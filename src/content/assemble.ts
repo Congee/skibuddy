@@ -10,14 +10,17 @@ export interface ContentFile {
   readonly text: string;
 }
 
-const decodeMuscles = Schema.decodeUnknownEffect(Schema.Array(Muscle));
-const decodeSources = Schema.decodeUnknownEffect(Schema.Array(Source));
-const decodePrimitives = Schema.decodeUnknownEffect(Schema.Array(Primitive));
-const decodeFundamentals = Schema.decodeUnknownEffect(AssociationFundamentals);
-const decodeMovement = Schema.decodeUnknownEffect(Movement);
-const decodeDrill = Schema.decodeUnknownEffect(Drill);
-const decodeTask = Schema.decodeUnknownEffect(AssociationTask);
-const decodeExercise = Schema.decodeUnknownEffect(Exercise);
+// YAML flow maps split on commas; stray keys must fail, not vanish.
+const STRICT = { onExcessProperty: 'error' } as const;
+
+const decodeMuscles = Schema.decodeUnknownEffect(Schema.Array(Muscle), STRICT);
+const decodeSources = Schema.decodeUnknownEffect(Schema.Array(Source), STRICT);
+const decodePrimitives = Schema.decodeUnknownEffect(Schema.Array(Primitive), STRICT);
+const decodeFundamentals = Schema.decodeUnknownEffect(AssociationFundamentals, STRICT);
+const decodeMovement = Schema.decodeUnknownEffect(Movement, STRICT);
+const decodeDrill = Schema.decodeUnknownEffect(Drill, STRICT);
+const decodeTask = Schema.decodeUnknownEffect(AssociationTask, STRICT);
+const decodeExercise = Schema.decodeUnknownEffect(Exercise, STRICT);
 
 const parseYaml = (file: ContentFile): Effect.Effect<unknown, ContentError> =>
   Effect.try({

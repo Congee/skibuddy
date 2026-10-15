@@ -228,9 +228,9 @@ dof_matrix:
   - dof: knee.rotation
     side: outside
     cells:
-      initiation: { neutral: true, contraction: isometric, cue: Turn the thigh, not the knee, confidence: low, sources: [{ source: iasi-2021, pages: 191 }, { source: lemaster-2010, pages: "124-125" }] }
-      shaping: { neutral: true, moment: Resisting the twist the snow force invites, contraction: isometric, cue: Turn the thigh, not the knee, confidence: medium, sources: [zorko-2020, heinrich-2023] }
-      finish: { neutral: true, contraction: isometric, cue: Turn the thigh, not the knee, confidence: low, sources: [] }
+      initiation: { neutral: true, contraction: isometric, cue: "Turn the thigh, not the knee", confidence: low, sources: [{ source: iasi-2021, pages: 191 }, { source: lemaster-2010, pages: "124-125" }] }
+      shaping: { neutral: true, moment: Resisting the twist the snow force invites, contraction: isometric, cue: "Turn the thigh, not the knee", confidence: medium, sources: [zorko-2020, heinrich-2023] }
+      finish: { neutral: true, contraction: isometric, cue: "Turn the thigh, not the knee", confidence: low, sources: [] }
   - dof: knee.rotation
     side: inside
     cells:
@@ -241,8 +241,8 @@ dof_matrix:
     side: outside
     cells:
       initiation: { neutral: true, contraction: isometric, cue: Knee stays over the foot, confidence: low, sources: [] }
-      shaping: { neutral: true, moment: Resisting the inward collapse the edged load invites, contraction: isometric, cue: Knee stays over the foot, not caving in, confidence: medium, sources: [zorko-2020, heinrich-2023] }
-      finish: { neutral: true, contraction: isometric, cue: Knee stays over the foot, not caving in, confidence: low, sources: [] }
+      shaping: { neutral: true, moment: Resisting the inward collapse the edged load invites, contraction: isometric, cue: "Knee stays over the foot, not caving in", confidence: medium, sources: [zorko-2020, heinrich-2023] }
+      finish: { neutral: true, contraction: isometric, cue: "Knee stays over the foot, not caving in", confidence: low, sources: [] }
   - dof: knee.valgus
     side: inside
     cells:
@@ -525,9 +525,9 @@ dof_matrix:
   - dof: lumbar.rotation
     side: trunk
     cells:
-      initiation: { neutral: true, contraction: isometric, cue: Counter comes from the hip sockets, not the low back, confidence: low, sources: [{ source: lemaster-2010, pages: 73 }, fujii-2007] }
-      shaping: { neutral: true, contraction: isometric, cue: Counter comes from the hip sockets, not the low back, confidence: low, sources: [{ source: lemaster-2010, pages: 73 }] }
-      finish: { neutral: true, contraction: isometric, cue: Counter comes from the hip sockets, not the low back, confidence: low, sources: [{ source: lemaster-2010, pages: 73 }] }
+      initiation: { neutral: true, contraction: isometric, cue: "Counter comes from the hip sockets, not the low back", confidence: low, sources: [{ source: lemaster-2010, pages: 73 }, fujii-2007] }
+      shaping: { neutral: true, contraction: isometric, cue: "Counter comes from the hip sockets, not the low back", confidence: low, sources: [{ source: lemaster-2010, pages: 73 }] }
+      finish: { neutral: true, contraction: isometric, cue: "Counter comes from the hip sockets, not the low back", confidence: low, sources: [{ source: lemaster-2010, pages: 73 }] }
   - dof: thoracic.flexion
     side: trunk
     cells:
@@ -655,7 +655,7 @@ dof_matrix:
   - dof: shoulder.abduction
     side: both
     cells:
-      initiation: { action: Arms a little out from the sides, hands wide for balance, contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [{ source: lemaster-2010, pages: "142-143" }] }
+      initiation: { action: "Arms a little out from the sides, hands wide for balance", contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [{ source: lemaster-2010, pages: "142-143" }] }
       shaping: { action: Hands held wide, contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [] }
       finish: { action: Hands held wide, contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [] }
   - dof: elbow.flexion
@@ -667,7 +667,7 @@ dof_matrix:
   - dof: wrist.grip
     side: both
     cells:
-      initiation: { action: Light grip; the touching wrist flicks the pole tip forward, contraction: concentric, cue: Touch with the wrist, not the arm, confidence: low, sources: [] }
+      initiation: { action: Light grip; the touching wrist flicks the pole tip forward, contraction: concentric, cue: "Touch with the wrist, not the arm", confidence: low, sources: [] }
       shaping: { action: Light grip held, contraction: isometric, cue: Hold the poles lightly, confidence: low, sources: [] }
       finish: { action: Light grip held, contraction: isometric, cue: Hold the poles lightly, confidence: low, sources: [] }
   - dof: neck.flexion
@@ -679,7 +679,7 @@ dof_matrix:
   - dof: neck.side-bend
     side: trunk
     cells:
-      initiation: { action: Head kept level, or tipped slightly toward the outside with the shoulders, contraction: isometric, cue: Don't tip the head into the turn, confidence: low, sources: [{ source: lemaster-2010, pages: 72 }] }
+      initiation: { action: "Head kept level, or tipped slightly toward the outside with the shoulders", contraction: isometric, cue: Don't tip the head into the turn, confidence: low, sources: [{ source: lemaster-2010, pages: 72 }] }
       shaping: { action: Head kept level, contraction: isometric, cue: Don't tip the head into the turn, confidence: low, sources: [{ source: lemaster-2010, pages: 72 }] }
       finish: { action: Head kept level, contraction: isometric, cue: Level head, confidence: low, sources: [] }
   - dof: neck.rotation

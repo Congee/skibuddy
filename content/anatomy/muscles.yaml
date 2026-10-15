@@ -1,12 +1,12 @@
 # FMA ids are left out until checked against the anatomy model.
 # Groups (quadriceps, hamstrings, calf, obliques) stay for exercise targets; activations name their parts.
 - { id: quadriceps, name: Quadriceps, region: leg }
-- { id: vasti, name: Vasti (vastus lateralis, medialis and intermedius), short_name: Vasti, region: leg, part_of: quadriceps }
+- { id: vasti, name: "Vasti (vastus lateralis, medialis and intermedius)", short_name: Vasti, region: leg, part_of: quadriceps }
 - { id: rectus-femoris, name: Rectus femoris, region: leg, part_of: quadriceps }
 - { id: hamstrings, name: Hamstrings, region: leg }
 - { id: biceps-femoris, name: Biceps femoris, region: leg, part_of: hamstrings }
 - { id: medial-hamstrings, name: Medial hamstrings (semitendinosus and semimembranosus), short_name: Medial hamstrings, region: leg, part_of: hamstrings }
-- { id: adductors, name: Adductors (longus, brevis and pectineus), short_name: Adductors, region: hip }
+- { id: adductors, name: "Adductors (longus, brevis and pectineus)", short_name: Adductors, region: hip }
 - { id: adductor-magnus, name: Adductor magnus, region: hip }
 - { id: gracilis, name: Gracilis, region: hip }
 - { id: gluteus-maximus, name: Gluteus maximus, region: hip }

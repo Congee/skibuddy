@@ -26,6 +26,6 @@ primitives:
   - { primitive: leg-rotation, modifier: small }
   - { primitive: counter, modifier: slight }
   - { primitive: hip-angulation, modifier: inside half of the pelvis unsupported }
-  - { primitive: inside-leg-lift, modifier: tail only, tip stays on the snow }
+  - { primitive: inside-leg-lift, modifier: "tail only, tip stays on the snow" }
   - { primitive: pole-touch, modifier: touch just before the lift }
 reviewed_by: []

@@ -90,13 +90,24 @@ describe('assembleContent', () => {
     }),
   );
 
+  it.effect('rejects a flow-map value split by a comma', () =>
+    Effect.gen(function* () {
+      const split = exercise.replace(
+        "targets: [{ muscle: quadriceps, contraction: eccentric }]",
+        "targets: [{ muscle: quadriceps, contraction: eccentric, slow and deep }]",
+      );
+      const error = yield* Effect.flip(assembleContent(replace('exercises/split-squat.yaml', split)));
+      assert.include(error.problems[0], 'slow and deep');
+    }),
+  );
+
   it.effect('rejects a camelCase key', () =>
     Effect.gen(function* () {
       const camel = exercise.replace('matches_on_snow:', 'matchesOnSnow:');
       const error = yield* Effect.flip(assembleContent(replace('exercises/split-squat.yaml', camel)));
       assert.strictEqual(error.problems.length, 1);
       assert.isTrue(error.problems[0]?.startsWith('exercises/split-squat.yaml: '));
-      assert.include(error.problems[0], 'matches_on_snow');
+      assert.include(error.problems[0], 'matchesOnSnow');
     }),
   );
 
