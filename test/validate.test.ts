@@ -44,9 +44,14 @@ describe('findProblems', () => {
     ]);
   });
 
-  it('flags a task pointing at an unknown movement', () => {
-    const tasks = rawContent.tasks.map((t) => ({ ...t, movement: 'missing' }));
-    assert.deepStrictEqual(findProblems(contentWith({ tasks })), ['task psia/Stork Turns: unknown movement missing']);
+  it('flags a drill pointing at an unknown movement', () => {
+    const drills = rawContent.drills.map((d) => ({ ...d, movement: 'missing' }));
+    assert.deepStrictEqual(findProblems(contentWith({ drills })), ['drill stork-turns: unknown movement missing']);
+  });
+
+  it('flags a task pointing at an unknown drill', () => {
+    const tasks = rawContent.tasks.map((t) => ({ ...t, drill: 'missing' }));
+    assert.deepStrictEqual(findProblems(contentWith({ tasks })), ['task psia/Stork Turns: unknown drill missing']);
   });
 });
 

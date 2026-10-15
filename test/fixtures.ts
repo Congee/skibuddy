@@ -32,16 +32,15 @@ export const rawContent = {
   ],
   sources: [{ id: 'study-1', citation: 'A study', url: 'https://example.org/1', read: 'abstract' }],
   movements: [{ id: 'turn', name: 'Turn', activations: [activation], jointActions: [], reviewedBy: [] }],
+  drills: [{ id: 'stork-turns', name: 'Stork turns', movement: 'turn', summary: 'Our words', terrain: 'Easy', reviewedBy: [] }],
   tasks: [
     {
       association: 'psia',
+      drill: 'stork-turns',
       task: 'Stork Turns',
       level: 2,
       category: 'Individual',
       fundamentals: [],
-      movement: 'turn',
-      summary: 'Our words',
-      terrain: 'Green',
       url: 'https://example.org/task',
       reviewedBy: [],
     },

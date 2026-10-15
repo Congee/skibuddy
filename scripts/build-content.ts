@@ -22,7 +22,7 @@ const program = Effect.gen(function* () {
   const content = yield* assembleContent(files);
   yield* Effect.promise(() => Bun.write(OUTPUT, JSON.stringify(content)));
   console.log(
-    `${OUTPUT}: ${content.movements.length} movements, ${content.tasks.length} tasks, ${content.exercises.length} exercises`,
+    `${OUTPUT}: ${content.movements.length} movements, ${content.drills.length} drills, ${content.tasks.length} tasks, ${content.exercises.length} exercises`,
   );
 });
 

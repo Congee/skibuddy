@@ -1,12 +1,10 @@
 association: psia
+drill: stork-turns
 task: Stork Turns
 level: 2
 category: Individual
 fundamentals:
   - Control edge angles through a combination of inclination and angulation
   - Control the relationship of the Center of Mass to the Base of Support to direct pressure along the length of the skis
-movement: outside-ski-turn
-summary: Linked large turns balanced on the outside ski, with the inside ski's tail held off the snow through the middle of each turn.
-terrain: Green or easy blue, groomed
 url: https://psia-c.org/education/alpine/alpine-resources/stork-turns/
 reviewedBy: []

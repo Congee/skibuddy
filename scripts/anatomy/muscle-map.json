@@ -1,0 +1,18 @@
+{
+  "quadriceps": ["Rectus femoris muscle", "Vastus lateralis muscle", "Vastus medialis muscle", "Vastus intermedius muscle"],
+  "hamstrings": ["Long head of biceps femoris", "Short head of biceps femoris", "Semitendinosus muscle", "Semimembranosus muscle"],
+  "adductors": ["Adductor longus", "Adductor brevis", "Adductor magnus", "(Adductor minimus)", "Gracilis muscle", "Pectineus muscle"],
+  "gluteus-maximus": ["Gluteus maximus muscle"],
+  "gluteus-medius": ["Gluteus medius muscle", "Gluteus minimus muscle"],
+  "deep-hip-rotators": ["Piriformis muscle", "Superior gemellus muscle", "Inferior gemellus muscle", "Obturator internus", "Obturator externus", "Quadratus femoris muscle"],
+  "hip-flexors": ["Psoas major", "Iliacus muscle"],
+  "tibialis-anterior": ["Tibialis anterior muscle"],
+  "calf": ["Lateral head of gastrocnemius", "Medial head of gastrocnemius", "Soleus muscle"],
+  "peroneals": ["Fibularis longus muscle", "Fibularis brevis muscle"],
+  "obliques": ["External abdominal oblique muscle", "Internal abdominal oblique muscle"],
+  "erector-spinae": [
+    "Iliocostalis lumborum muscle", "Iliocostalis thoracis muscle", "Iliocostalis colli muscle",
+    "Longissimus thoracis muscle", "Longissimus colli muscle", "Longissimus capitis muscle",
+    "Spinalis thoracis muscle", "Spinalis colli muscle", "Spinalis capitis muscle"
+  ]
+}

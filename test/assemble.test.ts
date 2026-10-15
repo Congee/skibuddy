@@ -27,15 +27,21 @@ activations:
 jointActions: []
 reviewedBy: []
 `;
+const drill = `
+id: stork-turns
+name: Stork turns
+movement: turn
+summary: Our words
+terrain: Easy
+reviewedBy: []
+`;
 const task = (association: string): string => `
 association: ${association}
+drill: stork-turns
 task: Stork Turns
 level: 2
 category: Individual
 fundamentals: []
-movement: turn
-summary: Our words
-terrain: Green
 url: https://example.org/task
 reviewedBy: []
 `;
@@ -55,6 +61,7 @@ const files: ReadonlyArray<ContentFile> = [
   { path: 'anatomy/muscles.yaml', text: muscles },
   { path: 'sources.yaml', text: sources },
   { path: 'movements/turn.yaml', text: movement },
+  { path: 'drills/stork-turns.yaml', text: drill },
   { path: 'associations/psia/stork-turns.yaml', text: task('psia') },
   { path: 'exercises/split-squat.yaml', text: exercise },
 ];
@@ -68,6 +75,7 @@ describe('assembleContent', () => {
       const content = yield* assembleContent(files);
       assert.strictEqual(content.muscles.length, 1);
       assert.strictEqual(content.movements[0]?.id, 'turn');
+      assert.strictEqual(content.drills[0]?.id, 'stork-turns');
       assert.strictEqual(content.tasks[0]?.association, 'psia');
       assert.strictEqual(content.exercises[0]?.id, 'split-squat');
     }),

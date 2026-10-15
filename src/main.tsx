@@ -1,3 +1,5 @@
+// oxlint-disable-next-line import/no-unassigned-import -- self-hosted font faces
+import '@fontsource-variable/archivo/standard.css';
 import { RegistryProvider } from '@effect/atom-solid';
 import { render } from 'solid-js/web';
 import { App } from './ui/App';

@@ -1,62 +1,71 @@
-import { useAtom, useAtomValue } from '@effect/atom-solid';
-import { For, Show, createMemo } from 'solid-js';
+import { useAtomValue } from '@effect/atom-solid';
+import { Show, createMemo } from 'solid-js';
 import type { JSX } from 'solid-js';
-import { levelsAt } from '../content/activation';
 import { matchExercises } from '../content/match';
-import type { Content } from '../content/schema';
-import { taskIndexAtom, turnTimeAtom } from '../state/playback';
-import { Viewer } from '../viewer/Viewer';
-import { ExerciseList } from './ExerciseList';
-import { MusclePanel } from './MusclePanel';
-import { Scrubber } from './Scrubber';
+import type { Content, Drill, Movement } from '../content/schema';
+import { drillIdAtom, phaseAt, pinsAtom, turnTimeAtom } from '../state/playback';
+import * as s from './app.css';
+import { Board } from './board/Board';
+import { shortName } from './board/marks';
+import { rankSlats } from './board/rank';
+import { FigureField } from './figure/FigureField';
+import { GymBoard } from './gym/GymBoard';
+import { LiftLine, PhaseStops, usePlayback } from './lift/LiftLine';
+import { phoneTabs } from './lift/lift.css';
+import { REDUCED_MOTION, createMedia } from './media';
 
-export const Drill = (props: { readonly content: Content }): JSX.Element => {
-  const [taskIndex, setTaskIndex] = useAtom(() => taskIndexAtom);
+const Lodge = (props: { readonly content: Content; readonly drill: Drill; readonly movement: Movement }): JSX.Element => {
   const t = useAtomValue(() => turnTimeAtom);
-  const task = createMemo(() => props.content.tasks[taskIndex()] ?? props.content.tasks[0]);
-  const movement = createMemo(() => {
-    const id = task()?.movement;
-    return props.content.movements.find((m) => m.id === id);
-  });
+  const pins = useAtomValue(() => pinsAtom);
+  const reducedMotion = createMedia(REDUCED_MOTION);
+  usePlayback(reducedMotion);
+  const phase = createMemo(() => phaseAt(t()));
+  const ranked = createMemo(() => rankSlats(props.movement.activations, phase()));
+  const muscleName = (id: string): string => props.content.muscles.find((m) => m.id === id)?.name ?? id;
+  const tasks = createMemo(() => props.content.tasks.filter((x) => x.drill === props.drill.id));
+  const matches = createMemo(() => matchExercises(props.movement, props.content.exercises));
 
   return (
-    <Show when={task()} fallback={<p>No drills yet.</p>}>
-      {(current) => (
-        <div class="drill">
-          <section class="drill-picker" aria-label="Drill">
-            <label>
-              Drill{' '}
-              <select value={taskIndex()} onChange={(e) => setTaskIndex(Number(e.currentTarget.value))}>
-                <For each={props.content.tasks}>
-                  {(item, i) => (
-                    <option value={i()}>
-                      {item.task} ({item.association.toUpperCase()} level {item.level})
-                    </option>
-                  )}
-                </For>
-              </select>
-            </label>
-            <p>{current().summary}</p>
-            <p class="muted">
-              Terrain: {current().terrain}.{' '}
-              <a href={current().url} target="_blank" rel="noopener noreferrer">
-                {current().association.toUpperCase()} task page
-              </a>
-            </p>
-          </section>
-          <Show when={movement()} fallback={<p role="alert">This drill has no movement data.</p>}>
-            {(m) => (
-              <>
-                <div class="stage">
-                  <Viewer movement={m()} muscles={props.content.muscles.map((x) => x.id)} />
-                  <Scrubber />
-                </div>
-                <MusclePanel levels={levelsAt(m(), t())} movement={m()} content={props.content} />
-                <ExerciseList matches={matchExercises(m(), props.content.exercises)} content={props.content} />
-              </>
-            )}
-          </Show>
-        </div>
+    <main class={s.lodge}>
+      <section class={s.stage} aria-label="Figure and turn">
+        <FigureField
+          movement={props.movement}
+          muscles={props.content.muscles.map((m) => m.id)}
+          ranked={ranked()}
+          pins={pins()}
+          muscleName={(id) => shortName(muscleName(id))}
+        />
+        <LiftLine />
+      </section>
+      <div class={phoneTabs}>
+        <PhaseStops look="tabs" />
+      </div>
+      <div class={s.boards}>
+        <Board
+          drill={props.drill}
+          movement={props.movement}
+          tasks={tasks()}
+          content={props.content}
+          phase={phase()}
+          ranked={ranked()}
+          reducedMotion={reducedMotion}
+        />
+        <GymBoard matches={matches()} movement={props.movement} content={props.content} />
+      </div>
+    </main>
+  );
+};
+
+export const DrillView = (props: { readonly content: Content }): JSX.Element => {
+  const drillId = useAtomValue(() => drillIdAtom);
+  const drill = createMemo(() => props.content.drills.find((d) => d.id === drillId()) ?? props.content.drills[0]);
+  const movement = createMemo(() => props.content.movements.find((m) => m.id === drill()?.movement));
+  return (
+    <Show when={drill()} keyed fallback={<p class={s.status}>No drills yet.</p>}>
+      {(d) => (
+        <Show when={movement()} keyed fallback={<p class={s.status} role="alert">This drill has no movement data yet.</p>}>
+          {(m) => <Lodge content={props.content} drill={d} movement={m} />}
+        </Show>
       )}
     </Show>
   );

@@ -2,7 +2,7 @@ import { assert, describe, it } from '@effect/vitest';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
-import { poseAt, segmentMatrices, turnDepth } from '../src/viewer/pose';
+import { SKI_TIP as TIP, poseAt, segmentMatrices, turnDepth } from '../src/viewer/pose';
 
 const indexOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 const matrixAt = (t: number, kind: SegmentKind, side: BodySide): Mat4 => {
@@ -61,5 +61,58 @@ describe('segmentMatrices', () => {
         assert.closeTo(Math.hypot(m[col] ?? 0, m[col + 1] ?? 0, m[col + 2] ?? 0), 1, 1e-5);
       }
     }
+  });
+
+  it('keeps the hips over mid-foot, never in the back seat', () => {
+    for (const t of [0, 1 / 6, 0.5, 5 / 6]) {
+      const hip = point(t, SegmentKind.Pelvis, BodySide.Center, [0, 0, 0])[2];
+      const ankle = point(t, SegmentKind.Boot, BodySide.Right, [0, 0, 0])[2];
+      assert.isAbove(hip, ankle - 0.01, `t=${t}`);
+      assert.isBelow(hip, ankle + 0.12, `t=${t}`);
+    }
+  });
+
+  it('keeps the inside ski tip on the snow while its tail lifts', () => {
+    for (const t of [1 / 6, 0.5, 5 / 6]) {
+      assert.closeTo(point(t, SegmentKind.Ski, BodySide.Left, TIP)[1], 0, 1e-3, `t=${t}`);
+    }
+  });
+
+  it('flexes the inside knee more than the outside mid-turn', () => {
+    const { inside, outside } = poseAt(0.5);
+    assert.isAbove(inside.hipFlex + inside.ankleFlex, outside.hipFlex + outside.ankleFlex + 0.2);
+  });
+
+  it('leans the torso forward 30-40 degrees', () => {
+    for (const t of [0, 0.5]) {
+      const [, py, pz] = point(t, SegmentKind.Trunk, BodySide.Center, [0, 0, 0]);
+      const [, hy, hz] = point(t, SegmentKind.Trunk, BodySide.Center, [0, 1, 0]);
+      const angle = Math.atan2(hz - pz, hy - py);
+      assert.isAbove(angle, 0.5, `t=${t}`);
+      assert.isBelow(angle, 0.7, `t=${t}`);
+    }
+  });
+
+  it('holds the hands forward, wider than the hips, between hip and chest height', () => {
+    for (const side of [BodySide.Left, BodySide.Right]) {
+      const pelvis = point(0, SegmentKind.Pelvis, BodySide.Center, [0, 0, 0]);
+      const hand = point(0, SegmentKind.Forearm, side, [0, -0.28, 0]);
+      assert.isAbove(hand[2], pelvis[2] + 0.25, side);
+      assert.isAbove(Math.abs(hand[0] - pelvis[0]), 0.2, side);
+      assert.isAbove(hand[1], pelvis[1] - 0.05, side);
+      assert.isBelow(hand[1], pelvis[1] + 0.45, side);
+    }
+  });
+
+  it('keeps the shoulders level as the legs incline', () => {
+    const left = point(0.5, SegmentKind.UpperArm, BodySide.Left, [0, 0, 0])[1];
+    const right = point(0.5, SegmentKind.UpperArm, BodySide.Right, [0, 0, 0])[1];
+    assert.closeTo(left, right, 0.02);
+  });
+
+  it('turns the torso toward the outside ski mid-turn', () => {
+    const [x, , z] = point(0.5, SegmentKind.Trunk, BodySide.Center, [0, 0, 1]);
+    const [ox, , oz] = point(0.5, SegmentKind.Trunk, BodySide.Center, [0, 0, 0]);
+    assert.isBelow(Math.atan2(x - ox, z - oz), -0.05);
   });
 });

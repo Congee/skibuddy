@@ -36,6 +36,8 @@ export const ExerciseId = Slug.pipe(Schema.brand('ExerciseId'));
 export type ExerciseId = typeof ExerciseId.Type;
 export const SourceId = Slug.pipe(Schema.brand('SourceId'));
 export type SourceId = typeof SourceId.Type;
+export const DrillId = Slug.pipe(Schema.brand('DrillId'));
+export type DrillId = typeof DrillId.Type;
 
 /** Relative effort, 0 (idle) to 3 (high); never a percentage unless a source measured one. */
 export const Intensity = Schema.Number.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 3 }));
@@ -87,17 +89,30 @@ export const Movement = Schema.Struct({
 });
 export type Movement = typeof Movement.Type;
 
-export const AssociationTask = Schema.Struct({
-  association: Schema.Enum(Association),
-  task: Text,
-  level: Schema.Number.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 4 })),
-  category: Text,
-  /** The association's own fundamental names, kept verbatim. */
-  fundamentals: Schema.Array(Text),
+/** An association-neutral drill; associations map their own tasks onto it. */
+export const Drill = Schema.Struct({
+  id: DrillId,
+  /** A generic name, not any one association's. */
+  name: Text,
   movement: MovementId,
-  /** Our own words; never copied from the association. */
+  /** Our own words. */
   summary: Text,
   terrain: Text,
+  reviewedBy: Schema.Array(Text),
+});
+export type Drill = typeof Drill.Type;
+
+/** One association's name and placement for a drill. */
+export const AssociationTask = Schema.Struct({
+  association: Schema.Enum(Association),
+  drill: DrillId,
+  /** The association's own task name. */
+  task: Text,
+  /** In the association's own level scale. */
+  level: Schema.optionalKey(Schema.Number.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 4 }))),
+  category: Schema.optionalKey(Text),
+  /** The association's own fundamental names, kept verbatim. */
+  fundamentals: Schema.Array(Text),
   url: Schema.String.check(Schema.isPattern(/^https:\/\//)),
   reviewedBy: Schema.Array(Text),
 });
@@ -133,6 +148,7 @@ export type Source = typeof Source.Type;
 export const Content = Schema.Struct({
   muscles: Schema.Array(Muscle),
   movements: Schema.Array(Movement),
+  drills: Schema.Array(Drill),
   tasks: Schema.Array(AssociationTask),
   exercises: Schema.Array(Exercise),
   sources: Schema.Array(Source),

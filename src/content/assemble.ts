@@ -1,6 +1,6 @@
 import { Effect, Schema } from 'effect';
 import { parse } from 'yaml';
-import { AssociationTask, Exercise, Movement, Muscle, Source } from './schema';
+import { AssociationTask, Drill, Exercise, Movement, Muscle, Source } from './schema';
 import type { Content } from './schema';
 import { ContentError, validateContent } from './validate';
 
@@ -13,6 +13,7 @@ export interface ContentFile {
 const decodeMuscles = Schema.decodeUnknownEffect(Schema.Array(Muscle));
 const decodeSources = Schema.decodeUnknownEffect(Schema.Array(Source));
 const decodeMovement = Schema.decodeUnknownEffect(Movement);
+const decodeDrill = Schema.decodeUnknownEffect(Drill);
 const decodeTask = Schema.decodeUnknownEffect(AssociationTask);
 const decodeExercise = Schema.decodeUnknownEffect(Exercise);
 
@@ -70,6 +71,7 @@ export const assembleContent = Effect.fn('assembleContent')(function* (
   const movements = yield* Effect.forEach(sortedBy(files, /^movements\/[^/]+\.ya?ml$/), (f) =>
     decodeFile(f, decodeMovement),
   );
+  const drills = yield* Effect.forEach(sortedBy(files, /^drills\/[^/]+\.ya?ml$/), (f) => decodeFile(f, decodeDrill));
   const exercises = yield* Effect.forEach(sortedBy(files, /^exercises\/[^/]+\.ya?ml$/), (f) =>
     decodeFile(f, decodeExercise),
   );
@@ -93,6 +95,7 @@ export const assembleContent = Effect.fn('assembleContent')(function* (
     muscles,
     sources,
     movements: movements.flat(),
+    drills: drills.flat(),
     exercises: exercises.flat(),
     tasks: tasks.flat(),
   });
