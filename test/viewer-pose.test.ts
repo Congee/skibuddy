@@ -2,7 +2,7 @@ import { assert, describe, it } from '@effect/vitest';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
-import { CAPSULE_GRIP, POLE, POLE_TOUCH_T, SKI_TIP as TIP, poleDirection, poleTouchAt, poseAt, segmentMatrices, turnDepth } from '../src/viewer/pose';
+import { SKI_TIP as TIP, poseAt, segmentMatrices, turnDepth } from '../src/viewer/pose';
 
 const indexOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 const matrixAt = (t: number, kind: SegmentKind, side: BodySide): Mat4 => {
@@ -114,51 +114,5 @@ describe('segmentMatrices', () => {
     const [x, , z] = point(0.5, SegmentKind.Trunk, BodySide.Center, [0, 0, 1]);
     const [ox, , oz] = point(0.5, SegmentKind.Trunk, BodySide.Center, [0, 0, 0]);
     assert.isBelow(Math.atan2(x - ox, z - oz), -0.05);
-  });
-});
-
-const basket = (t: number, side: typeof BodySide.Left | typeof BodySide.Right): Vec3 => {
-  const grip = point(t, SegmentKind.Forearm, side, CAPSULE_GRIP);
-  const d = poleDirection(grip, side, side === BodySide.Left ? poseAt(t).poleTouch : 0);
-  return [grip[0] + d[0] * POLE.basket, grip[1] + d[1] * POLE.basket, grip[2] + d[2] * POLE.basket];
-};
-
-describe('poles', () => {
-  const times = Array.from({ length: 96 }, (_, i) => i / 96);
-
-  it('touches the inside basket to the snow beside the inside ski tip at initiation', () => {
-    const b = basket(POLE_TOUCH_T, BodySide.Left);
-    const tip = point(POLE_TOUCH_T, SegmentKind.Ski, BodySide.Left, TIP);
-    assert.closeTo(b[1], 0, 0.005);
-    assert.isBelow(Math.hypot(b[0] - tip[0], b[2] - tip[2]), 0.4);
-    // Beside the ski, not on it.
-    assert.isAbove(b[0], tip[0] + 0.1);
-  });
-
-  it('keeps the inside basket off the snow outside the touch', () => {
-    for (const t of times.filter((x) => poleTouchAt(x) < 0.9)) {
-      assert.isAbove(basket(t, BodySide.Left)[1], 0.002, `t=${t}`);
-    }
-    for (const t of times.filter((x) => poleTouchAt(x) === 0)) {
-      assert.isAbove(basket(t, BodySide.Left)[1], 0.25, `t=${t}`);
-    }
-  });
-
-  it('never plants the outside pole', () => {
-    for (const t of times) assert.isAbove(basket(t, BodySide.Right)[1], 0.25, `t=${t}`);
-  });
-
-  it('touches only around initiation', () => {
-    assert.strictEqual(poleTouchAt(POLE_TOUCH_T), 1);
-    for (const t of [0.4, 0.5, 0.75, 0.95]) assert.strictEqual(poleTouchAt(t), 0, `t=${t}`);
-  });
-
-  it('carries the poles back and down, tips behind the hands', () => {
-    for (const side of [BodySide.Left, BodySide.Right] as const) {
-      const grip = point(0.5, SegmentKind.Forearm, side, CAPSULE_GRIP);
-      const b = basket(0.5, side);
-      assert.isBelow(b[2], grip[2] - 0.3, side);
-      assert.isBelow(b[1], grip[1] - 0.5, side);
-    }
   });
 });

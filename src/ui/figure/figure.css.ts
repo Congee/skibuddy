@@ -103,6 +103,9 @@ export const pin = style({
   },
 });
 
+// Pins follow every played frame; easing each step would keep the compositor busy.
+globalStyle(`${overlay}[data-playing] ${pin}`, { transition: 'none' });
+
 export const pinBody = style({ display: 'grid', rowGap: 4, minWidth: 0 });
 
 export const pinName = style({
@@ -124,3 +127,15 @@ export const pinName = style({
 export const pinMeta = style({ display: 'flex', alignItems: 'center', gap: 6 });
 
 export const pinSide = style({ fontSize: 12, fontWeight: 600 });
+
+/** Filled with the effort colour by direct writes as the turn plays. */
+export const pinSwatch = style({
+  width: 14,
+  height: 14,
+  marginTop: 2,
+  borderRadius: 2,
+  boxShadow: `inset 0 0 0 1.5px ${vars.color.pinInk}`,
+  '@media': { [phone]: { width: 12, height: 12 } },
+});
+
+export const pinWord = style({ fontSize: 12, fontWeight: 700, lineHeight: 1 });

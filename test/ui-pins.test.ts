@@ -1,6 +1,5 @@
 import { assert, describe, it } from '@effect/vitest';
 import type { Activation } from '../src/content/schema';
-import { rankSlats } from '../src/ui/board/rank';
 import { pinInputs } from '../src/ui/figure/pin-inputs';
 import { Column, layoutPins } from '../src/ui/figure/pin-layout';
 import type { PinBox, PinInput } from '../src/ui/figure/pin-layout';
@@ -89,11 +88,12 @@ describe('layoutPins', () => {
   });
 });
 
+// A muscle at 0 in shaping rests through the whole turn.
 const act = (muscle: string, side: string, shaping: number): Activation =>
   ({
     muscle,
     side,
-    intensity: { initiation: 1, shaping, finish: 1 },
+    intensity: { initiation: shaping === 0 ? 0 : 1, shaping, finish: shaping === 0 ? 0 : 1 },
     contraction: ['isometric'],
     role: 'r',
     confidence: 'low',
@@ -104,25 +104,27 @@ const anchor = (muscle: string, side: 'outside' | 'inside', visible = true): Mus
 
 describe('pinInputs', () => {
   it('pins working muscles with a visible anchor on the matching side', () => {
-    const ranked = rankSlats(
-      [act('quads', 'outside', 3), act('calf', 'inside', 2), act('core', 'both', 1), act('idle', 'outside', 0), act('hidden', 'outside', 2)],
-      'shaping',
-    );
+    const order = [act('quads', 'outside', 3), act('calf', 'inside', 2), act('core', 'both', 1), act('idle', 'outside', 0), act('hidden', 'outside', 2)];
     const anchors = [anchor('quads', 'outside'), anchor('calf', 'outside'), anchor('core', 'inside'), anchor('idle', 'outside'), anchor('hidden', 'outside', false)];
-    const keys = pinInputs(ranked, anchors).map((p) => p.key);
+    const keys = pinInputs(order, anchors).map((p) => p.key);
     assert.deepStrictEqual(keys, ['quads:outside', 'core:both']);
   });
 
+  it('keeps a muscle that rests in one phase but works in another', () => {
+    const resting = { ...act('a', 'outside', 0), intensity: { initiation: 2, shaping: 0, finish: 0 } } as Activation;
+    assert.deepStrictEqual(pinInputs([resting], [anchor('a', 'outside')]).map((p) => p.key), ['a:outside']);
+  });
+
   it('carries measured label heights', () => {
-    const ranked = rankSlats([act('a', 'outside', 2), act('b', 'outside', 2)], 'shaping');
-    const inputs = pinInputs(ranked, [anchor('a', 'outside'), anchor('b', 'outside')], new Map([['a:outside', 52]]));
+    const order = [act('a', 'outside', 2), act('b', 'outside', 2)];
+    const inputs = pinInputs(order, [anchor('a', 'outside'), anchor('b', 'outside')], new Map([['a:outside', 52]]));
     assert.strictEqual(inputs.find((p) => p.key === 'a:outside')?.height, 52);
     assert.isUndefined(inputs.find((p) => p.key === 'b:outside')?.height);
   });
 
-  it('gives higher-ranked slats higher priority', () => {
-    const ranked = rankSlats([act('a', 'outside', 1), act('b', 'outside', 3)], 'shaping');
-    const inputs = pinInputs(ranked, [anchor('a', 'outside'), anchor('b', 'outside')]);
+  it('gives earlier muscles in the steady order higher priority', () => {
+    const order = [act('b', 'outside', 3), act('a', 'outside', 1)];
+    const inputs = pinInputs(order, [anchor('a', 'outside'), anchor('b', 'outside')]);
     assert.isAbove(inputs.find((p) => p.key === 'b:outside')?.priority ?? 0, inputs.find((p) => p.key === 'a:outside')?.priority ?? 0);
   });
 });

@@ -1,13 +1,17 @@
-import { For, Show, createMemo, createSignal, onCleanup } from 'solid-js';
+import { useAtomValue } from '@effect/atom-solid';
+import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount, untrack } from 'solid-js';
 import type { JSX } from 'solid-js';
+import { effortAt, effortColour, effortWord } from '../../content/effort';
+import type { EffortRamp } from '../../content/effort';
 import { Side } from '../../content/schema';
+import type { Activation } from '../../content/schema';
+import { playingAtom, turnTimeAtom } from '../../state/playback';
 import type { MuscleAnchor } from '../../viewer/anchors';
-import { Stamp, Tag } from '../board/marks';
-import type { RankedSlat } from '../board/rank';
+import { Stamp } from '../board/marks';
 import * as s from './figure.css';
 import { Column, layoutPins } from './pin-layout';
 import type { PinBox, PlacedPin } from './pin-layout';
-import { pinInputs, slatKey } from './pin-inputs';
+import { pinInputs, pinKey } from './pin-inputs';
 
 export interface PinSize {
   readonly width: number;
@@ -21,17 +25,27 @@ export const boxFor = (size: PinSize): PinBox =>
     ? { width: size.width, height: size.height, labelWidth: Math.round(Math.min(size.width * 0.36, 150)), labelHeight: 58, gap: 6, pad: 6, maxPins: 4 }
     : { width: size.width, height: size.height, labelWidth: Math.round(Math.min(216, Math.max(150, size.width * 0.3))), labelHeight: 50, gap: 10, pad: 16, maxPins: 7 };
 
+interface LivePin {
+  readonly activation: Activation;
+  readonly swatch: HTMLElement;
+  readonly word: HTMLElement;
+}
+
 const EMPTY: PlacedPin = { key: '', column: Column.Left, x: 0, y: 0, height: 0, anchorX: 0, anchorY: 0 };
 
 /** Muscle-name pins over the figure; a visual copy of the board, hidden from assistive tech. */
 export const Pins = (props: {
-  readonly ranked: ReadonlyArray<RankedSlat>;
+  /** The board's steady order. */
+  readonly order: ReadonlyArray<Activation>;
   readonly anchors: ReadonlyArray<MuscleAnchor>;
   readonly size: PinSize;
+  readonly ramp: EffortRamp;
   readonly muscleName: (id: string) => string;
 }): JSX.Element => {
+  const t = useAtomValue(() => turnTimeAtom);
+  const playing = useAtomValue(() => playingAtom);
   const box = createMemo(() => boxFor(props.size));
-  const bySlat = createMemo(() => new Map(props.ranked.map((r) => [slatKey(r), r])));
+  const byKey = createMemo(() => new Map(props.order.map((a) => [pinKey(a), a])));
   const [heights, setHeights] = createSignal<ReadonlyMap<string, number>>(new Map());
   const measure = new ResizeObserver((entries) => {
     const next = new Map(heights());
@@ -44,12 +58,26 @@ export const Pins = (props: {
   });
   onCleanup(() => measure.disconnect());
   const placed = createMemo(
-    () => new Map(layoutPins(pinInputs(props.ranked, props.anchors, heights()), box()).map((p) => [p.key, p])),
+    () => new Map(layoutPins(pinInputs(props.order, props.anchors, heights()), box()).map((p) => [p.key, p])),
   );
+
+  // Effort swatches and words follow the playhead by direct writes, so a frame of play re-renders nothing.
+  const live = new Set<LivePin>();
+  const paint = (now: number, ramp: EffortRamp, pin: LivePin): void => {
+    const v = effortAt(pin.activation.intensity, now);
+    pin.swatch.style.background = effortColour(v, ramp);
+    const word = effortWord(v);
+    if (pin.word.textContent !== word) pin.word.textContent = word;
+  };
+  createEffect(() => {
+    const now = t();
+    const ramp = props.ramp;
+    for (const pin of live) paint(now, ramp, pin);
+  });
   // Iterate stable keys so pins move instead of remounting.
   const keys = createMemo(() => [...placed().keys()]);
   return (
-    <div class={s.overlay} style={{ width: `${props.size.width}px`, height: `${props.size.height}px` }} aria-hidden="true">
+    <div class={s.overlay} data-playing={playing() ? '' : undefined} style={{ width: `${props.size.width}px`, height: `${props.size.height}px` }} aria-hidden="true">
       <svg class={s.leaders}>
         <For each={keys()}>
           {(key) => {
@@ -69,32 +97,44 @@ export const Pins = (props: {
       </svg>
       <For each={keys()}>
         {(key) => (
-          <Show when={bySlat().get(key)}>
-            {(slat) => (
-              <div
-                class={s.pin}
-                data-key={key}
-                ref={(el) => {
-                  measure.observe(el);
-                  onCleanup(() => measure.unobserve(el));
-                }}
-                style={{
-                  width: `${box().labelWidth}px`,
-                  transform: `translate(${placed().get(key)?.x ?? 0}px, ${placed().get(key)?.y ?? 0}px)`,
-                }}
-              >
-                <Tag level={slat().level} size="mini" />
-                <span class={s.pinBody}>
-                  <span class={s.pinName}>{props.muscleName(slat().activation.muscle)}</span>
-                  <span class={s.pinMeta}>
-                    <Stamp confidence={slat().activation.confidence} tone="pin" />
-                    <Show when={slat().activation.side === Side.Inside}>
-                      <span class={s.pinSide}>inside</span>
-                    </Show>
+          <Show when={byKey().get(key)}>
+            {(activation) => {
+              let swatch: HTMLElement | undefined;
+              let word: HTMLElement | undefined;
+              onMount(() => {
+                if (swatch === undefined || word === undefined) return;
+                const pin: LivePin = { activation: activation(), swatch, word };
+                live.add(pin);
+                paint(untrack(t), untrack(() => props.ramp), pin);
+                onCleanup(() => live.delete(pin));
+              });
+              return (
+                <div
+                  class={s.pin}
+                  data-key={key}
+                  ref={(el) => {
+                    measure.observe(el);
+                    onCleanup(() => measure.unobserve(el));
+                  }}
+                  style={{
+                    width: `${box().labelWidth}px`,
+                    transform: `translate(${placed().get(key)?.x ?? 0}px, ${placed().get(key)?.y ?? 0}px)`,
+                  }}
+                >
+                  <span class={s.pinSwatch} ref={(el) => (swatch = el)} />
+                  <span class={s.pinBody}>
+                    <span class={s.pinName}>{props.muscleName(activation().muscle)}</span>
+                    <span class={s.pinWord} ref={(el) => (word = el)} />
+                    <span class={s.pinMeta}>
+                      <Stamp confidence={activation().confidence} tone="pin" />
+                      <Show when={activation().side === Side.Inside}>
+                        <span class={s.pinSide}>inside</span>
+                      </Show>
+                    </span>
                   </span>
-                </span>
-              </div>
-            )}
+                </div>
+              );
+            }}
           </Show>
         )}
       </For>

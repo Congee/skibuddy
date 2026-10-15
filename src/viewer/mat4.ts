@@ -44,3 +44,10 @@ export const transformPoint = (m: Mat4, [x, y, z]: Vec3): Vec3 => [
   (m[1] ?? 0) * x + (m[5] ?? 0) * y + (m[9] ?? 0) * z + (m[13] ?? 0),
   (m[2] ?? 0) * x + (m[6] ?? 0) * y + (m[10] ?? 0) * z + (m[14] ?? 0),
 ];
+
+/** The inverse of a rigid matrix's rotation part, without its translation. */
+export const inverseRotation = (m: Mat4): Mat4 => {
+  const out = identity();
+  for (let col = 0; col < 3; col++) for (let row = 0; row < 3; row++) out[col * 4 + row] = m[row * 4 + col] ?? 0;
+  return out;
+};

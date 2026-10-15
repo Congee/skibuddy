@@ -11,18 +11,18 @@ import {
   Vector3,
 } from 'three/webgpu';
 import type { NodeBuilder, Scene } from 'three/webgpu';
-import { attribute, mix, normalLocal, positionLocal, smoothstep, uniformArray, varying, vec4 } from 'three/tsl';
+import { attribute, mix, normalLocal, positionLocal, uniformArray, varying, vec4 } from 'three/tsl';
 import type { MuscleLevel } from '../content/activation';
 import { Side } from '../content/schema';
 import { spreadCandidates } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
-import { levelColour } from './level-colour';
+import { levelColour, levelOn } from './level-colour';
 import type { Vec3 } from './mat4';
 import { BodySide, SEGMENTS, SegmentKind } from './figure';
 import type { Segment } from './figure';
 import { createGear, placePole } from './gear';
 import type { LegSide } from './gear';
-import { CAPSULE_BOOT, coveredByBoot } from './gear-fit';
+import { CAPSULE_BOOT, capsuleGlove, coveredByBoot } from './gear-fit';
 import type { GearMode } from './gear-mode';
 import { compose, transformPoint, translation } from './mat4';
 import { CAPSULE_GRIP, poleDirection, poseAt, segmentMatrices } from './pose';
@@ -140,7 +140,7 @@ class FigureMaterial extends MeshStandardNodeMaterial {
     this.levels = Array.from({ length: slotCount }, () => 0);
     const level = varying(uniformArray<'float'>(this.levels, 'float').element(attribute('muscleSlot', 'uint')));
     const highlight = levelColour(level);
-    const on = smoothstep(0, 0.34, level);
+    const on = levelOn(level);
     this.colorNode = mix(attribute('color', 'vec3'), highlight, on);
     this.emissiveNode = highlight.mul(level.mul(0.35));
   }
@@ -162,8 +162,9 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
   figure.frustumCulled = false;
   scene.add(figure);
 
-  const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT });
-  for (const part of [...gear.shells, ...gear.cuffs]) {
+  // The glove's palm faces the midline: -x for the left hand.
+  const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT }, { [BodySide.Right]: capsuleGlove(1), [BodySide.Left]: capsuleGlove(-1) });
+  for (const part of [...gear.shells, ...gear.soles, ...gear.cuffs, ...gear.gloves]) {
     part.mesh.matrixAutoUpdate = false;
     scene.add(part.mesh);
   }
@@ -179,9 +180,13 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
       const pose = poseAt(t);
       const world = segmentMatrices(pose);
       world.forEach((m, k) => material.matrices[k]?.fromArray(m));
-      for (const { mesh, side } of gear.shells) {
+      for (const { mesh, side } of [...gear.shells, ...gear.soles]) {
         const boot = world[segmentOf(SegmentKind.Boot, side)];
         if (boot !== undefined) mesh.matrix.fromArray(boot);
+      }
+      for (const { mesh, side } of gear.gloves) {
+        const forearm = world[segmentOf(SegmentKind.Forearm, side)];
+        if (forearm !== undefined) mesh.matrix.fromArray(forearm);
       }
       for (const { mesh, side } of gear.cuffs) {
         const shin = world[segmentOf(SegmentKind.Shin, side)];
@@ -191,7 +196,8 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         const forearm = world[segmentOf(SegmentKind.Forearm, side)];
         if (forearm === undefined) continue;
         const grip = transformPoint(forearm, CAPSULE_GRIP);
-        placePole(mesh, grip, poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0));
+        const ankle = transformPoint(world[segmentOf(SegmentKind.Boot, side)] ?? forearm, [0, 0, 0]);
+        placePole(mesh, grip, poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0, ankle));
       }
       fillSlotLevels(table, levels, material.levels);
     },
@@ -205,6 +211,7 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         return [{ ...owner, position: [p.x, p.y, p.z] as const, normal: [n.x, n.y, n.z] as const }];
       }),
     setGear: (mode: GearMode) => gear.setMode(mode),
+    setDark: (dark: boolean) => gear.setDark(dark),
     dispose: () => {
       gear.dispose();
       geometry.dispose();

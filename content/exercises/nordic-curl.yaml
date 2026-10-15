@@ -14,7 +14,7 @@ dosing:
       reps: { min: 3, max: 6 }
       restSeconds: { min: 120, max: 180 }
       note: Lower as slowly as you can; begin at the low end, since soreness is heavy at first.
+      basis: Low volume to start, built up over weeks, as in progressive Nordic programmes; the rest follows ACSM's strength zone.
+      sources: [petersen-2011, acsm-2009]
   suggested: { goal: strength, sets: 2, reps: 5 }
-  basis: Low volume to start, built up over weeks, as in progressive Nordic programmes; the rest follows ACSM's strength zone.
-  sources: [petersen-2011, acsm-2009]
 reviewedBy: []

@@ -6,8 +6,8 @@ import type { Content, Drill, Movement } from '../content/schema';
 import { drillIdAtom, phaseAt, pinsAtom, turnTimeAtom } from '../state/playback';
 import * as s from './app.css';
 import { Board } from './board/Board';
+import { steadyOrder } from '../content/effort';
 import { shortName } from './board/marks';
-import { rankSlats } from './board/rank';
 import { FigureField } from './figure/FigureField';
 import { GearControl } from './figure/GearControl';
 import { GymBoard } from './gym/GymBoard';
@@ -28,9 +28,10 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
   const [skeleton, setSkeleton] = createSignal(SKELETON_AT_START);
   const [gear, setGear] = createSignal<GearMode>(GEAR_AT_START);
   const reducedMotion = createMedia(REDUCED_MOTION);
-  usePlayback(reducedMotion);
+  const [field, setField] = createSignal<HTMLDivElement>();
+  usePlayback(reducedMotion, field);
   const phase = createMemo(() => phaseAt(t()));
-  const ranked = createMemo(() => rankSlats(props.movement.activations, phase()));
+  const order = createMemo(() => steadyOrder(props.movement.activations));
   const muscleName = (id: string): string => props.content.muscles.find((m) => m.id === id)?.name ?? id;
   const tasks = createMemo(() => props.content.tasks.filter((x) => x.drill === props.drill.id));
   const matches = createMemo(() => matchExercises(props.movement, props.content.exercises));
@@ -41,11 +42,12 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
         <FigureField
           movement={props.movement}
           muscles={props.content.muscles.map((m) => m.id)}
-          ranked={ranked()}
+          order={order()}
           pins={pins()}
           skeleton={skeleton()}
           gear={gear()}
           muscleName={(id) => shortName(muscleName(id))}
+          ref={setField}
         />
         <LiftLine skeleton={skeleton()} onSkeleton={setSkeleton} controls={<GearControl value={gear()} onChange={setGear} />} />
       </section>
@@ -59,8 +61,6 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
           tasks={tasks()}
           content={props.content}
           phase={phase()}
-          ranked={ranked()}
-          reducedMotion={reducedMotion}
         />
         <GymBoard matches={matches()} movement={props.movement} content={props.content} />
       </div>

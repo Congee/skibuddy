@@ -1,6 +1,6 @@
 import { BodySide, SEGMENTS, SegmentKind } from './figure';
 import type { Segment } from './figure';
-import { compose, identity, rotationX, rotationY, rotationZ, transformPoint, translation } from './mat4';
+import { compose, identity, inverseRotation, rotationX, rotationY, rotationZ, transformPoint, translation } from './mat4';
 import type { Mat4, Vec3 } from './mat4';
 
 /** Joint angles in radians; flexion is positive. */
@@ -16,6 +16,8 @@ export interface Pose {
   readonly trunkTurn: number;
   /** 0..1: the inside pole swings forward and plants at 1. */
   readonly poleTouch: number;
+  /** Extra inside-shoulder flexion that brings the touch beside the ski; solved per figure. */
+  readonly insideReach: number;
   readonly outside: LegPose;
   readonly inside: LegPose;
 }
@@ -104,28 +106,29 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
       // Eyes ahead, not at the snow.
       return rotationX(-HEAD_LIFT * pose.trunkFlex);
     case SegmentKind.UpperArm:
-      // Hands forward at hip-to-chest height, wider than the hips; the inside arm reaches to plant its pole.
-      return compose(rotationZ(out * 0.35), rotationX(-0.9 - REACH_SHOULDER * reach(segment, pose)));
+      // Hands forward at hip-to-chest height, wider than the hips.
+      return compose(rotationZ(out * 0.35), rotationX(-0.9 - (segment.side === BodySide.Left ? pose.insideReach : 0)));
     case SegmentKind.Forearm:
-      return rotationX(-1.1 + REACH_ELBOW * reach(segment, pose));
+      return rotationX(-1.1);
     case SegmentKind.Thigh:
       // Both feet move toward the outside of the turn, so the legs incline more than the pelvis.
       return compose(rotationZ(-pose.hipAngulation), rotationX(-leg.hipFlex));
     case SegmentKind.Shin:
       return compose(rotationZ(-pose.kneeAngulation), rotationX(leg.hipFlex + leg.ankleFlex));
     case SegmentKind.Boot:
-      // Undo the shin's net pitch so the boot sole stays level, then pitch the tail up.
-      return rotationX(-leg.ankleFlex + leg.tailLift);
+      // Set in the body frame by bootRotation instead.
+      return identity();
     default:
       return identity();
   }
 };
 
-const reach = (segment: Segment, pose: Pose): number => (segment.side === BodySide.Left ? pose.poleTouch : 0);
-
-/** Inside-arm shoulder flexion and elbow extension at the pole touch; mirrored in build_anatomy.py. */
-export const REACH_SHOULDER = 0.15;
-export const REACH_ELBOW = 0.4;
+/**
+ * Boot orientation before the lean: after it, both skis point straight ahead on
+ * the same edge angle and only the inside tail pitches up. Mirrored in build_anatomy.py.
+ */
+const bootRotation = (segment: Segment, pose: Pose): Mat4 =>
+  compose(rotationZ(pose.lean), rotationX(legPose(pose, segment.side).tailLift), rotationZ(-pose.lean - pose.hipAngulation - pose.kneeAngulation));
 
 /** Share of the torso's pitch the neck takes back out. */
 export const HEAD_LIFT = 0.6;
@@ -142,7 +145,8 @@ export const segmentMatrices = (pose: Pose): ReadonlyArray<Mat4> => {
   const world: Array<Mat4> = [];
   for (const segment of SEGMENTS) {
     const parent = segment.parent === null ? identity() : (world[segment.parent] ?? identity());
-    world.push(compose(parent, translation(segment.joint), localRotation(segment, pose)));
+    const local = segment.kind === SegmentKind.Boot ? compose(inverseRotation(parent), bootRotation(segment, pose)) : localRotation(segment, pose);
+    world.push(compose(parent, translation(segment.joint), local));
   }
   const outsideSki = world[skiIndex(BodySide.Right)] ?? identity();
   const [cx, cy, cz] = transformPoint(outsideSki, [0, SKI_BASE, 0]);
@@ -165,6 +169,7 @@ export const poseAt = (t: number): Pose => {
     trunkFlex: k.trunkFlex,
     trunkTurn: k.trunkTurn,
     poleTouch: poleTouchAt(t),
+    insideReach: 0,
     outside,
     inside: { hipFlex: k.hipFlex + extra, ankleFlex: k.ankleFlex + 0.6 * extra, tailLift: Math.max(0, k.insideTailLift) },
   });
@@ -176,7 +181,29 @@ export const poseAt = (t: number): Pose => {
     if (insideTipHeight(withFlex(mid)) > 0) hi = mid;
     else lo = mid;
   }
-  return withFlex((lo + hi) / 2);
+  const legs = withFlex((lo + hi) / 2);
+  return legs.poleTouch > 0 ? { ...legs, insideReach: legs.poleTouch * solveReach(legs) } : legs;
+};
+
+/** How far ahead of the inside ankle a full touch lands. */
+const touchAhead = (pose: Pose): number => {
+  const world = segmentMatrices(pose);
+  const at = (kind: SegmentKind, p: Vec3): Vec3 => transformPoint(world[SEGMENTS.findIndex((s) => s.kind === kind && s.side === BodySide.Left)] ?? identity(), p);
+  const grip = at(SegmentKind.Forearm, CAPSULE_GRIP);
+  const ankle = at(SegmentKind.Boot, [0, 0, 0]);
+  return grip[2] + poleDirection(grip, BodySide.Left, 1, ankle)[2] * POLE.basket - ankle[2];
+};
+
+/** Shoulder flexion that lands the touch PLANT_AHEAD in front of the ankle; mirrored in build_anatomy.py. */
+const solveReach = (pose: Pose): number => {
+  let lo = -0.5;
+  let hi = 0.8;
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2;
+    if (touchAhead({ ...pose, insideReach: mid }) < PLANT_AHEAD) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
 };
 
 /** Turn time of the inside pole touch: initiation. */
@@ -203,21 +230,29 @@ export const POLE = {
   carry: 0.32,
 } as const;
 
-/** Heading of the shaft from +z (forward) toward the pole's own side. */
-const CARRY_HEADING = Math.PI - 0.35;
-const PLANT_HEADING = -0.2;
+/** Heading of the carried shaft from +z (forward) toward the pole's own side. */
+const CARRY_HEADING = Math.PI - 0.3;
+/** The touch lands this far outside the inside ski, and this far ahead of the ankle: by the forebody. */
+const PLANT_SIDE = 0.22;
+export const PLANT_AHEAD = 0.3;
 
 /**
  * Unit shaft direction, fist to tip, in world space. The pitch is solved so the
- * basket hangs at the carry height, or touches the snow at a full touch; the
- * heading swings from back-and-out to forward through the side.
+ * basket hangs at the carry height, or reaches the snow at a full touch beside
+ * the ski at `ankle`, behind the fist; the heading eases between the two, so the
+ * swing stays back and close to the hand.
  */
-export const poleDirection = (grip: Vec3, side: typeof BodySide.Left | typeof BodySide.Right, touch: number): Vec3 => {
+export const poleDirection = (grip: Vec3, side: typeof BodySide.Left | typeof BodySide.Right, touch: number, ankle: Vec3): Vec3 => {
   const out = side === BodySide.Left ? 1 : -1;
-  const heading = CARRY_HEADING + (PLANT_HEADING - CARRY_HEADING) * touch;
-  const drop = Math.min(POLE.basket, Math.max(0, grip[1] - POLE.carry * (1 - touch) ** 2));
-  const flat = Math.sqrt(POLE.basket ** 2 - drop ** 2);
-  return [(out * Math.sin(heading) * flat) / POLE.basket, -drop / POLE.basket, (Math.cos(heading) * flat) / POLE.basket];
+  const b = POLE.basket;
+  const dx = ankle[0] + out * PLANT_SIDE - grip[0];
+  const dz = -Math.sqrt(Math.max(0, b ** 2 - grip[1] ** 2 - dx ** 2));
+  // Turn the short way from the carry heading.
+  const turn = Math.atan2(out * dx, dz) - CARRY_HEADING;
+  const heading = CARRY_HEADING + Math.atan2(Math.sin(turn), Math.cos(turn)) * touch;
+  const drop = Math.min(b, Math.max(0, grip[1] - POLE.carry * (1 - touch) ** 2));
+  const flat = Math.sqrt(b ** 2 - drop ** 2);
+  return [(out * Math.sin(heading) * flat) / b, -drop / b, (Math.cos(heading) * flat) / b];
 };
 
 /** The capsule figure's fist, in its forearm frame. */

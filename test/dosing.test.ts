@@ -14,6 +14,8 @@ const dosing = {
       reps: { min: 8, max: 12 },
       restSeconds: { min: 60, max: 120 },
       note: 'Hard by the last rep',
+      basis: 'General loading zones',
+      sources: ['study-1'],
     },
     {
       goal: 'endurance',
@@ -21,11 +23,11 @@ const dosing = {
       holdSeconds: { min: 20, max: 40 },
       restSeconds: { min: 30, max: 60 },
       note: 'Steady',
+      basis: 'Holds below a maximal effort',
+      sources: ['study-1'],
     },
   ],
   suggested: { goal: 'strength', sets: 3, reps: 8 },
-  basis: 'General loading zones',
-  sources: ['study-1'],
 };
 
 const decode = Schema.decodeUnknownExit(Dosing);
@@ -76,13 +78,14 @@ describe('dosing schema', () => {
     assert.isTrue(fails({ ...dosing, ranges: [dosing.ranges[0], dosing.ranges[0]] }));
   });
 
-  it('needs at least one source', () => {
-    assert.isTrue(fails({ ...dosing, sources: [] }));
+  it('needs a basis and at least one source per goal', () => {
+    assert.isTrue(fails(withRange({ sources: [] })));
+    assert.isTrue(fails(withRange({ basis: undefined })));
   });
 
   it('flags an unknown dosing source', () => {
-    const exercises = [{ ...exercise, dosing: { ...dosing, sources: ['nope'] } }];
-    assert.deepStrictEqual(findProblems(decodeContent({ ...rawContent, exercises })), ['exercise split-squat, dosing: unknown source nope']);
+    const exercises = [{ ...exercise, dosing: withRange({ sources: ['nope'] }) }];
+    assert.deepStrictEqual(findProblems(decodeContent({ ...rawContent, exercises })), ['exercise split-squat, dosing strength: unknown source nope']);
   });
 
   it('accepts a known dosing source', () => {

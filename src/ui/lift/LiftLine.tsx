@@ -1,10 +1,12 @@
 import { useAtom } from '@effect/atom-solid';
 import { Slider } from '@ark-ui/solid/slider';
-import { For, createEffect, createMemo, onCleanup, onMount } from 'solid-js';
+import { For, createEffect, createMemo, onCleanup } from 'solid-js';
 import type { Accessor, JSX } from 'solid-js';
 import { PHASES } from '../../content/schema';
 import type { Phase } from '../../content/schema';
-import { TURN_SECONDS, phaseAt, phaseCentre, pinsAtom, playingAtom, turnTimeAtom, wrapTurn } from '../../state/playback';
+import { MIN_VISIBLE_FRACTION, createAutoPause } from '../../state/auto-pause';
+import { PLAYBACK_FPS, TURN_SECONDS, phaseAt, phaseCentre, pinsAtom, playingAtom, turnTimeAtom, wrapTurn } from '../../state/playback';
+import { createTicker } from '../../state/ticker';
 import { phaseLabel } from '../board/marks';
 import { IconButton } from '../components/IconButton';
 import { Segmented } from '../components/Segmented';
@@ -17,23 +19,37 @@ const MAX = 0.999;
 const PHASE_OPTIONS = PHASES.map((p) => ({ value: p, label: phaseLabel(p) }));
 const isPhase = (v: string): v is Phase => (PHASES as ReadonlyArray<string>).includes(v);
 
-/** Autoplays the turn unless reduced motion is set. */
-export const usePlayback = (reducedMotion: Accessor<boolean>): void => {
+/**
+ * Runs the turn while playing, at most PLAYBACK_FPS steps a second. It starts
+ * paused and pauses itself when the page hides or `figure` scrolls out of sight.
+ */
+export const usePlayback = (reducedMotion: Accessor<boolean>, figure: Accessor<Element | undefined>): void => {
   const [playing, setPlaying] = useAtom(() => playingAtom);
   const [, setT] = useAtom(() => turnTimeAtom);
-  onMount(() => setPlaying(!reducedMotion()));
   createEffect(() => {
     if (reducedMotion()) setPlaying(false);
   });
+
+  const ticker = createTicker((seconds) => setT((prev) => wrapTurn(prev + seconds / TURN_SECONDS)), PLAYBACK_FPS);
   createEffect(() => {
-    if (!playing()) return;
-    let last = performance.now();
-    let frame = requestAnimationFrame(function tick(now) {
-      setT((prev) => wrapTurn(prev + (now - last) / 1000 / TURN_SECONDS));
-      last = now;
-      frame = requestAnimationFrame(tick);
-    });
-    onCleanup(() => cancelAnimationFrame(frame));
+    if (playing()) ticker.start();
+    else ticker.stop();
+  });
+  onCleanup(() => ticker.stop());
+
+  const auto = createAutoPause(playing, () => setPlaying(false), { hidden: document.hidden, visibleFraction: 1 });
+  const onVisibility = (): void => auto.update({ hidden: document.hidden });
+  document.addEventListener('visibilitychange', onVisibility);
+  onCleanup(() => document.removeEventListener('visibilitychange', onVisibility));
+  createEffect(() => {
+    const el = figure();
+    if (el === undefined) return;
+    const seen = new IntersectionObserver((entries) => {
+      const last = entries.at(-1);
+      if (last !== undefined) auto.update({ visibleFraction: last.intersectionRatio });
+    }, { threshold: [0, MIN_VISIBLE_FRACTION] });
+    seen.observe(el);
+    onCleanup(() => seen.disconnect());
   });
 };
 
@@ -51,7 +67,8 @@ export const PhaseStops = (props: { readonly look: 'stops' | 'tabs'; readonly cl
       onChange={(v) => {
         if (!isPhase(v)) return;
         setPlaying(false);
-        setT(phaseCentre(v));
+        const next = phaseCentre(v);
+        if (next !== t()) setT(next);
       }}
     />
   );
@@ -102,7 +119,7 @@ export const LiftLine = (props: {
           const next = d.value[0];
           if (next === undefined) return;
           setPlaying(false);
-          setT(next);
+          if (next !== t()) setT(next);
         }}
       >
         <Slider.Control class={s.control}>

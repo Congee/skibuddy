@@ -1,4 +1,5 @@
 import type { Vec3 } from './mat4';
+import { CAPSULE_GRIP } from './pose';
 
 /**
  * Boot shape in the boot frame, in metres: origin at the ankle joint, +y up,
@@ -39,11 +40,32 @@ const CUFF_TOP = 0.2;
 const SHELL_MARGIN = 0.014;
 const CUFF_MARGIN = 0.016;
 
+/**
+ * A mitten round the fist: `a` runs along the fingers, `n` out of the palm.
+ * Extents are about the grip point along a, n and u = n x a, as min/max pairs.
+ */
+export interface GloveFit {
+  readonly grip: Vec3;
+  readonly a: Vec3;
+  readonly n: Vec3;
+  readonly extents: readonly [number, number, number, number, number, number];
+}
+
+/** The capsule's fist, in its forearm frame: fingers point down the forearm, the palm faces in. */
+export const capsuleGlove = (medial: 1 | -1): GloveFit => ({
+  grip: CAPSULE_GRIP,
+  a: [0, -1, 0],
+  n: [medial, 0, 0],
+  extents: [-0.05, 0.05, -0.035, 0.045, -0.045, 0.045],
+});
+
 /** One side's rest-pose extents from build_anatomy.py, in glTF coordinates. */
 export interface RawFit {
   readonly ankle: Vec3;
-  readonly wrist: Vec3;
-  readonly fingertip: Vec3;
+  readonly grip: Vec3;
+  readonly fistA: Vec3;
+  readonly fistN: Vec3;
+  readonly fist: readonly [number, number, number, number, number, number];
   readonly sole: number;
   readonly toe: number;
   readonly heel: number;
@@ -59,8 +81,10 @@ const isRawFit = (v: unknown): v is RawFit => {
   const r = v as Record<string, unknown>;
   return (
     isVec(r['ankle'], 3) &&
-    isVec(r['wrist'], 3) &&
-    isVec(r['fingertip'], 3) &&
+    isVec(r['grip'], 3) &&
+    isVec(r['fistA'], 3) &&
+    isVec(r['fistN'], 3) &&
+    isVec(r['fist'], 6) &&
     ['sole', 'toe', 'heel'].every((k) => typeof r[k] === 'number') &&
     ['footX', 'shinX', 'shinZ'].every((k) => isVec(r[k], 2))
   );
@@ -98,12 +122,7 @@ export const bootFitFrom = (raw: RawFit): BootFit => {
   };
 };
 
-/** The middle of the fist, part way from the wrist to the fingertips. */
-export const gripFrom = (raw: RawFit): Vec3 => {
-  const [wx, wy, wz] = raw.wrist;
-  const [fx, fy, fz] = raw.fingertip;
-  return [wx + 0.4 * (fx - wx), wy + 0.4 * (fy - wy), wz + 0.4 * (fz - wz)];
-};
+export const gloveFrom = (raw: RawFit): GloveFit => ({ grip: raw.grip, a: raw.fistA, n: raw.fistN, extents: raw.fist });
 
 /**
  * True for a rest-pose point inside the boot, given the ankle in the same frame.

@@ -1,9 +1,10 @@
 import { useAtomValue } from '@effect/atom-solid';
 import { Show, createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 import type { JSX } from 'solid-js';
-import { levelsAt } from '../content/activation';
+import type { MuscleLevel } from '../content/activation';
+import { MAX_EFFORT, effortAt } from '../content/effort';
 import type { Movement } from '../content/schema';
-import { turnTimeAtom } from '../state/playback';
+import { playingAtom, turnTimeAtom } from '../state/playback';
 import type { AnchorsListener } from './anchors';
 import { GearMode } from './gear-mode';
 import type { FigureKind, Viewer as SceneViewer } from './scene';
@@ -40,6 +41,8 @@ export const Viewer = (props: {
   readonly movement: Movement;
   readonly muscles: ReadonlyArray<string>;
   readonly onAnchors?: AnchorsListener;
+  /** Pins show, so anchors are worth projecting. */
+  readonly pins?: boolean;
   /** Fades the muscles to show the skeleton (anatomy figure only). */
   readonly skeleton?: boolean;
   /** Boots and poles; translucent by default. */
@@ -54,6 +57,7 @@ export const Viewer = (props: {
   readonly fallback?: (message: string) => JSX.Element;
 }): JSX.Element => {
   const t = useAtomValue(() => turnTimeAtom);
+  const playing = useAtomValue(() => playingAtom);
   const [error, setError] = createSignal<string | null>(null);
   const [shown, setShown] = createSignal<FigureKind | null>(null);
   let root: HTMLElement | undefined;
@@ -61,27 +65,36 @@ export const Viewer = (props: {
   let viewer: SceneViewer | undefined;
   let disposed = false;
 
-  // Pins are relative to the viewer element, so add the canvas's offset in it.
+  // Pins are relative to the viewer element, so add the canvas's offset in it, measured on resize, not per frame.
+  let dx = 0;
+  let dy = 0;
+  const offset = new ResizeObserver(() => {
+    const c = canvas?.getBoundingClientRect();
+    const r = root?.getBoundingClientRect();
+    dx = c === undefined || r === undefined ? 0 : c.left - r.left;
+    dy = c === undefined || r === undefined ? 0 : c.top - r.top;
+  });
   const onAnchors: AnchorsListener | undefined =
     props.onAnchors === undefined
       ? undefined
-      : (anchors) => {
-          const c = canvas?.getBoundingClientRect();
-          const r = root?.getBoundingClientRect();
-          const dx = c === undefined || r === undefined ? 0 : c.left - r.left;
-          const dy = c === undefined || r === undefined ? 0 : c.top - r.top;
-          props.onAnchors?.(anchors.map((a) => ({ ...a, x: a.x + dx, y: a.y + dy })));
-        };
+      : (anchors) => props.onAnchors?.(dx === 0 && dy === 0 ? anchors : anchors.map((a) => ({ ...a, x: a.x + dx, y: a.y + dy })));
+
+  // The figure's glow follows the board's continuous effort scale.
+  const levels = (at: number): ReadonlyArray<MuscleLevel> =>
+    props.movement.activations.map((a) => ({ muscle: a.muscle, side: a.side, level: effortAt(a.intensity, at) / MAX_EFFORT }));
 
   onMount(() => {
     if (canvas === undefined) return;
     const target = canvas;
+    offset.observe(target);
+    if (root !== undefined) offset.observe(root);
     // Three.js loads lazily so the panels render first.
     import('./scene')
       .then(({ createViewer }) =>
-        createViewer(target, props.muscles, () => ({ t: t(), levels: levelsAt(props.movement, t()) }), {
+        createViewer(target, props.muscles, {
           figure: FIGURE,
           forceWebGL: FORCE_WEBGL,
+          levels,
           ...(onAnchors === undefined ? {} : { onAnchors }),
         }),
       )
@@ -108,7 +121,24 @@ export const Viewer = (props: {
 
   onCleanup(() => {
     disposed = true;
+    offset.disconnect();
     viewer?.dispose();
+  });
+
+  // Each change asks the viewer for one frame; nothing draws otherwise.
+  createEffect(() => {
+    const at = t();
+    if (shown() !== null) viewer?.setTime(at);
+  });
+
+  createEffect(() => {
+    const on = playing();
+    if (shown() !== null) viewer?.setPlaying(on);
+  });
+
+  createEffect(() => {
+    const on = props.pins ?? true;
+    if (shown() !== null) viewer?.setPins(on);
   });
 
   createEffect(() => {

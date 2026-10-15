@@ -149,6 +149,9 @@ export const DosingRange = Schema.Struct({
   restSeconds: Span,
   /** Plain words on how it should feel or what to watch. */
   note: Text,
+  /** Plain-words basis for this goal's numbers only. */
+  basis: Text,
+  sources: Schema.Array(SourceId).check(Schema.isMinLength(1)),
 }).check(Schema.makeFilter(oneUnit));
 export type DosingRange = typeof DosingRange.Type;
 
@@ -191,9 +194,6 @@ export const Dosing = Schema.Struct({
   perSide: Schema.Boolean,
   ranges: Schema.Array(DosingRange).check(Schema.isMinLength(1)),
   suggested: DosingSuggestion,
-  /** Plain-words basis for the numbers. */
-  basis: Text,
-  sources: Schema.Array(SourceId).check(Schema.isMinLength(1)),
 }).check(
   Schema.makeFilter((d) => {
     const goals = d.ranges.map((r) => r.goal);

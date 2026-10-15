@@ -156,6 +156,8 @@ def bone_part(name, ch):
         return 'upper_arm'
     if n in ('Radius', 'Ulna'):
         return 'forearm'
+    if 'phalanx' in n and 'first finger' not in n:
+        return 'fingers' if n.startswith('Proximal') else 'fingertips'
     if 'Bones of free part of upper limb.g' in ch:
         return 'hand'
     return 'chest'
@@ -192,8 +194,13 @@ def landmarks(src):
         radius = src[f'Radius.{s.lower()}']
         wrist = radius[radius[:, 2] < radius[:, 2].min() + 0.015].mean(axis=0)
         hand = np.concatenate([v for k, v in src.items() if k.startswith('hand:' + s)])
+        # Knuckles and middle finger joints of fingers 2-5; the hand hangs, so proximal is up.
+        proximal = [src[f'Proximal phalanx of {f} finger of hand.{s.lower()}'] for f in ('second', 'third', 'fourth', 'fifth')]
+        knuckle = np.mean([v[v[:, 2] > v[:, 2].max() - 0.006].mean(axis=0) for v in proximal], axis=0)
+        pip = np.mean([v[v[:, 2] < v[:, 2].min() + 0.006].mean(axis=0) for v in proximal], axis=0)
+        thumb = src[f'First metacarpal bone.{s.lower()}'].mean(axis=0) - src[f'Third metacarpal bone.{s.lower()}'].mean(axis=0)
         J[s] = dict(hip=hip, knee=knee, ankle=ankle, shoulder=shoulder, elbow=elbow, wrist=wrist,
-                    fingertip=hand[hand[:, 2].argmin()],
+                    fingertip=hand[hand[:, 2].argmin()], knuckle=knuckle, pip=pip, thumb=thumb,
                     toe=foot[foot[:, 1].argmin()], heel=foot[foot[:, 1].argmax()], sole=foot[:, 2].min())
     l5, l1, t12 = src['Vertebra L5'], anterior_centre(src['Vertebra L1']), anterior_centre(src['Vertebra T12'])
     c7, t1 = anterior_centre(src['Vertebra C7']), anterior_centre(src['Vertebra T1'])
@@ -238,7 +245,9 @@ def build_armature(J):
         add(f'foot.{s}', j['ankle'], toe, f'shin.{s}')
         add(f'upper_arm.{s}', j['shoulder'], j['elbow'], 'chest')
         add(f'forearm.{s}', j['elbow'], j['wrist'], f'upper_arm.{s}')
-        add(f'hand.{s}', j['wrist'], j['fingertip'], f'forearm.{s}')
+        add(f'hand.{s}', j['wrist'], j['knuckle'], f'forearm.{s}')
+        add(f'fingers.{s}', j['knuckle'], j['pip'], f'hand.{s}')
+        add(f'fingertips.{s}', j['pip'], j['fingertip'], f'fingers.{s}')
     bpy.ops.object.mode_set(mode='OBJECT')
     return ob
 
@@ -247,7 +256,7 @@ def build_armature(J):
 
 CANDIDATES = {
     'lower': lambda s: ['lumbar', 'pelvis', f'thigh.{s}', f'shin.{s}', f'foot.{s}'],
-    'upper': lambda s: ['chest', f'upper_arm.{s}', f'forearm.{s}', f'hand.{s}'],
+    'upper': lambda s: ['chest', f'upper_arm.{s}', f'forearm.{s}', f'hand.{s}', f'fingers.{s}', f'fingertips.{s}'],
     'trunk': lambda s: ['pelvis', 'lumbar', 'chest', 'neck'] + ([f'upper_arm.{s}'] if s else []),
     'neck': lambda s: ['chest', 'neck', 'head'],
 }
@@ -312,12 +321,15 @@ def rot_y3(a):
 
 
 HEAD_LIFT = 0.6  # matches HEAD_LIFT in src/viewer/pose.ts
-REACH_SHOULDER, REACH_ELBOW = 0.15, 0.4  # match src/viewer/pose.ts
+# Pole touch, as in src/viewer/pose.ts: basket length, and where it lands beside the inside ski.
+POLE_BASKET, PLANT_SIDE, PLANT_AHEAD = 1.09, 0.22, 0.3
+# Fingers curl at the knuckles, then at the middle joints, to close round the pole grip.
+CURL_KNUCKLE, CURL_MIDDLE = 1.5, 1.7
 # Boot sole below the lowest foot bone: heel pad, liner and shell sole.
 BOOT_SOLE = 0.03
 
 
-def local_rotations(p, rest_abduction, inside_extra=0.0):
+def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
     """Mirrors localRotation in src/viewer/pose.ts; the trunk's rotation is split over lumbar and chest."""
     half = rot_z3(p['lean'] / 2) @ rot_y3(p['trunkTurn'] / 2) @ rot_x(p['trunkFlex'] / 2)
     lift = rot_x(-HEAD_LIFT * p['trunkFlex'] / 2)
@@ -328,13 +340,16 @@ def local_rotations(p, rest_abduction, inside_extra=0.0):
         hip, ankle = leg['hipFlex'] + extra, leg['ankleFlex'] + 0.6 * extra
         R[f'thigh.{s}'] = rot_z3(-p['hipAngulation']) @ rot_x(-hip)
         R[f'shin.{s}'] = rot_z3(-p['kneeAngulation']) @ rot_x(hip + ankle)
-        # Undo the shin's net pitch so the sole stays level, then pitch the tail up.
-        R[f'foot.{s}'] = rot_x(-ankle + leg['tailLift'])
-        # The inside arm reaches to plant its pole.
-        reach = p.get('poleTouch', 0.0) if s == 'L' else 0.0
-        R[f'upper_arm.{s}'] = rot_z3(sign * 0.35) @ rot_x(-0.9 - REACH_SHOULDER * reach) @ rot_z3(-rest_abduction[s])
-        R[f'forearm.{s}'] = rot_x(-1.1 + REACH_ELBOW * reach)
-        R[f'hand.{s}'] = Matrix()
+        # Body-frame target for the foot (bootRotation in pose.ts): skis stay parallel; world_pose resolves it.
+        R[f'foot.{s}'] = (rot_z3(p['lean']) @ rot_x(leg['tailLift'])
+                          @ rot_z3(-p['lean'] - p['hipAngulation'] - p['kneeAngulation']))
+        flex = 0.9 + (reach if s == 'L' else 0.0)
+        R[f'upper_arm.{s}'] = rot_z3(sign * 0.35) @ rot_x(-flex) @ rot_z3(-rest['abduction'][s])
+        R[f'forearm.{s}'] = rot_x(-1.1)
+        hand = rest['hands'][s]
+        R[f'hand.{s}'] = hand['twist']
+        R[f'fingers.{s}'] = hand['curl'][0]
+        R[f'fingertips.{s}'] = hand['curl'][1]
     return R
 
 
@@ -344,13 +359,38 @@ def world_pose(bones, order, R, ski_pivot, lean):
         b = bones[name]
         j = Vector(b.head_local)
         parent = D[b.parent.name] if b.parent else Matrix()
-        D[name] = parent @ Matrix.Translation(j) @ R[name] @ Matrix.Translation(-j)
+        r = R[name]
+        if name.startswith('foot.'):
+            r = parent.to_3x3().to_4x4().inverted() @ r
+        D[name] = parent @ Matrix.Translation(j) @ r @ Matrix.Translation(-j)
     c = D['foot.R'] @ Vector(ski_pivot)
     tilt = Matrix.Translation((c.x, c.y, 0)) @ Matrix.Rotation(lean, 4, 'Y') @ Matrix.Translation(-c)
     return {k: tilt @ m for k, m in D.items()}
 
 
-def bake(rig, ski_pivot, inside_tip, track, rest_abduction):
+def touch_ahead(D, rest):
+    """How far ahead of the inside ankle a full touch lands; mirrors poleDirection in pose.ts."""
+    grip = D['hand.L'] @ rest['grip']
+    ankle = D['foot.L'] @ rest['ankle']
+    dx = ankle.x + PLANT_SIDE - grip.x
+    dz = math.sqrt(max(0.0, POLE_BASKET ** 2 - grip.z ** 2 - dx ** 2))
+    return (-grip.y - dz) - (-ankle.y)
+
+
+def solve_reach(bones, order, p, rest, flex, ski_pivot):
+    """Inside-shoulder flexion that lands the touch PLANT_AHEAD in front of the ankle, as solveReach in pose.ts."""
+    lo, hi = -0.5, 0.8
+    for _ in range(20):
+        mid = (lo + hi) / 2
+        D = world_pose(bones, order, local_rotations(p, rest, flex, mid), ski_pivot, p['lean'])
+        if touch_ahead(D, rest) < PLANT_AHEAD:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+def bake(rig, ski_pivot, inside_tip, track, rest):
     bones = rig.data.bones
     order = [b.name for b in bones]  # parents precede children
     frames = len(track) - 1
@@ -367,12 +407,14 @@ def bake(rig, ski_pivot, inside_tip, track, rest_abduction):
         lo, hi = -0.3, 0.6
         for _ in range(20):
             mid = (lo + hi) / 2
-            D = world_pose(bones, order, local_rotations(p, rest_abduction, mid), ski_pivot, p['lean'])
+            D = world_pose(bones, order, local_rotations(p, rest, mid), ski_pivot, p['lean'])
             if (D['foot.L'] @ Vector(inside_tip)).z > 0:
                 hi = mid
             else:
                 lo = mid
-        D = world_pose(bones, order, local_rotations(p, rest_abduction, (lo + hi) / 2), ski_pivot, p['lean'])
+        flex = (lo + hi) / 2
+        reach = p['poleTouch'] * solve_reach(bones, order, p, rest, flex, ski_pivot) if p['poleTouch'] > 0 else 0.0
+        D = world_pose(bones, order, local_rotations(p, rest, flex, reach), ski_pivot, p['lean'])
         for name in order:
             b = bones[name]
             ml = b.matrix_local
@@ -416,7 +458,68 @@ def to_gltf(p):
     return [float(p[0]), float(p[2]), float(-p[1])]
 
 
-def boot_fit(J, cloud):
+def unit(v):
+    return v / np.linalg.norm(v)
+
+
+def hand_frame(j, s):
+    """Rest-pose hand axes: a along the fingers, n out of the palm, u = n x a toward the thumb side."""
+    a = unit(j['knuckle'] - j['wrist'])
+    t = j['thumb'] - (j['thumb'] @ a) * a
+    n = unit(np.cross(a, t)) * (1 if s == 'L' else -1)
+    return a, n, np.cross(n, a)
+
+
+def curls(j, s):
+    a, n, _ = hand_frame(j, s)
+    axis = Vector(np.cross(a, n).tolist())
+    return Matrix.Rotation(CURL_KNUCKLE, 4, axis), Matrix.Rotation(CURL_MIDDLE, 4, axis)
+
+
+def palm_in(bones, track, J, rest):
+    """Per side, the twist about the forearm that turns the palm to face in, thumb up, as on a pole grip."""
+    order = [b.name for b in bones]
+    flat = dict(rest, hands={s: dict(twist=Matrix(), curl=(Matrix(), Matrix())) for s in ('R', 'L')})
+    D = world_pose(bones, order, local_rotations(track[0], flat), (0, 0, 0), 0)
+    out = {}
+    for s, medial in (('R', 1.0), ('L', -1.0)):
+        j = J[s]
+        _, n, _ = hand_frame(j, s)
+        axis = Vector(unit(j['wrist'] - j['elbow']).tolist())
+        arm = D[f'forearm.{s}'].to_3x3()
+        best = max(range(144), key=lambda k: (arm @ Matrix.Rotation(k * math.pi / 72, 3, axis) @ Vector(n.tolist())).x * medial)
+        out[s] = Matrix.Rotation(best * math.pi / 72, 4, axis)
+    return out
+
+
+def grip_point(j, s):
+    """Middle of the closed fist, where the pole grip passes."""
+    a, n, _ = hand_frame(j, s)
+    return j['knuckle'] + 0.024 * n - 0.02 * a
+
+
+def fist(j, s, bone_meshes):
+    """Grip point inside the curled fingers, the hand axes, and the fist's extents about the grip."""
+    a, n, u = hand_frame(j, s)
+    c1, c2 = (np.array(m.to_3x3()) for m in curls(j, s))
+    k, p = j['knuckle'], j['pip']
+    pts = []
+    for b in bone_meshes:
+        if b['side'] != s or b['bone'] not in (f'hand.{s}', f'fingers.{s}', f'fingertips.{s}'):
+            continue
+        v = b['verts']
+        if b['bone'] == f'fingers.{s}':
+            v = k + (v - k) @ c1.T
+        elif b['bone'] == f'fingertips.{s}':
+            v = k + ((p - k) + (v - p) @ c2.T) @ c1.T
+        pts.append(v)
+    grip = grip_point(j, s)
+    q = np.concatenate(pts) - grip
+    ext = [f(q @ ax) for ax in (a, n, u) for f in (np.min, np.max)]
+    return dict(grip=to_gltf(grip), fistA=to_gltf(a), fistN=to_gltf(n), fist=[float(x) for x in ext])
+
+
+def boot_fit(J, cloud, bone_meshes):
     """Per side, the foot and lower-leg extents the viewer fits its boot around, in glTF coordinates."""
     fit = {}
     for s in ('R', 'L'):
@@ -426,7 +529,7 @@ def boot_fit(J, cloud):
         foot = leg[(leg[:, 2] < a[2] + 0.01) & (leg[:, 1] > j['toe'][1] - 0.01) & (leg[:, 1] < j['heel'][1] + 0.01)]
         shin = leg[(leg[:, 2] > a[2] + 0.02) & (leg[:, 2] < a[2] + 0.22) & (np.abs(leg[:, 1] - a[1]) < 0.12)]
         fit[s] = dict(
-            ankle=to_gltf(a), knee=to_gltf(j['knee']), wrist=to_gltf(j['wrist']), fingertip=to_gltf(j['fingertip']),
+            ankle=to_gltf(a), knee=to_gltf(j['knee']), **fist(j, s, bone_meshes),
             sole=float(j['sole'] - BOOT_SOLE), toe=float(-foot[:, 1].min()), heel=float(-foot[:, 1].max()),
             footX=[float(foot[:, 0].min()), float(foot[:, 0].max())],
             shinX=[float(shin[:, 0].min()), float(shin[:, 0].max())],
@@ -477,8 +580,8 @@ def main():
         src[b['name']] = v
         part = bone_part(b['name'], b['chain'])
         side = side_of(b['name'], b['centroid_x'])
-        if part in ('foot', 'hand') and side:
-            src[f'{part}:{side}:{b["name"]}'] = v
+        if part in ('foot', 'hand', 'fingers', 'fingertips') and side:
+            src[f'{"foot" if part == "foot" else "hand"}:{side}:{b["name"]}'] = v
         if part == 'head':
             skull_top = max(skull_top, float(v[:, 2].max()))
     src['skull_top'] = skull_top
@@ -539,7 +642,7 @@ def main():
             ws += [[(f'thigh.{b["side"]}', 0.5), (f'shin.{b["side"]}', 0.5)]] * len(b['verts'])
         offset += len(b['verts'])
     cloud = np.concatenate([x['verts'] for x in bone_meshes + muscles])
-    fit = boot_fit(J, cloud)
+    fit = boot_fit(J, cloud, bone_meshes)
     make_object('bones', np.concatenate(vs), np.concatenate(ts), np.concatenate(ms),
                 [mats['bone'], mats['cartilage']], rig, ws, extras={'gear_fit': json.dumps(fit)})
 
@@ -606,13 +709,17 @@ def main():
         else:
             inside_tip = (float(j['ankle'][0]), float(y0), float(z0))
 
-    rest_abduction = {}
+    rest = dict(abduction={})
     for s in ('R', 'L'):
         d = J[s]['elbow'] - J[s]['shoulder']
-        rest_abduction[s] = math.atan2(d[0], -d[2])
+        rest['abduction'][s] = math.atan2(d[0], -d[2])
     with open(args.pose) as fh:
         track = json.load(fh)
-    bake(rig, ski_pivot, inside_tip, track, rest_abduction)
+    twist = palm_in(rig.data.bones, track, J, rest)
+    rest['hands'] = {s: dict(twist=twist[s], curl=curls(J[s], s)) for s in ('R', 'L')}
+    rest['grip'] = Vector(grip_point(J['L'], 'L').tolist())
+    rest['ankle'] = Vector(J['L']['ankle'].tolist())
+    bake(rig, ski_pivot, inside_tip, track, rest)
     log(f'baked {len(track)} keyframes at {time.time() - t0:.1f}s')
 
     bpy.ops.object.select_all(action='DESELECT')

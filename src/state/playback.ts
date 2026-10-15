@@ -5,9 +5,12 @@ import type { DrillId } from '../content/schema';
 /** Seconds per turn while playing. */
 export const TURN_SECONDS = 3;
 
+/** Playback advances the turn, and so draws the figure, at most this often a second. */
+export const PLAYBACK_FPS = 30;
+
 /** Position through one turn, in [0, 1). */
 export const turnTimeAtom = Atom.keepAlive(Atom.make(0.5));
-/** Starts paused; the UI starts playback unless reduced motion is set. */
+/** Starts paused; play is always the user's choice. */
 export const playingAtom = Atom.keepAlive(Atom.make(false));
 /** The chosen drill; null means the first one. */
 export const drillIdAtom = Atom.keepAlive(Atom.make<DrillId | null>(null));

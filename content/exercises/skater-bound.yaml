@@ -17,12 +17,14 @@ dosing:
       reps: { min: 5, max: 8 }
       restSeconds: { min: 60, max: 90 }
       note: Small hops; stick each landing for 2 seconds with the knee over the foot.
+      basis: Our own conservative reading for slow, form-first work, not a published dose; the rest follows ACSM's general guidance.
+      sources: [acsm-2009]
     - goal: power
       sets: { min: 2, max: 4 }
       reps: { min: 3, max: 6 }
       restSeconds: { min: 120, max: 180 }
       note: Full rest between sets; stop when landings get loud or the knee caves in.
+      basis: Few reps with long rest, as in ACSM's power guidance.
+      sources: [acsm-2009]
   suggested: { goal: control, sets: 2, reps: 6 }
-  basis: Power work uses few reps with long rest, as in ACSM's power guidance; the control range is our own conservative reading for slow, form-first work, not a published dose.
-  sources: [acsm-2009]
 reviewedBy: []

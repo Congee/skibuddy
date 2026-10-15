@@ -31,6 +31,7 @@ skibuddy shows a drill on a 3D figure, highlights the muscles at work through in
 ## Capabilities and Constraints
 
 - Installable browser app (PWA) on Three.js WebGPU (with a WebGL2 fallback), Solid, Effect and strict TypeScript.
+- Performance and battery are hard requirements, on a phone on the hill as much as on a laptop. Nothing renders while nothing changes: the 3D view draws on demand, never autoplays, stops when hidden or scrolled away, and caps its frame rate while playing.
 - Association text is linked or paraphrased in our own words, never copied (© PSIA-AASI Central and others).
 - No video capture; the maintainer has limited disk. Large 3D assets stay out of the repo.
 - Asset licences must allow open redistribution. Non-commercial or research-only datasets (AMASS, SMPL, EPFL Ski-Pose) are excluded.

@@ -12,7 +12,6 @@ export default defineConfig({
       'three/tsl',
       'three/addons/loaders/GLTFLoader.js',
       'three/addons/libs/meshopt_decoder.module.js',
-      'three/addons/tsl/display/BloomNode.js',
       'three/addons/utils/BufferGeometryUtils.js',
     ],
   },

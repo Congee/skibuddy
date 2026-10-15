@@ -1,12 +1,15 @@
-import { CircleGeometry, Color, DirectionalLight, HemisphereLight, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, RenderPipeline, Scene, WebGPURenderer } from 'three/webgpu';
-import { color, emissive, float, length, luminance, max, mrt, output, pass, positionLocal, smoothstep, uniform, vec2, vec4 } from 'three/tsl';
-import { bloom } from 'three/addons/tsl/display/BloomNode.js';
+import { CircleGeometry, Color, DirectionalLight, HemisphereLight, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, Scene, WebGPURenderer } from 'three/webgpu';
+import { color, float, length, positionLocal, smoothstep, uniform, vec2 } from 'three/tsl';
 import type { MuscleLevel } from '../content/activation';
 import { bestAnchors, sameAnchors } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
 import type { AnchorsListener, MuscleAnchor } from './anchors';
 import { createCapsuleFigure } from './capsule';
+import { createFrameScheduler } from './frame-scheduler';
 import type { GearMode } from './gear-mode';
+import { dampOrbit } from './orbit';
+import type { Orbit } from './orbit';
+import { pixelRatio } from './pixel-ratio';
 import { makeSlotTable } from './slots';
 
 export const FigureKind = { Capsule: 'capsule', Anatomy: 'anatomy' } as const;
@@ -18,13 +21,12 @@ export interface Figure {
   /** One point per muscle and side, in world space, for the current pose. */
   readonly anchors: () => ReadonlyArray<AnchorPoint>;
   readonly setSkeleton?: (on: boolean) => void;
+  /** Steps motion the figure runs on its own, such as the skeleton fade; true while it still moves. */
+  readonly animate?: (now: number) => boolean;
   readonly setGear?: (mode: GearMode) => void;
+  /** The field behind the figure is dark. */
+  readonly setDark?: (dark: boolean) => void;
   readonly dispose: () => void;
-}
-
-export interface FrameInput {
-  readonly t: number;
-  readonly levels: ReadonlyArray<MuscleLevel>;
 }
 
 export interface ViewerOptions {
@@ -32,6 +34,8 @@ export interface ViewerOptions {
   /** Pin positions in CSS px relative to the canvas; called only when a pin moved. */
   readonly onAnchors?: AnchorsListener;
   readonly forceWebGL?: boolean;
+  /** Each muscle's 0..1 level at turn time `t`. */
+  readonly levels: (t: number) => ReadonlyArray<MuscleLevel>;
 }
 
 export interface Viewer {
@@ -43,8 +47,20 @@ export interface Viewer {
   readonly setGear: (mode: GearMode) => void;
   /** CSS colour of the ground. */
   readonly setGround: (css: string) => void;
+  /** Position through the turn; draws a frame when it changed. */
+  readonly setTime: (t: number) => void;
+  /** Playback draws at a lower pixel ratio. */
+  readonly setPlaying: (on: boolean) => void;
+  /** Pin anchors are projected only while pins show. */
+  readonly setPins: (on: boolean) => void;
   readonly dispose: () => void;
 }
+
+/** three runs a requestAnimationFrame loop from init even with no animation loop set; render() needs none of it. */
+const stopIdleLoop = (renderer: WebGPURenderer): void => {
+  const animation: unknown = Reflect.get(renderer, '_animation');
+  if (typeof animation === 'object' && animation !== null && 'stop' in animation && typeof animation.stop === 'function') animation.stop();
+};
 
 /** The ground fades out between these radii, so the horizon follows the camera. */
 const GROUND_SOLID = 1.6;
@@ -53,12 +69,11 @@ const GROUND_RADIUS = 6.5;
 export const createViewer = async (
   canvas: HTMLCanvasElement,
   muscles: ReadonlyArray<string>,
-  frame: () => FrameInput,
   options: ViewerOptions,
 ): Promise<Viewer> => {
   const renderer = new WebGPURenderer({ canvas, antialias: true, alpha: true, forceWebGL: options.forceWebGL ?? false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   await renderer.init();
+  stopIdleLoop(renderer);
 
   const scene = new Scene();
   scene.add(new HemisphereLight(0xffffff, 0x8899aa, 1.6));
@@ -106,25 +121,66 @@ export const createViewer = async (
 
   const camera = new PerspectiveCamera(32, 1, 0.1, 50);
   const target = { x: 0, y: 0.7, z: 0 };
-  const orbit = { azimuth: 0.7, elevation: 0.25, distance: 4.2 };
+  const DISTANCE = 4.2;
+  // The drag moves `aim`; the camera eases toward it and stops once there.
+  let aim: Orbit = { azimuth: 0.7, elevation: 0.25 };
+  let orbit: Orbit = aim;
   const placeCamera = (): void => {
-    const r = orbit.distance * Math.cos(orbit.elevation);
-    camera.position.set(target.x + r * Math.sin(orbit.azimuth), target.y + orbit.distance * Math.sin(orbit.elevation), target.z + r * Math.cos(orbit.azimuth));
+    const r = DISTANCE * Math.cos(orbit.elevation);
+    camera.position.set(target.x + r * Math.sin(orbit.azimuth), target.y + DISTANCE * Math.sin(orbit.elevation), target.z + r * Math.cos(orbit.azimuth));
     camera.lookAt(target.x, target.y, target.z);
   };
   placeCamera();
 
-  // Only emissive light blooms, so working muscles glow and nothing else does.
-  let pipeline: RenderPipeline | null = null;
-  if (anatomy) {
-    pipeline = new RenderPipeline(renderer);
-    const scenePass = pass(scene, camera);
-    scenePass.setMRT(mrt({ output, emissive }));
-    const glow = bloom(scenePass.getTextureNode('emissive'), 1.25, 0.5, 0);
-    const colour = scenePass.getTextureNode('output');
-    // Keep the canvas transparent around the figure, but let the glow spill past its edge.
-    pipeline.outputNode = vec4(colour.rgb.add(glow.rgb), max(colour.a, luminance(glow.rgb)));
-  }
+  // Inputs to the next frame; a draw runs only when one of them changed.
+  let time = 0;
+  let posedAt = Number.NaN;
+  let playing = false;
+  let pins = options.onAnchors !== undefined;
+  let lastDraw = 0;
+  let anchors: ReadonlyArray<MuscleAnchor> = [];
+  const viewProjection = new Matrix4();
+  const vp = new Float32Array(16);
+  const eye: [number, number, number] = [0, 0, 0];
+
+  const publishAnchors = (): void => {
+    if (options.onAnchors === undefined || !pins) return;
+    camera.updateMatrixWorld();
+    viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    vp.set(viewProjection.elements);
+    eye[0] = camera.position.x;
+    eye[1] = camera.position.y;
+    eye[2] = camera.position.z;
+    const next = bestAnchors(vp, eye, figure.anchors(), width, height);
+    if (sameAnchors(anchors, next)) return;
+    anchors = next;
+    options.onAnchors(next);
+  };
+
+  const draw = (now: number): boolean => {
+    const seconds = lastDraw === 0 ? 0 : (now - lastDraw) / 1000;
+    lastDraw = now;
+    let moving = false;
+    if (orbit !== aim) {
+      const step = dampOrbit(orbit, aim, seconds);
+      orbit = step.orbit;
+      moving = !step.settled;
+      placeCamera();
+    }
+    if (time !== posedAt) {
+      posedAt = time;
+      figure.update(time, options.levels(time));
+    }
+    if (figure.animate?.(now) === true) moving = true;
+    // No bloom pass: the muscle material carries its own glow.
+    renderer.render(scene, camera);
+    publishAnchors();
+    // The next draw after a pause steps from now, not from the last frame.
+    if (!moving) lastDraw = 0;
+    return moving;
+  };
+  const scheduler = createFrameScheduler(draw);
+  const invalidate = scheduler.invalidate;
 
   let drag: { x: number; y: number } | null = null;
   const onDown = (e: PointerEvent): void => {
@@ -133,10 +189,12 @@ export const createViewer = async (
   };
   const onMove = (e: PointerEvent): void => {
     if (drag === null) return;
-    orbit.azimuth -= (e.clientX - drag.x) * 0.01;
-    orbit.elevation = Math.min(1.2, Math.max(-0.1, orbit.elevation + (e.clientY - drag.y) * 0.01));
+    aim = {
+      azimuth: aim.azimuth - (e.clientX - drag.x) * 0.01,
+      elevation: Math.min(1.2, Math.max(-0.1, aim.elevation + (e.clientY - drag.y) * 0.01)),
+    };
     drag = { x: e.clientX, y: e.clientY };
-    placeCamera();
+    invalidate();
   };
   const onUp = (): void => {
     drag = null;
@@ -146,56 +204,83 @@ export const createViewer = async (
   canvas.addEventListener('pointerup', onUp);
   canvas.addEventListener('pointercancel', onUp);
 
-  const resize = (): void => {
-    const { clientWidth: w, clientHeight: h } = canvas;
-    if (w === 0 || h === 0) return;
+  // Canvas size in CSS px, kept from the observer so frames never read layout.
+  let width = 0;
+  let height = 0;
+  const coarse = window.matchMedia('(pointer: coarse)');
+  const applyPixelRatio = (): void => {
+    const ratio = pixelRatio({ devicePixelRatio: window.devicePixelRatio, handheld: coarse.matches || Math.min(window.innerWidth, window.innerHeight) <= 600, playing });
+    if (ratio !== renderer.getPixelRatio()) renderer.setPixelRatio(ratio);
+  };
+  const resize = (entries: ReadonlyArray<ResizeObserverEntry>): void => {
+    const box = entries.at(-1)?.contentRect;
+    const w = Math.round(box?.width ?? 0);
+    const h = Math.round(box?.height ?? 0);
+    if (w === 0 || h === 0 || (w === width && h === height)) return;
+    width = w;
+    height = h;
+    applyPixelRatio();
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    invalidate();
   };
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
-  resize();
-
-  const viewProjection = new Matrix4();
-  let anchors: ReadonlyArray<MuscleAnchor> = [];
-  const publishAnchors = (): void => {
-    if (options.onAnchors === undefined) return;
-    camera.updateMatrixWorld();
-    viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-    const m = new Float32Array(viewProjection.elements);
-    const eye = [camera.position.x, camera.position.y, camera.position.z] as const;
-    const next = bestAnchors(m, eye, figure.anchors(), canvas.clientWidth, canvas.clientHeight);
-    if (sameAnchors(anchors, next)) return;
-    anchors = next;
-    options.onAnchors(next);
+  const onPointerKind = (): void => {
+    applyPixelRatio();
+    invalidate();
   };
+  coarse.addEventListener('change', onPointerKind);
 
   if (anatomy) performance.mark('skibuddy:figure-ready');
-  await renderer.setAnimationLoop(() => {
-    const { t, levels } = frame();
-    figure.update(t, levels);
-    if (pipeline === null) renderer.render(scene, camera);
-    else pipeline.render();
-    publishAnchors();
-  });
 
   return {
     figure: anatomy ? FigureKind.Anatomy : FigureKind.Capsule,
-    setSkeleton: (on) => figure.setSkeleton?.(on),
-    setGear: (mode) => figure.setGear?.(mode),
+    setSkeleton: (on) => {
+      figure.setSkeleton?.(on);
+      invalidate();
+    },
+    setGear: (mode) => {
+      figure.setGear?.(mode);
+      invalidate();
+    },
     setGround: (css) => {
+      const before = groundColour.value.getHex();
       groundColour.value.set(css);
+      if (groundColour.value.getHex() === before) return;
+      // Dark snow means the dark theme.
+      const { r, g, b } = groundColour.value;
+      figure.setDark?.(0.2126 * r + 0.7152 * g + 0.0722 * b < 0.25);
+      invalidate();
+    },
+    setTime: (t) => {
+      if (t === time) return;
+      time = t;
+      invalidate();
+    },
+    setPlaying: (on) => {
+      if (on === playing) return;
+      playing = on;
+      applyPixelRatio();
+      invalidate();
+    },
+    setPins: (on) => {
+      if (on === pins) return;
+      pins = on && options.onAnchors !== undefined;
+      // Fresh anchors when pins come back.
+      anchors = [];
+      invalidate();
     },
     dispose: () => {
-      void renderer.setAnimationLoop(null);
+      scheduler.dispose();
       observer.disconnect();
+      coarse.removeEventListener('change', onPointerKind);
       canvas.removeEventListener('pointerdown', onDown);
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerup', onUp);
       canvas.removeEventListener('pointercancel', onUp);
       figure.dispose();
-      pipeline?.dispose();
       for (const m of [ground, contact]) {
         m.geometry.dispose();
         m.material.dispose();

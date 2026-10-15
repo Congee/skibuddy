@@ -14,7 +14,7 @@ dosing:
       reps: { min: 5, max: 8 }
       restSeconds: { min: 60, max: 90 }
       note: Turn slowly, about 2-3 seconds each way, with the pelvis moving over a still stance leg.
+      basis: Our own conservative reading for slow, form-first work, not a published dose; the rest follows ACSM's general guidance.
+      sources: [acsm-2009]
   suggested: { goal: control, sets: 2, reps: 6 }
-  basis: The control range is our own conservative reading for slow, form-first work, not a published dose; the rest follows ACSM's general guidance.
-  sources: [acsm-2009]
 reviewedBy: []

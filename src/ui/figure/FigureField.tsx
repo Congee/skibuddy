@@ -1,11 +1,11 @@
 import { Show, Suspense, createMemo, createSignal, lazy, onCleanup, onMount } from 'solid-js';
 import type { JSX } from 'solid-js';
-import type { Movement } from '../../content/schema';
+import type { Activation, Movement } from '../../content/schema';
 import type { MuscleAnchor } from '../../viewer/anchors';
 import type { GearMode } from '../../viewer/gear-mode';
-import type { RankedSlat } from '../board/rank';
 import { PHONE, createMedia } from '../media';
 import { vars } from '../theme/theme.css';
+import { readEffortRamp } from './effort-ramp';
 import * as s from './figure.css';
 import { Pins } from './Pins';
 
@@ -27,11 +27,14 @@ export const Caption = (): JSX.Element => (
 export const FigureField = (props: {
   readonly movement: Movement;
   readonly muscles: ReadonlyArray<string>;
-  readonly ranked: ReadonlyArray<RankedSlat>;
+  /** The board's steady order. */
+  readonly order: ReadonlyArray<Activation>;
   readonly pins: boolean;
   readonly skeleton: boolean;
   readonly gear: GearMode;
   readonly muscleName: (id: string) => string;
+  /** The field's element, for watching whether it is on screen. */
+  readonly ref?: (el: HTMLDivElement) => void;
 }): JSX.Element => {
   let host: HTMLDivElement | undefined;
   const compact = createMedia(PHONE);
@@ -39,6 +42,10 @@ export const FigureField = (props: {
   const ground = createMemo(() => {
     dark();
     return themeColour(vars.color.snow);
+  });
+  const ramp = createMemo(() => {
+    dark();
+    return readEffortRamp();
   });
   const [size, setSize] = createSignal({ width: 0, height: 0 });
   const [ready, setReady] = createSignal(false);
@@ -64,7 +71,13 @@ export const FigureField = (props: {
   };
 
   return (
-    <div class={s.field} ref={(el) => (host = el)}>
+    <div
+      class={s.field}
+      ref={(el) => {
+        host = el;
+        props.ref?.(el);
+      }}
+    >
       <Suspense
         fallback={
           <figure>
@@ -83,6 +96,7 @@ export const FigureField = (props: {
           ground={ground()}
           caption={<Caption />}
           onAnchors={setAnchors}
+          pins={props.pins}
           onReady={onReady}
           onError={() => setFailed(true)}
         />
@@ -94,9 +108,10 @@ export const FigureField = (props: {
       </Show>
       <Show when={props.pins && size().width > 0}>
         <Pins
-          ranked={props.ranked}
+          order={props.order}
           anchors={anchors()}
           size={{ ...size(), compact: compact() }}
+          ramp={ramp()}
           muscleName={props.muscleName}
         />
       </Show>

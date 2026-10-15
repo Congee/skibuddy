@@ -13,7 +13,7 @@ export const frame = style({
   '@media': { [phone]: { padding: 6, borderRadius: 3 } },
 });
 
-/** Below this board width the slats stack: name and evidence over two rows, tags beside. */
+/** Below this board width the strip drops to full width under the name. */
 const stacked = '(max-width: 580px)';
 
 export const plate = style({
@@ -57,9 +57,16 @@ export const plateAfter = style({ marginTop: 4, paddingTop: 4 });
 // Shared grid for the column heads and every slat row.
 const columns = {
   display: 'grid',
-  gridTemplateColumns: '16px minmax(15ch, 1fr) 46px 46px 46px 92px 96px 14px',
-  columnGap: 6,
+  gridTemplateColumns: 'minmax(13ch, 1fr) 96px minmax(0, 2.6fr) 14px',
+  columnGap: 12,
   alignItems: 'center',
+} as const;
+
+const stackedColumns = {
+  gridTemplateColumns: 'minmax(0, 1fr) auto',
+  columnGap: 8,
+  rowGap: 8,
+  padding: '8px 10px',
 } as const;
 
 export const heads = style({
@@ -75,25 +82,31 @@ export const heads = style({
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
   borderRadius: 2,
-  '@container': { [stacked]: { display: 'none' } },
+  '@container': { [stacked]: stackedColumns },
 });
 
 export const headTitle = style({
   gridColumn: '1 / span 2',
   font: 'inherit',
   letterSpacing: 'inherit',
+  '@container': { [stacked]: { gridColumn: '1 / -1' } },
+});
+
+/** The phase labels sit over the strip column, a third each. */
+export const headPhases = style({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, 1fr)',
+  gap: 4,
+  '@container': { [stacked]: { gridColumn: '1 / -1' } },
 });
 
 export const headPhase = recipe({
-  base: { textAlign: 'center', color: vars.color.plateInk2, letterSpacing: '0.03em' },
+  base: { textAlign: 'center', color: vars.color.plateInk2, letterSpacing: '0.03em', padding: '3px 0', borderRadius: 2 },
   variants: {
     now: {
-      // Stays inside its own column so it never touches a neighbour.
       true: {
         background: vars.color.plateInk,
         color: vars.color.plate,
-        borderRadius: 2,
-        padding: '3px 0',
         fontWeight: 900,
         fontStretch: '75%',
         letterSpacing: 0,
@@ -116,7 +129,7 @@ export const slatRow = style({
   ...columns,
   width: '100%',
   minHeight: 58,
-  padding: '6px 10px',
+  padding: '8px 10px',
   border: 0,
   borderRadius: 2,
   background: 'transparent',
@@ -126,33 +139,11 @@ export const slatRow = style({
   selectors: {
     '&:hover': { boxShadow: `inset 0 0 0 2px ${vars.color.ink3}` },
   },
-  '@container': {
-    [stacked]: {
-      gridTemplateColumns: '16px minmax(0, 1fr) 46px 46px 46px',
-      columnGap: 4,
-      gridTemplateRows: 'auto auto',
-      rowGap: 6,
-      minHeight: 68,
-      padding: 8,
-    },
-  },
+  '@container': { [stacked]: { ...stackedColumns, minHeight: 68 } },
 });
-
-export const change = style({
-  width: 14,
-  height: 14,
-  color: vars.color.ink,
-  '@container': { [stacked]: { gridColumn: 1, gridRow: 1, alignSelf: 'start', marginTop: 3 } },
-});
-
-export const changeSame = style({ color: vars.color.ink3 });
 
 // Wraps instead of truncating; the side word sits on its own line.
-export const name = style({
-  minWidth: 0,
-  lineHeight: 1.2,
-  '@container': { [stacked]: { gridColumn: 2, gridRow: 1 } },
-});
+export const name = style({ minWidth: 0, lineHeight: 1.2 });
 
 export const muscle = style({
   fontWeight: 800,
@@ -163,21 +154,55 @@ export const muscle = style({
 
 export const side = style({ display: 'block', fontWeight: 400, color: vars.color.ink3 });
 
-/** Phone grid cells for the initiation, shaping and finish tags. */
-export const tagCells = [3, 4, 5].map((column) => style({ '@container': { [stacked]: { gridColumn: column, gridRow: '1 / span 2' } } }));
-
 export const evidence = style({
-  display: 'contents',
-  '@container': {
-    [stacked]: {
-      gridColumn: 2,
-      gridRow: 2,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 8,
-    },
-  },
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  gap: 6,
+  '@container': { [stacked]: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' } },
+});
+
+/** Strip height in px; the area tops out STRIP_TOP px below it so the dot stays inside. */
+export const STRIP_HEIGHT = 40;
+export const STRIP_TOP = 5;
+
+/** Turn position 0..1, written once per frame on the list. */
+export const turnProperty = '--board-t';
+
+export const strip = style({
+  position: 'relative',
+  display: 'block',
+  height: STRIP_HEIGHT,
+  '@container': { [stacked]: { gridColumn: '1 / -1' } },
+});
+
+export const stripSvg = style({ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' });
+
+export const stripEdge = style({ fill: 'none', stroke: vars.color.ink2, strokeWidth: 1.5, strokeLinejoin: 'round' });
+
+export const stripBase = style({ stroke: vars.color.rule, strokeWidth: 1.5 });
+
+export const stripTick = style({ stroke: vars.color.rule, strokeWidth: 1, strokeDasharray: '2 3' });
+
+export const playhead = style({
+  position: 'absolute',
+  top: -5,
+  bottom: -5,
+  left: `calc(var(${turnProperty}, 0.5) * 100% - 1px)`,
+  width: 2,
+  background: vars.color.ink,
+  borderRadius: 1,
+});
+
+export const dot = style({
+  position: 'absolute',
+  left: `calc(var(${turnProperty}, 0.5) * 100%)`,
+  width: 14,
+  height: 14,
+  margin: '-7px 0 0 -7px',
+  borderRadius: '50%',
+  border: `2px solid ${vars.color.ink}`,
+  background: vars.color.rest,
 });
 
 export const caret = style({
@@ -413,9 +438,14 @@ export const legend = style({
   fontSize: 14,
 });
 
-export const swatch = style({ display: 'inline-flex', alignItems: 'center', gap: 6 });
+export const swatch = style({ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 22 });
 
-globalStyle(`${legend} [data-level="0"]`, { color: vars.color.plateInk2, boxShadow: `inset 0 0 0 1.5px ${vars.color.plateInk2}` });
+/** Legend bars for Resting, Light, Working, Hard: colour and height together. */
+export const scaleBars = [vars.color.rest, vars.color.l1, vars.color.l2, vars.color.l3].map((colour, i) =>
+  style({ display: 'inline-block', width: 22, height: 3 + i * 4, alignSelf: 'flex-end', marginBottom: 3, background: colour, borderRadius: 1 }),
+);
+
+export const legendNote = style({ flexBasis: '100%', margin: 0, maxWidth: '70ch' });
 
 export const unreviewed = style({ padding: '6px 6px 6px', color: vars.color.plateInk2, fontSize: 14, maxWidth: '70ch' });
 

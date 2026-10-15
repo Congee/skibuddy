@@ -47,8 +47,13 @@ const DosingBlock = (props: {
   readonly view: DosingView;
   readonly sources: ReadonlyArray<Source>;
 }): JSX.Element => {
-  const cited = (): ReadonlyArray<Source> => props.sources.filter((x) => props.dosing.sources.includes(x.id));
+  const cited = (r: DosingRange): ReadonlyArray<Source> => props.sources.filter((x) => r.sources.includes(x.id));
   const suggestedRange = (): DosingRange | undefined => props.dosing.ranges.find((r) => r.goal === props.dosing.suggested.goal);
+  // Sets & reps explains only the suggested goal's numbers.
+  const explained = (): ReadonlyArray<DosingRange> => {
+    const r = suggestedRange();
+    return props.view === DosingView.SetsReps && r !== undefined ? [r] : props.dosing.ranges;
+  };
   return (
     <section class={s.dosing} aria-label="Dosing">
       <Switch>
@@ -87,19 +92,24 @@ const DosingBlock = (props: {
       </Switch>
       <div class={s.doseFoot}>
         <p class={s.disclaimer}>{DOSING_DISCLAIMER}</p>
-        <p>
-          {props.dosing.basis}{' '}
-          <For each={cited()}>
-            {(src, i) => (
-              <>
-                {i() > 0 ? ', ' : ''}
-                <a href={src.url} title={src.citation} target="_blank" rel="noreferrer">
-                  {shortCitation(src.citation)}
-                </a>
-              </>
-            )}
-          </For>
-        </p>
+        <For each={explained()}>
+          {(r) => (
+            <p>
+              {explained().length > 1 ? `${goalName(r.goal)}: ` : ''}
+              {r.basis}{' '}
+              <For each={cited(r)}>
+                {(src, i) => (
+                  <>
+                    {i() > 0 ? ', ' : ''}
+                    <a href={src.url} title={src.citation} target="_blank" rel="noreferrer">
+                      {shortCitation(src.citation)}
+                    </a>
+                  </>
+                )}
+              </For>
+            </p>
+          )}
+        </For>
       </div>
     </section>
   );
