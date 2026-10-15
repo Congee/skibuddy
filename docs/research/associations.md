@@ -15,6 +15,7 @@ skibuddy is association-neutral: a drill has a generic name, and each associatio
 | BASI (UK) | Level 1, 2, 3, 4 (ISTD) | Fundamental Elements; Central Theme; Performance Threads | No; drills sit in the member manual and paid courses |
 | NZSIA | Level 1, 2, 3, Trainer | four directions of movement | Partly; old manual appendix and the Trainer outline name drills |
 | APSI (Australia) | Level 1, 2, 3, 4 | steering-based teaching system; manual is member-only | No |
+| IASI (Ireland) | Level 1, 2, 3, 4 (plus Level 1 Rolling Carpet) | Skills Model: rotation, edging, pressure control, timing, within balance and movements | Partly; the public manual has a short drills chapter, and the criteria name run types, not drills |
 | ISIA | Stamp, Card | none of its own | No; sets minimum standards over member associations |
 | Interski | none (congress) | none | No |
 | Snowsport Austria | learner stages Grün, Blau, Rot, Schwarz; instructor grades Anwärter, Landesskilehrer, Diplom/Staatlicher Skilehrer | stage curriculum | Stage names only; the Lehrplan is sold |
@@ -286,6 +287,38 @@ The APSI Teaching Manual is included with membership (digital access); see [Manu
 
 No public licence. Everything that matters sits behind membership.
 
+## IASI (Irish Association of Snowsports Instructors)
+
+Not to be confused with iasi.ie, which belongs to an unrelated accommodation body. The association's site is [iasisnowsports.ie](https://iasisnowsports.ie/).
+
+### Levels and framework
+
+Alpine has four levels ([Alpine page](https://iasisnowsports.ie/education/alpine/)):
+
+- **Level 1 Ski Instructor:** closed or controlled areas such as artificial slopes, indoor domes and beginner areas. A Level 1 Rolling Carpet award is an alternative route.
+- **Level 2 Ski Instructor:** on-piste work for a resort ski school.
+- **Level 3 Ski Teacher:** carries the ISIA and IVSI stamps.
+- **Level 4 Ski Teacher:** the top award, with outcomes of Euro Ski Pro (EU Common Technical Test) or the ISIA card.
+
+From Level 2 up, IASI recommends skis of at least 14 m radius for women and 16 m for men.
+
+The manual, *The Five Key Concepts* (2021), is organised around five models: the Basic Principles, the IASI Skills Model, Core Skier Development (the beginner-to-parallel progression), the Diamond Model of Skill Acquisition and the Pear Model. The Skills Model has four skills, rotation, edging, pressure control and timing, which sit inside two overriding fundamentals, balance and movements. IASI splits a turn into four phases: initiation, fall line, completion and transition.
+
+### Named tasks
+
+- **Drills:** the manual's drills chapter (ch. 17) is short and has no levels. It names straight running on one leg, edged garlands, edged J turns, side slipping, diagonal side slipping, javelin turns, braquage, hop turns, tic-tacs, dolphin turns and White Pass turns. There is no stork turn.
+- **Assessment criteria:** the per-level criteria downloads on the Alpine page (zips of PDFs and images, Nov 2019) name assessed run types, not drills. At Level 4 these are advanced parallel, short, medium/long and mixed turns (funnel, hourglass, rhythm changes), bumps and variable conditions. The Level 1–3 teaching criteria require Core Skier Development lessons and the ability to explain the why, what and how of each drill chosen.
+
+### Public vs. member-only
+
+- The full manual ([PDF, 237 pages](https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/)) and a mini manual are linked publicly from [IASI Manuals](https://iasisnowsports.ie/education/iasi-manual/). On 2026-10-15 both downloaded without a login.
+- The full manual includes "Anatomy and Biomechanics: Fundamentals Applied to Skiing" (F. Sollini) as ch. 18, from p. 177. A standalone 2018 version of that chapter also circulates as "Chapter 3"; no public URL for the standalone file was found.
+- The criteria zips are public. Course workbooks for other disciplines are public PDFs under `wp-content/uploads`.
+
+### Copyright
+
+The site footer reads "©2025 Irish Association of Snowsports Instructors CLG". No open licence was found, so link to IASI material and paraphrase it; never copy it.
+
 ## ISIA and Interski
 
 - **ISIA** sets minimum standards (Stamp, Card) that member associations' qualifications must meet; it publishes no drills. The Card adds a timed GS technique test. [isia.ski](https://isia.ski/) returned **403 to curl** (Cloudflare challenge). The [PSIA ISIA Stamp requirements PDF](https://thesnowpros.org/wp-content/uploads/2025/01/PSIA-AASI-ISIA-Stamp-Application-Requirements-23-24.pdf) is a public secondary source.
@@ -358,6 +391,8 @@ The SAJ site says "Copyright © 2026 SKI AND SNOWBOARD ASSOCIATION OF JAPAN All 
 | Short-radius turns | P: Short Radius Parallel Turns, L1; Short Radius Turn, L2; Dynamic Short Radius Turns, L3; Short Swing Turns, L3 | Short Turn, L2; Short Radius Turns, L3 | Short Turns, L3/4 strand | Short Turns, L2; Parallel Short Turns, L2; Dynamic Short, L3 | none found by name (L3 scope says "short turns") |
 | Medium-radius turns | C: Medium Radius Parallel Turns, L1 (not in national v1.2a) | Demonstration parallel (9 - 11m), L2; Demonstration Parallel Turns, L3 | none found | Dynamic Medium, L2 and L3 | none found by name |
 | Long-radius turns | P: Large Radius Parallel Turns, L1; Dynamic Large Radius Turns, L3 | Advanced Parallel Turns (approx. 2 to 3 cat tracks), L3 | Long Turns, L3/4 strand | none found (NZSIA tests medium radius) | none found |
+
+**IASI** (manual ch. 17, no levels given): Javelin Turns; White Pass Turn; Braquage (nearest match to pivot slips); Side Slipping/edge set and Diagonal side slipping (side slips); Edged Garlands (garlands); Hop Turns/Speiss (hop turns); Straight Running on one leg (no generic drill yet); Edged J Turns, TicTacs and Dolphin Turns (no generic drill yet). Stork turns: none found. Level 4 criteria name short and medium/long turns as assessed runs.
 
 ### Other associations
 
