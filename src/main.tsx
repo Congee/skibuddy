@@ -2,6 +2,7 @@
 import '@fontsource-variable/archivo/standard.css';
 import { RegistryProvider } from '@effect/atom-solid';
 import { render } from 'solid-js/web';
+import { registerServiceWorker } from './pwa/register';
 import { App } from './ui/App';
 
 const root = document.getElementById('root');
@@ -15,3 +16,5 @@ render(
   ),
   root,
 );
+
+registerServiceWorker();
