@@ -57,7 +57,7 @@ skibuddy is about regular skiing first: cruising, carved turns, short turns, mog
 1. Show the evidence level with every claim; uncertainty is content, not noise.
 2. Stay association-neutral at the core; use each association's own vocabulary only in its mapping.
 3. Every gym exercise traces back to a muscle and the skiing or drill that loads it.
-4. The 3D figure leads: a phone user finds what to train by playing with the model; text is short, and depth comes only on request.
+4. The 3D figure leads: a phone user finds what to train by playing with the model; every view starts visual, and full detail opens when the user drills in.
 5. Work at a desk and in the cold: the essentials must be readable at a glance on a phone.
 6. Open by default: content a reviewer can check, correct and extend.
 
