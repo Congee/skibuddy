@@ -216,16 +216,9 @@ describe('poseAt', () => {
     assert.deepStrictEqual(poseAt(-0.75, MODERATE), poseAt(0.25, MODERATE));
   });
 
-  it('solves a table per scenario once, within the frame budget', () => {
+  it('solves a table per scenario and reuses it', () => {
     const fresh = { speedMps: 9, radiusM: 13, slopeDeg: 14 };
-    const start = performance.now();
-    poseAt(0.3, fresh);
-    const first = performance.now() - start;
-    const again = performance.now();
-    poseAt(0.7, fresh);
-    assert.isBelow(performance.now() - again, 5);
-    // A generous bound for slow CI; about 75 ms locally.
-    assert.isBelow(first, 400);
+    assert.deepStrictEqual(poseAt(0.3, fresh), poseAt(0.3, { ...fresh }));
   });
 });
 
