@@ -355,9 +355,10 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
         hip, ankle = leg['hipFlex'] + extra, leg['ankleFlex'] + 0.6 * extra
         R[f'thigh.{s}'] = rot_z3(-p['hipAngulation']) @ rot_x(-hip)
         R[f'shin.{s}'] = rot_z3(-p['kneeAngulation']) @ rot_x(hip + ankle)
-        # Body-frame target for the foot (bootRotation in pose.ts): skis stay parallel; world_pose resolves it.
+        # Body-frame target for the foot (bootRotation in pose.ts): skis stay parallel, the foot heel-up on its
+        # ski by the ramp; world_pose resolves it.
         R[f'foot.{s}'] = (rot_z3(p['lean']) @ rot_x(leg['tailLift'])
-                          @ rot_z3(-p['lean'] - p['hipAngulation'] - p['kneeAngulation']))
+                          @ rot_z3(-p['lean'] - p['hipAngulation'] - p['kneeAngulation']) @ rot_x(rest['ramp']))
         flex = 0.9 + (reach if s == 'L' else 0.0)
         R[f'upper_arm.{s}'] = rot_z3(sign * 0.35) @ rot_x(-flex) @ rot_z3(-rest['abduction'][s])
         R[f'forearm.{s}'] = rot_x(-1.1)
@@ -624,6 +625,25 @@ def palm_in(bones, track, J, rest):
     return out
 
 
+def rx3(a):
+    """three.js rotationX(a) as a 4x4 glTF-space matrix."""
+    c, s = math.cos(a), math.sin(a)
+    return np.array([[1, 0, 0, 0], [0, c, -s, 0], [0, s, c, 0], [0, 0, 0, 1.0]])
+
+
+def tr3(v):
+    m = np.eye(4)
+    m[:3, 3] = v
+    return m
+
+
+def binding_in_foot(f, b):
+    """bindingInFoot in src/viewer/equipment.ts for the boot fit `f` (bootFitFrom's, ankle at the origin, glTF)."""
+    sole, heel, toe = f['sole'], f['heel'], f['toe']
+    shell = tr3([0, sole, toe]) @ rx3(-b['bootBoardRamp']) @ tr3([0, -sole, -toe])
+    return shell @ tr3([0, sole, (heel + toe) / 2]) @ rx3(-b['deltaAngle']) @ tr3([0, -b['stackHeight'], 0])
+
+
 def boot_fit(J, cloud):
     """Per side, the pole grip and the foot and lower-leg extents the viewer fits its boot around, in glTF coordinates."""
     fit = {}
@@ -797,29 +817,40 @@ def main():
                     rig, ws, np.concatenate(uvs), extras)
         report['groups'][key] = dict(meshes=[m['name'] for m in items], tris=int(sum(len(t) for t in ts)))
 
-    # Skis: 1.6 m x 9 cm x 2 cm under each boot sole, as in figure.ts.
+    with open(args.pose) as fh:
+        posed_track = json.load(fh)
+    binding, track = posed_track['binding'], posed_track['frames']
+    # Skis: 1.6 m x 9 cm slabs centred 3 cm ahead of the foot, under each binding as in figure.ts and equipment.ts.
     ski_pivot = None
+    thick = binding['skiThickness']
     for s in ('R', 'L'):
         j = J[s]
-        mid_y = (j['toe'][1] + j['heel'][1]) / 2 - 0.03
-        top = j['sole'] - BOOT_SOLE
-        x0, x1, y0, y1, z0, z1 = j['ankle'][0] - 0.045, j['ankle'][0] + 0.045, mid_y - 0.8, mid_y + 0.8, top - 0.02, top
-        verts = np.array([[x, y, z] for x in (x0, x1) for y in (y0, y1) for z in (z0, z1)])
+        a = fit[s]['ankle']
+        shell = dict(sole=fit[s]['sole'] - a[1], heel=fit[s]['heel'] - a[2] - binding['heelRoom'],
+                     toe=fit[s]['toe'] - a[2] + binding['toeRoom'])
+        mount = binding_in_foot(shell, binding)
+        zc = j['ankle'][1] - (j['toe'][1] + j['heel'][1]) / 2 + 0.03 - (shell['heel'] + shell['toe']) / 2
+
+        def rest_point(k):
+            """A point in the binding frame (glTF), at the rest pose in Blender space."""
+            g = mount @ np.array([k[0], k[1], k[2], 1.0])
+            return np.array([a[0] + g[0], -(a[2] + g[2]), a[1] + g[1]])
+
+        # Same corner order as an axis-aligned box: x, then front to back, then bottom to top.
+        verts = np.array([rest_point((x, y, zc + z)) for x in (-0.045, 0.045) for z in (0.8, -0.8) for y in (-thick, 0.0)])
         quads = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
         tris = np.array([t for a, b, c, d in quads for t in ((a, b, c), (a, c, d))])
         make_object(f'gear_ski_{s}', verts, tris, np.zeros(len(tris), np.int32), [mats['gear']], rig,
                     [[(f'foot.{s}', 1.0)]] * len(verts))
         if s == 'R':
-            ski_pivot = (float(j['ankle'][0]), float(mid_y), float(z0))
+            ski_pivot = tuple(float(x) for x in rest_point((0, -thick, zc)))
         else:
-            inside_tip = (float(j['ankle'][0]), float(y0), float(z0))
+            inside_tip = tuple(float(x) for x in rest_point((0, -thick, zc + 0.8)))
 
-    rest = dict(abduction={})
+    rest = dict(abduction={}, ramp=binding['bootBoardRamp'] + binding['deltaAngle'])
     for s in ('R', 'L'):
         d = J[s]['elbow'] - J[s]['shoulder']
         rest['abduction'][s] = math.atan2(d[0], -d[2])
-    with open(args.pose) as fh:
-        track = json.load(fh)
     twist = palm_in(rig.data.bones, track, J, rest)
     parts = {k: np.concatenate(v) for k, v in pts.items()}
     rest['hands'] = {s: dict(twist=twist[s], curl=curls(J[s], s), thumb=thumb_pose(J[s], s, parts),

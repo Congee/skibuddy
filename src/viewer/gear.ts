@@ -1,6 +1,8 @@
 import { BoxGeometry, BufferAttribute, BufferGeometry, Color, CylinderGeometry, FrontSide, Mesh, MeshStandardNodeMaterial, Vector3 } from 'three/webgpu';
 import { color, dot, float, mix, normalView, positionViewDirection, pow, saturate, uniform } from 'three/tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { EQUIPMENT, soleHeight } from './equipment';
+import type { Equipment } from './equipment';
 import { BodySide } from './figure';
 import type { BootFit } from './gear-fit';
 import { GearMode } from './gear-mode';
@@ -11,6 +13,7 @@ export type LegSide = typeof BodySide.Left | typeof BodySide.Right;
 
 const SHELL = 0x2f4d7a;
 const TRIM = 0x17212b;
+const METAL = 0x9aa4ae;
 /** Fresnel edge on the snow, and brighter on the dark field. */
 const EDGE = { light: 0x9dbde6, dark: 0xe8f2ff } as const;
 /** Above the ground (0) and contact shadow (1), in a fixed order so the sort never flips. */
@@ -110,6 +113,38 @@ export const soleGeometry = (fit: BootFit): BufferGeometry => {
   return sole;
 };
 
+/** A box across x ±`half` and from `z0` to `z1`, from `y0` up to `top(z)`. */
+const block = (half: number, z0: number, z1: number, y0: number, top: (z: number) => number): BufferGeometry => {
+  const g = plain(new BoxGeometry(2 * half, 1, z1 - z0));
+  const pos = g.getAttribute('position');
+  for (let i = 0; i < pos.count; i++) {
+    const z = pos.getZ(i) + (z0 + z1) / 2;
+    pos.setXYZ(i, pos.getX(i), pos.getY(i) > 0 ? top(z) : y0, z);
+  }
+  g.computeVertexNormals();
+  return g;
+};
+
+/**
+ * Binding in its own frame (see `bindingInFoot`): the stack is the plate and the
+ * risers the sole rests on; the binding is the toe jaw and the taller heel housing.
+ */
+export const bindingGeometry = (fit: BootFit, eq: Equipment = EQUIPMENT): { readonly stack: BufferGeometry; readonly binding: BufferGeometry } => {
+  const end = (fit.toe - fit.heel) / 2;
+  const plate = eq.plateHeight;
+  const sole = (z: number): number => soleHeight(z, eq);
+  const stack = mergeOrThrow([
+    block(0.034, -end - 0.07, end + 0.05, 0, () => plate),
+    block(0.03, end - 0.07, end + 0.005, plate, sole),
+    block(0.03, -end - 0.005, -end + 0.08, plate, sole),
+  ]);
+  const binding = mergeOrThrow([
+    block(0.037, end - 0.012, end + 0.05, plate, () => sole(end) + 0.024),
+    block(0.035, -end - 0.085, -end + 0.012, plate, () => sole(-end) + 0.058),
+  ]);
+  return { stack, binding };
+};
+
 /** Power strap round the cuff top and buckles on the outer side. */
 const trimGeometry = (fit: BootFit, side: LegSide): { readonly shell: BufferGeometry; readonly cuff: BufferGeometry } => {
   const lateral = side === BodySide.Left ? 1 : -1;
@@ -171,6 +206,10 @@ export interface Gear {
   readonly shells: ReadonlyArray<GearPart>;
   readonly soles: ReadonlyArray<GearPart>;
   readonly cuffs: ReadonlyArray<GearPart>;
+  /** Plate and risers in the binding frame; they stay when the gear is off, like the soles. */
+  readonly plates: ReadonlyArray<GearPart>;
+  /** Toe and heel pieces in the binding frame. */
+  readonly bindings: ReadonlyArray<GearPart>;
   readonly poles: ReadonlyArray<GearPart>;
   readonly setMode: (mode: GearMode) => void;
   /** Brightens the translucent edges over a dark field. */
@@ -180,11 +219,17 @@ export interface Gear {
 
 const SIDES: ReadonlyArray<LegSide> = [BodySide.Right, BodySide.Left];
 
-/** Boots and poles, unparented; each figure places them. */
-export const createGear = (boots: Readonly<Record<LegSide, BootFit>>): Gear => {
+/** One material group over the whole geometry. */
+const slot = (g: BufferGeometry, material: number): BufferGeometry => {
+  g.addGroup(0, g.index?.count ?? 0, material);
+  return g;
+};
+
+/** Boots, bindings and poles, unparented; each figure places them. */
+export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, eq: Equipment = EQUIPMENT): Gear => {
   const backdrop: Backdrop = { edge: uniform(new Color(EDGE.light)), gain: uniform(0.65) };
-  const glass = [translucent(SHELL, 0.16, backdrop), translucent(TRIM, 0.45, backdrop)] as const;
-  const opaque = [solid(SHELL), solid(TRIM)] as const;
+  const glass = [translucent(SHELL, 0.16, backdrop), translucent(TRIM, 0.45, backdrop), translucent(METAL, 0.45, backdrop)] as const;
+  const opaque = [solid(SHELL), solid(TRIM), solid(METAL)] as const;
   const make = (geometry: BufferGeometry, side: LegSide, order: number): GearPart => {
     const mesh = new Mesh(geometry, [...glass]);
     mesh.renderOrder = order;
@@ -195,26 +240,28 @@ export const createGear = (boots: Readonly<Record<LegSide, BootFit>>): Gear => {
   const shells = trims.map(({ side, trim }) => make(mergeOrThrow([shellGeometry(boots[side]), trim.shell], true), side, ORDER.shell));
   const cuffs = trims.map(({ side, trim }) => make(mergeOrThrow([cuffGeometry(boots[side]), trim.cuff], true), side, ORDER.cuff));
   // Trim colour only: the second material slot.
-  const soles = SIDES.map((side) => {
-    const g = soleGeometry(boots[side]);
-    g.addGroup(0, g.index?.count ?? 0, 1);
-    return make(g, side, ORDER.shell);
-  });
+  const soles = SIDES.map((side) => make(slot(soleGeometry(boots[side]), 1), side, ORDER.shell));
+  const mounts = SIDES.map((side) => ({ side, parts: bindingGeometry(boots[side], eq) }));
+  const plates = mounts.map(({ side, parts }) => make(slot(parts.stack, 1), side, ORDER.shell));
+  const bindings = mounts.map(({ side, parts }) => make(slot(parts.binding, 2), side, ORDER.shell));
   const pole = poleGeometry();
   const poles = SIDES.map((side) => make(pole, side, ORDER.pole));
-  const all = [...shells, ...soles, ...cuffs, ...poles];
+  const all = [...shells, ...soles, ...cuffs, ...plates, ...bindings, ...poles];
+  const kept = [...soles, ...plates];
   return {
     shells,
     soles,
     cuffs,
+    plates,
+    bindings,
     poles,
     setMode: (mode) => {
       for (const { mesh } of all) {
         mesh.visible = mode !== GearMode.Off;
         mesh.material = mode === GearMode.Solid ? [...opaque] : [...glass];
       }
-      // With the gear off the sole stays, so the foot still stands on the ski.
-      for (const { mesh } of soles) {
+      // With the gear off the sole and plate stay, so the foot still stands on the binding.
+      for (const { mesh } of kept) {
         mesh.visible = true;
         if (mode === GearMode.Off) mesh.material = [...opaque];
       }

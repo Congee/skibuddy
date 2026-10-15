@@ -1,8 +1,11 @@
 import { assert, describe, it } from '@effect/vitest';
+import { EQUIPMENT, FIS_STAND_HEIGHT_MAX, FORWARD_LEAN_RANGE, deltaAngle, minShinAngle, shellInFoot, shinAngle, totalRamp } from '../src/viewer/equipment';
+import type { Equipment } from '../src/viewer/equipment';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
-import { transformPoint } from '../src/viewer/mat4';
+import { CAPSULE_BOOT } from '../src/viewer/gear-fit';
+import { compose, transformPoint, translation } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
-import { POSE_SAMPLES, SKI_TIP as TIP, poseAt, segmentMatrices, solvePose, turnDepth } from '../src/viewer/pose';
+import { MID_FOOT, POSE_SAMPLES, SKI_TIP as TIP, poseAt, segmentMatrices, solvePose, turnDepth } from '../src/viewer/pose';
 
 const indexOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 const matrixAt = (t: number, kind: SegmentKind, side: BodySide): Mat4 => {
@@ -67,8 +70,8 @@ describe('segmentMatrices', () => {
     for (const t of [0, 1 / 6, 0.5, 5 / 6]) {
       const hip = point(t, SegmentKind.Pelvis, BodySide.Center, [0, 0, 0])[2];
       const ankle = point(t, SegmentKind.Boot, BodySide.Right, [0, 0, 0])[2];
-      assert.isAbove(hip, ankle - 0.01, `t=${t}`);
-      assert.isBelow(hip, ankle + 0.12, `t=${t}`);
+      assert.closeTo(hip, point(t, SegmentKind.Boot, BodySide.Right, MID_FOOT)[2], 1e-4, `t=${t}`);
+      assert.isAbove(hip, ankle, `t=${t}`);
     }
   });
 
@@ -142,5 +145,98 @@ describe('poseAt', () => {
   it('wraps like the turn', () => {
     assert.deepStrictEqual(poseAt(1.25), poseAt(0.25));
     assert.deepStrictEqual(poseAt(-0.75), poseAt(0.25));
+  });
+});
+
+const SIDES = [BodySide.Right, BodySide.Left] as const;
+const TIMES = Array.from({ length: POSE_SAMPLES }, (_, i) => i / POSE_SAMPLES);
+const DEG = Math.PI / 180;
+
+const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+/** Pitch of `v` forward of `frame`'s y axis, in the frame's y-z plane. */
+const pitchIn = (frame: Mat4, v: Vec3): number => {
+  const [ox, oy, oz] = transformPoint(frame, [0, 0, 0]);
+  const axis = (local: Vec3): Vec3 => {
+    const [x, y, z] = transformPoint(frame, local);
+    return [x - ox, y - oy, z - oz];
+  };
+  return Math.atan2(dot(v, axis([0, 0, 1])), dot(v, axis([0, 1, 0])));
+};
+const between = (a: Vec3, b: Vec3): Vec3 => [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+const SHIN_LENGTH = 0.43;
+const SHELL = shellInFoot(CAPSULE_BOOT, EQUIPMENT);
+
+/** Height of a point in the shell's frame above the ski base, along the ski's normal. */
+const above = (t: number, side: BodySide, p: Vec3): number => {
+  const ski = matrixAt(t, SegmentKind.Ski, side);
+  const base = transformPoint(ski, [0, -EQUIPMENT.skiThickness / 2, 0]);
+  const up = between(base, transformPoint(ski, [0, 1 - EQUIPMENT.skiThickness / 2, 0]));
+  return dot(between(base, transformPoint(compose(matrixAt(t, SegmentKind.Boot, side), SHELL), p)), up);
+};
+
+describe('equipment', () => {
+  it('defaults to a typical boot and binding', () => {
+    assert.isAtLeast(EQUIPMENT.forwardLean, FORWARD_LEAN_RANGE[0]);
+    assert.isAtMost(EQUIPMENT.forwardLean, FORWARD_LEAN_RANGE[1]);
+    assert.closeTo(deltaAngle(EQUIPMENT) / DEG, 0.56, 0.01);
+    assert.closeTo(totalRamp(EQUIPMENT), EQUIPMENT.bootBoardRamp + deltaAngle(EQUIPMENT), 1e-12);
+  });
+
+  it('keeps the stand height within the FIS race limit', () => {
+    // A recreational setup sits below what race skis may use.
+    assert.isAtMost(EQUIPMENT.standHeight, FIS_STAND_HEIGHT_MAX);
+    assert.isAbove(EQUIPMENT.standHeight - EQUIPMENT.skiThickness, EQUIPMENT.plateHeight);
+  });
+
+  it('holds the shin at the cuff until the ankle flexes past it', () => {
+    const stiff: Equipment = { ...EQUIPMENT, forwardLean: 17 * DEG };
+    assert.closeTo(shinAngle(0, stiff), minShinAngle(stiff), 1e-12);
+    assert.closeTo(shinAngle(0.5, stiff), 0.5 + totalRamp(stiff), 1e-12);
+  });
+
+  it('never stands the shin up past the forward lean', () => {
+    for (const t of TIMES) {
+      for (const side of SIDES) {
+        const ankle = point(t, SegmentKind.Shin, side, [0, -SHIN_LENGTH, 0]);
+        const knee = point(t, SegmentKind.Shin, side, [0, 0, 0]);
+        const shin = pitchIn(matrixAt(t, SegmentKind.Ski, side), between(ankle, knee));
+        assert.isAtLeast(shin, EQUIPMENT.forwardLean, `${side} at t=${t}`);
+        assert.isAtLeast(shin, minShinAngle(EQUIPMENT) - 1e-4, `${side} at t=${t}`);
+      }
+    }
+  });
+
+  it('pitches each foot heel-up on its ski by the total ramp', () => {
+    for (const t of TIMES) {
+      for (const side of SIDES) {
+        const foot = matrixAt(t, SegmentKind.Boot, side);
+        const toe = between(transformPoint(foot, [0, 0, 0]), transformPoint(foot, [0, 0, 1]));
+        // Pitch of the toe direction away from the ski's forward axis, toe down.
+        assert.closeTo(pitchIn(matrixAt(t, SegmentKind.Ski, side), toe) - Math.PI / 2, totalRamp(EQUIPMENT), 1e-5, `${side} at t=${t}`);
+      }
+    }
+  });
+
+  it('stands the boot sole at stand height above the ski base, heel higher than toe', () => {
+    const { sole, heel, toe } = CAPSULE_BOOT;
+    for (const t of [0, 1 / 6, 0.5, 5 / 6]) {
+      for (const side of SIDES) {
+        assert.closeTo(above(t, side, [0, sole, (heel + toe) / 2]), EQUIPMENT.standHeight, 1e-5, `${side} at t=${t}`);
+        const rise = above(t, side, [0, sole, heel]) - above(t, side, [0, sole, toe]);
+        assert.closeTo(rise, (EQUIPMENT.bindingDelta * (toe - heel)) / EQUIPMENT.soleLength, 1e-5, `${side} at t=${t}`);
+      }
+    }
+  });
+
+  it('keeps the cuff canted forward of the shell sole by at least the forward lean', () => {
+    for (const t of TIMES) {
+      for (const side of SIDES) {
+        const shell = compose(matrixAt(t, SegmentKind.Boot, side), SHELL);
+        const cuff = compose(matrixAt(t, SegmentKind.Shin, side), translation([0, -SHIN_LENGTH, 0]));
+        const axis = between(transformPoint(cuff, [0, 0, 0]), transformPoint(cuff, [0, 1, 0]));
+        assert.isAtLeast(pitchIn(shell, axis), EQUIPMENT.forwardLean - 1e-4, `${side} at t=${t}`);
+      }
+    }
   });
 });

@@ -31,6 +31,13 @@ const round = (x: number): number => Math.round(x * 1e6) / 1e6;
 const vec = (v: Vector3): Vec3 => [round(v.x), round(v.y), round(v.z)];
 const perSide = (f: (side: LegSide) => Vec3): Record<LegSide, Vec3> => ({ [BodySide.Right]: f(BodySide.Right), [BodySide.Left]: f(BodySide.Left) });
 
+/** Midpoint of the two lower corners of one end of the ski box. */
+const baseOf = (end: ReadonlyArray<Vector3>): Vector3 => {
+  const [a, b] = end.toSorted((p, q) => p.y - q.y);
+  if (a === undefined || b === undefined) throw new Error('ski mesh is not a box');
+  return a.clone().add(b).multiplyScalar(0.5);
+};
+
 export const probeFixture = (model: AnatomyModel): ProbeFixture => {
   const raw = parseGearFit(model.root.getObjectByName('bones')?.userData['gear_fit']);
   if (raw === null) throw new Error('anatomy model has no gear fit');
@@ -43,14 +50,12 @@ export const probeFixture = (model: AnatomyModel): ProbeFixture => {
     const ski = mesh;
     if (ski === undefined) throw new Error('no ski mesh');
     const pos = ski.geometry.getAttribute('position');
-    const pts = Array.from({ length: pos.count }, (_, i) => new Vector3(pos.getX(i), pos.getY(i), pos.getZ(i)).applyMatrix4(ski.matrixWorld));
-    const low = Math.min(...pts.map((p) => p.y));
-    const base = pts.filter((p) => p.y < low + 1e-3);
-    const tip = base.reduce((a, b) => (b.z > a.z ? b : a));
-    const tail = base.reduce((a, b) => (b.z < a.z ? b : a));
-    const x = (tip.x + tail.x) / 2;
+    const all = Array.from({ length: pos.count }, (_, i) => new Vector3(pos.getX(i), pos.getY(i), pos.getZ(i)).applyMatrix4(ski.matrixWorld));
+    const pts = [...new Map(all.map((p) => [p.toArray().map((x) => x.toFixed(5)).join(), p])).values()];
+    // The rest-pose ski is pitched against the ramp, so take each end's lower corners.
+    const byZ = pts.toSorted((a, b) => a.z - b.z);
     const foot = `foot.${letter(side)}`;
-    return { tip: model.carried(foot, new Vector3(x, low, tip.z)), tail: model.carried(foot, new Vector3(x, low, tail.z)) };
+    return { tip: model.carried(foot, baseOf(byZ.slice(-4))), tail: model.carried(foot, baseOf(byZ.slice(0, 4))) };
   };
   const ends = { [BodySide.Right]: skiEnds(BodySide.Right), [BodySide.Left]: skiEnds(BodySide.Left) };
   const grips = {

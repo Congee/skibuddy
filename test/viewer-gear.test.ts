@@ -2,7 +2,8 @@ import { assert, describe, it } from '@effect/vitest';
 import { vi } from 'vitest';
 import { BufferGeometry, Vector3 } from 'three/webgpu';
 import { BodySide } from '../src/viewer/figure';
-import { createGear, cuffGeometry, poleGeometry, shellGeometry } from '../src/viewer/gear';
+import { EQUIPMENT, soleHeight } from '../src/viewer/equipment';
+import { bindingGeometry, createGear, cuffGeometry, poleGeometry, shellGeometry } from '../src/viewer/gear';
 import { CAPSULE_BOOT, bootFitFrom, coveredByBoot, parseGearFit } from '../src/viewer/gear-fit';
 import type { RawFit } from '../src/viewer/gear-fit';
 import { GearMode, isGearMode } from '../src/viewer/gear-mode';
@@ -94,7 +95,41 @@ describe('gear geometry', () => {
   });
 });
 
+/** Highest vertex of `g` on one side of the boot centre. */
+const topWhere = (g: BufferGeometry, keep: (z: number) => boolean): number => {
+  const pos = g.getAttribute('position');
+  let top = -Infinity;
+  for (let i = 0; i < pos.count; i++) if (keep(pos.getZ(i))) top = Math.max(top, pos.getY(i));
+  return top;
+};
+
+describe('binding geometry', () => {
+  const { stack, binding } = bindingGeometry(CAPSULE_BOOT, EQUIPMENT);
+  const end = (CAPSULE_BOOT.toe - CAPSULE_BOOT.heel) / 2;
+
+  it('stands on the ski top and carries the sole on risers at its stack height', () => {
+    stack.computeBoundingBox();
+    assert.closeTo(stack.boundingBox?.min.y ?? -1, 0, 1e-6);
+    assert.closeTo(topWhere(stack, (z) => z < 0), soleHeight(-end - 0.005, EQUIPMENT), 1e-6);
+    assert.closeTo(topWhere(stack, (z) => z > 0), soleHeight(end - 0.07, EQUIPMENT), 1e-6);
+  });
+
+  it('raises the heel piece well above the toe piece', () => {
+    assert.isAbove(topWhere(binding, (z) => z < 0), topWhere(binding, (z) => z > 0) + 0.02);
+  });
+});
+
 describe('createGear', () => {
+  it('keeps the soles and plates but hides the bindings when the gear is off', () => {
+    const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT });
+    gear.setMode(GearMode.Off);
+    for (const { mesh } of [...gear.soles, ...gear.plates]) assert.isTrue(mesh.visible);
+    for (const { mesh } of [...gear.bindings, ...gear.shells, ...gear.cuffs]) assert.isFalse(mesh.visible);
+    gear.setMode(GearMode.Solid);
+    for (const { mesh } of gear.bindings) assert.isTrue(mesh.visible);
+    gear.dispose();
+  });
+
   it('frees every geometry it builds but does not keep', () => {
     const disposed = new Set<number>();
     const spy = vi.spyOn(BufferGeometry.prototype, 'dispose').mockImplementation(function (this: BufferGeometry) {
@@ -104,7 +139,7 @@ describe('createGear', () => {
       const first = new BufferGeometry().id + 1;
       const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT });
       const end = new BufferGeometry().id;
-      const kept = new Set([...gear.shells, ...gear.soles, ...gear.cuffs, ...gear.poles].map((p) => p.mesh.geometry.id));
+      const kept = new Set([...gear.shells, ...gear.soles, ...gear.cuffs, ...gear.plates, ...gear.bindings, ...gear.poles].map((p) => p.mesh.geometry.id));
       const leaked = Array.from({ length: end - first }, (_, i) => first + i).filter((id) => !kept.has(id) && !disposed.has(id));
       assert.deepStrictEqual(leaked, []);
     } finally {

@@ -36,7 +36,8 @@ import { spreadCandidates } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
 import { levelColour, levelOn } from './level-colour';
 import type { Vec3 } from './mat4';
-import { BodySide, SEGMENTS, SegmentKind } from './figure';
+import { EQUIPMENT, shellInFoot } from './equipment';
+import { BodySide, CAPSULE_BINDING, SEGMENTS, SegmentKind } from './figure';
 import type { Segment } from './figure';
 import { createGear, placePole } from './gear';
 import type { LegSide } from './gear';
@@ -94,6 +95,8 @@ const pickAnchors = (points: Map<number, Array<SlotPoint>>): ReadonlyArray<Local
 
 /** The ankle in the shin's frame. */
 const ANKLE: Vec3 = SEGMENTS.find((s) => s.kind === SegmentKind.Boot)?.joint ?? [0, 0, 0];
+
+const SHELL = shellInFoot(CAPSULE_BOOT, EQUIPMENT);
 
 const segmentOf = (kind: SegmentKind, side: LegSide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 
@@ -210,7 +213,7 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
   scene.add(figure);
 
   const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT });
-  for (const part of [...gear.shells, ...gear.soles, ...gear.cuffs]) {
+  for (const part of [...gear.shells, ...gear.soles, ...gear.cuffs, ...gear.plates, ...gear.bindings]) {
     part.mesh.matrixAutoUpdate = false;
     scene.add(part.mesh);
   }
@@ -234,9 +237,11 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
       const pose = poseAt(t);
       const world = segmentMatrices(pose);
       world.forEach((m, k) => material.matrices[k]?.fromArray(m));
-      for (const { mesh, side } of [...gear.shells, ...gear.soles]) {
-        const boot = world[segmentOf(SegmentKind.Boot, side)];
-        if (boot !== undefined) mesh.matrix.fromArray(boot);
+      for (const [parts, local] of [[[...gear.shells, ...gear.soles], SHELL], [[...gear.plates, ...gear.bindings], CAPSULE_BINDING]] as const) {
+        for (const { mesh, side } of parts) {
+          const foot = world[segmentOf(SegmentKind.Boot, side)];
+          if (foot !== undefined) mesh.matrix.fromArray(compose(foot, local));
+        }
       }
       for (const { mesh, side } of gear.cuffs) {
         const shin = world[segmentOf(SegmentKind.Shin, side)];

@@ -22,7 +22,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import type { MuscleLevel } from '../content/activation';
 import type { AnchorPoint } from './anchor-projection';
-import type { Vec3 } from './mat4';
+import { EQUIPMENT, bindingInFoot, shellInFoot } from './equipment';
+import type { Mat4, Vec3 } from './mat4';
 import { BodySide } from './figure';
 import { createGear, placePole } from './gear';
 import type { Gear, LegSide } from './gear';
@@ -228,18 +229,28 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
     return found;
   };
   const fists: Array<{ readonly side: LegSide; readonly hand: Object3D; readonly foot: Object3D; readonly local: Vector3 }> = [];
-  // Geometry built in rest-pose world space, re-expressed in the bone's frame.
-  const attach = (part: string, side: LegSide, mesh: Object3D, origin: Vec3): void => {
+  // Geometry built about `origin` in rest-pose world space, in its `local` frame there, re-expressed in the bone's frame.
+  const attach = (part: string, side: LegSide, mesh: Object3D, origin: Vec3, local?: Mat4): void => {
     const parent = joint(part, side);
-    mesh.applyMatrix4(new Matrix4().copy(parent.matrixWorld).invert().multiply(new Matrix4().makeTranslation(...origin)));
+    const placed = new Matrix4().copy(parent.matrixWorld).invert().multiply(new Matrix4().makeTranslation(...origin));
+    if (local !== undefined) placed.multiply(new Matrix4().fromArray(local));
+    mesh.applyMatrix4(placed);
     parent.add(mesh);
   };
   // Boots ride the foot and shin bones; poles are placed from the fist every frame.
   const fitGear = (worn: Gear, sides: Readonly<Record<LegSide, Fitting>>): void => {
     for (const f of Object.values(sides)) {
-      for (const [parts, part] of [[worn.shells, 'foot'], [worn.soles, 'foot'], [worn.cuffs, 'shin']] as const) {
+      const shell = shellInFoot(f.fit, EQUIPMENT);
+      const mount = bindingInFoot(f.fit, EQUIPMENT);
+      for (const [parts, part, local] of [
+        [worn.shells, 'foot', shell],
+        [worn.soles, 'foot', shell],
+        [worn.plates, 'foot', mount],
+        [worn.bindings, 'foot', mount],
+        [worn.cuffs, 'shin', undefined],
+      ] as const) {
         const mesh = own(parts, f.side);
-        if (mesh !== undefined) attach(part, f.side, mesh, f.ankle);
+        if (mesh !== undefined) attach(part, f.side, mesh, f.ankle, local);
       }
       const hand = joint('hand', f.side);
       fists.push({ side: f.side, hand, foot: joint('foot', f.side), local: hand.worldToLocal(new Vector3(...f.grip)) });

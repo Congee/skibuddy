@@ -35,6 +35,9 @@ export const CAPSULE_BOOT: BootFit = {
 };
 
 const CUFF_TOP = 0.2;
+/** Shell room behind the heel bone and ahead of the toes; build_anatomy.py reads them from the pose track. */
+export const HEEL_ROOM = 0.025;
+export const TOE_ROOM = 0.03;
 /** Liner and shell around the bare foot and leg. */
 const SHELL_MARGIN = 0.014;
 const CUFF_MARGIN = 0.016;
@@ -85,8 +88,8 @@ export const bootFitFrom = (raw: RawFit): BootFit => {
   const [ax, ay, az] = raw.ankle;
   return {
     sole: raw.sole - ay,
-    heel: raw.heel - az - 0.025,
-    toe: raw.toe - az + 0.03,
+    heel: raw.heel - az - HEEL_ROOM,
+    toe: raw.toe - az + TOE_ROOM,
     centreX: mid(raw.footX) - ax,
     halfWidth: half(raw.footX) + SHELL_MARGIN,
     cuffX: mid(raw.shinX) - ax,

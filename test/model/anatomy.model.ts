@@ -4,8 +4,11 @@ import { SkinnedMesh, Vector3, Vector4 } from 'three';
 import { loadAnatomy } from '../../scripts/anatomy/model';
 import { probeFixture } from '../../scripts/anatomy/probe-fixture';
 import { anchorCandidates } from '../../scripts/anatomy/stamp-anchors';
+import { EQUIPMENT, bindingInFoot, shellInFoot, totalRamp } from '../../src/viewer/equipment';
 import { BodySide } from '../../src/viewer/figure';
-import { parseGearFit } from '../../src/viewer/gear-fit';
+import { bootFitFrom, parseGearFit } from '../../src/viewer/gear-fit';
+import { transformPoint } from '../../src/viewer/mat4';
+import type { Vec3 } from '../../src/viewer/mat4';
 import { POLE_TOUCH_T, poleDirection, poleTouchAt } from '../../src/viewer/pose';
 import fixture from '../anatomy-probe.json';
 
@@ -30,6 +33,49 @@ describe('anatomy model build outputs', () => {
       let owner: unknown;
       for (const [object, ref] of model.gltf.parser.associations) if (ref.nodes === index && 'userData' in object) owner = object.userData['anchor_vertices'];
       assert.deepStrictEqual(owner, vertices, `node ${index}`);
+    }
+  });
+});
+
+describe('anatomy boots on their bindings', () => {
+  it('stands each foot heel-up by the total ramp, its shell sole at stand height above the ski base', async () => {
+    const model = await loadAnatomy();
+    const raw = parseGearFit(model.root.getObjectByName('bones')?.userData['gear_fit']);
+    if (raw === null) throw new Error('no gear fit');
+    // Carried points are taken at the rest pose, before anything poses the model.
+    const sides = (
+      [
+        { side: BodySide.Right, letter: 'R', raw: raw.right },
+        { side: BodySide.Left, letter: 'L', raw: raw.left },
+      ] as const
+    ).map(({ side, letter, raw: r }) => {
+      const fit = bootFitFrom(r);
+      const at = (local: Vec3): (() => Vector3) => model.carried(`foot.${letter}`, new Vector3(r.ankle[0] + local[0], r.ankle[1] + local[1], r.ankle[2] + local[2]));
+      return {
+        side,
+        letter,
+        ankle: at([0, 0, 0]),
+        ahead: at([0, 0, 0.1]),
+        mount: at(transformPoint(bindingInFoot(fit, EQUIPMENT), [0, 0, 0])),
+        sole: at(transformPoint(shellInFoot(fit, EQUIPMENT), [0, fit.sole, (fit.heel + fit.toe) / 2])),
+      };
+    });
+    const probe = probeFixture(model);
+    for (const i of [0, 16, 48, 80]) {
+      const frame = probe.frames[i];
+      if (frame === undefined) throw new Error(`no probe frame ${i}`);
+      model.pose(i / probe.samples);
+      for (const { side, letter, ankle, ahead, mount, sole } of sides) {
+        const tail = new Vector3(...frame.tail[side]);
+        const along = new Vector3(...frame.tip[side]).sub(tail).normalize();
+        // Rest points lie in the ski's mid-plane, so their distance from the base line is their height.
+        const height = (p: Vector3): number => p.clone().sub(tail).cross(along).length();
+        const toe = ahead().sub(ankle()).normalize();
+        const label = `${letter} at sample ${i}`;
+        assert.closeTo(toe.angleTo(along), totalRamp(EQUIPMENT), 1e-3, `foot pitch, ${label}`);
+        assert.closeTo(height(mount()), EQUIPMENT.skiThickness, 5e-4, `binding on the ski, ${label}`);
+        assert.closeTo(height(sole()), EQUIPMENT.standHeight, 5e-4, `sole at stand height, ${label}`);
+      }
     }
   });
 });

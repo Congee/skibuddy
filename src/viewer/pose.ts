@@ -1,4 +1,5 @@
-import { BodySide, SEGMENTS, SegmentKind } from './figure';
+import { EQUIPMENT, shinAngle, totalRamp } from './equipment';
+import { BodySide, CAPSULE_BINDING, SEGMENTS, SegmentKind } from './figure';
 import type { Segment } from './figure';
 import { compose, identity, inverseRotation, rotationX, rotationY, rotationZ, transformPoint, translation } from './mat4';
 import type { Mat4, Vec3 } from './mat4';
@@ -25,7 +26,7 @@ export interface Pose {
 export interface LegPose {
   /** Thigh forward of vertical in the pelvis frame. */
   readonly hipFlex: number;
-  /** Shin forward of vertical; the knee flexes by hip + ankle. */
+  /** Shin forward of vertical, from the ski-base normal on a flat ski; the knee flexes by hip + ankle. */
   readonly ankleFlex: number;
   /** Ski pitch with the tail up. */
   readonly tailLift: number;
@@ -34,7 +35,11 @@ export interface LegPose {
 /** 0 at the transition (t = 0), 1 mid-turn (t = 0.5). */
 export const turnDepth = (t: number): number => 0.5 - 0.5 * Math.cos(2 * Math.PI * (((t % 1) + 1) % 1));
 
-/** A key pose; the inside leg's flex is solved so its ski tip stays on the snow. */
+/**
+ * A key pose. The shin follows the ankle's dorsiflexion plus the boot's ramp, the
+ * hip flexes to keep the hips over mid-foot, and the inside leg's flex is solved so
+ * its ski tip stays on the snow.
+ */
 interface Key {
   readonly t: number;
   readonly lean: number;
@@ -42,25 +47,25 @@ interface Key {
   readonly kneeAngulation: number;
   readonly trunkFlex: number;
   readonly trunkTurn: number;
-  readonly hipFlex: number;
-  readonly ankleFlex: number;
+  /** Shin forward of the foot's normal. */
+  readonly dorsiflexion: number;
   readonly insideTailLift: number;
 }
 
 type KeyValues = Omit<Key, 't'>;
 
-// Centred stance: hips over mid-foot, shins about as far forward as the torso.
+// Centred stance: shins about as far forward as the torso.
 const KEYS: ReadonlyArray<Key> = [
   // Transition: slightly taller, skis flat.
-  { t: 0, lean: 0, hipAngulation: 0, kneeAngulation: 0, trunkFlex: 0.55, trunkTurn: 0, hipFlex: 0.34, ankleFlex: 0.42, insideTailLift: 0 },
+  { t: 0, lean: 0, hipAngulation: 0, kneeAngulation: 0, trunkFlex: 0.55, trunkTurn: 0, dorsiflexion: 0.42, insideTailLift: 0 },
   // Initiation: weight already on the outside ski, inside tail starts to rise.
-  { t: 1 / 6, lean: 0.12, hipAngulation: 0.08, kneeAngulation: 0.03, trunkFlex: 0.6, trunkTurn: -0.06, hipFlex: 0.42, ankleFlex: 0.5, insideTailLift: 0.12 },
-  { t: 1 / 2, lean: 0.22, hipAngulation: 0.16, kneeAngulation: 0.06, trunkFlex: 0.62, trunkTurn: -0.15, hipFlex: 0.45, ankleFlex: 0.53, insideTailLift: 0.22 },
+  { t: 1 / 6, lean: 0.12, hipAngulation: 0.08, kneeAngulation: 0.03, trunkFlex: 0.6, trunkTurn: -0.06, dorsiflexion: 0.5, insideTailLift: 0.12 },
+  { t: 1 / 2, lean: 0.22, hipAngulation: 0.16, kneeAngulation: 0.06, trunkFlex: 0.62, trunkTurn: -0.15, dorsiflexion: 0.53, insideTailLift: 0.22 },
   // Finish: easing out of the turn; the inside ski comes back down by the transition.
-  { t: 5 / 6, lean: 0.12, hipAngulation: 0.1, kneeAngulation: 0.04, trunkFlex: 0.6, trunkTurn: -0.1, hipFlex: 0.42, ankleFlex: 0.5, insideTailLift: 0.08 },
+  { t: 5 / 6, lean: 0.12, hipAngulation: 0.1, kneeAngulation: 0.04, trunkFlex: 0.6, trunkTurn: -0.1, dorsiflexion: 0.5, insideTailLift: 0.08 },
 ];
 
-const FIELDS = ['lean', 'hipAngulation', 'kneeAngulation', 'trunkFlex', 'trunkTurn', 'hipFlex', 'ankleFlex', 'insideTailLift'] as const;
+const FIELDS = ['lean', 'hipAngulation', 'kneeAngulation', 'trunkFlex', 'trunkTurn', 'dorsiflexion', 'insideTailLift'] as const;
 
 /** Periodic cubic Hermite through the keys, with finite-difference tangents. */
 const keyValuesAt = (t: number): KeyValues => {
@@ -83,7 +88,7 @@ const keyValuesAt = (t: number): KeyValues => {
   const h10 = s ** 3 - 2 * s ** 2 + s;
   const h01 = -2 * s ** 3 + 3 * s ** 2;
   const h11 = s ** 3 - s ** 2;
-  const out: Record<(typeof FIELDS)[number], number> = { lean: 0, hipAngulation: 0, kneeAngulation: 0, trunkFlex: 0, trunkTurn: 0, hipFlex: 0, ankleFlex: 0, insideTailLift: 0 };
+  const out: Record<(typeof FIELDS)[number], number> = { lean: 0, hipAngulation: 0, kneeAngulation: 0, trunkFlex: 0, trunkTurn: 0, dorsiflexion: 0, insideTailLift: 0 };
   for (const f of FIELDS) {
     const m1 = (p2[f] - p0[f]) / (p2.time - p0.time);
     const m2 = (p3[f] - p1[f]) / (p3.time - p1.time);
@@ -118,23 +123,31 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
     case SegmentKind.Boot:
       // Set in the body frame by bootRotation instead.
       return identity();
+    case SegmentKind.Ski:
+      // Takes the foot's ramp back out, so the ski lies as bootRotation sets it.
+      return rotationX(-RAMP);
     default:
       return identity();
   }
 };
 
+const RAMP = totalRamp(EQUIPMENT);
+
 /**
- * Boot orientation before the lean: after it, both skis point straight ahead on
- * the same edge angle and only the inside tail pitches up. Mirrored in build_anatomy.py.
+ * Foot orientation before the lean: after it, both skis point straight ahead on
+ * the same edge angle and only the inside tail pitches up; the foot sits heel-up
+ * on its ski by the total ramp. Mirrored in build_anatomy.py.
  */
 const bootRotation = (segment: Segment, pose: Pose): Mat4 =>
-  compose(rotationZ(pose.lean), rotationX(legPose(pose, segment.side).tailLift), rotationZ(-pose.lean - pose.hipAngulation - pose.kneeAngulation));
+  compose(rotationZ(pose.lean), rotationX(legPose(pose, segment.side).tailLift), rotationZ(-pose.lean - pose.hipAngulation - pose.kneeAngulation), rotationX(RAMP));
 
 /** Share of the torso's pitch the neck takes back out. */
 export const HEAD_LIFT = 0.6;
 
 /** Height of the ski base below its segment origin. */
-const SKI_BASE = -0.01;
+const SKI_BASE = -EQUIPMENT.skiThickness / 2;
+/** Mid-foot in the foot's frame: the binding's centre on the ski's top. */
+export const MID_FOOT: Vec3 = transformPoint(CAPSULE_BINDING, [0, 0, 0]);
 export const SKI_TIP: Vec3 = [0, SKI_BASE, 0.85];
 
 /**
@@ -159,11 +172,18 @@ const skiIndex = (side: BodySide): number => SEGMENTS.findIndex((s) => s.kind ==
 
 const insideTipHeight = (pose: Pose): number => transformPoint(segmentMatrices(pose)[skiIndex(BodySide.Left)] ?? identity(), SKI_TIP)[1];
 
-/** The exact pose, solved by bisection; costs about 45 skeleton passes, so frames read `poseAt`. */
+/** How far the hips sit ahead of the outside mid-foot. */
+const hipsAhead = (pose: Pose): number => {
+  const world = segmentMatrices(pose);
+  const foot = world[SEGMENTS.findIndex((s) => s.kind === SegmentKind.Boot && s.side === BodySide.Right)] ?? identity();
+  return transformPoint(world[0] ?? identity(), [0, 0, 0])[2] - transformPoint(foot, MID_FOOT)[2];
+};
+
+/** The exact pose, solved by bisection; costs about 70 skeleton passes, so frames read `poseAt`. */
 export const solvePose = (t: number): Pose => {
   const k = keyValuesAt(t);
-  const outside: LegPose = { hipFlex: k.hipFlex, ankleFlex: k.ankleFlex, tailLift: 0 };
-  const withFlex = (extra: number): Pose => ({
+  const ankleFlex = shinAngle(k.dorsiflexion, EQUIPMENT);
+  const base = (hipFlex: number, extra: number): Pose => ({
     lean: k.lean,
     hipAngulation: k.hipAngulation,
     kneeAngulation: k.kneeAngulation,
@@ -171,9 +191,19 @@ export const solvePose = (t: number): Pose => {
     trunkTurn: k.trunkTurn,
     poleTouch: poleTouchAt(t),
     insideReach: 0,
-    outside,
-    inside: { hipFlex: k.hipFlex + extra, ankleFlex: k.ankleFlex + 0.6 * extra, tailLift: Math.max(0, k.insideTailLift) },
+    outside: { hipFlex, ankleFlex, tailLift: 0 },
+    inside: { hipFlex: hipFlex + extra, ankleFlex: ankleFlex + 0.6 * extra, tailLift: Math.max(0, k.insideTailLift) },
   });
+  // Flex the hips until they sit over the outside mid-foot; more flex moves them back.
+  let back = 0;
+  let forward = 1.2;
+  for (let i = 0; i < 24; i++) {
+    const mid = (back + forward) / 2;
+    if (hipsAhead(base(mid, 0)) > 0) back = mid;
+    else forward = mid;
+  }
+  const hipFlex = (back + forward) / 2;
+  const withFlex = (extra: number): Pose => base(hipFlex, extra);
   // Bend the inside leg until its ski tip just touches the snow; the tip rises with flex.
   let lo = -0.3;
   let hi = 1.2;
