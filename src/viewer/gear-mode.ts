@@ -1,4 +1,4 @@
-/** How the boots and poles draw; kept free of three so the UI can import it eagerly. */
+/** How the boots, gloves and poles draw; kept free of three so the UI can import it eagerly. */
 export const GearMode = { Translucent: 'translucent', Solid: 'solid', Off: 'off' } as const;
 export type GearMode = (typeof GearMode)[keyof typeof GearMode];
 
