@@ -1,4 +1,4 @@
-import { PHASES, Side } from '../../content/schema';
+import { Intensity, PHASES, Side, levelAt } from '../../content/schema';
 import type { Activation } from '../../content/schema';
 import type { MuscleAnchor } from '../../viewer/anchors';
 import type { PinInput } from './pin-layout';
@@ -12,10 +12,10 @@ const anchorFor = (a: Activation, anchors: ReadonlyArray<MuscleAnchor>): MuscleA
   return visible.find((x) => x.side === Side.Outside) ?? visible[0];
 };
 
-const works = (a: Activation): boolean => PHASES.some((p) => a.intensity[p] > 0);
+const works = (a: Activation, i: Intensity): boolean => PHASES.some((p) => levelAt(a.intensity[p], i) > 0);
 
 /**
- * Muscles that work at some point in the turn and have a visible anchor, ready
+ * Muscles that work at some point in the turn at `intensity` and have a visible anchor, ready
  * for layout. `order` is the board's steady order, so pins keep their priority through the turn;
  * the `focused` pin outranks them all, so it shows even outside the top pins.
  */
@@ -24,11 +24,12 @@ export const pinInputs = (
   anchors: ReadonlyArray<MuscleAnchor>,
   heights: ReadonlyMap<string, number> = new Map(),
   focused: string | null = null,
+  intensity: Intensity = Intensity.Moderate,
 ): ReadonlyArray<PinInput> =>
   order.flatMap((a, rank) => {
     const key = pinKey(a);
     const focus = key === focused;
-    if (!works(a) && !focus) return [];
+    if (!works(a, intensity) && !focus) return [];
     const anchor = anchorFor(a, anchors);
     if (anchor === undefined) return [];
     const height = heights.get(key);

@@ -1,5 +1,5 @@
-import { PHASES } from './schema';
-import type { Activation, PhaseIntensity } from './schema';
+import { INTENSITIES, Intensity, PHASES, phaseContraction, phaseIntensity } from './schema';
+import type { Activation, ActivationIntensity, PhaseContraction, PhaseIntensity } from './schema';
 
 export const Effort = { Resting: 'Resting', Light: 'Light', Working: 'Working', Hard: 'Hard' } as const;
 export type Effort = (typeof Effort)[keyof typeof Effort];
@@ -14,12 +14,19 @@ export const PHASE_CENTRES: ReadonlyArray<number> = [1 / 6, 1 / 2, 5 / 6];
 
 const smoothstep = (u: number): number => u * u * (3 - 2 * u);
 
+/** An activation's effort per phase at setting `i`. */
+export const effortsFor = (a: Activation, i: Intensity): PhaseIntensity => phaseIntensity(a.intensity, i);
+
+/** An activation's contraction per phase at setting `i`. */
+export const contractionsFor = (a: Activation, i: Intensity): PhaseContraction => phaseContraction(a.contraction, i);
+
 /**
- * Effort at `t` in [0, 1) through one turn, smoothstep-blended between phase
+ * Effort at `t` in [0, 1) through one turn at `setting`, smoothstep-blended between phase
  * centres and wrapping from finish back to initiation. For display only.
  */
-export const effortAt = (intensity: PhaseIntensity, t: number): number => {
-  const values = PHASES.map((p) => intensity[p]);
+export const effortAt = (intensity: ActivationIntensity, t: number, setting: Intensity = Intensity.Moderate): number => {
+  const resolved = phaseIntensity(intensity, setting);
+  const values = PHASES.map((p) => resolved[p]);
   const n = values.length;
   const first = PHASE_CENTRES[0] ?? 0;
   const wrapped = ((t % 1) + 1) % 1;
@@ -65,10 +72,12 @@ export const effortColour = (v: number, ramp: EffortRamp): string => {
   return `rgb(${c.join(', ')})`;
 };
 
-const peak = (a: Activation): number => Math.max(...PHASES.map((p) => a.intensity[p]));
-const sum = (a: Activation): number => PHASES.reduce((s, p) => s + a.intensity[p], 0);
+const allLevels = (a: Activation): ReadonlyArray<number> =>
+  INTENSITIES.flatMap((i) => PHASES.map((p) => effortsFor(a, i)[p]));
+const peak = (a: Activation): number => Math.max(...allLevels(a));
+const sum = (a: Activation): number => allLevels(a).reduce((s, v) => s + v, 0);
 
-/** A fixed order for a drill: peak across the turn, then total, then content order. */
+/** A fixed order for a drill, the same at every setting: peak across the turn and settings, then total, then content order. */
 export const steadyOrder = (activations: ReadonlyArray<Activation>): ReadonlyArray<Activation> =>
   activations
     .map((activation, index) => ({ activation, index }))

@@ -1,9 +1,12 @@
 // Checks against the real baked model; run with `bun run test:model` after scripts/anatomy/build.sh.
 import { assert, describe, it } from '@effect/vitest';
 import { SkinnedMesh, Vector3, Vector4 } from 'three';
+import { drillScenarios } from '../../scripts/anatomy/drill-scenarios';
 import { loadAnatomy } from '../../scripts/anatomy/model';
 import { probeFixture } from '../../scripts/anatomy/probe-fixture';
 import { anchorCandidates } from '../../scripts/anatomy/stamp-anchors';
+import { INTENSITIES } from '../../src/content/schema';
+import { turnClipName } from '../../src/viewer/anatomy-names';
 import { EQUIPMENT, bindingInFoot, shellInFoot, totalRamp } from '../../src/viewer/equipment';
 import { BodySide } from '../../src/viewer/figure';
 import { bootFitFrom, parseGearFit } from '../../src/viewer/gear-fit';
@@ -17,12 +20,19 @@ const flat = (v: unknown): ReadonlyArray<number> => (typeof v === 'number' ? [v]
 describe('anatomy model build outputs', () => {
   it('matches the probe fixture the unit tests read', async () => {
     const fresh = probeFixture(await loadAnatomy());
+    assert.deepStrictEqual(fresh.scenarios, fixture.scenarios);
+    assert.deepStrictEqual(fresh.scenarios, drillScenarios());
     assert.strictEqual(fresh.frames.length, fixture.frames.length);
     // Rounded to micrometres by another JS engine, so the last digit may differ.
     const a = flat(fresh.frames);
     const b = flat(fixture.frames);
     assert.strictEqual(a.length, b.length);
     a.forEach((x, i) => assert.closeTo(x, b[i] ?? Number.NaN, 2e-6, `value ${i}`));
+  });
+
+  it('carries a turn clip per intensity', async () => {
+    const names = (await loadAnatomy()).gltf.animations.map((a) => a.name);
+    for (const i of INTENSITIES) assert.include(names, turnClipName(i), i);
   });
 
   it('carries the anchor candidates the viewer reads', async () => {

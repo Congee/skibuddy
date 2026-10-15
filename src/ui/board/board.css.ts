@@ -51,6 +51,13 @@ export const meta = style({
 
 export const summary = style({ marginTop: 8, maxWidth: '62ch', fontSize: 16, color: vars.color.plateInk });
 
+/** The intensity setting in plain words, under the terrain line. */
+export const scenario = style({ marginTop: 6, maxWidth: '62ch', fontSize: 14, color: vars.color.plateInk2 });
+
+export const drillSources = style({ marginTop: 8, maxWidth: '62ch', fontSize: 13, color: vars.color.plateInk2 });
+
+export const cautions = style({ marginTop: 8, paddingLeft: '1.2em', maxWidth: '62ch', fontSize: 15, color: vars.color.plateInk });
+
 /** The summary plate when it follows the slats on a phone. */
 export const plateAfter = style({ marginTop: 4, paddingTop: 4 });
 
@@ -114,6 +121,21 @@ export const headPhase = recipe({
       false: {},
     },
   },
+});
+
+export const group = style({ marginTop: 4 });
+
+/** A body-part label on its own plate strip above its slats. */
+export const groupTitle = style({
+  padding: '6px 10px',
+  background: vars.color.plate,
+  color: vars.color.plateInk2,
+  fontSize: 13,
+  fontWeight: 700,
+  fontStretch: '85%',
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  borderRadius: 2,
 });
 
 export const slats = style({ listStyle: 'none', margin: '4px 0 0', padding: 0, display: 'grid', gap: 4 });
@@ -411,3 +433,11 @@ export const assoc = slotRecipe({
 });
 
 globalStyle(`${assoc.trigger()} svg, ${assoc.link()} svg`, { width: 12, height: 12, flex: 'none' });
+
+export const structuresTitle = style([groupTitle, { padding: 0 }]);
+
+export const structures = style({ listStyle: 'none', margin: '6px 0 0', padding: 0, display: 'grid', gap: 10, maxWidth: '70ch' });
+
+export const structure = style({ display: 'grid', gap: 2 });
+
+export const structurePhases = style({ color: vars.color.plateInk2 });

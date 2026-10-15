@@ -1,6 +1,31 @@
 id: stork-turns
 name: Stork turns
-movement: outside-ski-turn
-summary: Linked large turns balanced on the outside ski, with the inside ski's tail held off the snow through the middle of each turn.
-terrain: Easy, groomed slopes
+movement: stork-turn
+summary: Linked round turns on easy to moderate terrain, balanced on the outside ski. After a pole touch, the inside ski's tail lifts through the middle of initiation while its tip stays on the snow, and it comes back down through the middle of the finish. A tail that touches early shows balance drifting inside or back.
+# Sources back smooth, firm, not icy snow; "slush or ruts" is our own wording.
+terrain: Easy to moderate groomed slopes with smooth, edgeable snow, dynamic on a steeper blue; not ice, slush or ruts
+# Gentle is brushed, moderate brushed to carved, dynamic mostly carved. Loads follow Lind & Sanders eq 4.9, p 103,
+# peaking below the fall line. Speeds and radii are our inference, well under race levels.
+scenarios:
+  gentle: { speed_mps: 6, radius_m: 10, slope_deg: 8 }
+  moderate: { speed_mps: 8, radius_m: 12, slope_deg: 12 }
+  dynamic: { speed_mps: 10, radius_m: 14, slope_deg: 15 }
+equipment: Efforts assume recreational carving skis and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. More lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee; a deeper sidecut tightens the turn.
+cautions:
+  - Never land the lifted ski in a wedge; set it down parallel, at hip width, on its little-toe edge.
+  - Stop the drill when tired; a tired set-down is the risky one.
+sources:
+  - { source: lind-sanders-2004, pages: "25, 53, 67, 103" }
+  - { source: lemaster-2010, pages: "32-33, 131-132, 164-167" }
+  - posch-2025
+  - ruedl-2022
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: whole load on one leg }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping }
+  - { primitive: leg-rotation, modifier: small }
+  - { primitive: counter, modifier: slight }
+  - { primitive: hip-angulation, modifier: inside half of the pelvis unsupported }
+  - { primitive: inside-leg-lift, modifier: tail only, tip stays on the snow }
+  - { primitive: pole-touch, modifier: touch just before the lift }
 reviewed_by: []

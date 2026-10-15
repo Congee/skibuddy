@@ -1,0 +1,89 @@
+# Movement patterns drills are built from (docs/research/biomechanics.md 0.4).
+# A movement shows a primitive when every row listed here moves (is not held neutral) in some phase.
+- id: stance-leg-edge-hold
+  code: P1
+  name: Stance-leg edge hold
+  summary: The outside leg holds the ski on edge under load, flexed at ankle, knee and hip.
+  rows:
+    - { dof: ankle.inversion, side: outside }
+    - { dof: knee.flexion, side: outside }
+    - { dof: hip.flexion, side: outside }
+    - { dof: hip.abduction, side: outside }
+- id: inside-leg-shortening
+  code: P2
+  name: Inside-leg shortening
+  summary: The inside leg flexes more than the outside one while it stays loaded, so both skis can tip together.
+  rows:
+    - { dof: knee.flexion, side: inside }
+    - { dof: hip.flexion, side: inside }
+- id: ankle-flexion
+  code: P3
+  name: Ankle flexion into the tongue
+  summary: The shins move forward into the boot tongues, actively pulled by the muscles at the front of the shin.
+  rows:
+    - { dof: ankle.flexion, side: both }
+- id: extension-transition
+  code: P4
+  name: Transition by extension
+  summary: The legs lengthen through the edge change.
+  rows:
+    - { dof: knee.flexion, side: both }
+    - { dof: hip.flexion, side: both }
+- id: flexion-transition
+  code: P5
+  name: Transition by flexion
+  summary: The legs shorten through the edge change and the body crosses over the skis.
+  rows:
+    - { dof: knee.flexion, side: both }
+    - { dof: hip.flexion, side: both }
+- id: tipping
+  code: P6
+  name: Tipping and edge release
+  summary: The feet and lower legs roll the skis off one set of edges and onto the next.
+  rows:
+    - { dof: ankle.inversion, side: both }
+- id: leg-rotation
+  code: P7
+  name: Leg rotation
+  summary: The thighs turn in the hip sockets under a quiet pelvis to steer the skis.
+  rows:
+    - { dof: hip.rotation, side: both }
+- id: counter
+  code: P8
+  name: Counter
+  summary: The pelvis and upper body face more toward the outside of the turn than the skis do.
+  rows:
+    - { dof: pelvis.rotation, side: trunk }
+    - { dof: thoracic.rotation, side: trunk }
+- id: hip-angulation
+  code: P9
+  name: Hip angulation
+  summary: The pelvis and spine tip toward the outside ski over the stance hip while the legs tilt in.
+  rows:
+    - { dof: hip.abduction, side: outside }
+    - { dof: pelvis.list, side: trunk }
+    - { dof: lumbar.side-bend, side: trunk }
+    - { dof: thoracic.side-bend, side: trunk }
+- id: inside-leg-lift
+  code: P10
+  name: Inside-leg lift
+  summary: The unloaded inside leg is drawn up at hip and knee and held off the snow.
+  rows:
+    - { dof: hip.flexion, side: inside }
+    - { dof: knee.flexion, side: inside }
+- id: edge-set
+  code: P11
+  name: Edge set
+  summary: A sudden edge and flexion under a sharp rise in load, to brake or to rebound.
+  rows:
+    - { dof: ankle.inversion, side: outside }
+    - { dof: knee.flexion, side: outside }
+    - { dof: hip.flexion, side: outside }
+- id: pole-touch
+  code: P12
+  name: Pole swing and touch
+  summary: The inside arm swings the pole forward and touches it to time the turn.
+  rows:
+    - { dof: shoulder.flexion, side: inside }
+    - { dof: elbow.flexion, side: inside }
+    - { dof: wrist.grip, side: inside }

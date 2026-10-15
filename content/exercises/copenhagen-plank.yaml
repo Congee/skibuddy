@@ -1,6 +1,6 @@
 id: copenhagen-plank
 name: Copenhagen plank
-targets: [{ muscle: adductors, contraction: isometric }]
+targets: [{ muscle: adductors, contraction: isometric }, { muscle: adductor-magnus, contraction: isometric }]
 single_leg: false
 matches_on_snow: Frontal-plane control with the abductors
 easier: Knee on the bench

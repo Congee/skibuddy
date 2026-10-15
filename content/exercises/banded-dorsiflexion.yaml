@@ -1,0 +1,21 @@
+id: banded-dorsiflexion
+name: Banded ankle mobilisation, knee to wall
+targets:
+  - { muscle: soleus, mobilisation: true }
+single_leg: true
+matches_on_snow: Room to flex the ankle so the shin can reach the tongue
+easier: No band, foot closer to the wall
+harder: Foot further from the wall
+cautions: [Pinching at the front of the ankle - ease off the range]
+dosing:
+  per_side: true
+  ranges:
+    - goal: control
+      sets: { min: 3, max: 4 }
+      reps: { min: 15, max: 20 }
+      rest_seconds: { min: 60, max: 120 }
+      note: The band sits low over the front of the ankle and pulls backward, gliding the ankle bone back while the knee drives forward over the toes, heel down. It mobilises; it never pulls the shin bone back.
+      basis: A racing book uses it as active recovery between squat sets in a sample block; its tables follow a general periodisation text, not a ski trial.
+      sources: [{ source: pritchard-cross-2023, pages: 74 }]
+  suggested: { goal: control, sets: 3, reps: 15 }
+reviewed_by: []

@@ -339,7 +339,7 @@ Effort is one continuous scale from 0 to 3. Colour interpolates linearly in sRGB
 
 **Single column at 960px and below.** The stage stops being sticky and the board follows the figure.
 
-**Phone at 600px and below.** Page padding goes to zero, the figure field runs full-bleed at 45vh (minimum 300px) with square corners, and the order is: bar (wordmark, drill picker and the theme icon menu; the disclaimer moves to the footer only), figure with pins, caption, play button and lift line, the two switches spread full width and the Gear control on its own full-width row, sticky phase tabs (Initiation, Shaping, Finish) pinned to the top on the snow ground, then the board. On the board the drill plate shows only the name and terrain; the slats come next so a slat reaches the first screen, and the summary plate with association names follows the slats. Then the legend, the review note, the gym board and the footer. The boards sit 8px in from the screen edge.
+**Phone at 600px and below.** Page padding goes to zero, the figure field runs full-bleed at 45vh (minimum 300px) with square corners, and the order is: bar (wordmark, drill picker and the theme icon menu; the disclaimer moves to the footer only), figure with pins, caption, play button and lift line, the two switches spread full width, then the Intensity and Gear controls each on its own full-width row, sticky phase tabs (Initiation, Shaping, Finish) pinned to the top on the snow ground, then the board. On the board the drill plate shows only the name, terrain and intensity line; the slats come next so a slat reaches the first screen, and the summary plate with association names follows the slats. Then the legend, the review note, the gym board and the footer. The boards sit 8px in from the screen edge.
 
 **The board grid.** The column heads and every slat share one grid: name (min 13ch, 1fr), evidence (96px, the stamp above the source keys), strip (2.6fr), caret (14px), with a 12px column gap. The head row's title ("Effort through the turn") spans name and evidence; the three phase labels sit over the strip column, a third each. Slats are at least 58px tall with 8px by 10px padding.
 
@@ -399,7 +399,7 @@ Borders are 1.5 to 2px solid ink, never hairline greys, except the dashed opinio
 ### Lift Line (scrubber)
 - A 2px ink cable with four ink towers at the phase bounds (0, 1/3, 2/3, 1). The travelled range is a 4px orange line. The playhead is a chairlift chair (32 by 48px) with an orange seat; it shows a 3px focus ring when focused by keyboard. The cable is 52px tall to touch. Dragging it pauses playback.
 - **Play button:** 52px circle, 2px ink border, transparent; hover fills ink with ground-coloured icon. Named by a tooltip.
-- **Controls row:** the phase stops, then the "Names on figure" and "Skeleton" switches and the Gear control, wrapping with a 16px gap.
+- **Controls row:** the phase stops, then the "Names on figure" and "Skeleton" switches, the Intensity control and the Gear control, wrapping with a 16px gap.
 
 ### Phase Stops and Phase Tabs (segmented, Ark UI radio group)
 - **Stops** (desktop, under the lift line): uppercase label text in Ink 3; hover and checked go to ink, checked at 900 with a 3px orange underline.
@@ -411,6 +411,10 @@ Borders are 1.5 to 2px solid ink, never hairline greys, except the dashed opinio
 ### Gear Control (segmented)
 - A "Gear" label, then three joined cells, Translucent (default), Solid and Off, inside a 2px ink border with 3px corners and divided by 1.5px Ink 2 rules. Cells are at least 40px tall (48px on phone, full width), 13px uppercase 700 in Ink 2; hover goes to ink; checked fills ink with ground text at 900.
 - The gear is boots and poles; the bare hands close round the pole grips. Translucent is a nearly clear face with a fresnel edge (pale blue on snow, near white on the dark field) so the shin muscles stay readable; Solid is opaque navy shell (figure-ski) with near-black trim (figure-gear-trim); Off hides everything but the boot sole, so the foot still stands on the ski.
+
+### Intensity Control (segmented)
+- An "Intensity" label, then three joined cells, Gentle, Moderate (default) and Dynamic, styled exactly as the Gear Control; on a phone it takes its own full-width row above Gear. The choice persists like the theme, and `?intensity=` sets the starting value.
+- A change redraws each strip once and updates the board's effort words, the pins and the figure; nothing animates. The drill plate shows the setting in plain words under the terrain line, in Plate Ink 2 at 14px: speed, turn radius, slope and the peak load on the outside leg.
 
 ### Select (drill picker)
 - **Trigger:** 44px tall, 1.5px Ink 2 border, 3px corners, 700 weight, chevron that rotates when open. Hover and open: ink border on Well.

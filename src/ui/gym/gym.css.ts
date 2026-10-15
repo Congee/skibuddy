@@ -45,6 +45,8 @@ export const oneLeg = style({
 
 export const onSnow = style({ color: vars.color.ink2 });
 
+export const sources = style({ marginTop: 4, fontSize: 13, color: vars.color.ink3 });
+
 export const versions = style({
   display: 'grid',
   gridTemplateColumns: 'auto minmax(0, 1fr)',

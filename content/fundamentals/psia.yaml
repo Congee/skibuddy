@@ -1,0 +1,25 @@
+# PSIA's five Alpine Skiing Fundamentals; names are our paraphrases, the wording is in the standards at url.
+# What each requires of a drill is our reading.
+association: psia
+url: https://thesnowpros.org/wp-content/uploads/2025/11/PSIA_Alpine_Standards100225v5.pdf
+fundamentals:
+  - id: fore-aft
+    name: Fore-aft balance over the feet, with pressure along the ski
+    requires: [ankle-flexion]
+    basis: Pressure moves along the ski mainly through the shin's angle in the boot
+  - id: ski-to-ski
+    name: Pressure between the skis, mostly to the outside ski
+    requires: [stance-leg-edge-hold, { any_of: [inside-leg-shortening, inside-leg-lift] }]
+    basis: The outside leg takes the load while the inside leg shortens or lifts
+  - id: edge-angles
+    name: Edge angle from leaning in and angulating
+    requires: [tipping, hip-angulation]
+    basis: Edges are tipped from the feet and held with angulation over the stance hip
+  - id: leg-rotation
+    name: Turning the skis with the legs, under a quiet upper body
+    requires: [leg-rotation, counter]
+    basis: The legs turn in the hip sockets while the upper body faces outside the turn
+  - id: pressure-magnitude
+    name: How much pressure builds between ski and snow
+    requires: [{ any_of: [extension-transition, flexion-transition, edge-set] }]
+    basis: Pressure is managed by lengthening or shortening the legs, or by a sharp edge set

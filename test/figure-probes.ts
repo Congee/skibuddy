@@ -1,3 +1,4 @@
+import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
 import type { ProbeFrame } from '../scripts/anatomy/probe-fixture';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
@@ -24,10 +25,12 @@ const segment = (world: ReadonlyArray<Mat4>, kind: SegmentKind, side: LegSide): 
   return m;
 };
 
+const MODERATE = drillScenarios().moderate;
+
 export const capsuleProbe: FigureProbe = {
   name: 'capsule',
   at: (t) => {
-    const world = segmentMatrices(poseAt(t));
+    const world = segmentMatrices(poseAt(t, MODERATE));
     return {
       grip: (side) => transformPoint(segment(world, SegmentKind.Forearm, side), CAPSULE_GRIP),
       ankle: (side) => transformPoint(segment(world, SegmentKind.Boot, side), [0, 0, 0]),

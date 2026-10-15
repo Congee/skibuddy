@@ -5,6 +5,7 @@ import type { Segment } from '../src/viewer/figure';
 import type { Vec3 } from '../src/viewer/mat4';
 import { fillSlotLevels, makeSlotTable, musclePartAt } from '../src/viewer/slots';
 
+/** The coarse regions the capsule draws; parts light them through their parents. */
 const MUSCLES = [
   'quadriceps',
   'hamstrings',
@@ -12,13 +13,14 @@ const MUSCLES = [
   'gluteus-maximus',
   'gluteus-medius',
   'deep-hip-rotators',
-  'hip-flexors',
+  'iliopsoas',
   'tibialis-anterior',
   'calf',
   'peroneals',
   'obliques',
   'erector-spinae',
 ];
+const LEAVES = ['adductors', 'gluteus-maximus', 'gluteus-medius', 'deep-hip-rotators', 'tibialis-anterior', 'peroneals', 'erector-spinae'];
 
 const segment = (kind: SegmentKind, side: BodySide): Segment => {
   const s = SEGMENTS.find((x) => x.kind === kind && x.side === side);
@@ -62,7 +64,7 @@ describe('musclePartAt', () => {
     assert.isNull(musclePartAt(ski, ski.shape.center));
   });
 
-  it('places every content muscle somewhere on both sides', () => {
+  it('places every capsule region somewhere on both sides', () => {
     const found = new Set<string>();
     for (const s of SEGMENTS) {
       for (let a = 0; a < 32; a++) {
@@ -81,14 +83,21 @@ describe('musclePartAt', () => {
 });
 
 describe('slot table', () => {
-  const table = makeSlotTable(MUSCLES);
+  const table = makeSlotTable(LEAVES);
 
   it('gives each (muscle, side) its own non-zero slot', () => {
-    const slots = MUSCLES.flatMap((m) => [table.slotOf(m, Side.Outside), table.slotOf(m, Side.Inside)]);
-    assert.strictEqual(new Set(slots).size, MUSCLES.length * 2);
+    const slots = LEAVES.flatMap((m) => [table.slotOf(m, Side.Outside), table.slotOf(m, Side.Inside)]);
+    assert.strictEqual(new Set(slots).size, LEAVES.length * 2);
     assert.isFalse(slots.includes(0));
-    assert.strictEqual(table.size, MUSCLES.length * 2 + 1);
+    assert.strictEqual(table.size, LEAVES.length * 2 + 1);
     assert.isTrue(slots.every((s) => s < table.size));
+  });
+
+  it('adds slots for the parts and parents of the muscles it is given', () => {
+    const parts = makeSlotTable(['quadriceps', 'soleus']);
+    for (const m of ['quadriceps', 'vasti', 'vastus-medialis', 'rectus-femoris', 'soleus', 'calf']) assert.isAbove(parts.slotOf(m, Side.Inside), 0, m);
+    assert.strictEqual(parts.slotOf('gastrocnemius', Side.Inside), 0);
+    assert.sameMembers([...parts.slotsOf('vasti', Side.Outside)], [parts.slotOf('vasti', Side.Outside), parts.slotOf('vastus-medialis', Side.Outside)]);
   });
 
   it('returns slot 0 for unknown muscles', () => {
@@ -96,19 +105,36 @@ describe('slot table', () => {
   });
 
   it('fills levels per side and lights both sides for "both"', () => {
-    const out = Array.from({ length: table.size }, () => 0.9);
+    const full = makeSlotTable(MUSCLES);
+    const out = Array.from({ length: full.size }, () => 0.9);
     fillSlotLevels(
-      table,
+      full,
       [
         { muscle: 'quadriceps', side: Side.Outside, level: 0.5 },
         { muscle: 'obliques', side: Side.Both, level: 0.25 },
       ],
       out,
     );
-    assert.strictEqual(out[table.slotOf('quadriceps', Side.Outside)], 0.5);
-    assert.strictEqual(out[table.slotOf('quadriceps', Side.Inside)], 0);
-    assert.strictEqual(out[table.slotOf('obliques', Side.Outside)], 0.25);
-    assert.strictEqual(out[table.slotOf('obliques', Side.Inside)], 0.25);
+    assert.strictEqual(out[full.slotOf('quadriceps', Side.Outside)], 0.5);
+    assert.strictEqual(out[full.slotOf('quadriceps', Side.Inside)], 0);
+    assert.strictEqual(out[full.slotOf('obliques', Side.Outside)], 0.25);
+    assert.strictEqual(out[full.slotOf('obliques', Side.Inside)], 0.25);
     assert.strictEqual(out[0], 0);
+  });
+
+  it('lights the parts of a parent, and the parents of a part only when asked', () => {
+    const parts = makeSlotTable(['quadriceps', 'calf']);
+    const out = Array.from({ length: parts.size }, () => 0);
+    const levels = [
+      { muscle: 'quadriceps', side: Side.Outside, level: 0.5 },
+      { muscle: 'soleus', side: Side.Inside, level: 0.75 },
+    ];
+    fillSlotLevels(parts, levels, out);
+    assert.strictEqual(out[parts.slotOf('vastus-medialis', Side.Outside)], 0.5);
+    assert.strictEqual(out[parts.slotOf('soleus', Side.Inside)], 0.75);
+    assert.strictEqual(out[parts.slotOf('calf', Side.Inside)], 0);
+    fillSlotLevels(parts, levels, out, true);
+    assert.strictEqual(out[parts.slotOf('calf', Side.Inside)], 0.75);
+    assert.strictEqual(out[parts.slotOf('gastrocnemius', Side.Inside)], 0);
   });
 });

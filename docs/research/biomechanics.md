@@ -423,11 +423,12 @@ normal turns. Medium for the rest.
    adduction at the hip.
 6. **Hips level, inside half up.** Association descriptions ask for a "strong inside half" and for the
    inside half of the body to be slightly raised and forward (psia-c-medium-radius-carved,
-   psia-c-sideslip-fall-line). Mechanically, raising or holding the inside half of the pelvis is:
-   - pelvis-on-femur abduction at the **outside** hip (gluteus medius, gluteus minimus, TFL, upper gluteus
-     maximus), plus
-   - lateral flexion that draws the inside iliac crest toward the inside ribs (**inside quadratus
-     lumborum**, inside internal and external obliques).
+   psia-c-sideslip-fall-line). Mechanically, raising or holding the inside half of the pelvis is
+   pelvis-on-femur abduction at the **outside** hip (gluteus medius, gluteus minimus, TFL, upper gluteus
+   maximus).
+   - The spine meanwhile bends toward the outside ski (F9.2), so the **inside quadratus lumborum** and
+     inside obliques lengthen. They control that outward tilt (eccentric as it develops, isometric while
+     held, concentric as the trunk comes back); they do not hike the pelvis.
 
    In off-snow EMG, the standing "hip hitch" (lifting the opposite pelvis while standing on one leg)
    ranked highest for all gluteus medius and minimus segments (ganderton-2017, moore-2020). The hip hike
@@ -507,14 +508,16 @@ normal turns. Medium for the rest.
 | Erector spinae and multifidus | isometric; eccentric as the trunk is driven into more flexion at peak force | Hold the hip hinge against the lumbar flexion moment; keep the curves neutral | high for erector spinae in turns (heinrich-2023, zeglinski-1998, hintermeister-1995); low for multifidus |
 | Rectus abdominis | isometric | Brace against extension and pelvic tilt; trunk stiffness | medium (hintermeister-1997, one side) |
 | External and internal obliques | isometric; eccentric against leg torque at edge set and pivot | Resist twisting from the legs' rotation; their lateral fibres also hold the side bend | high in normal turns (hintermeister-1997, heinrich-2023) |
-| Quadratus lumborum, inside side | isometric; eccentric if the trunk is pushed further toward the outside ski | Hold the lateral bend toward the outside ski; hike or hold the inside half of the pelvis | low (andersson-1996, mcgill-1996) |
+| Quadratus lumborum, inside side | eccentric as the bend develops; isometric while held; concentric as the trunk returns | Control the lateral bend toward the outside ski from the lengthened side; the pelvic hike belongs to the outside hip abductors | low (andersson-1996, mcgill-1996) |
 | Quadratus lumborum, outside side | isometric | Co-contract to stiffen the lumbopelvic junction | low |
 | Transversus abdominis | isometric | Intra-abdominal pressure and trunk stiffness | low (no ski data) |
 
    Under turn forces the trunk is pushed into flexion and toward the inside of the turn by the force along
-   the balance axis. Erector spinae work eccentrically to isometrically against flexion. The lateral
-   muscles on the side away from the bend (the inside QL and obliques) work eccentrically to
-   isometrically against the side bend. The obliques brake the torque of the legs.
+   the balance axis. Erector spinae work eccentrically to isometrically against flexion. The spine bends
+   toward the outside ski, so the lateral muscles on the inside (the inside QL and obliques) lengthen:
+   eccentric as the bend develops, isometric while held, concentric as the trunk returns at the finish.
+   The inside half of the pelvis is held up by the outside hip abductors, pelvis on femur (F6.6), not by
+   the inside QL. The obliques brake the torque of the legs.
 
 5. **How it varies between drills.**
    - **Short turns, pivot slips, hockey stops, sideslips, falling leaf:** the pelvis and thorax face
@@ -530,7 +533,7 @@ normal turns. Medium for the rest.
      body rotating *against* the turn, which is counter. Lateral tilt did not differ (debertin-2022). Every
      instructed trial showed a forward movement at initiation and a slight backward shift in steering.
    - **Stork and one-ski turns:** as long carved turns, but the lateral pelvic hold is all on the outside
-     hip and the inside QL and obliques.
+     hip abductors; the inside QL and obliques control the trunk's outward bend.
    - **Railroad tracks and garlands:** low lateral spinal bending; the edging comes from the feet and
      knees. A quiet trunk is the criterion (psia-c-railroad-tracks).
 
@@ -612,7 +615,7 @@ outside). Frontal-plane hip words depend on the reference: see the note below th
 | Ankle sagittal | Shin moves forward into the tongue: tibialis anterior, concentric then isometric (high in turns: hintermeister-1997) | Same, less loaded | — |
 | Knee moved toward the new turn, with the hip flexed | Hip internal rotation and adduction of the flexed femur: anterior gluteus medius and minimus, TFL, adductors, concentric (medium: delp-1999) | Hip external rotation and abduction of the flexed femur: deep rotators, gluteus maximus, posterior gluteus medius, sartorius, concentric (low) | — |
 | Inside leg shortening | — | Hip and knee flexion: iliopsoas, rectus femoris, hamstrings, concentric (medium: kroll-2010, seifert-2023) | — |
-| Pelvis held as load arrives (angulation) | Pelvis-on-femur abduction: gluteus medius and minimus, TFL, upper gluteus maximus; isometric, eccentric if it yields (medium) | Hip adduction held: adductor longus (heinrich-2023) | Inside QL and obliques start the lateral hold; obliques and multifidus hold the pelvis and thorax against the legs' rotation; erector spinae hold the hinge |
+| Pelvis held as load arrives (angulation) | Pelvis-on-femur abduction: gluteus medius and minimus, TFL, upper gluteus maximus; isometric, eccentric if it yields (medium) | Hip adduction held: adductor longus (heinrich-2023) | Inside QL and obliques lengthen under control as the trunk bends toward the outside ski; obliques and multifidus hold the pelvis and thorax against the legs' rotation; erector spinae hold the hinge |
 
 Note on hip words. Moving the knee toward the turn at a flexed hip is internal rotation plus adduction of
 the outside femur (open chain, light load). Once the leg carries load and the trunk angulates, the femur is
@@ -798,14 +801,14 @@ shaping-phase pose for D1, D2 and D13, scaled down for slower drills.
 | Hip flexion | 50° to 81° | 70° to 117° | heinrich-2022 |
 | Hip ab/adduction | 3° to 27° abducted | 13° abducted to 11° adducted | heinrich-2022 |
 | Hip rotation | 5° to 28° internal | 10° to 26° external | heinrich-2022 |
-| Pelvis | tilt 28° to 39°, list 15° to 33°, rotation −18° to 30° (sign convention as printed) | | heinrich-2022 |
+| Pelvis | anterior tilt 28° to 39° (the hip hinge; the lumbar row below is the low back's own flexion, so the low back flattens from standing while the pelvis carries most of the fold), list 15° to 33°, rotation −18° to 30° (sign convention as printed) | | heinrich-2022 |
 | Lumbar | sagittal 23° to 29°, lateral bending 0° to 5°, rotation −3° to 10° | | heinrich-2022 |
 | Trunk, sacrum to sternum, GS | frontal bending 27° (turn mean) and 35° (after the gate), peak 40°; lateral bending 7° (turn mean) and 12° (after the gate), peak 15°; torsion 3° to 6°, peak 8° | | sporri-2018 |
 | Trunk, SL | frontal bending 11°, lateral bending 6°, torsion 5° (after the gate) | | sporri-2016 |
 
 | Drill | Initiation | Shaping | Finish |
 |---|---|---|---|
-| D1 Stork, D2 one-ski, D13 long carved | Forward 30°, spine lat. 0° → 5°, counter 5°, edge 0° → 20° progressively after the switch | Forward 35° to 40°, spine lat. 8° to 12° (GS measured 11°, peak about 14° to 15°: sporri-2016, sporri-2015), counter 5° to 10°, edge at maximum (40° to 60° racing, sporri-2012 lean; 25° to 40° recreational) | Forward 35°, spine lat. falling to 5°, counter 10°, edge falling toward release |
+| D1 Stork, D2 one-ski, D13 long carved | Legs lengthening from their deepest bend in the transition; forward falling from about 26-33° to 25-31°, spine lat. 0° → 5°, counter 5°, edge 0° → 20° progressively after the switch | Legs at their longest, quasi-isometric (stork model, inference: outside hip 48/55/63°, knee 60/65/71° gentle/moderate/dynamic; heinrich-2022 GS hip 50-81°, knee 56-80°); forward 20° to 26°, spine lat. 8° to 12° (GS measured 11°, peak about 14° to 15°: sporri-2016, sporri-2015), counter 5° to 10°, edge building to its peak in late shaping (lemaster-2010 p128; 40° to 60° racing, sporri-2012 lean; 25° to 40° recreational) | Legs flexing, absorbing the load that peaks below the fall line, into the transition's hip 62/70/78° and knee 68/74/81°; forward rising to 25° to 33°, spine lat. falling to 5°, counter falling toward square (about 3°), edge falling toward release |
 | D12 Short turns | Forward 20° to 25°, spine lat. 0° to 4°, counter 20° to 30° unwinding, edge 0° → 30° fast | Forward 25°, spine lat. 6° (SL measured 6°, peak 9°: sporri-2016), counter 25°, edge max 35° to 50° | Forward 25°, spine lat. 4°, counter 30° to 40°, edge falls fast |
 | D3 Javelin | Forward 30°, counter builds | Counter 40° to 60° (the drill's point), spine lat. 8° | Counter held, then unwinds |
 | D4 Thousand steps | Forward 25°, small alternating lateral shifts | Spine lat. 5°, counter 10°, edge 20° to 30° | As shaping |
@@ -867,14 +870,14 @@ Measured moments are from heinrich-2022 and heinrich-2023. The rest are reasoned
 | Hip IR/ER | outside | IR, femur turns under pelvis; anterior GMED/GMIN, TFL, ADD con | IR held and braked; GMAX, DR, BF ecc/iso | Held, then neutral; DR, GMAX iso | IR while rotating in (skidded) -> con / mostly ER moment (up to 0.17 Nm/kg; BF, GMAX, quadratus femoris) while IR 5-28 deg held -> ecc/iso / same -> iso |
 | Hip IR/ER | inside | ER; DR, GMAX, SAR con | ER held (10-26 deg) against an IR moment; anterior GMED/GMIN, TFL, ADD iso | Held; same iso | ER while rotating out -> con / IR moment (up to 0.23 Nm/kg) while femur sits in 10-26 deg ER -> anterior GMED/GMIN, TFL, ADD iso / same -> iso |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso | set by hip and lumbar moments -> iso |
-| Pelvis hike (list) | both | Inside half rises toward level as legs tip; O GMED, GMIN, TFL con; I QL con | Inside half held up; O GMED, GMIN, TFL iso; I QL, I IO/EO iso | Levels for release; O GMED, I QL ecc | outside hip abduction moment plus inside QL -> iso |
+| Pelvis hike (list) | both | Inside half rises toward level as legs tip (pelvis on outside femur); O GMED, GMIN, TFL con | Inside half held up; O GMED, GMIN, TFL iso | Levels for release; O GMED ecc | outside hip abduction moment -> iso |
 | Pelvis rotation | both | Slight counter forms as legs turn under it; O IO + I EO iso; hip rotators | Slight counter held; obliques iso | Held, then squares for release; obliques ecc | reaction torque of turning legs, resisted -> iso |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | extension, trunk flexing forward -> ES ecc / extension (up to 1.88 Nm/kg, largest moment) held -> iso / same -> iso |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc | lateral bending moment up to 0.75 Nm/kg, one direction throughout (side not stated) -> iso |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con | lateral bending moment up to 0.75 Nm/kg, one direction throughout (side not stated) -> iso |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | rotation moment small (up to 0.16 Nm/kg, toward the turn), about 12 times smaller than extension -> iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | extension -> iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc | lateral -> iso |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con | anti-rotation -> iso |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con | lateral -> iso |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con | anti-rotation -> iso |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | small -> iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | small -> iso |
 | Shoulder | outside | Arm forward, in view; AD, RC iso | Held forward; AD, RC iso | Swings forward to prepare next touch; AD con | flexion moment holds arm forward -> iso |
@@ -955,7 +958,8 @@ inside ski or back, the tail touches down.
   it is inference. Because the tip rests on the snow, part of the ski's weight is carried, so the knee
   flexors do less than in a fully lifted ski (D2).
 - The pelvis has no support on the inside. Its inside half is held up by the **outside** hip abductors,
-  pelvis-on-femur, and from above by the **inside** quadratus lumborum and obliques (F6.6). In a normal
+  pelvis-on-femur (F6.6). The spine bends toward the outside ski, so the **inside** quadratus lumborum
+  and obliques lengthen and control that tilt rather than hike the pelvis. In a normal
   turn the inside foot carries about 0.4 BW (falda-buscaiot-2017). Removing it moves all that load and
   pelvic support to the outside hip, so outside abductor demand rises above a normal turn.
 - The outside leg carries the whole snow force (F7). So outside extensor, abductor and ankle demands are
@@ -968,17 +972,17 @@ inside ski or back, the tail touches down.
 
 | Segment | Initiation | Shaping | Finish |
 |---|---|---|---|
-| Outside ankle | Shin moves forward into the tongue as the centre of mass crosses. Foot begins to evert inside the boot to tip the ski. | Dorsiflexed against the tongue. Eversion torque holds the edge. Ankle stiffened against rising load. | Held. Pressure shifts toward the heel late (falda-buscaiot-2017). Released with the edge. |
-| Outside knee | Extends slightly or stays flexed through the transition. | Flexes under load (eccentric). Stays in slight abduction and internal rotation; valgus is resisted. | Deepest flexion near peak load, then extends into the transition. |
-| Outside hip, flexion/extension | Moderately flexed. Flexes as load arrives. | Flexed (more with angulation). Extensors brake. | Flexed at peak, then extends. |
+| Outside ankle | Shin moves forward into the tongue as the centre of mass crosses. Foot begins to evert inside the boot to tip the ski. | Held flexed against the tongue and the rising load to the fall line, then begins to open (lemaster-2010 pp79, 85-86). Eversion torque holds the edge. | Opens progressively as the foot slides forward; pressure shifts toward the heel (lemaster-2010 pp182-183, falda-buscaiot-2017). Released with the edge. |
+| Outside knee | Extends a little from its deepest bend in the transition. | Most extended, quasi-isometric, while the load builds (bacharach-cross-2023 p27). Stays in slight abduction and internal rotation; valgus is resisted. | Flexes (eccentric), absorbing the load that peaks below the fall line, into the transition (lemaster-2010 pp40-42, iasi-2021 pp65-66). |
+| Outside hip, flexion/extension | Opens from the transition's deep fold as the leg lengthens. | Held at its most open; the fold is deeper the harder the turn. Extensors hold. | Folds again with the knee into the transition. |
 | Outside hip, abduction/adduction | Moves toward abduction (pelvis-on-femur) as the legs tilt in. | Abducted relative to pelvis; inside half of pelvis held up. | Held, then returns to neutral at release. |
 | Outside hip, rotation | Rotates internally (femur turns into the turn under the pelvis). | Internally rotated and held against the snow (braked). | Held, then neutral at release. |
-| Inside ankle | Shin forward in the boot. Foot tips toward its little-toe edge with the outside foot. | Held. Ski tilted tip-down, tip touching the snow. | Held, then the foot flattens as the tail is set down. |
+| Inside ankle | Shin forward in the boot. Foot tips toward its little-toe edge with the outside foot. | Held. Ski tilted tip-down, tip touching the snow. | Stays closed, shin on the tongue, as the tail is set down, ready to become the new outside ankle (lemaster-2010 pp81, 86). |
 | Inside knee | Flexes actively to lift the tail (after the pole touch). | Held more flexed than the outside knee. | Held, then extends to set the tail down around mid-finish. |
 | Inside hip, flexion/extension | Flexes actively to raise the thigh. | Held flexed, more than the outside hip. | Held, then lowered (extends) to set the ski down. |
-| Inside hip, abduction/adduction | Adducts slightly so the boot rides beside the outside boot. | Adducted, held (no snow support to push against). | Held, then neutral. |
+| Inside hip, abduction/adduction | Kept at hip width, so the boot rides beside the outside boot. | Held at hip width (no snow support to push against). | Held; the foot is set down at hip width. |
 | Inside hip, rotation | Rotates externally with the turn, so the lifted ski stays parallel. | Externally rotated, held. | Held. |
-| Pelvis | Rotates slightly toward the outside of the new turn (counter). Inside half lifted level or slightly up as weight leaves the inside foot. | Faces partly outside the turn. Inside half held up (stance-hip abduction plus inside lateral flexion). Anterior tilt with hip flexion. | Inside half held until the tail is set down, then levels for the edge change. |
+| Pelvis | Rotates slightly toward the outside of the new turn (counter). Inside half lifted level or slightly up as weight leaves the inside foot. | Faces partly outside the turn. Inside half held up (stance-hip abduction, pelvis on femur). Anterior tilt with the hip hinge, least while the legs are longest. | Inside half held until the tail is set down, then levels for the edge change. |
 | Trunk | Moves forward and across with the centre of mass. Stays quiet. | Flexed forward. Tilted toward the outside ski (angulation). Lateral muscles hold it. Resists the legs' rotation. | Held, then moves across into the next turn. |
 | Shoulders and arms | Hands forward and in view. Inside hand leads. | Held forward and level with the slope. Outside hand ready to swing. | Outside (next inside) pole swings forward. |
 | Poles | Pole touch just before the tail lifts (association task). | No pole action. | Pole swing prepares the next touch. |
@@ -987,7 +991,7 @@ inside ski or back, the tail touches down.
 
 | Muscle (slug) | I / S / F | Contraction | Role | Conf. | Sources |
 |---|---|---|---|---|---|
-| quadriceps | 2 / 3 / 3 | eccentric, isometric; concentric in the transition | Holds the flexed knee against the whole turn force (no inside support) | medium | hintermeister-1997, berg-1995, kroll-2010, heinrich-2023 |
+| quadriceps | 2 / 3 / 3 | concentric (initiation), isometric (shaping), eccentric (finish) | Lengthens the knee into the turn, holds it against the whole turn force (no inside support), then absorbs the late load | medium | hintermeister-1997, berg-1995, kroll-2010, heinrich-2023 |
 | gluteus-maximus | 2 / 3 / 3 | eccentric, isometric | Hip extension moment. Main abductor in deep hip flexion. Brakes femoral internal rotation. | medium | hintermeister-1997, heinrich-2023 |
 | gluteus-medius | 2 / 3 / 3 | isometric; eccentric if the inside half of the pelvis yields | Holds the unsupported inside half of the pelvis up (pelvis-on-femur). Anterior fibres help internal rotation. | medium | seifert-2023, louie-1984, ganderton-2017, moore-2020 |
 | gluteus-minimus | 2 / 3 / 3 | isometric | Same pelvic hold as gluteus medius. Anterior part internally rotates in flexion. Stabilises the femoral head. | medium | ganderton-2017, moore-2020, delp-1999 |
@@ -1005,7 +1009,7 @@ inside ski or back, the tail touches down.
 
 | Muscle (slug) | I / S / F | Contraction | Role | Conf. | Sources |
 |---|---|---|---|---|---|
-| iliopsoas | 2 / 2 / 1 | concentric (lift), isometric (hold), eccentric (set down) | Main hip flexor holding the inside thigh up with the hip already flexed | medium | jiroumaru-2014, juan-2024, andersson-1997 |
+| iliopsoas | 2 / 2 / 1 | concentric (lift), isometric (hold), eccentric (set down) | Main hip flexor holding the inside thigh up with the hip already flexed | low | jiroumaru-2014, juan-2024, andersson-1997 |
 | quadriceps (rectus femoris role) | 2 / 2 / 1 | concentric, isometric | Rectus femoris as a hip flexor unloading the inside leg. The vasti are nearly idle because the leg carries no load. | medium | kroll-2010, cuniberti-2026 |
 | tensor-fasciae-latae | 1 / 1 / 1 | isometric | Assists hip flexion; keeps the thigh from falling into external rotation | low | andersson-1997, jiroumaru-2014 |
 | sartorius | 1 / 1 / 1 | isometric | Hip flexion, external rotation and knee flexion together, which is the stork posture | low | andersson-1997 |
@@ -1016,14 +1020,14 @@ inside ski or back, the tail touches down.
 | gluteus-medius | 1 / 1 / 1 | isometric | Holds the free thigh from dropping into adduction or internal rotation | low | seifert-2023 (inside gluteus medius active in normal turns) |
 | tibialis-anterior | 1 / 1 / 1 | isometric | Holds the shin forward in the boot. Inverts the foot to tip the lifted ski. | low | heinrich-2023 (inside, normal turn) |
 | tibialis-posterior | 1 / 1 / 1 | isometric | Inverts the foot to tip the lifted ski to its new edge | low | — |
-| quadratus-lumborum | 1 / 2 / 2 | isometric; concentric when the inside half rises | Hikes or holds the inside half of the pelvis from above. Holds the trunk against tilting further outside. | low | andersson-1996, mcgill-1996, monteiro-2017 |
-| obliques | 2 / 2 / 2 | isometric | Inside lateral fibres join the pelvic hold. Both sides resist the legs' rotation torque. | medium | hintermeister-1997, heinrich-2023 |
+| quadratus-lumborum | 1 / 2 / 2 | eccentric (initiation), isometric (shaping), concentric (finish) | Lengthens as the spine bends toward the outside ski and controls that tilt; brings the trunk back at the finish. | low | andersson-1996, mcgill-1996, monteiro-2017 |
+| obliques | 2 / 2 / 2 | isometric; inside lateral fibres eccentric, then concentric | Inside lateral fibres lengthen with the outward bend and control it. Both sides resist the legs' rotation torque. | medium | hintermeister-1997, heinrich-2023 |
 
 **Muscles: both sides.**
 
 | Muscle (slug) | I / S / F | Contraction | Role | Conf. | Sources |
 |---|---|---|---|---|---|
-| erector-spinae | 2 / 2 / 2 | isometric | Hold the flexed trunk; largest lumbar moment | medium | hintermeister-1997, zeglinski-1998, heinrich-2022 |
+| erector-spinae | 2 / 2 / 2, dynamic 2 / 3 / 3 | isometric | Hold the flexed trunk, low back slightly flattened from standing, never arched or slumped; largest lumbar moment | medium | hintermeister-1997, zeglinski-1998, heinrich-2022 |
 | rectus-abdominis | 1 / 1 / 1 | isometric | Trunk stiffness and pelvic tilt control | medium | hintermeister-1997 |
 | deltoid | 1 / 1 / 1 | isometric | Arms held forward; pole touch | low | — |
 
@@ -1033,7 +1037,7 @@ inside ski or back, the tail touches down.
 |---|---|---|
 | Banking (inclined trunk, no angulation) | Inside tail drops or the skier steps onto it | Outside hip abductors and inside QL do less. Load goes to the inside ski, so the drill fails. |
 | Hip dumped inside (pelvis drops to the inside) | Inside half of the pelvis low; "sitting" into the turn | Outside gluteus medius and minimus lose the pelvic hold (Trendelenburg-like). The adductors take over. |
-| Lifting with the knee only (hip stays extended) | Tail lifts but the inside knee drops back and the ski tips up | Hamstrings overloaded, iliopsoas idle. Fore-aft balance drifts back. |
+| Lifting with the knee only (hip stays extended) | Tail lifts but the inside knee drops back and the ski pitches tip-down into the snow | Hamstrings overloaded, iliopsoas idle. Fore-aft balance drifts back. |
 | Tip lifted too (whole ski off) | Becomes D2 | Hip and knee flexor demand rises; tip support is lost. |
 | Back seat | Outside tail chatters; inside tip rises | Quadriceps rise (anterior drawer risk), tibialis anterior falls, hamstrings and gluteus maximus fight the pitch |
 | Upper body rotates with the legs | Shoulders turn into the turn | Obliques do less; the deep rotators no longer get a stable pelvis to turn against |
@@ -1042,31 +1046,31 @@ inside ski or back, the tail touches down.
 
 | DOF | Side | Initiation | Shaping | Finish |
 |---|---|---|---|---|
-| Ankle DF/PF | outside | DF active: feet pulled back, shin to tongue; TA, EDL, EHL, FT con | DF held against turn force and boot flex; TA, EDL, EHL iso; SOL ecc then iso (GAS slack, knee bent) | DF held as pressure moves to heel; TA iso, SOL iso; if TA lets go the ankle opens (backseat) |
-| Ankle DF/PF | inside | Shin forward as tail lifts (after pole touch), ski pitched tip-down; TA, EDL, EHL iso | Held, tip resting on snow; TA, EDL, EHL iso (light) | Held, then flattens as tail sets down mid-finish; TA ecc |
+| Ankle DF/PF | outside | DF active: feet pulled back, shin to tongue; TA, EDL, EHL, FT con | DF held against the rising load to the fall line, then begins to open; SOL iso (GAS slack, knee bent); TA co-con | Opens progressively as the foot slides forward and pressure moves to the heel; SOL con, TA ecc |
+| Ankle DF/PF | inside | Shin forward as tail lifts (after pole touch), ski pitched tip-down; TA, EDL, EHL iso | Held, tip resting on snow; TA, EDL, EHL iso (light) | Stays closed, shin on the tongue, as the tail sets down mid-finish; TA iso |
 | Ankle inv/ev | outside | Eversion to big-toe edge; PL, PB con; TP ecc | Eversion torque held; PL, PB iso; TP iso (arch) | Back to neutral at release; PL, PB ecc |
 | Ankle inv/ev | inside | Lifted ski tipped to match stance ski; TA, TP con | Tilt held; TA, TP iso | Back to neutral at set-down; TA, TP ecc |
 | Foot arch, toes | outside | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso |
 | Foot arch, toes | inside | Unloaded; INT low | Unloaded; INT low | Unloaded; INT low |
-| Knee flex/ext | outside | Extends or stays flexed through the switch; VAS con/iso; MH, BF co-con | Flexes under whole turn force; VAS, RF ecc (higher than two-footed turn) | Deepest flexion, then extends; VAS ecc, iso, con |
+| Knee flex/ext | outside | Extends a little from its deepest bend in the transition; VAS con; MH, BF co-con | Most extended, quasi-isometric under the whole turn force; VAS, RF iso (higher than two-footed turn) | Flexes, absorbing the load that peaks below the fall line; VAS ecc |
 | Knee flex/ext | inside | Active flexion lifts the tail; BF (incl. short head), MH, GRA, SAR, GAS con; VAS near idle | Held more flexed than outside; hamstrings, GRA, SAR iso | Extends to set tail down at mid-finish; hamstrings ecc |
 | Knee tibial rot. | outside | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso |
 | Knee tibial rot. | inside | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) |
-| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Flexes under load; GMAX, AM, MH ecc | Flexed at peak, then extends; GMAX ecc then con |
+| Hip flex/ext | outside | Opens from the transition's deep fold; GMAX, AM con | Held at its most open; GMAX, AM, hamstrings iso | Folds again with the knee; GMAX, AM ecc |
 | Hip flex/ext | inside | Active flexion lifts the thigh; IP, RF, TFL, SAR, ADD (pectineus, longus) con | Held flexed; IP, RF iso | Lowered; IP, RF ecc |
 | Hip abd/add | outside | Knee toward turn: add of flexed femur, ADD, AM con; then abd (pelvis-on-femur) as load arrives, GMED, GMIN, TFL ecc to iso | Abducted, inside half of pelvis held; GMED, GMIN, TFL, upper GMAX iso; ADD, AM co-con iso | Held, back to neutral; GMED ecc |
-| Hip abd/add | inside | Slight add, boot beside stance boot; ADD, pectineus con | Held; ADD iso; GMED iso against drifting further | Held, then neutral |
+| Hip abd/add | inside | Kept at hip width, boot beside stance boot; ADD, GMED co-con (light) | Held at hip width; ADD, GMED iso | Held; set down at hip width |
 | Hip IR/ER | outside | IR, femur turns under pelvis; anterior GMED/GMIN, TFL, ADD con | IR held and braked; GMAX, DR, BF ecc/iso | Held, then neutral; DR, GMAX iso |
 | Hip IR/ER | inside | ER keeps lifted ski parallel; DR, SAR, GMAX con | Held; DR, SAR iso | Held; DR iso |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half unsupported, held up; O GMED, GMIN, TFL, upper GMAX con/iso (high); I QL con | Held; O GMED, GMIN, TFL iso (high); I QL, I IO/EO iso | Held until set-down, then levels; ecc |
+| Pelvis hike (list) | both | Inside half unsupported, held up (pelvis on outside femur); O GMED, GMIN, TFL, upper GMAX con/iso (high) | Held; O GMED, GMIN, TFL iso (high) | Held until set-down, then levels; O GMED ecc |
 | Pelvis rotation | both | Slight counter forms as legs turn under it; O IO + I EO iso; hip rotators | Slight counter held; obliques iso | Held, then squares for release; obliques ecc |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder | outside | Arm forward, in view; AD, RC iso | Held forward; AD, RC iso | Swings forward to prepare next touch; AD con |
@@ -1116,7 +1120,7 @@ tail, in a straight run, sideslip or traverse (psia-c-intro-one-ski).
 | quadriceps | outside | 2 / 3 / 3 | eccentric, isometric | Single-leg load throughout | medium | ishige-2021 |
 | hamstrings | outside | 2 / 2 / 2 | isometric | Fore-aft and trunk-pitch control on one ski | medium | ishige-2021 |
 | peroneals, tibialis-posterior | outside | 2 / 2 / 1 | isometric | Edge change by the stance foot alone | low | louie-1984 |
-| quadratus-lumborum, obliques | inside | 2 / 2 / 2 | isometric | Lateral trunk and pelvic hold | low | mcgill-1996 |
+| quadratus-lumborum, obliques | inside | 2 / 2 / 2 | eccentric, isometric | Control the trunk's outward bend from the lengthened side | low | mcgill-1996 |
 
 Errors: lifting late, which turns it into D1 and leaves the edge change to two feet; lifted ski crossing
 or diverging (hip rotators not holding it parallel); hip dumped inside (as D1).
@@ -1142,14 +1146,14 @@ or diverging (hip rotators not holding it parallel); hip dumped inside (as D1).
 | Hip IR/ER | outside | IR, femur turns under pelvis; anterior GMED/GMIN, TFL, ADD con | IR held and braked; GMAX, DR, BF ecc/iso | Held, then neutral; DR, GMAX iso |
 | Hip IR/ER | inside | ER keeps lifted ski parallel; DR, SAR, GMAX con | Held; DR, SAR iso | Held; DR iso |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half unsupported, held up; O GMED, GMIN, TFL, upper GMAX con/iso (high); I QL con | Held; O GMED, GMIN, TFL iso (high); I QL, I IO/EO iso | Held until set-down, then levels; ecc |
+| Pelvis hike (list) | both | Inside half unsupported, held up (pelvis on outside femur); O GMED, GMIN, TFL, upper GMAX con/iso (high) | Held; O GMED, GMIN, TFL iso (high) | Held until set-down, then levels; O GMED ecc |
 | Pelvis rotation | both | Slight counter forms as legs turn under it; O IO + I EO iso; hip rotators | Slight counter held; obliques iso | Held, then squares for release; obliques ecc |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder | outside | Arm forward, in view; AD, RC iso | Held forward; AD, RC iso | Swings forward to prepare next touch; AD con |
@@ -1213,13 +1217,13 @@ drifts inside); hip pushed back to make room (back seat).
 | Hip IR/ER | outside | Large IR under still pelvis; anterior GMED/GMIN, TFL, ADD, AM con | Large IR held; DR, GMAX ecc/iso | Unwinds at release; DR con |
 | Hip IR/ER | inside | Kept near pelvis direction (ski points where pelvis faces); DR vs GMED/TFL iso | Kept near pelvis direction (ski points where pelvis faces); DR vs GMED/TFL iso | Kept near pelvis direction (ski points where pelvis faces); DR vs GMED/TFL iso |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half unsupported, held up; O GMED, GMIN, TFL, upper GMAX con/iso (high); I QL con | Held; O GMED, GMIN, TFL iso (high); I QL, I IO/EO iso | Held until set-down, then levels; ecc |
+| Pelvis hike (list) | both | Inside half unsupported, held up (pelvis on outside femur); O GMED, GMIN, TFL, upper GMAX con/iso (high) | Held; O GMED, GMIN, TFL iso (high) | Held until set-down, then levels; O GMED ecc |
 | Pelvis rotation | both | Faces down fall line, strong counter (40° to 60°); O IO + I EO iso (high) | Faces down fall line, strong counter (40° to 60°); O IO + I EO iso (high) | Faces down fall line, strong counter (40° to 60°); O IO + I EO iso (high) |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
 | Thoracic rotation | both | Held with pelvis; obliques iso (high) | Held with pelvis; obliques iso (high) | Held with pelvis; obliques iso (high) |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
@@ -1289,8 +1293,8 @@ Errors: steps with diverging, rotated skis (rotary instead of edging); upper bod
 | Lumbar lat. flex | both | Small alternating shifts, trunk quiet; QL both sides iso | Small alternating shifts, trunk quiet; QL both sides iso | Small alternating shifts, trunk quiet; QL both sides iso |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder | outside | Arm forward, in view; AD, RC iso | Held forward; AD, RC iso | Swings forward to prepare next touch; AD con |
@@ -1705,13 +1709,13 @@ skis.
 | Hip IR/ER | outside | Toward fall line: femurs turn; con (skidded) or held (carved) | Brief | Back across the hill; con |
 | Hip IR/ER | inside | Toward fall line; con (skidded) or held (carved) | Brief | Back across; con |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half rises toward level as legs tip; O GMED, GMIN, TFL con; I QL con | Inside half held up; O GMED, GMIN, TFL iso; I QL, I IO/EO iso | Levels for release; O GMED, I QL ecc |
+| Pelvis hike (list) | both | Inside half rises toward level as legs tip (pelvis on outside femur); O GMED, GMIN, TFL con | Inside half held up; O GMED, GMIN, TFL iso | Levels for release; O GMED ecc |
 | Pelvis rotation | both | Faces downhill throughout; obliques iso | Faces downhill throughout; obliques iso | Faces downhill throughout; obliques iso |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
 | Thoracic rotation | both | Faces downhill throughout; obliques iso | Faces downhill throughout; obliques iso | Faces downhill throughout; obliques iso |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
@@ -1778,14 +1782,14 @@ bere-2011); rotating in the air with the shoulders; landing on one ski.
 | Hip IR/ER | outside | IR, femur turns under pelvis; anterior GMED/GMIN, TFL, ADD con | IR held and braked; GMAX, DR, BF ecc/iso | Held, then neutral; DR, GMAX iso |
 | Hip IR/ER | inside | ER; DR, GMAX, SAR con | ER held (10-26 deg) against an IR moment; anterior GMED/GMIN, TFL, ADD iso | Held; same iso |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half rises toward level as legs tip; O GMED, GMIN, TFL con; I QL con | Inside half held up; O GMED, GMIN, TFL iso; I QL, I IO/EO iso | Levels for release; O GMED, I QL ecc |
+| Pelvis hike (list) | both | Inside half rises toward level as legs tip (pelvis on outside femur); O GMED, GMIN, TFL con | Inside half held up; O GMED, GMIN, TFL iso | Levels for release; O GMED ecc |
 | Pelvis rotation | both | Slight counter forms as legs turn under it; O IO + I EO iso; hip rotators | Slight counter held; obliques iso | Held, then squares for release; obliques ecc |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder | outside | Arm forward, in view; AD, RC iso | Held forward; AD, RC iso | Swings forward to prepare next touch; AD con |
@@ -1859,13 +1863,13 @@ Errors: upper body turns with the skis (obliques drop, the shoulders rotate); sk
 | Hip IR/ER | outside | Quick IR (more in skidded); GMED/GMIN ant, TFL, ADD con | IR held; DR, GMAX ecc/iso | Unwinds to neutral; DR con |
 | Hip IR/ER | inside | ER; DR, GMAX, SAR con | ER held (10-26 deg) against an IR moment; anterior GMED/GMIN, TFL, ADD iso | Held; same iso |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half rises toward level as legs tip; O GMED, GMIN, TFL con; I QL con | Inside half held up; O GMED, GMIN, TFL iso; I QL, I IO/EO iso | Levels for release; O GMED, I QL ecc |
+| Pelvis hike (list) | both | Inside half rises toward level as legs tip (pelvis on outside femur); O GMED, GMIN, TFL con | Inside half held up; O GMED, GMIN, TFL iso | Levels for release; O GMED ecc |
 | Pelvis rotation | both | Faces down the fall line; counter about 20° to 30° unwinding; obliques iso (high) | Counter about 25°; O IO + I EO iso | Counter 30° to 40°; obliques iso |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
 | Thoracic rotation | both | Faces downhill with the pelvis; obliques iso (high) | Faces downhill with the pelvis; obliques iso (high) | Faces downhill with the pelvis; obliques iso (high) |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
@@ -1947,14 +1951,14 @@ into the turn (tails skid); losing pressure on the outside ski and catching its 
 | Hip IR/ER | outside | IR, femur turns under pelvis; anterior GMED/GMIN, TFL, ADD con | IR held and braked; GMAX, DR, BF ecc/iso | Held, then neutral; DR, GMAX iso |
 | Hip IR/ER | inside | ER; DR, GMAX, SAR con | ER held (10-26 deg) against an IR moment; anterior GMED/GMIN, TFL, ADD iso | Held; same iso |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half rises toward level as legs tip; O GMED, GMIN, TFL con; I QL con | Inside half held up; O GMED, GMIN, TFL iso; I QL, I IO/EO iso | Levels for release; O GMED, I QL ecc |
+| Pelvis hike (list) | both | Inside half rises toward level as legs tip (pelvis on outside femur); O GMED, GMIN, TFL con | Inside half held up; O GMED, GMIN, TFL iso | Levels for release; O GMED ecc |
 | Pelvis rotation | both | Slight counter forms as legs turn under it; O IO + I EO iso; hip rotators | Slight counter held; obliques iso | Held, then squares for release; obliques ecc |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder | outside | Arm forward, in view; AD, RC iso | Held forward; AD, RC iso | Swings forward to prepare next touch; AD con |
@@ -2024,10 +2028,10 @@ wedge size changing (adductors not controlling).
 | Pelvis hike (list) | both | Near level; shifts toward outside ski; O GMED iso | Near level; shifts toward outside ski; O GMED iso | Near level; shifts toward outside ski; O GMED iso |
 | Pelvis rotation | both | Square to slightly countered; obliques iso (low) | Square to slightly countered; obliques iso (low) | Square to slightly countered; obliques iso (low) |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
 | Thoracic rotation | both | Square; obliques iso (low) | Square; obliques iso (low) | Square; obliques iso (low) |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
@@ -2094,14 +2098,14 @@ not committing to the gliding ski.
 | Hip IR/ER | outside | ER (diverging ski); DR iso | ER (diverging ski); DR iso | ER (diverging ski); DR iso |
 | Hip IR/ER | inside | Free leg ER to diverge on landing; DR con | Free leg ER to diverge on landing; DR con | Free leg ER to diverge on landing; DR con |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half rises toward level as legs tip; O GMED, GMIN, TFL con; I QL con | Inside half held up; O GMED, GMIN, TFL iso; I QL, I IO/EO iso | Levels for release; O GMED, I QL ecc |
+| Pelvis hike (list) | both | Inside half rises toward level as legs tip (pelvis on outside femur); O GMED, GMIN, TFL con | Inside half held up; O GMED, GMIN, TFL iso | Levels for release; O GMED ecc |
 | Pelvis rotation | both | Slight counter forms as legs turn under it; O IO + I EO iso; hip rotators | Slight counter held; obliques iso | Held, then squares for release; obliques ecc |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder | outside | Pole push (optional); LD, TMaj con; TRI con | Pole push (optional); LD, TMaj con; TRI con | Pole push (optional); LD, TMaj con; TRI con |
@@ -2140,7 +2144,7 @@ first half of the turn, linked to forward trunk pitch (ishige-2021).
 | adductors | stance | 2 / 2 / 2 | isometric | The hip sits adducted under load; frontal control | low | heinrich-2023 |
 | tibialis-anterior, tibialis-posterior | stance | 2 / 2 / 2 | isometric | Inversion holds the little-toe edge | low | — |
 | iliopsoas, hamstrings | lifted (outside) | 2 / 2 / 1 | concentric, isometric | Hold the downhill ski up | low | — |
-| quadratus-lumborum, obliques | uphill side | 2 / 2 / 2 | isometric | Angulation over the uphill foot | low | — |
+| quadratus-lumborum, obliques | downhill side | 2 / 2 / 2 | eccentric, isometric | Control the bend over the uphill foot from the lengthening downhill side; the downhill pelvis is held up by the stance abductors | low | — |
 
 Errors: banking downhill (falls onto the lifted ski); hip dumped (pelvis drops on the unsupported side);
 back seat.
@@ -2173,7 +2177,7 @@ back seat.
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
 | Thoracic lat. flex | both | Bend over the uphill foot; downhill obliques iso | Bend over the uphill foot; downhill obliques iso | Bend over the uphill foot; downhill obliques iso |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder | outside | Arm forward, in view; AD, RC iso | Held forward; AD, RC iso | Swings forward to prepare next touch; AD con |
@@ -2242,14 +2246,14 @@ change).
 | Hip IR/ER | outside | IR, femur turns under pelvis; anterior GMED/GMIN, TFL, ADD con | IR held and braked; GMAX, DR, BF ecc/iso | Held, then neutral; DR, GMAX iso |
 | Hip IR/ER | inside | ER; DR, GMAX, SAR con | ER held (10-26 deg) against an IR moment; anterior GMED/GMIN, TFL, ADD iso | Held; same iso |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half rises toward level as legs tip; O GMED, GMIN, TFL con; I QL con | Inside half held up; O GMED, GMIN, TFL iso; I QL, I IO/EO iso | Levels for release; O GMED, I QL ecc |
+| Pelvis hike (list) | both | Inside half rises toward level as legs tip (pelvis on outside femur); O GMED, GMIN, TFL con | Inside half held up; O GMED, GMIN, TFL iso | Levels for release; O GMED ecc |
 | Pelvis rotation | both | Slight counter forms as legs turn under it; O IO + I EO iso; hip rotators | Slight counter held; obliques iso | Held, then squares for release; obliques ecc |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Flexion transition: trunk low and flexed forward, still not rounded; ES iso (high) | Flexion transition: trunk low and flexed forward, still not rounded; ES iso (high) | Flexion transition: trunk low and flexed forward, still not rounded; ES iso (high) |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder | outside | Arm forward, in view; AD, RC iso | Held forward; AD, RC iso | Swings forward to prepare next touch; AD con |
@@ -2308,14 +2312,14 @@ stepped in.
 | Hip IR/ER | outside | IR, femur turns under pelvis; anterior GMED/GMIN, TFL, ADD con | IR held and braked; GMAX, DR, BF ecc/iso | Held, then neutral; DR, GMAX iso |
 | Hip IR/ER | inside | Lifted ski turned out (ER), set down diverging; DR, GMAX con | Matches; iso | Parallel; iso |
 | Pelvis tilt | both | Anterior tilt grows with hip hinge; IP, RF con; ES iso | Anterior tilt held, lumbar neutral; ES, MF iso; RA, TrA iso (anti-extension) | Held; ES, RA iso |
-| Pelvis hike (list) | both | Inside half rises toward level as legs tip; O GMED, GMIN, TFL con; I QL con | Inside half held up; O GMED, GMIN, TFL iso; I QL, I IO/EO iso | Levels for release; O GMED, I QL ecc |
+| Pelvis hike (list) | both | Inside half rises toward level as legs tip (pelvis on outside femur); O GMED, GMIN, TFL con | Inside half held up; O GMED, GMIN, TFL iso | Levels for release; O GMED ecc |
 | Pelvis rotation | both | Slight counter forms as legs turn under it; O IO + I EO iso; hip rotators | Slight counter held; obliques iso | Held, then squares for release; obliques ecc |
 | Lumbar flex/ext | both | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment | Near neutral (not rounded or arched); ES, MF iso; RA iso; ES ecc under peak flexion moment |
-| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL con | Slight bend held; I QL, I obliques ecc/iso; O QL co-con | Returns to neutral; I QL ecc |
+| Lumbar lat. flex | both | Neutral to slight bend toward outside ski; I QL ecc (lengthens, controls the outward tilt) | Slight bend held; I QL, I obliques iso; O QL co-con | Returns to neutral; I QL con |
 | Lumbar rotation | both | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso | Held near neutral (little range); MF, obliques iso |
 | Thoracic flex/ext | both | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso | Slight flexion held, not rounded; thoracic ES iso |
-| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques con | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques ecc |
-| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Unwinds toward the new turn; I IO + O EO con |
+| Thoracic lat. flex | both | Neutral to slight bend toward outside ski; I obliques ecc (lengthen) | Some bend held; I obliques iso, O obliques co-con | Returns; I obliques con |
+| Thoracic rotation | both | Slight rotation toward outside of turn; O IO + I EO con | Held; O IO + I EO iso | Squares to the skis as they release, then the new counter forms as the legs turn under; I IO + O EO con |
 | Shoulder girdle | outside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder girdle | inside | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso | Slightly protracted, level; SA, TRAP iso |
 | Shoulder | outside | Arm forward, in view; AD, RC iso | Held forward; AD, RC iso | Swings forward to prepare next touch; AD con |
@@ -2379,7 +2383,7 @@ The coordinator's list was checked muscle by muscle; the result is below.
 | **transversus-abdominis** | Transversus abdominis | trunk | FMA:15570 | no | Transversus abdominis muscle; built | Trunk stiffness (low) |
 | **external-oblique** | External oblique | trunk | FMA:13335 | no (inside `obliques`) | External abdominal oblique muscle; built | Counter-rotation pairs one side's external with the other side's internal oblique, so per-side activations need them apart |
 | **internal-oblique** | Internal oblique | trunk | FMA:13891 | no (inside `obliques`) | Internal abdominal oblique muscle; built | Same; internal oblique was primary in the model (heinrich-2023) |
-| **quadratus-lumborum** | Quadratus lumborum | trunk | FMA:15569 | no | Quadratus lumborum muscle; built | Inside-half hike and lateral hold; both sides co-contract |
+| **quadratus-lumborum** | Quadratus lumborum | trunk | FMA:15569 | no | Quadratus lumborum muscle; built | Controls the lateral bend from the lengthened inside; both sides co-contract |
 | erector-spinae | Erector spinae | trunk | right/left sets 22731/22732 | yes | iliocostalis, longissimus, spinalis parts; built | — |
 | **multifidus** | Multifidus | trunk | FMA:22827 | no | Multifidus lumborum, thoracis, colli muscle; source | Segmental anti-rotation and extension (low) |
 | **anterior-deltoid** | Deltoid, clavicular part | arm | deltoid FMA:32521 | no | Clavicular part of deltoid muscle (acromial and scapular spinal parts also present); built | Arms forward, pole swing |
@@ -2652,8 +2656,9 @@ Against `content/movements/outside-ski-turn.yaml` and `content/drills/stork-turn
 1. **The inside hip and pelvis group is missing.**
    - Add the outside **gluteus minimus** (split from gluteus-medius) and outside **TFL**, with the role
      "hold the unsupported inside half of the pelvis up (pelvis-on-femur)".
-   - Add the inside **quadratus lumborum** and the inside lateral role of the **obliques** (today obliques
-     are `both` with only an anti-rotation role).
+   - Add the inside **quadratus lumborum** and the inside lateral role of the **obliques**: they lengthen and
+     control the outward bend, they do not hike the pelvis (today obliques are `both` with only an
+     anti-rotation role).
    - Give the outside gluteus medius the same explicit pelvis-on-femur role, with eccentric added for
      when the pelvis yields.
 2. **The inside leg is under-modelled.** Today there is only `hip-flexors` (low, no sources) and inside

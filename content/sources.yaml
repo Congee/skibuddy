@@ -1,56 +1,292 @@
 - id: hintermeister-1995
+  type: article
   citation: Hintermeister RA et al. Muscle activity in slalom and giant slalom skiing. Med Sci Sports Exerc. 1995;27:315-22.
   url: https://pubmed.ncbi.nlm.nih.gov/7752856/
   read: abstract
 - id: hintermeister-1997
+  type: article
   citation: Hintermeister RA et al. Muscle activity in wedge, parallel, and giant slalom skiing. Med Sci Sports Exerc. 1997;29:548-53.
   url: https://pubmed.ncbi.nlm.nih.gov/9107639/
   read: abstract
 - id: berg-1999
+  type: article
   citation: Berg HE et al. Muscle control in elite alpine skiing. Med Sci Sports Exerc. 1999;31:1065-7.
   url: https://pubmed.ncbi.nlm.nih.gov/10416571/
   read: abstract
 - id: kroll-2011
+  type: article
   citation: Kröll J et al. Changes in quadriceps muscle activity during sustained recreational alpine skiing. J Sports Sci Med. 2011;10:81-92.
   url: https://pubmed.ncbi.nlm.nih.gov/24149299/
   read: abstract
 - id: chollet-2025
+  type: article
   citation: Chollet M et al. Fatigue-induced changes in electromyographic activity after repeated racing turns. Eur J Appl Physiol. 2025;125:1423-35.
   url: https://pubmed.ncbi.nlm.nih.gov/39707012/
   read: abstract
 - id: ishige-2021
+  type: article
   citation: Ishige Y et al. Muscle activity and morphology in slalom skiing by a single-leg amputee ski racer. J Sports Sci Med. 2021;20:500-7.
   url: https://pubmed.ncbi.nlm.nih.gov/34267590/
   read: abstract
 - id: sporri-2022
+  type: article
   citation: 'Spörri J et al. "When you''re down, stay down": an ACL rupture measured in vivo. J Sport Health Sci. 2022;11:14-20.'
   url: https://pubmed.ncbi.nlm.nih.gov/34852295/
   read: abstract
 - id: bere-2011
+  type: article
   citation: Bere T et al. Mechanisms of ACL injury in World Cup alpine skiing. Am J Sports Med. 2011;39:1421-9.
   url: https://pubmed.ncbi.nlm.nih.gov/21515807/
   read: abstract
 - id: turnbull-2009
+  type: article
   citation: Turnbull JR et al. Physiology of alpine skiing. Scand J Med Sci Sports. 2009;19:146-55.
   url: https://pubmed.ncbi.nlm.nih.gov/19335589/
   read: abstract
 - id: westin-2020
+  type: article
   citation: Westin M et al. Prevention of ACL injuries in competitive adolescent alpine skiers. Front Sports Act Living. 2020;2:11.
   url: https://pubmed.ncbi.nlm.nih.gov/33345006/
   read: abstract
 - id: acsm-2009
+  type: article
   citation: American College of Sports Medicine. Progression models in resistance training for healthy adults (position stand). Med Sci Sports Exerc. 2009;41:687-708.
   url: https://pubmed.ncbi.nlm.nih.gov/19204579/
   read: abstract
 - id: lum-2019
+  type: article
   citation: Lum D, Barbosa TM. Brief review - effects of isometric strength training on strength and dynamic performance. Int J Sports Med. 2019;40:363-75.
   url: https://pubmed.ncbi.nlm.nih.gov/30943568/
   read: abstract
 - id: petersen-2011
+  type: article
   citation: Petersen J et al. Preventive effect of eccentric training on acute hamstring injuries in men's soccer. Am J Sports Med. 2011;39:2296-303.
   url: https://pubmed.ncbi.nlm.nih.gov/21825112/
   read: abstract
 - id: ishoi-2016
+  type: article
   citation: Ishøi L et al. Large eccentric strength increase using the Copenhagen Adduction exercise in football. Scand J Med Sci Sports. 2016;26:1334-42.
   url: https://pubmed.ncbi.nlm.nih.gov/26589483/
   read: abstract
+
+# Articles
+- id: zeglinski-1998
+  type: article
+  citation: Zeglinksi CM et al. Muscle activity in the slalom turn of alpine skiing and in-line skating. Int J Sports Med. 1998;19:447-54.
+  url: https://pubmed.ncbi.nlm.nih.gov/9839840/
+  read: abstract
+- id: louie-1984
+  type: article
+  citation: Louie JK et al. Surface EMG and torsion measurements during snow skiing. J Biomech. 1984;17:713-24.
+  url: https://pubmed.ncbi.nlm.nih.gov/6526831/
+  read: abstract
+- id: kroll-2010
+  type: article
+  citation: Kröll J et al. Quadriceps muscle function during recreational alpine skiing. Med Sci Sports Exerc. 2010;42:1545-56.
+  url: https://pubmed.ncbi.nlm.nih.gov/20068490/
+  read: abstract
+- id: seifert-2023
+  type: article
+  citation: Seifert JG et al. The EMG, NIRS, and RPE responses to two turn transition techniques in alpine skiing. JSAMS Plus. 2023;2:100037.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12980613/
+  read: full
+- id: cuniberti-2026
+  type: article
+  citation: Cuniberti GC et al. Sex-specific biomechanical profiles in recreational alpine skiing. J Biomech. 2026;207:113543.
+  url: https://pubmed.ncbi.nlm.nih.gov/42697010/
+  read: abstract
+- id: heinrich-2022
+  type: article
+  citation: Heinrich D, van den Bogert AJ, Nachbauer W. Estimation of joint moments during turning maneuvers in alpine skiing using a three dimensional musculoskeletal skier model. Front Bioeng Biotechnol. 2022;10:894568.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9269104/
+  read: full
+- id: heinrich-2023
+  type: article
+  citation: Heinrich D et al. Model-based estimation of muscle and ACL forces during turning maneuvers in alpine skiing. Sci Rep. 2023;13:9026.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10239490/
+  read: full
+- id: falda-buscaiot-2017
+  type: article
+  citation: Falda-Buscaiot T et al. Influence of slope steepness, foot position and turn phase on plantar pressure distribution during giant slalom alpine ski racing. PLoS One. 2017;12:e0176975.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC5417654/
+  read: full
+- id: alhammoud-2020
+  type: article
+  citation: Alhammoud M et al. On-field ski kinematic according to leg and discipline in elite alpine skiers. Front Sports Act Living. 2020;2:56.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7739787/
+  read: full
+# Mass shares are the paper's table values as widely reproduced; only the abstract was read.
+- id: de-leva-1996
+  type: article
+  citation: de Leva P. Adjustments to Zatsiorsky-Seluyanov's segment inertia parameters. J Biomech. 1996;29:1223-30.
+  url: https://doi.org/10.1016/0021-9290(95)00178-6
+  read: abstract
+- id: sporri-2015
+  type: article
+  citation: Spörri J et al. Potential mechanisms leading to overuse injuries of the back in alpine ski racing. Am J Sports Med. 2015;43:2042-8.
+  url: https://pubmed.ncbi.nlm.nih.gov/26109612/
+  read: abstract
+- id: sporri-2016
+  type: article
+  citation: Spörri J et al. Course setting as a prevention measure for overuse injuries of the back in alpine ski racing. Orthop J Sports Med. 2016;4:2325967116630719.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC4772347/
+  read: full
+- id: bere-2013
+  type: article
+  citation: Bere T et al. Kinematics of anterior cruciate ligament ruptures in World Cup alpine skiing. Am J Sports Med. 2013;41:1067-73.
+  url: https://pubmed.ncbi.nlm.nih.gov/23449837/
+  read: abstract
+- id: zorko-2015
+  type: article
+  citation: Zorko M et al. The waist width of skis influences the kinematics of the knee joint in alpine skiing. J Sports Sci Med. 2015;14:606-19.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC4541126/
+  read: full
+- id: posch-2025
+  type: article
+  citation: Posch M et al. Impact of an elevated rear component of the ski binding on joint angles of the lower extremity and the center of mass in recreational skiers. J Hum Kinet. 2025;98:29-40.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12360943/
+  read: full
+- id: ruedl-2022
+  type: article
+  citation: Ruedl G et al. A comparison of ACL injury risk, ski geometry and standing height parameters between skiers with rented and with owned skis. Int J Environ Res Public Health. 2022;19:11124.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9518475/
+  read: full
+- id: zorko-2020
+  type: article
+  citation: Zorko M et al. Wide skis as a potential knee injury risk factor in alpine skiing. Front Sports Act Living. 2020;2:7.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7739600/
+  read: full
+- id: panizzolo-2013
+  type: article
+  citation: Panizzolo FA, Marcolin G, Petrone N. Comparative evaluation of two skiing simulators as functional training devices for recreational skiers. J Sports Sci Med. 2013;12:151-8.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC3761755/
+  read: full
+- id: delp-1999
+  type: article
+  citation: Delp SL et al. Variation of rotation moment arms with hip flexion. J Biomech. 1999;32:493-501.
+  url: https://pubmed.ncbi.nlm.nih.gov/10327003/
+  read: abstract
+- id: neumann-2010
+  type: article
+  citation: Neumann DA. Kinesiology of the hip - a focus on muscular actions. J Orthop Sports Phys Ther. 2010;40:82-94.
+  url: https://pubmed.ncbi.nlm.nih.gov/20118525/
+  read: abstract
+- id: andersson-1997
+  type: article
+  citation: Andersson EA, Nilsson J, Thorstensson A. Intramuscular EMG from the hip flexor muscles during human locomotion. Acta Physiol Scand. 1997;161:361-70.
+  url: https://pubmed.ncbi.nlm.nih.gov/9401589/
+  read: abstract
+- id: andersson-1996
+  type: article
+  citation: Andersson EA et al. EMG activities of the quadratus lumborum and erector spinae muscles during flexion-relaxation and other motor tasks. Clin Biomech. 1996;11:392-400.
+  url: https://pubmed.ncbi.nlm.nih.gov/11415651/
+  read: abstract
+- id: mcgill-1996
+  type: article
+  citation: McGill S, Juker D, Kropf P. Appropriately placed surface EMG electrodes reflect deep muscle activity (psoas, quadratus lumborum, abdominal wall) in the lumbar spine. J Biomech. 1996;29:1503-7.
+  url: https://pubmed.ncbi.nlm.nih.gov/8894932/
+  read: abstract
+- id: jiroumaru-2014
+  type: article
+  citation: Jiroumaru T, Kurihara T, Isaka T. Measurement of muscle length-related EMG activity of the hip flexor muscles. SpringerPlus. 2014;3:624.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC4221557/
+  read: full
+- id: juan-2024
+  type: article
+  citation: Juan J et al. Hip flexor muscle activation during common rehabilitation and strength exercises. J Clin Med. 2024;13:6617.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC11546833/
+  read: full
+- id: distefano-2009
+  type: article
+  citation: Distefano LJ et al. Gluteal muscle activation during common therapeutic exercises. J Orthop Sports Phys Ther. 2009;39:532-40.
+  url: https://pubmed.ncbi.nlm.nih.gov/19574661/
+  read: abstract
+- id: ganderton-2017
+  type: article
+  citation: Ganderton C et al. Gluteus minimus and gluteus medius muscle activity during common rehabilitation exercises in healthy postmenopausal women. J Orthop Sports Phys Ther. 2017;47:914-22.
+  url: https://pubmed.ncbi.nlm.nih.gov/29034801/
+  read: abstract
+- id: moore-2020
+  type: article
+  citation: Moore D, Semciw AI, Pizzari T. A systematic review and meta-analysis of common therapeutic exercises that generate highest muscle activity in the gluteus medius and gluteus minimus segments. Int J Sports Phys Ther. 2020;15:856-81.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7727410/
+  read: full
+- id: selkowitz-2024
+  type: article
+  citation: Selkowitz DM, Beneck GJ, Powers CM. Comparison of EMG activity of the gluteal muscles and tensor fascia lata in persons with patellofemoral pain. Physiother Theory Pract. 2024;40:1775-83.
+  url: https://pubmed.ncbi.nlm.nih.gov/37212292/
+  read: abstract
+- id: monteiro-2017
+  type: article
+  citation: Monteiro RL et al. Hip rotations' influence of electromyographic activity of gluteus medius muscle during pelvic-drop exercise. J Sport Rehabil. 2017;26:65-71.
+  url: https://pubmed.ncbi.nlm.nih.gov/27632837/
+  read: abstract
+- id: uebayashi-2026
+  type: article
+  citation: Uebayashi K et al. Muscle activity of deep hip muscles across joint positions and elevation phases during side-lying hip abduction. PeerJ. 2026;14:e21536.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC13353230/
+  read: full
+- id: fujii-2007
+  type: article
+  citation: Fujii R et al. Kinematics of the lumbar spine in trunk rotation - in vivo three-dimensional analysis using magnetic resonance imaging. Eur Spine J. 2007;16:1867-74.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC2223353/
+  read: full
+- id: fujimori-2014
+  type: article
+  citation: Fujimori T et al. Kinematics of the thoracic spine in trunk lateral bending - in vivo three-dimensional analysis. Spine J. 2014;14:1991-9.
+  url: https://pubmed.ncbi.nlm.nih.gov/24333460/
+  read: abstract
+
+# Books and manuals; citations to these give pages.
+- id: lemaster-2010
+  type: book
+  citation: LeMaster R. Ultimate Skiing. Champaign (IL) - Human Kinetics; 2010.
+  url: https://us.humankinetics.com/products/ultimate-skiing
+  read: full
+- id: iasi-2021
+  type: book
+  citation: Irish Association of Snowsports Instructors (Kagan J, Tate D, Sollini F et al.). IASI Manual - The Five Key Concepts. Manual version 2. 2021. Whole manual, chapters 1-19.
+  url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/
+  read: full
+- id: lind-sanders-2004
+  type: book
+  citation: Lind D, Sanders SP. The Physics of Skiing - Skiing at the Triple Point. 2nd ed. New York - Springer; 2004.
+  url: https://doi.org/10.1007/978-1-4757-4345-6
+  read: full
+- id: cross-raschner-2023
+  type: book
+  citation: Cross MR, Raschner C. Biomechanics. In - Pritchard J, Taylor J, eds. The Science of Alpine Ski Racing. Routledge; 2023. p. 1-24.
+  url: https://doi.org/10.4324/9781003258773-1
+  read: full
+- id: bacharach-cross-2023
+  type: book
+  citation: Bacharach DW, Cross MR. Physiology. In - Pritchard J, Taylor J, eds. The Science of Alpine Ski Racing. Routledge; 2023. p. 25-44.
+  url: https://doi.org/10.4324/9781003258773-2
+  read: partial
+- id: lindinger-2023
+  type: book
+  citation: Lindinger S, Bacharach DW, Taylor J. Motor learning and skill acquisition. In - Pritchard J, Taylor J, eds. The Science of Alpine Ski Racing. Routledge; 2023. p. 45-58.
+  url: https://doi.org/10.4324/9781003258773-3
+  read: partial
+- id: pritchard-cross-2023
+  type: book
+  citation: Pritchard J, Cross MR. Strength and power training. In - Pritchard J, Taylor J, eds. The Science of Alpine Ski Racing. Routledge; 2023. p. 59-84.
+  url: https://doi.org/10.4324/9781003258773-4
+  read: full
+- id: patterson-2023
+  type: book
+  citation: Patterson C. Endurance. In - Pritchard J, Taylor J, eds. The Science of Alpine Ski Racing. Routledge; 2023. p. 85-112.
+  url: https://doi.org/10.4324/9781003258773-5
+  read: partial
+- id: jordan-sporri-taylor-2023
+  type: book
+  citation: Jordan M, Spörri J, Taylor J. Injury prevention and rehabilitation. In - Pritchard J, Taylor J, eds. The Science of Alpine Ski Racing. Routledge; 2023. p. 113-153.
+  url: https://doi.org/10.4324/9781003258773-6
+  read: full
+
+# Association task pages
+- id: psia-c-stork-turns
+  type: web
+  citation: PSIA-AASI Central. Stork Turns (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/stork-turns/
+  read: full

@@ -1,6 +1,7 @@
 import { Side } from '../content/schema';
 import type { AnchorPoint } from './anchor-projection';
 import type { Vec3 } from './mat4';
+import { familyOf, isDeep } from './muscle-groups';
 import type { SlotTable, TurnSide } from './slots';
 
 /** A muscle singled out from the board: focused (a slat is open) or previewed (hover). */
@@ -18,9 +19,12 @@ export const highlightStrength = (h: FigureHighlight | null): number => (h === n
 
 const sidesOf = (side: Side): ReadonlyArray<TurnSide> => (side === Side.Both ? [Side.Outside, Side.Inside] : [side]);
 
-/** The slots a highlight marks; "both" marks both sides. */
+/** The slots a highlight marks; "both" marks both sides and a parent marks its parts. */
 export const highlightSlots = (table: SlotTable, h: FigureHighlight | null): ReadonlyArray<number> =>
-  h === null ? [] : sidesOf(h.side).map((s) => table.slotOf(h.muscle, s)).filter((slot) => slot > 0);
+  h === null ? [] : sidesOf(h.side).flatMap((s) => table.slotsOf(h.muscle, s));
+
+/** A focus on a deep muscle fades the muscles over it. */
+export const revealsDeep = (h: FigureHighlight | null): boolean => h !== null && h.focus && isDeep(h.muscle);
 
 /** Slot writes that turn `prev` marks into `next`: only the slots whose mark changed. */
 export const markChanges = (prev: ReadonlyArray<number>, next: ReadonlyArray<number>): ReadonlyArray<readonly [number, 0 | 1]> => [
@@ -30,7 +34,8 @@ export const markChanges = (prev: ReadonlyArray<number>, next: ReadonlyArray<num
 
 export const pointsFor = (points: ReadonlyArray<AnchorPoint>, h: FigureHighlight): ReadonlyArray<AnchorPoint> => {
   const sides = sidesOf(h.side);
-  return points.filter((p) => p.muscle === h.muscle && sides.includes(p.side));
+  const family = familyOf(h.muscle);
+  return points.filter((p) => family.includes(p.muscle) && sides.includes(p.side));
 };
 
 /** A muscle whose mean surface faces the camera at least this squarely (cosine) needs no turn. */

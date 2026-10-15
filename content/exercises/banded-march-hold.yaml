@@ -1,6 +1,6 @@
 id: banded-march-hold
 name: Banded standing march, hold at top
-targets: [{ muscle: hip-flexors, contraction: isometric }]
+targets: [{ muscle: iliopsoas, contraction: isometric }, { muscle: rectus-femoris, contraction: isometric }]
 single_leg: true
 matches_on_snow: Holding the inside ski's tail up
 easier: No band

@@ -1,13 +1,45 @@
 # FMA ids are left out until checked against the anatomy model.
+# Groups (quadriceps, hamstrings, calf, obliques) stay for exercise targets; activations name their parts.
 - { id: quadriceps, name: Quadriceps, region: leg }
+- { id: vasti, name: Vasti (vastus lateralis, medialis and intermedius), short_name: Vasti, region: leg, part_of: quadriceps }
+- { id: rectus-femoris, name: Rectus femoris, region: leg, part_of: quadriceps }
 - { id: hamstrings, name: Hamstrings, region: leg }
-- { id: adductors, name: Adductors, region: hip }
+- { id: biceps-femoris, name: Biceps femoris, region: leg, part_of: hamstrings }
+- { id: medial-hamstrings, name: Medial hamstrings (semitendinosus and semimembranosus), short_name: Medial hamstrings, region: leg, part_of: hamstrings }
+- { id: adductors, name: Adductors (longus, brevis and pectineus), short_name: Adductors, region: hip }
+- { id: adductor-magnus, name: Adductor magnus, region: hip }
+- { id: gracilis, name: Gracilis, region: hip }
 - { id: gluteus-maximus, name: Gluteus maximus, region: hip }
 - { id: gluteus-medius, name: Gluteus medius, region: hip }
+- { id: gluteus-minimus, name: Gluteus minimus, region: hip }
+- { id: tensor-fasciae-latae, name: Tensor fasciae latae, region: hip }
+- { id: sartorius, name: Sartorius, region: hip }
+- { id: iliopsoas, name: Iliopsoas, region: hip }
 - { id: deep-hip-rotators, name: Deep hip rotators, region: hip }
-- { id: hip-flexors, name: Hip flexors, region: hip }
 - { id: tibialis-anterior, name: Tibialis anterior, region: leg }
-- { id: calf, name: Calf (gastrocnemius and soleus), region: leg }
+- { id: toe-extensors, name: Toe extensors (long toe extensors and fibularis tertius), short_name: Toe extensors, region: leg }
+- { id: tibialis-posterior, name: Tibialis posterior, region: leg }
+- { id: calf, name: Calf (gastrocnemius and soleus), short_name: Calf, region: leg }
+- { id: soleus, name: Soleus, region: leg, part_of: calf }
+- { id: gastrocnemius, name: Gastrocnemius, region: leg, part_of: calf }
 - { id: peroneals, name: Peroneals, region: leg }
+- { id: foot-intrinsics, name: Foot intrinsic muscles, region: leg }
+- { id: popliteus, name: Popliteus, region: leg }
 - { id: obliques, name: Obliques, region: trunk }
+- { id: external-oblique, name: External oblique, region: trunk, part_of: obliques }
+- { id: internal-oblique, name: Internal oblique, region: trunk, part_of: obliques }
+- { id: rectus-abdominis, name: Rectus abdominis, region: trunk }
+- { id: transversus-abdominis, name: Transversus abdominis, region: trunk }
+- { id: quadratus-lumborum, name: Quadratus lumborum, region: trunk }
 - { id: erector-spinae, name: Erector spinae, region: trunk }
+- { id: multifidus, name: Multifidus, region: trunk }
+- { id: neck-stabilisers, name: Neck stabilisers (sternocleidomastoid and splenius capitis), short_name: Neck stabilisers, region: trunk }
+- { id: anterior-deltoid, name: Anterior deltoid, region: arm }
+- { id: latissimus-dorsi, name: Latissimus dorsi, region: arm }
+- { id: teres-major, name: Teres major, region: arm }
+- { id: serratus-anterior, name: Serratus anterior, region: arm }
+- { id: rotator-cuff, name: Rotator cuff, region: arm }
+- { id: trapezius, name: Trapezius, region: arm }
+- { id: biceps-brachii, name: Biceps brachii, region: arm }
+- { id: triceps-brachii, name: Triceps brachii, region: arm }
+- { id: forearm-flexors, name: Forearm flexors, region: arm }

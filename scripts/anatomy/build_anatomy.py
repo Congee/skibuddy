@@ -24,7 +24,7 @@ MUSCLE_BRANCHES = {
 # Deep layers no viewer will see; they only cost triangles.
 MUSCLE_SKIP = (
     'Innermost intercostal', 'Internal intercostal', 'Transversus thoracis', 'Levatores', 'Rotatores',
-    'Interspinales', 'Intertransversarii', 'Multifidus', 'Dorsal parts of lateral', 'Ventral parts of lateral',
+    'Interspinales', 'Intertransversarii', 'Dorsal parts of lateral', 'Ventral parts of lateral',
     'Subcostal', 'Diaphragm',
 )
 SOFT_SKIP = ('bursa', 'fascia', 'sheath', 'retinacul', 'septum', 'aponeurosis', 'ligament')
@@ -333,7 +333,9 @@ def rot_y3(a):
     return Matrix.Rotation(a, 4, 'Z')
 
 
-HEAD_LIFT = 0.6  # matches HEAD_LIFT in src/viewer/pose.ts
+HEAD_LIFT, HEAD_LEVEL = 0.6, 0.7  # as in src/viewer/pose.ts
+# Arm angles come from src/viewer/pose.ts through the pose track; see main.
+ARMS = {}
 # Pole, as in src/viewer/pose.ts: basket length, carry height and heading, and where the touch lands.
 POLE_BASKET, POLE_CARRY, CARRY_HEADING = 1.09, 0.32, math.pi - 0.3
 PLANT_SIDE, PLANT_AHEAD = 0.22, 0.3
@@ -346,22 +348,22 @@ BOOT_SOLE = 0.03
 
 def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
     """Mirrors localRotation in src/viewer/pose.ts; the trunk's rotation is split over lumbar and chest."""
-    half = rot_z3(p['lean'] / 2) @ rot_y3(p['trunkTurn'] / 2) @ rot_x(p['trunkFlex'] / 2)
-    lift = rot_x(-HEAD_LIFT * p['trunkFlex'] / 2)
-    R = {'pelvis': Matrix(), 'lumbar': half, 'chest': half, 'neck': lift, 'head': lift}
+    pelvis = rot_y3(-p['counter']) @ rot_z3(p['pelvisList']) @ rot_x(p['pelvisPitch'])
+    half = rot_y3(-p['spineTwist'] / 2) @ rot_z3(p['spineBend'] / 2) @ rot_x(p['spineFlex'] / 2)
+    roll = HEAD_LEVEL * (p['pelvisList'] - p['lean'] + p['spineBend'])
+    lift = rot_z3(-roll / 2) @ rot_x(-HEAD_LIFT * (p['pelvisPitch'] + p['spineFlex']) / 2)
+    R = {'pelvis': pelvis, 'lumbar': half, 'chest': half, 'neck': lift, 'head': lift}
     for s, sign in (('R', -1), ('L', 1)):
         leg = p['outside'] if s == 'R' else p['inside']
-        extra = inside_extra if s == 'L' else 0.0
-        hip, ankle = leg['hipFlex'] + extra, leg['ankleFlex'] + 0.6 * extra
-        R[f'thigh.{s}'] = rot_z3(-p['hipAngulation']) @ rot_x(-hip)
-        R[f'shin.{s}'] = rot_z3(-p['kneeAngulation']) @ rot_x(hip + ankle)
-        # Body-frame target for the foot (bootRotation in pose.ts): skis stay parallel, the foot heel-up on its
-        # ski by the ramp; world_pose resolves it.
-        R[f'foot.{s}'] = (rot_z3(p['lean']) @ rot_x(leg['tailLift'])
-                          @ rot_z3(-p['lean'] - p['hipAngulation'] - p['kneeAngulation']) @ rot_x(rest['ramp']))
-        flex = 0.9 + (reach if s == 'L' else 0.0)
-        R[f'upper_arm.{s}'] = rot_z3(sign * 0.35) @ rot_x(-flex) @ rot_z3(-rest['abduction'][s])
-        R[f'forearm.{s}'] = rot_x(-1.1)
+        # The inside leg shortens at the hip, as in solvePose.
+        hip, ankle = leg['hipFlex'] + (inside_extra if s == 'L' else 0.0), leg['ankleFlex']
+        # Set in the body frame; the femur turns about its own axis.
+        R[f'thigh.{s}'] = (pelvis.inverted() @ rot_z3(-p['hipAngulation'] - sign * leg.get('adduction', 0.0)) @ rot_x(-hip)
+                           @ Matrix.Rotation(leg['femurRotation'], 4, rest['femur'][s]))
+        R[f'shin.{s}'] = rot_x(hip + ankle)
+        flex = ARMS['flexion'] + (reach if s == 'L' else 0.0)
+        R[f'upper_arm.{s}'] = rot_z3(sign * ARMS['abduction']) @ rot_x(-flex) @ rot_z3(-rest['abduction'][s])
+        R[f'forearm.{s}'] = rot_x(-ARMS['forearmFlexion'])
         hand = rest['hands'][s]
         R[f'hand.{s}'] = hand['twist']
         R[f'fingers.{s}'] = hand['curl'][0]
@@ -371,18 +373,27 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
     return R
 
 
-def world_pose(bones, order, R, ski_pivot, lean):
+def foot_rotation(p, s, rest, outside_shin):
+    """bootRotation in pose.ts: both skis on the outside shin's tilt plus its eversion, the foot heel-up by the ramp."""
+    up = outside_shin.to_3x3() @ Vector((0, 0, 1))
+    edge = math.atan2(up.x, up.z) + p['eversion']
+    tail = (p['outside'] if s == 'R' else p['inside'])['tailLift']
+    return rot_z3(p['lean']) @ rot_x(tail) @ rot_z3(-p['lean'] - edge) @ rot_x(rest['ramp'])
+
+
+def world_pose(bones, order, R, ski_pivot, p, rest):
     D = {}
     for name in order:
         b = bones[name]
         j = Vector(b.head_local)
         parent = D[b.parent.name] if b.parent else Matrix()
-        r = R[name]
         if name.startswith('foot.'):
-            r = parent.to_3x3().to_4x4().inverted() @ r
+            r = parent.to_3x3().to_4x4().inverted() @ foot_rotation(p, name[-1], rest, D['shin.R'])
+        else:
+            r = R[name]
         D[name] = parent @ Matrix.Translation(j) @ r @ Matrix.Translation(-j)
     c = D['foot.R'] @ Vector(ski_pivot)
-    tilt = Matrix.Translation((c.x, c.y, 0)) @ Matrix.Rotation(lean, 4, 'Y') @ Matrix.Translation(-c)
+    tilt = Matrix.Translation((c.x, c.y, 0)) @ Matrix.Rotation(p['lean'], 4, 'Y') @ Matrix.Translation(-c)
     return {k: tilt @ m for k, m in D.items()}
 
 
@@ -411,7 +422,7 @@ def posed(bones, order, p, rest, flex, reach, ski_pivot):
     """World pose with each wrist turned so the fist's grip channel runs along its pole."""
     R = local_rotations(p, rest, flex, reach)
     for _ in range(4):
-        D = world_pose(bones, order, R, ski_pivot, p['lean'])
+        D = world_pose(bones, order, R, ski_pivot, p, rest)
         for s in ('R', 'L'):
             grip = D[f'hand.{s}'] @ rest['grip'][s]
             ankle = D[f'foot.{s}'] @ rest['ankle'][s]
@@ -419,7 +430,7 @@ def posed(bones, order, p, rest, flex, reach, ski_pivot):
             twist = rest['hands'][s]['twist']
             want = (D[f'forearm.{s}'].to_3x3() @ twist.to_3x3()).inverted() @ -d
             R[f'hand.{s}'] = twist @ rest['hands'][s]['row'].rotation_difference(want).to_matrix().to_4x4()
-    return world_pose(bones, order, R, ski_pivot, p['lean'])
+    return world_pose(bones, order, R, ski_pivot, p, rest)
 
 
 def solve_reach(bones, order, p, rest, flex, ski_pivot):
@@ -435,7 +446,7 @@ def solve_reach(bones, order, p, rest, flex, ski_pivot):
     return (lo + hi) / 2
 
 
-def bake(rig, ski_pivot, inside_tip, track, rest):
+def bake(rig, ski_pivot, inside_tip, track, rest, name='stork-turn'):
     bones = rig.data.bones
     order = [b.name for b in bones]  # parents precede children
     frames = len(track) - 1
@@ -443,7 +454,8 @@ def bake(rig, ski_pivot, inside_tip, track, rest):
     scene.render.fps = frames
     scene.frame_start, scene.frame_end = 0, frames
     rig.animation_data_create()
-    action = bpy.data.actions.new('stork-turn')
+    action = bpy.data.actions.new(name)
+    action.use_fake_user = True
     rig.animation_data.action = action
     for pb in rig.pose.bones:
         pb.rotation_mode = 'QUATERNION'
@@ -452,7 +464,7 @@ def bake(rig, ski_pivot, inside_tip, track, rest):
         lo, hi = -0.3, 0.6
         for _ in range(20):
             mid = (lo + hi) / 2
-            D = world_pose(bones, order, local_rotations(p, rest, mid), ski_pivot, p['lean'])
+            D = world_pose(bones, order, local_rotations(p, rest, mid), ski_pivot, p, rest)
             if (D['foot.L'] @ Vector(inside_tip)).z > 0:
                 hi = mid
             else:
@@ -613,7 +625,7 @@ def palm_in(bones, track, J, rest):
     order = [b.name for b in bones]
     still = (Matrix(), Matrix())
     flat = dict(rest, hands={s: dict(twist=Matrix(), curl=still, thumb=still) for s in ('R', 'L')})
-    D = world_pose(bones, order, local_rotations(track[0], flat), (0, 0, 0), 0)
+    D = world_pose(bones, order, local_rotations(track[0], flat), (0, 0, 0), dict(track[0], lean=0), flat)
     out = {}
     for s, medial in (('R', 1.0), ('L', -1.0)):
         j = J[s]
@@ -680,8 +692,9 @@ def main():
             name = base_name(o.name)
             if kind == 'muscle':
                 extra = name in EXTRA_TENDONS
-                if not extra and (not (MUSCLE_BRANCHES & set(ch)) or name.startswith(MUSCLE_SKIP)
-                                  or any(k in name.lower() for k in SOFT_SKIP)):
+                # A mapped muscle is kept even if a skip word matches (tensor fasciae latae).
+                skipped = name not in muscle_of and (name.startswith(MUSCLE_SKIP) or any(k in name.lower() for k in SOFT_SKIP))
+                if not extra and (not (MUSCLE_BRANCHES & set(ch)) or skipped):
                     continue
             elif not (BONE_BRANCHES & set(ch)) or name.startswith(BONE_SKIP):
                 continue
@@ -768,8 +781,13 @@ def main():
         offset += len(b['verts'])
     cloud = np.concatenate([x['verts'] for x in bone_meshes + muscles])
     fit = boot_fit(J, cloud)
+    with open(args.pose) as fh:
+        posed_track = json.load(fh)
+    ARMS.update(posed_track['arms'])
+    # The drill scenarios the clips were solved for, so tests can tie the model to the content.
     make_object('bones', np.concatenate(vs), np.concatenate(ts), np.concatenate(ms),
-                [mats['bone'], mats['cartilage']], rig, ws, extras={'gear_fit': json.dumps(fit)})
+                [mats['bone'], mats['cartilage']], rig, ws,
+                extras={'gear_fit': json.dumps(fit), 'scenarios': json.dumps(posed_track['scenarios'])})
 
     # Muscles grouped by (muscle id, side); unmapped ones share one resting mesh.
     groups = {}
@@ -785,6 +803,12 @@ def main():
         m['uv'] = fibre_uv(m['verts'], m['tris_idx'], deep / max(np.linalg.norm(deep), 1e-6))
         groups.setdefault(key, []).append(m)
     log(f'weights and fibres at {time.time() - t0:.1f}s')
+
+    # Every mapped mesh must exist on both sides; a missing one is reported, never stood in for.
+    found = {(base_name(m['name']), side_of(m['name'], float(m['centroid'][0]))) for m in muscles}
+    missing = sorted(f'{n} ({s})' for names in mapping.values() for n in names for s in ('R', 'L') if (n, s) not in found)
+    if missing:
+        raise SystemExit(f'muscle-map.json names meshes not in the blend: {", ".join(missing)}')
 
     report = dict(groups={})
     for key, items in sorted(groups.items()):
@@ -817,8 +841,6 @@ def main():
                     rig, ws, np.concatenate(uvs), extras)
         report['groups'][key] = dict(meshes=[m['name'] for m in items], tris=int(sum(len(t) for t in ts)))
 
-    with open(args.pose) as fh:
-        posed_track = json.load(fh)
     binding, track = posed_track['binding'], posed_track['frames']
     # Skis: 1.6 m x 9 cm slabs centred 3 cm ahead of the foot, under each binding as in figure.ts and equipment.ts.
     ski_pivot = None
@@ -847,7 +869,8 @@ def main():
         else:
             inside_tip = tuple(float(x) for x in rest_point((0, -thick, zc + 0.8)))
 
-    rest = dict(abduction={}, ramp=binding['bootBoardRamp'] + binding['deltaAngle'])
+    rest = dict(abduction={}, ramp=binding['bootBoardRamp'] + binding['deltaAngle'],
+                femur={s: (Vector(J[s]['hip']) - Vector(J[s]['knee'])).normalized() for s in ('R', 'L')})
     for s in ('R', 'L'):
         d = J[s]['elbow'] - J[s]['shoulder']
         rest['abduction'][s] = math.atan2(d[0], -d[2])
@@ -857,8 +880,15 @@ def main():
                              row=Vector(unit(J[s]['row']).tolist())) for s in ('R', 'L')}
     rest['grip'] = {s: Vector(grip_point(J[s], s).tolist()) for s in ('R', 'L')}
     rest['ankle'] = {s: Vector(J[s]['ankle'].tolist()) for s in ('R', 'L')}
-    bake(rig, ski_pivot, inside_tip, track, rest)
-    log(f'baked {len(track)} keyframes at {time.time() - t0:.1f}s')
+    # One clip per intensity; the moderate one keeps the old name and stays active (src/viewer/anatomy-names.ts).
+    tracks = posed_track.get('tracks', {'moderate': track})
+    for intensity in sorted(tracks, key=lambda i: i == 'moderate'):
+        name = 'stork-turn' if intensity == 'moderate' else f'stork-turn-{intensity}'
+        action = bake(rig, ski_pivot, inside_tip, tracks[intensity], rest, name)
+        strip = rig.animation_data.nla_tracks.new()
+        strip.name = name
+        strip.strips.new(name, 0, action)
+        log(f'baked {name}: {len(tracks[intensity])} keyframes at {time.time() - t0:.1f}s')
 
     bpy.ops.object.select_all(action='DESELECT')
     rig.select_set(True)

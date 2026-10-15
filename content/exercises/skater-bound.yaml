@@ -1,7 +1,7 @@
 id: skater-bound
 name: Lateral skater bound, stick the landing
 targets:
-  - { muscle: quadriceps, contraction: eccentric }
+  - { muscle: vasti, contraction: eccentric }
   - { muscle: gluteus-medius, contraction: isometric }
   - { muscle: gluteus-maximus, contraction: eccentric }
 single_leg: true

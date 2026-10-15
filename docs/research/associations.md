@@ -29,15 +29,15 @@ skibuddy is association-neutral: a drill has a generic name, and each associatio
 
 ### Levels and fundamentals
 
-Three certification levels: Level 1, Level 2, Level 3. The Alpine Certification Standards list five **Alpine Skiing Fundamentals** (verbatim labels, [Standards PDF](https://thesnowpros.org/wp-content/uploads/2025/11/PSIA_Alpine_Standards100225v5.pdf)):
+Three certification levels: Level 1, Level 2, Level 3. The Alpine Certification Standards list five **Alpine Skiing Fundamentals**. Paraphrased here, ids as in `content/fundamentals/psia.yaml`; the wording is PSIA's, in the [Standards PDF](https://thesnowpros.org/wp-content/uploads/2025/11/PSIA_Alpine_Standards100225v5.pdf):
 
-1. Control the relationship of the center of mass to the base of support to direct pressure along the length of the skis.
-2. Control pressure from ski to ski and direct pressure toward the outside ski.
-3. Control edge angles through a combination of inclination and angulation.
-4. Control the skis' rotation with leg rotation, separate from the upper body.
-5. Regulate the magnitude of pressure created through ski/snow interaction.
+1. `fore-aft`: fore-aft balance over the feet, with pressure along the ski.
+2. `ski-to-ski`: pressure between the skis, mostly to the outside ski.
+3. `edge-angles`: edge angle from leaning in and angulating.
+4. `leg-rotation`: turning the skis with the legs, under a quiet upper body.
+5. `pressure-magnitude`: how much pressure builds between ski and snow.
 
-The 2025 PDF prints the first as "Control the Technical relationship of …", which looks like a layout slip; PSIA-C's pages omit "Technical".
+The 2025 PDF's wording of the first differs slightly from PSIA-C's pages, which looks like a layout slip.
 
 Activities fall into three **categories**: Integrated, Individual and Versatility. The word "tasks" has been replaced by "assessment activities".
 
@@ -146,7 +146,7 @@ Public: the national activities list, standards, performance guides, assessment 
 
 ### Copyright
 
-thesnowpros.org shows "© 2026 The Snow Pros. All Rights Reserved." PSIA-C pages are © PSIA-AASI Central Division. No open licence was found. Link to the pages and paraphrase them; do not copy descriptions or performance lists. The five fundamentals are short labels and can be quoted.
+thesnowpros.org shows "© 2026 The Snow Pros. All Rights Reserved." PSIA-C pages are © PSIA-AASI Central Division. No open licence was found. Link to the pages and paraphrase them; do not copy descriptions or performance lists. Paraphrase the five fundamentals too, and link the standards.
 
 ## CSIA (Canadian Ski Instructors' Alliance)
 

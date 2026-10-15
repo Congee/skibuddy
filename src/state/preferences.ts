@@ -1,4 +1,5 @@
 import * as Atom from 'effect/reactivity/Atom';
+import { INTENSITIES, Intensity } from '../content/schema';
 
 /** How much exercise dosing the gym board shows. */
 export const DosingView = { Off: 'off', Ranges: 'ranges', SetsReps: 'sets-reps' } as const;
@@ -47,5 +48,42 @@ export const dosingViewAtom = Atom.writable(
   (ctx, view: DosingView) => {
     ctx.set(dosingBase, view);
     saveDosingView(view);
+  },
+).pipe(Atom.keepAlive);
+
+export const INTENSITY_KEY = 'skibuddy.intensity';
+
+/** Unknown or missing values fall back to Moderate. */
+export const parseIntensity = (raw: unknown): Intensity => INTENSITIES.find((i) => i === raw) ?? Intensity.Moderate;
+
+export const loadIntensity = (store: Store | undefined = storage()): Intensity => {
+  try {
+    return parseIntensity(store?.getItem(INTENSITY_KEY));
+  } catch {
+    return Intensity.Moderate;
+  }
+};
+
+export const saveIntensity = (intensity: Intensity, store: Store | undefined = storage()): void => {
+  try {
+    store?.setItem(INTENSITY_KEY, intensity);
+  } catch {
+    // The choice still holds for this page.
+  }
+};
+
+/** `?intensity=` sets the starting value, as `?gear=` does, without saving it; otherwise the saved choice. */
+export const startIntensity = (search: string, store: Store | undefined = storage()): Intensity => {
+  const param = new URLSearchParams(search).get('intensity');
+  return param !== null && INTENSITIES.some((i) => i === param) ? parseIntensity(param) : loadIntensity(store);
+};
+
+const intensityBase = Atom.keepAlive(Atom.make<Intensity | null>(null));
+
+export const intensityAtom = Atom.writable(
+  (get) => get(intensityBase) ?? startIntensity(globalThis.location?.search ?? ''),
+  (ctx, intensity: Intensity) => {
+    ctx.set(intensityBase, intensity);
+    saveIntensity(intensity);
   },
 ).pipe(Atom.keepAlive);

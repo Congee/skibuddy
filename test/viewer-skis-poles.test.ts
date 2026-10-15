@@ -70,8 +70,8 @@ describe('anatomy skis and poles', () => {
 });
 
 describe('pole touch timing', () => {
-  it('touches only around initiation', () => {
+  it('touches only around the transition', () => {
     assert.strictEqual(poleTouchAt(POLE_TOUCH_T), 1);
-    for (const t of [0.4, 0.5, 0.75, 0.95]) assert.strictEqual(poleTouchAt(t), 0, `t=${t}`);
+    for (const t of [0.25, 0.4, 0.5, 0.75]) assert.strictEqual(poleTouchAt(t), 0, `t=${t}`);
   });
 });

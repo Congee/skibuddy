@@ -1,7 +1,7 @@
 import { useAtomValue } from '@effect/atom-solid';
 import { Show, Suspense, createMemo, createSignal, lazy, onCleanup, onMount } from 'solid-js';
 import type { JSX } from 'solid-js';
-import type { Activation, Movement } from '../../content/schema';
+import type { Activation, Intensity, Movement, Scenarios } from '../../content/schema';
 import { Emphasis, focusAtom, highlight, sameHighlight } from '../../state/focus';
 import type { MuscleAnchor } from '../../viewer/anchors';
 import type { FigureHighlight } from '../../viewer/highlight';
@@ -37,6 +37,10 @@ export const FigureField = (props: {
   readonly pins: boolean;
   readonly skeleton: boolean;
   readonly gear: GearMode;
+  /** How hard the drill is skied: the figure's pose and glow, and the pins. */
+  readonly intensity: Intensity;
+  /** The drill's scenarios, which pose the capsule figure. */
+  readonly scenarios: Scenarios;
   readonly muscleName: (id: string) => string;
   /** A pin was clicked or tapped. */
   readonly onPick: (key: string) => void;
@@ -107,6 +111,8 @@ export const FigureField = (props: {
           muscles={props.muscles}
           skeleton={props.skeleton}
           gear={props.gear}
+          intensity={props.intensity}
+          scenarios={props.scenarios}
           ground={ground()}
           highlight={figureHighlight()}
           caption={<Caption />}
@@ -127,6 +133,7 @@ export const FigureField = (props: {
           anchors={anchors()}
           size={{ ...size(), compact: compact() }}
           ramp={ramp()}
+          intensity={props.intensity}
           muscleName={props.muscleName}
           highlight={lit()}
           onPick={props.onPick}

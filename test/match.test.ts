@@ -1,6 +1,6 @@
 import { assert, describe, it } from '@effect/vitest';
 import { matchExercises } from '../src/content/match';
-import { activation, contentWith, exercise } from './fixtures';
+import { activation, contentWith, dofMatrix, exercise } from './fixtures';
 
 const content = contentWith({
   movements: [
@@ -9,9 +9,14 @@ const content = contentWith({
       name: 'Turn',
       activations: [
         activation,
-        { ...activation, muscle: 'gluteus-medius', intensity: { initiation: 1, shaping: 1, finish: 1 }, contraction: ['isometric'] },
+        {
+          ...activation,
+          muscle: 'gluteus-medius',
+          intensity: { initiation: 1, shaping: 1, finish: 1 },
+          contraction: { initiation: 'isometric', shaping: 'isometric', finish: 'isometric' },
+        },
       ],
-      joint_actions: [],
+      dof_matrix: dofMatrix,
       reviewed_by: [],
     },
   ],
@@ -28,6 +33,7 @@ const content = contentWith({
       ],
     },
     { ...exercise, id: 'pallof', name: 'Pallof press', targets: [{ muscle: 'obliques', contraction: 'isometric' }] },
+    { ...exercise, id: 'mobilise', name: 'Mobilisation', targets: [{ muscle: 'gluteus-medius', mobilisation: true }] },
   ],
 });
 
@@ -36,13 +42,14 @@ describe('matchExercises', () => {
   if (movement === undefined) throw new Error('fixture has no movement');
   const matches = matchExercises(movement, content.exercises);
 
-  it('ranks by shared peak intensity, doubled for a matching contraction', () => {
+  it('ranks by shared peak intensity, doubled for a matching contraction but never for a mobilisation', () => {
     assert.deepStrictEqual(
       matches.map((m) => [m.exercise.id, m.score]),
       [
         ['combo', 8],
         ['eccentric-squat', 6],
         ['iso-squat', 3],
+        ['mobilise', 1],
       ],
     );
   });

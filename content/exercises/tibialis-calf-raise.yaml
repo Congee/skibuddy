@@ -1,11 +1,14 @@
 id: tibialis-calf-raise
-name: Tibialis raise and calf raise
-targets: [{ muscle: tibialis-anterior, contraction: concentric }, { muscle: calf, contraction: concentric }]
+name: Bent-knee calf raise and tibialis raise
+targets:
+  - { muscle: soleus, contraction: eccentric }
+  - { muscle: tibialis-anterior, contraction: isometric }
+  - { muscle: toe-extensors, contraction: isometric }
 single_leg: false
-matches_on_snow: Fore-aft balance in the boot
-easier: Two legs
-harder: Single leg
-cautions: [Achilles pain]
+matches_on_snow: Fore-aft balance in the boot, with the knee bent as when skiing
+easier: Two legs, smaller range
+harder: Single leg, or a load held for the calf raise
+cautions: [Achilles pain - reduce range and load]
 dosing:
   per_side: false
   ranges:
@@ -13,15 +16,15 @@ dosing:
       sets: { min: 2, max: 3 }
       reps: { min: 15, max: 20 }
       rest_seconds: { min: 30, max: 60 }
-      note: Two legs, full range, smooth tempo.
+      note: Two legs, knees bent; lower each calf raise over about 3 seconds and hold each tibialis raise for 2 seconds at the top.
       basis: Rep and rest ranges follow ACSM's endurance zone for healthy adults, kept at the conservative end.
       sources: [acsm-2009]
     - goal: strength
       sets: { min: 2, max: 3 }
       reps: { min: 8, max: 12 }
       rest_seconds: { min: 60, max: 120 }
-      note: Single leg or loaded; a slow lowering on each rep.
-      basis: Rep and rest ranges follow ACSM's strength zone for healthy adults, kept at the conservative end.
-      sources: [acsm-2009]
+      note: Single leg or loaded, knee still bent; 3-second lowering on every calf raise.
+      basis: A racing book names tibialis anterior and soleus among the muscles to train and writes tempo as seconds of lowering; the rep and rest ranges follow ACSM's strength zone.
+      sources: [{ source: pritchard-cross-2023, pages: "74, 79" }, acsm-2009]
   suggested: { goal: endurance, sets: 2, reps: 15 }
 reviewed_by: []

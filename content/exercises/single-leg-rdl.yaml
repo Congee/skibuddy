@@ -2,6 +2,7 @@ id: single-leg-rdl
 name: Single-leg Romanian deadlift
 targets:
   - { muscle: gluteus-medius, contraction: isometric }
+  - { muscle: gluteus-minimus, contraction: isometric }
   - { muscle: gluteus-maximus, contraction: eccentric }
   - { muscle: hamstrings, contraction: eccentric }
 single_leg: true

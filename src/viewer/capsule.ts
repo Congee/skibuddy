@@ -32,6 +32,8 @@ import {
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { MuscleLevel } from '../content/activation';
 import { Side } from '../content/schema';
+import type { Intensity } from '../content/schema';
+import type { TurnScenario } from '../physics/turn';
 import { spreadCandidates } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
 import { levelColour, levelOn } from './level-colour';
@@ -204,7 +206,7 @@ const ahead = new Vector3();
 const across = new Vector3();
 
 /** The placeholder capsule skier. */
-export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: ReadonlyArray<string>): Figure => {
+export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: ReadonlyArray<string>, initial: TurnScenario): Figure => {
   const { geometry, anchors } = buildFigureGeometry(table);
   const material = new FigureMaterial(table.size);
   const figure = new Mesh(geometry, material);
@@ -231,10 +233,14 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
   const p = new Vector3();
   const n = new Vector3();
   let marked: ReadonlyArray<number> = [];
+  let scenario = initial;
 
   return {
+    setIntensity: (_: Intensity, next: TurnScenario) => {
+      scenario = next;
+    },
     update: (t: number, levels: ReadonlyArray<MuscleLevel>) => {
-      const pose = poseAt(t);
+      const pose = poseAt(t, scenario);
       const world = segmentMatrices(pose);
       world.forEach((m, k) => material.matrices[k]?.fromArray(m));
       for (const [parts, local] of [[[...gear.shells, ...gear.soles], SHELL], [[...gear.plates, ...gear.bindings], CAPSULE_BINDING]] as const) {
@@ -264,7 +270,8 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         fist.position.set(grip[0], grip[1], grip[2]);
         fist.quaternion.setFromRotationMatrix(fistBasis.makeBasis(across, up, ahead));
       }
-      fillSlotLevels(table, levels, material.levels);
+      // The capsule draws parents, so parts light them.
+      fillSlotLevels(table, levels, material.levels, true);
     },
     anchors: (): ReadonlyArray<AnchorPoint> =>
       anchors.flatMap((a) => {

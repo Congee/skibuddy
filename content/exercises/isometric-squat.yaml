@@ -1,0 +1,25 @@
+id: isometric-squat
+name: Isometric squat at two depths
+targets:
+  - { muscle: vasti, contraction: isometric }
+  - { muscle: gluteus-maximus, contraction: isometric }
+single_leg: false
+matches_on_snow: The long, steady outside-leg hold at the peak of the turn
+easier: Body weight against a wall, shallower bend
+harder: Single leg
+cautions: [Knee pain - use the shallower depth, Hold your breath only briefly]
+dosing:
+  per_side: false
+  ranges:
+    - goal: strength
+      sets: { min: 4, max: 8 }
+      hold_seconds: { min: 6, max: 8 }
+      rest_seconds: { min: 60, max: 90 }
+      note: Push hard against a fixed bar or a heavy load; split the sets between a shallow bend like skiing and a deeper one.
+      basis: A racing book's isometric guidance of short maximal holds adding to 30-50 seconds per muscle group, taken from a general periodisation text, not a ski trial; one national team tests isometric squats at two knee angles.
+      sources:
+        - { source: pritchard-cross-2023, pages: 73 }
+        - { source: patterson-2023, pages: 87 }
+        - lum-2019
+  suggested: { goal: strength, sets: 5, hold_seconds: 7 }
+reviewed_by: []

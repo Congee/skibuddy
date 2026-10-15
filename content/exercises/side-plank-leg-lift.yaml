@@ -1,6 +1,10 @@
 id: side-plank-leg-lift
 name: Side plank with top-leg lift
-targets: [{ muscle: gluteus-medius, contraction: isometric }, { muscle: obliques, contraction: isometric }]
+targets:
+  - { muscle: gluteus-medius, contraction: isometric }
+  - { muscle: gluteus-minimus, contraction: isometric }
+  - { muscle: quadratus-lumborum, contraction: isometric }
+  - { muscle: obliques, contraction: isometric }
 single_leg: false
 matches_on_snow: Lateral hip and trunk stability
 easier: Knees bent

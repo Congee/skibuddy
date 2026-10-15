@@ -21,6 +21,8 @@ export interface ProbeFrame {
 }
 
 export interface ProbeFixture {
+  /** The drill scenarios the model's clips were solved for, as the bake stored them. */
+  readonly scenarios: unknown;
   readonly samples: number;
   readonly frames: ReadonlyArray<ProbeFrame>;
 }
@@ -71,7 +73,9 @@ export const probeFixture = (model: AnatomyModel): ProbeFixture => {
       tail: perSide((side) => vec(ends[side].tail())),
     };
   });
-  return { samples: PROBE_SAMPLES, frames };
+  const stored = model.root.getObjectByName('bones')?.userData['scenarios'];
+  if (typeof stored !== 'string') throw new Error('anatomy model has no scenarios');
+  return { scenarios: JSON.parse(stored), samples: PROBE_SAMPLES, frames };
 };
 
 if (import.meta.main) {

@@ -9,6 +9,7 @@ import { Segmented } from '../components/Segmented';
 import { Caution } from '../icons';
 import { visuallyHidden } from '../theme/global.css';
 import { DOSING_DISCLAIMER, formatRange, formatRest, formatSuggestion, goalName, shortCitation } from './dosing';
+import { SourceLine } from '../board/SourceLine';
 import { TargetFit, targetMatch } from './fit';
 import * as s from './gym.css';
 
@@ -131,6 +132,7 @@ export const GymBoard = (props: {
                     <span class={visuallyHidden}>On snow: </span>
                     {exercise.matchesOnSnow}
                   </p>
+                  <SourceLine citations={exercise.sources ?? []} sources={props.content.sources} class={s.sources} />
                   <dl class={s.versions}>
                     <dt class={s.term}>Easier</dt>
                     <dd>{exercise.easier}</dd>
@@ -142,11 +144,11 @@ export const GymBoard = (props: {
                   <ul class={s.trains} aria-label="Trains">
                     <For each={exercise.targets}>
                       {(t) => {
-                        const m = targetMatch(props.movement, t);
+                        const m = targetMatch(props.movement, t, props.content.muscles);
                         return (
                           <li class={s.target}>
                             <span class={s.targetMuscle}>{muscleName(t.muscle)}</span>
-                            <span class={s.contraction}>{t.contraction}</span>
+                            <span class={s.contraction}>{t.contraction ?? 'mobilisation'}</span>
                             <Switch>
                               <Match when={m.fit === TargetFit.OtherContraction}>
                                 <span class={s.fit}>drill works it {m.drillContractions.join(' or ')}</span>

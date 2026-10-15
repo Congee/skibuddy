@@ -3,7 +3,8 @@ import { Show, createEffect, createMemo, createSignal, onCleanup, onMount } from
 import type { JSX } from 'solid-js';
 import type { MuscleLevel } from '../content/activation';
 import { MAX_EFFORT, effortAt } from '../content/effort';
-import type { Movement } from '../content/schema';
+import { Intensity } from '../content/schema';
+import type { Movement, Scenarios } from '../content/schema';
 import { playingAtom, turnTimeAtom } from '../state/playback';
 import type { AnchorsListener } from './anchors';
 import { GearMode } from './gear-mode';
@@ -47,6 +48,10 @@ export const Viewer = (props: {
   readonly skeleton?: boolean;
   /** Boots and poles; translucent by default. */
   readonly gear?: GearMode;
+  /** How hard the turn is skied; moderate by default. */
+  readonly intensity?: Intensity;
+  /** The drill's scenario per setting, which the capsule figure poses for. */
+  readonly scenarios: Scenarios;
   /** CSS colour of the ground under the figure. */
   readonly ground?: string;
   /** The muscle the board singles out, if any. */
@@ -84,7 +89,9 @@ export const Viewer = (props: {
   // The figure's glow follows the board's continuous effort scale.
   const levels = createMemo(() => {
     const { activations } = props.movement;
-    return (at: number): ReadonlyArray<MuscleLevel> => activations.map((a) => ({ muscle: a.muscle, side: a.side, level: effortAt(a.intensity, at) / MAX_EFFORT }));
+    const setting = props.intensity ?? Intensity.Moderate;
+    return (at: number): ReadonlyArray<MuscleLevel> =>
+      activations.map((a) => ({ muscle: a.muscle, side: a.side, level: effortAt(a.intensity, at, setting) / MAX_EFFORT }));
   });
 
   onMount(() => {
@@ -99,6 +106,7 @@ export const Viewer = (props: {
           figure: FIGURE,
           forceWebGL: FORCE_WEBGL,
           levels: levels(),
+          scenarios: props.scenarios,
           ...(onAnchors === undefined ? {} : { onAnchors }),
         }),
       )
@@ -157,6 +165,12 @@ export const Viewer = (props: {
   createEffect(() => {
     const mode = props.gear ?? GearMode.Translucent;
     if (shown() !== null) viewer?.setGear(mode);
+  });
+
+  createEffect(() => {
+    const i = props.intensity ?? Intensity.Moderate;
+    const scenarios = props.scenarios;
+    if (shown() !== null) viewer?.setIntensity(i, scenarios);
   });
 
   createEffect(() => {

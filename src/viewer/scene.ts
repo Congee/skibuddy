@@ -1,13 +1,15 @@
 import { CircleGeometry, Color, DirectionalLight, HemisphereLight, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, Scene, WebGPURenderer } from 'three/webgpu';
 import { color, float, length, positionLocal, smoothstep, uniform, vec2 } from 'three/tsl';
 import type { MuscleLevel } from '../content/activation';
+import { Intensity } from '../content/schema';
+import type { TurnScenario, TurnScenarios } from '../physics/turn';
 import { bestAnchors, sameAnchors } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
 import type { AnchorsListener, MuscleAnchor } from './anchors';
 import { createCapsuleFigure } from './capsule';
 import { createFrameScheduler } from './frame-scheduler';
 import type { GearMode } from './gear-mode';
-import { highlightSlots, highlightStrength, pointsFor, turnAzimuth } from './highlight';
+import { highlightSlots, highlightStrength, pointsFor, revealsDeep, turnAzimuth } from './highlight';
 import type { FigureHighlight } from './highlight';
 import { DRAG_DAMPING, TURN_DAMPING, dampOrbit } from './orbit';
 import type { Orbit } from './orbit';
@@ -26,10 +28,12 @@ export interface Figure {
   /** Steps motion the figure runs on its own, such as the skeleton fade; true while it still moves. */
   readonly animate?: (now: number) => boolean;
   readonly setGear?: (mode: GearMode) => void;
+  /** How hard the turn is skied, and the drill's scenario for it; the next update poses for it. */
+  readonly setIntensity?: (intensity: Intensity, scenario: TurnScenario) => void;
   /** The field behind the figure is dark. */
   readonly setDark?: (dark: boolean) => void;
-  /** Marks these slots and dims the rest by `strength` (0 clears). */
-  readonly setHighlight?: (slots: ReadonlyArray<number>, strength: number) => void;
+  /** Marks these slots and dims the rest by `strength` (0 clears); `reveal` fades the unmarked muscles to show deep ones. */
+  readonly setHighlight?: (slots: ReadonlyArray<number>, strength: number, reveal: boolean) => void;
   readonly dispose: () => void;
 }
 
@@ -40,6 +44,8 @@ export interface ViewerOptions {
   readonly forceWebGL?: boolean;
   /** Each muscle's 0..1 level at turn time `t`. */
   readonly levels: (t: number) => ReadonlyArray<MuscleLevel>;
+  /** The drill's scenarios; the capsule poses for them, the anatomy model carries its own bake. */
+  readonly scenarios: TurnScenarios;
 }
 
 export interface Viewer {
@@ -49,6 +55,8 @@ export interface Viewer {
   readonly setSkeleton: (on: boolean) => void;
   /** Boots and poles: translucent, solid or hidden. */
   readonly setGear: (mode: GearMode) => void;
+  /** How hard the turn is skied, from the drill's scenarios: re-poses the figure and draws one frame. */
+  readonly setIntensity: (intensity: Intensity, scenarios: TurnScenarios) => void;
   /** CSS colour of the ground. */
   readonly setGround: (css: string) => void;
   /** Each muscle's level through the turn, such as another drill's; draws a frame. */
@@ -119,7 +127,7 @@ export const createViewer = async (
   };
   const anatomyFigure = options.figure === FigureKind.Anatomy ? await loadAnatomy() : null;
   const anatomy = anatomyFigure !== null;
-  const figure: Figure = anatomyFigure ?? createCapsuleFigure(scene, table, muscles);
+  const figure: Figure = anatomyFigure ?? createCapsuleFigure(scene, table, muscles, options.scenarios[Intensity.Moderate]);
   if (anatomy) {
     // A cool back light separates the figure's silhouette from the background.
     const rim = new DirectionalLight(0xbfd8ff, 1.4);
@@ -150,6 +158,8 @@ export const createViewer = async (
   let lastDraw = 0;
   let anchors: ReadonlyArray<MuscleAnchor> = [];
   let highlight: FigureHighlight | null = null;
+  let intensity: Intensity = Intensity.Moderate;
+  let scenarios = options.scenarios;
   // Set by a new focus; the turn is worked out once the pose is current.
   let turnPending = false;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -275,6 +285,14 @@ export const createViewer = async (
       figure.setGear?.(mode);
       invalidate();
     },
+    setIntensity: (next, nextScenarios) => {
+      if (next === intensity && nextScenarios === scenarios) return;
+      intensity = next;
+      scenarios = nextScenarios;
+      figure.setIntensity?.(next, nextScenarios[next]);
+      posedAt = Number.NaN;
+      invalidate();
+    },
     setGround: (css) => {
       const before = groundColour.value.getHex();
       groundColour.value.set(css);
@@ -311,7 +329,7 @@ export const createViewer = async (
     setHighlight: (next) => {
       if (next?.muscle === highlight?.muscle && next?.side === highlight?.side && next?.focus === highlight?.focus) return;
       highlight = next;
-      figure.setHighlight?.(highlightSlots(table, next), highlightStrength(next));
+      figure.setHighlight?.(highlightSlots(table, next), highlightStrength(next), revealsDeep(next));
       // Only a new focus turns the camera; hover and collapse leave it.
       if (next?.focus === true) turnPending = true;
       invalidate();

@@ -1,0 +1,11 @@
+id: supine-banded-march
+name: Supine banded hip-flexor march
+targets:
+  - { muscle: iliopsoas, contraction: concentric }
+  - { muscle: rectus-femoris, contraction: concentric }
+single_leg: true
+matches_on_snow: Drawing the inside thigh up with the hip already bent
+easier: No band
+harder: Pause with the thigh up, then lower slowly
+cautions: [Hip-flexor strain, Low back lifting off the floor - stop the set]
+reviewed_by: []

@@ -1,7 +1,7 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Side } from '../src/content/schema';
 import type { AnchorPoint } from '../src/viewer/anchor-projection';
-import { highlightSlots, markChanges, turnAzimuth } from '../src/viewer/highlight';
+import { highlightSlots, markChanges, pointsFor, revealsDeep, turnAzimuth } from '../src/viewer/highlight';
 import { makeSlotTable } from '../src/viewer/slots';
 
 const point = (normal: readonly [number, number, number], position: readonly [number, number, number] = [0, 1, 0]): AnchorPoint => ({
@@ -15,13 +15,41 @@ describe('figure highlight', () => {
   const table = makeSlotTable(['quadriceps', 'calf']);
 
   it('marks one side, or both for "both"', () => {
-    assert.deepStrictEqual(highlightSlots(table, { muscle: 'calf', side: Side.Inside, focus: true }), [table.slotOf('calf', Side.Inside)]);
-    assert.deepStrictEqual(highlightSlots(table, { muscle: 'calf', side: Side.Both, focus: true }), [
-      table.slotOf('calf', Side.Outside),
-      table.slotOf('calf', Side.Inside),
+    assert.deepStrictEqual(highlightSlots(table, { muscle: 'soleus', side: Side.Inside, focus: true }), [table.slotOf('soleus', Side.Inside)]);
+    assert.deepStrictEqual(highlightSlots(table, { muscle: 'soleus', side: Side.Both, focus: true }), [
+      table.slotOf('soleus', Side.Outside),
+      table.slotOf('soleus', Side.Inside),
     ]);
     assert.deepStrictEqual(highlightSlots(table, null), []);
     assert.deepStrictEqual(highlightSlots(table, { muscle: 'unknown', side: Side.Outside, focus: false }), []);
+  });
+
+  it('marks a parent with its parts, and a part alone', () => {
+    const slots = highlightSlots(table, { muscle: 'quadriceps', side: Side.Outside, focus: true });
+    for (const m of ['quadriceps', 'vasti', 'vastus-medialis', 'rectus-femoris']) assert.include(slots, table.slotOf(m, Side.Outside), m);
+    assert.notInclude(slots, table.slotOf('calf', Side.Outside));
+    assert.deepStrictEqual(highlightSlots(table, { muscle: 'rectus-femoris', side: Side.Outside, focus: true }), [table.slotOf('rectus-femoris', Side.Outside)]);
+  });
+
+  it('finds the pins of a parent among its parts', () => {
+    const parts = [
+      { ...point([0, 0, 1]), muscle: 'soleus' },
+      { ...point([0, 0, 1]), muscle: 'gastrocnemius' },
+      { ...point([0, 0, 1]), muscle: 'vasti' },
+    ];
+    assert.deepStrictEqual(
+      pointsFor(parts, { muscle: 'calf', side: Side.Outside, focus: true }).map((p) => p.muscle),
+      ['soleus', 'gastrocnemius'],
+    );
+  });
+
+  it('reveals deep muscles on focus only', () => {
+    for (const muscle of ['transversus-abdominis', 'multifidus', 'tibialis-posterior', 'popliteus', 'iliopsoas', 'hip-flexors']) {
+      assert.isTrue(revealsDeep({ muscle, side: Side.Inside, focus: true }), muscle);
+      assert.isFalse(revealsDeep({ muscle, side: Side.Inside, focus: false }), `${muscle} preview`);
+    }
+    for (const muscle of ['vasti', 'calf', 'obliques']) assert.isFalse(revealsDeep({ muscle, side: Side.Inside, focus: true }), muscle);
+    assert.isFalse(revealsDeep(null));
   });
 
   it('writes only the slots whose mark changed', () => {

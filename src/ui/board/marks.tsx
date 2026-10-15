@@ -9,9 +9,6 @@ const CONFIDENCE_WORDS: Record<Confidence, string> = {
   [Confidence.Low]: 'Opinion',
 };
 
-/** Drops parenthetical detail, e.g. "Calf (gastrocnemius and soleus)". */
-export const shortName = (name: string): string => name.replace(/\s*\(.*\)\s*$/, '');
-
 export const phaseLabel = (phase: Phase): string => phase.charAt(0).toUpperCase() + phase.slice(1);
 
 export const Stamp = (props: { readonly confidence: Confidence; readonly tone?: 'slat' | 'plate' | 'pin' }): JSX.Element => (

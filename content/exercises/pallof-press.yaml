@@ -1,6 +1,6 @@
 id: pallof-press
 name: Pallof press
-targets: [{ muscle: obliques, contraction: isometric }]
+targets: [{ muscle: obliques, contraction: isometric }, { muscle: transversus-abdominis, contraction: isometric }]
 single_leg: false
 matches_on_snow: A still upper body while the legs turn
 easier: Shorter lever

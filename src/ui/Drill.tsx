@@ -2,15 +2,17 @@ import { useAtom, useAtomValue } from '@effect/atom-solid';
 import { Show, createEffect, createMemo, createSignal, on } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { matchExercises } from '../content/match';
+import { shortNameOf } from '../content/schema';
 import type { Content, Drill, Movement } from '../content/schema';
 import { NO_FOCUS, focusAtom, openSlat } from '../state/focus';
+import { intensityAtom } from '../state/preferences';
 import { drillIdAtom, phaseAt, pinsAtom, turnTimeAtom } from '../state/playback';
 import * as s from './app.css';
 import { Board } from './board/Board';
 import { steadyOrder } from '../content/effort';
-import { shortName } from './board/marks';
 import { FigureField } from './figure/FigureField';
 import { GearControl } from './figure/GearControl';
+import { IntensityControl } from './figure/IntensityControl';
 import { GymBoard } from './gym/GymBoard';
 import { LiftLine, PhaseStops, usePlayback } from './lift/LiftLine';
 import { phoneTabs } from './lift/lift.css';
@@ -28,14 +30,18 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
   const pins = useAtomValue(() => pinsAtom);
   const [skeleton, setSkeleton] = createSignal(SKELETON_AT_START);
   const [gear, setGear] = createSignal<GearMode>(GEAR_AT_START);
+  const [intensity, setIntensity] = useAtom(() => intensityAtom);
   const reducedMotion = createMedia(REDUCED_MOTION);
   const [field, setField] = createSignal<HTMLDivElement>();
   usePlayback(reducedMotion, field);
   const phase = createMemo(() => phaseAt(t()));
   const order = createMemo(() => steadyOrder(props.movement.activations));
-  const muscleName = (id: string): string => props.content.muscles.find((m) => m.id === id)?.name ?? id;
+  const muscleShort = (id: string): string => {
+    const m = props.content.muscles.find((x) => x.id === id);
+    return m === undefined ? id : shortNameOf(m);
+  };
   const tasks = createMemo(() => props.content.tasks.filter((x) => x.drill === props.drill.id));
-  const matches = createMemo(() => matchExercises(props.movement, props.content.exercises));
+  const matches = createMemo(() => matchExercises(props.movement, props.content.exercises, props.content.muscles));
   const [focus, setFocus] = useAtom(() => focusAtom);
   // Another drill starts with every slat closed.
   createEffect(on(() => props.movement, () => setFocus(NO_FOCUS), { defer: true }));
@@ -57,11 +63,22 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
           pins={pins()}
           skeleton={skeleton()}
           gear={gear()}
-          muscleName={(id) => shortName(muscleName(id))}
+          intensity={intensity()}
+          scenarios={props.drill.scenarios}
+          muscleName={muscleShort}
           onPick={pick}
           ref={setField}
         />
-        <LiftLine skeleton={skeleton()} onSkeleton={setSkeleton} controls={<GearControl value={gear()} onChange={setGear} />} />
+        <LiftLine
+          skeleton={skeleton()}
+          onSkeleton={setSkeleton}
+          controls={
+            <>
+              <IntensityControl value={intensity()} onChange={setIntensity} />
+              <GearControl value={gear()} onChange={setGear} />
+            </>
+          }
+        />
       </section>
       <div class={phoneTabs}>
         <PhaseStops look="tabs" />
@@ -73,6 +90,7 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
           tasks={tasks()}
           content={props.content}
           phase={phase()}
+          intensity={intensity()}
         />
         <GymBoard matches={matches()} movement={props.movement} content={props.content} />
       </div>

@@ -1,0 +1,24 @@
+id: deep-single-leg-squat
+name: Deep single-leg squat
+targets:
+  - { muscle: vasti, contraction: eccentric }
+  - { muscle: gluteus-maximus, contraction: eccentric }
+  - { muscle: gluteus-medius, contraction: isometric }
+  - { muscle: deep-hip-rotators, contraction: isometric }
+single_leg: true
+matches_on_snow: Holding the knee over the foot on one bent leg, as on the stork's stance leg
+easier: Sit down to a box
+harder: Slower lowering, full depth
+cautions: [Knee pain - reduce depth, Knee caving inward - stop the set]
+dosing:
+  per_side: true
+  ranges:
+    - goal: control
+      sets: { min: 2, max: 3 }
+      reps: { min: 4, max: 8 }
+      rest_seconds: { min: 60, max: 120 }
+      note: Lower slowly with the knee over the second toe; sit to a box until full depth is clean.
+      basis: An injury-prevention programme for young racers that cut injuries includes deep single-leg squats, done once a week; the book prints no sets or reps, so the counts are our conservative reading and the rest follows ACSM.
+      sources: [{ source: jordan-sporri-taylor-2023, pages: 125 }, acsm-2009]
+  suggested: { goal: control, sets: 2, reps: 6 }
+reviewed_by: []

@@ -21,6 +21,7 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import type { MuscleLevel } from '../content/activation';
+import { INTENSITIES, Intensity } from '../content/schema';
 import type { AnchorPoint } from './anchor-projection';
 import { EQUIPMENT, bindingInFoot, shellInFoot } from './equipment';
 import type { Mat4, Vec3 } from './mat4';
@@ -31,8 +32,9 @@ import { bootFitFrom, parseGearFit } from './gear-fit';
 import type { BootFit, RawFit } from './gear-fit';
 import type { GearMode } from './gear-mode';
 import { poleDirection, poleTouchAt } from './pose';
-import { NodeKind, nodeOf } from './anatomy-names';
+import { NodeKind, nodeOf, turnClipName } from './anatomy-names';
 import { markChanges } from './highlight';
+import { ancestorsOf } from './muscle-groups';
 import { fillSlotLevels } from './slots';
 import type { SlotTable, TurnSide } from './slots';
 import { levelColour, levelOn } from './level-colour';
@@ -57,10 +59,11 @@ const FADE_SECONDS = 0.35;
 
 type Uniform = ReturnType<typeof uniform<'float'>>;
 
-/** Marks per slot and how strongly the marked muscle stands out. */
+/** Marks per slot, how strongly the marked muscle stands out, and how far the rest fade to show a deep one. */
 interface HighlightInputs {
   readonly marks: Array<number>;
   readonly strength: Uniform;
+  readonly reveal: Uniform;
 }
 
 /**
@@ -68,7 +71,8 @@ interface HighlightInputs {
  * colour and glow: emissive lift and a fresnel rim both grow with level, so the
  * level reads from brightness and halo width, not hue alone. `skeleton` fades
  * muscles to a dark translucent ghost, leaving working muscles partly visible.
- * A highlighted muscle keeps its effort and gains a pale outline; the rest dim toward resting red.
+ * A highlighted muscle keeps its effort and gains a pale outline; the rest dim toward resting red,
+ * or, for a deep muscle, fade to a faint ghost over it.
  */
 const muscleMaterial = (levels: Array<number>, highlight: HighlightInputs, skeleton: Uniform, tendon: boolean): MeshStandardNodeMaterial => {
   const m = new MeshStandardNodeMaterial({ roughness: tendon ? 0.35 : 0.5 });
@@ -76,6 +80,7 @@ const muscleMaterial = (levels: Array<number>, highlight: HighlightInputs, skele
   const marked = varying(uniformArray<'float'>(highlight.marks, 'float').element(slot));
   const mark = marked.mul(highlight.strength);
   const others = highlight.strength.mul(float(1).sub(marked));
+  const veil = highlight.reveal.mul(float(1).sub(marked));
   const level = varying(uniformArray<'float'>(levels, 'float').element(slot)).mul(float(1).sub(others.mul(0.97)));
   const facing = saturate(dot(normalView, positionViewDirection));
   // Higher levels get a wider rim.
@@ -90,7 +95,7 @@ const muscleMaterial = (levels: Array<number>, highlight: HighlightInputs, skele
   const on = levelOn(level);
   const lit = mix(base, hot, on.mul(tendon ? 0.3 : 0.9));
   const shaded = lit.mul(float(1).sub(fibre.mul(tendon ? 0.06 : 0.22))).mul(float(1).sub(others.mul(0.3)));
-  m.colorNode = mix(shaded, color(GHOST), skeleton.mul(float(1).sub(on)));
+  m.colorNode = mix(mix(shaded, color(GHOST), skeleton.mul(float(1).sub(on))), color(GHOST), veil.mul(0.6));
   // level is 0..1: level 1 is a subtle lift, level 3 a strong glow. With no bloom pass,
   // hard muscles also burn toward warm white.
   const lift = pow(level, 1.2).mul(tendon ? 0.3 : 2.6);
@@ -100,8 +105,10 @@ const muscleMaterial = (levels: Array<number>, highlight: HighlightInputs, skele
   const rimColour = mix(hot, color(WARM_WHITE), 0.5);
   const outline = color(FOCUS_RIM).mul(pow(float(1).sub(facing), 2.4).mul(mark.mul(tendon ? 1 : 2.6)));
   const lifted = base.mul(mark.mul(0.18));
-  m.emissiveNode = glow.add(burn).add(rimColour.mul(rim.mul(rimGain))).add(color(RIM_COOL).mul(rim.mul(0.06))).add(outline).add(lifted);
-  m.opacityNode = mix(float(1), saturate(rim.mul(0.35).add(0.12).add(level.mul(0.55)).add(mark.mul(0.5))), skeleton);
+  const emissive = glow.add(burn).add(rimColour.mul(rim.mul(rimGain))).add(color(RIM_COOL).mul(rim.mul(0.06))).add(outline).add(lifted);
+  m.emissiveNode = emissive.mul(float(1).sub(veil.mul(0.8)));
+  const ghost = mix(float(1), saturate(rim.mul(0.35).add(0.12).add(level.mul(0.55)).add(mark.mul(0.5))), skeleton);
+  m.opacityNode = ghost.mul(mix(float(1), saturate(rim.mul(0.4).add(0.05)), veil));
   return m;
 };
 
@@ -119,7 +126,8 @@ const vertexIn = (mesh: SkinnedMesh, name: 'position' | 'normal', index: number,
 
 /** A candidate pin vertex; the scene keeps the one facing the camera most. */
 interface Anchor {
-  readonly muscle: string;
+  /** The mesh's muscle, then the parents the board may name instead. */
+  readonly muscles: ReadonlyArray<string>;
   readonly side: TurnSide;
   readonly mesh: SkinnedMesh;
   readonly index: number;
@@ -157,7 +165,7 @@ export interface AnatomyFigure extends Figure {
   readonly setSkeleton: (on: boolean) => void;
 }
 
-/** The Z-Anatomy figure from scripts/anatomy; poses come from the baked `stork-turn` clip. */
+/** The Z-Anatomy figure from scripts/anatomy; poses come from the baked `stork-turn` clip per intensity. */
 export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: string = ANATOMY_URL): Promise<AnatomyFigure> => {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -176,7 +184,7 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
 
   const levels = Array.from({ length: table.size }, () => 0);
   const skeleton = uniform(0);
-  const highlight: HighlightInputs = { marks: Array.from({ length: table.size }, () => 0), strength: uniform(0) };
+  const highlight: HighlightInputs = { marks: Array.from({ length: table.size }, () => 0), strength: uniform(0), reveal: uniform(0) };
   const muscle = muscleMaterial(levels, highlight, skeleton, false);
   const tendon = muscleMaterial(levels, highlight, skeleton, true);
   let marked: ReadonlyArray<number> = [];
@@ -218,7 +226,8 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
       o.geometry.setAttribute('muscleSlot', new Uint32BufferAttribute(new Uint32Array(count).fill(slot), 1));
       if (node.kind === NodeKind.Muscle && !seen.has(owner)) {
         seen.add(owner);
-        for (const index of anchorVertices(owner.userData['anchor_vertices'], count)) anchors.push({ muscle: node.muscle, side: node.side, mesh: o, index });
+        const muscles = [node.muscle, ...ancestorsOf(node.muscle).filter((m) => table.slotOf(m, node.side) > 0)];
+        for (const index of anchorVertices(owner.userData['anchor_vertices'], count)) anchors.push({ muscles, side: node.side, mesh: o, index });
       }
     }
   };
@@ -278,7 +287,7 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
       kit = createGear({ [BodySide.Right]: fitted.right.fit, [BodySide.Left]: fitted.left.fit });
       fitGear(kit, fitted);
     }
-    clip = gltf.animations.find((a) => a.name === 'stork-turn') ?? gltf.animations[0];
+    clip = gltf.animations.find((a) => a.name === turnClipName(Intensity.Moderate)) ?? gltf.animations[0];
     if (clip === undefined) throw new Error('anatomy model has no stork-turn animation');
   } catch (e: unknown) {
     release();
@@ -289,11 +298,18 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
   for (const p of kit?.poles ?? []) scene.add(p.mesh);
   const turn = clip;
   const mixer = new AnimationMixer(root);
-  const action: AnimationAction = mixer.clipAction(turn);
-  action.play();
+  // Each intensity has its own baked clip; older models carry only the moderate one.
+  const actions = new Map<Intensity, { readonly clip: AnimationClip; readonly action: AnimationAction }>();
+  for (const i of INTENSITIES) {
+    const found = gltf.animations.find((a) => a.name === turnClipName(i)) ?? turn;
+    actions.set(i, { clip: found, action: mixer.clipAction(found) });
+  }
+  let playing = actions.get(Intensity.Moderate);
+  playing?.action.play();
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let target = 0;
+  let revealTarget = 0;
   let last = 0;
   const v4 = new Vector4();
   const p3 = new Vector3();
@@ -309,7 +325,7 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
 
   return {
     update: (t: number, current: ReadonlyArray<MuscleLevel>) => {
-      action.time = (((t % 1) + 1) % 1) * turn.duration;
+      if (playing !== undefined) playing.action.time = (((t % 1) + 1) % 1) * playing.clip.duration;
       mixer.update(0);
       root.updateMatrixWorld(true);
       // Otherwise the bone matrices upload a draw late and the hands trail their poles.
@@ -318,31 +334,46 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
       fillSlotLevels(table, current, levels);
     },
     animate: (now: number): boolean => {
-      const before = skeleton.value;
-      if (before === target) return false;
+      if (skeleton.value === target && highlight.reveal.value === revealTarget) return false;
       const step = reducedMotion.matches ? 1 : Math.max(0, now - last) / 1000 / FADE_SECONDS;
       last = now;
-      skeleton.value = target > before ? Math.min(target, before + step) : Math.max(target, before - step);
-      if ((before === 0) !== (skeleton.value === 0)) setFade(skeleton.value > 0);
-      return skeleton.value !== target;
+      const wasFaded = skeleton.value > 0 || highlight.reveal.value > 0;
+      const toward = (u: Uniform, goal: number): void => {
+        u.value = goal > u.value ? Math.min(goal, u.value + step) : Math.max(goal, u.value - step);
+      };
+      toward(skeleton, target);
+      toward(highlight.reveal, revealTarget);
+      const isFaded = skeleton.value > 0 || highlight.reveal.value > 0;
+      if (wasFaded !== isFaded) setFade(isFaded);
+      return skeleton.value !== target || highlight.reveal.value !== revealTarget;
     },
     anchors: (): ReadonlyArray<AnchorPoint> =>
-      anchors.map((a) => {
+      anchors.flatMap((a) => {
         const p = skinned(a.mesh, a.index, vertexIn(a.mesh, 'position', a.index, 1, v4), p3);
         const position = [p.x, p.y, p.z] as const;
         const n = skinned(a.mesh, a.index, vertexIn(a.mesh, 'normal', a.index, 0, v4), n3);
-        return { muscle: a.muscle, side: a.side, position, normal: [n.x, n.y, n.z] as const };
+        const normal = [n.x, n.y, n.z] as const;
+        return a.muscles.map((name) => ({ muscle: name, side: a.side, position, normal }));
       }),
     setSkeleton: (on: boolean) => {
       target = on ? 1 : 0;
       last = performance.now();
     },
+    setIntensity: (i: Intensity) => {
+      const next = actions.get(i);
+      if (next === undefined || next === playing) return;
+      playing?.action.stop();
+      next.action.play();
+      playing = next;
+    },
     setGear: (mode: GearMode) => kit?.setMode(mode),
     setDark: (dark: boolean) => kit?.setDark(dark),
-    setHighlight: (slots: ReadonlyArray<number>, strength: number) => {
+    setHighlight: (slots: ReadonlyArray<number>, strength: number, reveal: boolean) => {
       for (const [slot, value] of markChanges(marked, slots)) highlight.marks[slot] = value;
       marked = slots;
       highlight.strength.value = strength;
+      revealTarget = reveal ? 1 : 0;
+      last = performance.now();
     },
     dispose: () => {
       mixer.stopAllAction();

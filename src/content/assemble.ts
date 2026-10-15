@@ -1,6 +1,6 @@
 import { Effect, Schema } from 'effect';
 import { parse } from 'yaml';
-import { AssociationTask, Drill, Exercise, Movement, Muscle, Source } from './schema';
+import { AssociationFundamentals, AssociationTask, Drill, Exercise, Movement, Muscle, Primitive, Source } from './schema';
 import type { Content } from './schema';
 import { checkContent, ContentError } from './validate';
 
@@ -12,6 +12,8 @@ export interface ContentFile {
 
 const decodeMuscles = Schema.decodeUnknownEffect(Schema.Array(Muscle));
 const decodeSources = Schema.decodeUnknownEffect(Schema.Array(Source));
+const decodePrimitives = Schema.decodeUnknownEffect(Schema.Array(Primitive));
+const decodeFundamentals = Schema.decodeUnknownEffect(AssociationFundamentals);
 const decodeMovement = Schema.decodeUnknownEffect(Movement);
 const decodeDrill = Schema.decodeUnknownEffect(Drill);
 const decodeTask = Schema.decodeUnknownEffect(AssociationTask);
@@ -68,12 +70,25 @@ export const assembleContent = Effect.fn('assembleContent')(function* (
 
   const muscles = yield* required('anatomy/muscles.yaml', decodeMuscles);
   const sources = yield* required('sources.yaml', decodeSources);
+  const primitives = yield* required('primitives.yaml', decodePrimitives);
   const movements = yield* Effect.forEach(sortedBy(files, /^movements\/[^/]+\.ya?ml$/), (f) =>
     decodeFile(f, decodeMovement),
   );
   const drills = yield* Effect.forEach(sortedBy(files, /^drills\/[^/]+\.ya?ml$/), (f) => decodeFile(f, decodeDrill));
   const exercises = yield* Effect.forEach(sortedBy(files, /^exercises\/[^/]+\.ya?ml$/), (f) =>
     decodeFile(f, decodeExercise),
+  );
+  const fundamentals = yield* Effect.forEach(sortedBy(files, /^fundamentals\/[^/]+\.ya?ml$/), (f) =>
+    decodeFile(f, decodeFundamentals).pipe(
+      Effect.tap((decoded) =>
+        Effect.sync(() => {
+          const name = f.path.slice('fundamentals/'.length).replace(/\.ya?ml$/, '');
+          for (const d of decoded) {
+            if (d.association !== name) problems.push(`${f.path}: association ${d.association} does not match file name ${name}`);
+          }
+        }),
+      ),
+    ),
   );
   const tasks = yield* Effect.forEach(sortedBy(files, /^associations\/[^/]+\/[^/]+\.ya?ml$/), (f) =>
     decodeFile(f, decodeTask).pipe(
@@ -95,6 +110,8 @@ export const assembleContent = Effect.fn('assembleContent')(function* (
     muscles,
     sources,
     movements: movements.flat(),
+    primitives,
+    fundamentals: fundamentals.flat(),
     drills: drills.flat(),
     exercises: exercises.flat(),
     tasks: tasks.flat(),

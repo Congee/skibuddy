@@ -4,7 +4,7 @@ import type { JSX } from 'solid-js';
 import { effortAt, effortColour, effortWord } from '../../content/effort';
 import type { EffortRamp } from '../../content/effort';
 import { Side } from '../../content/schema';
-import type { Activation } from '../../content/schema';
+import type { Activation, Intensity } from '../../content/schema';
 import { Emphasis } from '../../state/focus';
 import type { Highlight } from '../../state/focus';
 import { playingAtom, turnTimeAtom } from '../../state/playback';
@@ -42,6 +42,8 @@ export const Pins = (props: {
   readonly anchors: ReadonlyArray<MuscleAnchor>;
   readonly size: PinSize;
   readonly ramp: EffortRamp;
+  /** Pin efforts show this setting. */
+  readonly intensity: Intensity;
   readonly muscleName: (id: string) => string;
   /** The board's focused or previewed muscle. */
   readonly highlight: Highlight | null;
@@ -65,13 +67,13 @@ export const Pins = (props: {
   });
   onCleanup(() => measure.disconnect());
   const placed = createMemo(
-    () => new Map(layoutPins(pinInputs(props.order, props.anchors, heights(), focused()), box()).map((p) => [p.key, p])),
+    () => new Map(layoutPins(pinInputs(props.order, props.anchors, heights(), focused(), props.intensity), box()).map((p) => [p.key, p])),
   );
 
   // Effort swatches and words follow the playhead by direct writes, so a frame of play re-renders nothing.
   const live = new Set<LivePin>();
-  const paint = (now: number, ramp: EffortRamp, pin: LivePin): void => {
-    const v = effortAt(pin.activation.intensity, now);
+  const paint = (now: number, ramp: EffortRamp, setting: Intensity, pin: LivePin): void => {
+    const v = effortAt(pin.activation.intensity, now, setting);
     pin.swatch.style.background = effortColour(v, ramp);
     const word = effortWord(v);
     if (pin.word.textContent !== word) pin.word.textContent = word;
@@ -79,7 +81,8 @@ export const Pins = (props: {
   createEffect(() => {
     const now = t();
     const ramp = props.ramp;
-    for (const pin of live) paint(now, ramp, pin);
+    const setting = props.intensity;
+    for (const pin of live) paint(now, ramp, setting, pin);
   });
   // Iterate stable keys so pins move instead of remounting.
   const keys = createMemo(() => [...placed().keys()]);
@@ -116,7 +119,7 @@ export const Pins = (props: {
                 if (swatch === undefined || word === undefined) return;
                 const pin: LivePin = { activation: activation(), swatch, word };
                 live.add(pin);
-                paint(untrack(t), untrack(() => props.ramp), pin);
+                paint(untrack(t), untrack(() => props.ramp), untrack(() => props.intensity), pin);
                 onCleanup(() => live.delete(pin));
               });
               return (

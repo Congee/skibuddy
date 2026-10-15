@@ -1,0 +1,27 @@
+id: single-leg-balance
+name: Single-leg balance in an athletic stance
+targets:
+  - { muscle: peroneals, contraction: isometric }
+  - { muscle: tibialis-posterior, contraction: isometric }
+  - { muscle: foot-intrinsics, contraction: isometric }
+single_leg: true
+matches_on_snow: Balancing on one ski, where small corrections come from the foot and ankle
+easier: Firm floor, eyes open, fingertip on a wall
+harder: Stand on a balance pad, then close the eyes
+cautions: [Clear space around you before closing the eyes]
+dosing:
+  per_side: true
+  ranges:
+    - goal: control
+      sets: { min: 2, max: 3 }
+      hold_seconds: { min: 20, max: 40 }
+      rest_seconds: { min: 30, max: 60 }
+      note: Ankle, knee and hip bent as when skiing; progress to the pad only when the floor is steady, then to eyes closed.
+      basis: A racing book lists single-leg balance, made harder with the eyes closed, for off-snow proprioception and treats balance work as a supplement to strength work; the hold times are our own conservative reading.
+      sources:
+        - { source: lindinger-2023, pages: 55 }
+        - { source: pritchard-cross-2023, pages: 80 }
+  suggested: { goal: control, sets: 2, hold_seconds: 30 }
+sources:
+  - { source: lind-sanders-2004, pages: 137 }
+reviewed_by: []

@@ -1,0 +1,32 @@
+id: stork-hold
+name: Standing stork hold
+targets:
+  - { muscle: gluteus-medius, contraction: isometric }
+  - { muscle: gluteus-minimus, contraction: isometric }
+  - { muscle: iliopsoas, contraction: isometric }
+  - { muscle: biceps-femoris, contraction: isometric }
+  - { muscle: medial-hamstrings, contraction: isometric }
+single_leg: true
+matches_on_snow: The stork turn's shape - a bent stance leg, the free heel drawn up and the inside hip held up
+easier: Fingertip on a wall, shorter hold
+harder: Stand on a balance pad, or lean the trunk slightly toward the stance side as in a turn
+cautions: [Hamstring cramp - lower the heel and shorten the hold]
+dosing:
+  per_side: true
+  ranges:
+    - goal: control
+      sets: { min: 2, max: 3 }
+      hold_seconds: { min: 10, max: 20 }
+      rest_seconds: { min: 30, max: 60 }
+      note: Stance knee bent, free heel pulled up toward the seat with the thigh a little forward; end the hold when the free hip drops.
+      basis: Our own conservative reading for slow, form-first work, not a published dose. Body-weight holds sit well below a maximal effort, so the holds are longer than in maximal isometric training.
+      sources: [lum-2019]
+    - goal: endurance
+      sets: { min: 2, max: 3 }
+      hold_seconds: { min: 20, max: 40 }
+      rest_seconds: { min: 30, max: 60 }
+      note: Easy enough to breathe through the whole hold; the pelvis stays level.
+      basis: Body-weight holds sit well below a maximal effort, so the holds are longer than in maximal isometric training. The rest follows ACSM's general guidance.
+      sources: [lum-2019, acsm-2009]
+  suggested: { goal: control, sets: 2, hold_seconds: 15 }
+reviewed_by: []

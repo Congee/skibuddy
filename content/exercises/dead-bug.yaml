@@ -1,0 +1,12 @@
+id: dead-bug
+name: Dead bug
+targets:
+  - { muscle: transversus-abdominis, contraction: isometric }
+  - { muscle: rectus-abdominis, contraction: isometric }
+  - { muscle: obliques, contraction: isometric }
+single_leg: false
+matches_on_snow: A quiet trunk while the arms and legs move on their own
+easier: Move only the legs
+harder: Hold a light band or cable overhead
+cautions: [Low back arching off the floor - shorten the reach]
+reviewed_by: []

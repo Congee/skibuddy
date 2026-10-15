@@ -1,5 +1,17 @@
 import { assert, describe, it } from '@effect/vitest';
-import { DOSING_KEY, DosingView, loadDosingView, parseDosingView, saveDosingView } from '../src/state/preferences';
+import { Intensity } from '../src/content/schema';
+import {
+  DOSING_KEY,
+  DosingView,
+  INTENSITY_KEY,
+  loadDosingView,
+  loadIntensity,
+  parseDosingView,
+  parseIntensity,
+  saveDosingView,
+  saveIntensity,
+  startIntensity,
+} from '../src/state/preferences';
 
 const memory = (): Pick<Storage, 'getItem' | 'setItem'> & { readonly data: Map<string, string> } => {
   const data = new Map<string, string>();
@@ -38,5 +50,34 @@ describe('dosing preference', () => {
     assert.strictEqual(loadDosingView(throwing), DosingView.Off);
     assert.doesNotThrow(() => saveDosingView(DosingView.SetsReps, throwing));
     assert.strictEqual(loadDosingView(undefined), DosingView.Off);
+  });
+});
+
+describe('intensity preference', () => {
+  it('defaults to Moderate', () => {
+    assert.strictEqual(loadIntensity(memory()), Intensity.Moderate);
+    for (const raw of [null, undefined, '', 'Dynamic', 'hard', 2]) assert.strictEqual(parseIntensity(raw), Intensity.Moderate);
+  });
+
+  it('round-trips through storage', () => {
+    const store = memory();
+    saveIntensity(Intensity.Gentle, store);
+    assert.strictEqual(store.data.get(INTENSITY_KEY), 'gentle');
+    assert.strictEqual(loadIntensity(store), Intensity.Gentle);
+  });
+
+  it('works without storage', () => {
+    assert.strictEqual(loadIntensity(throwing), Intensity.Moderate);
+    assert.doesNotThrow(() => saveIntensity(Intensity.Dynamic, throwing));
+  });
+
+  it('starts from ?intensity= when valid, without saving it, else the saved choice', () => {
+    const store = memory();
+    saveIntensity(Intensity.Gentle, store);
+    assert.strictEqual(startIntensity('?intensity=dynamic', store), Intensity.Dynamic);
+    assert.strictEqual(store.data.get(INTENSITY_KEY), 'gentle');
+    assert.strictEqual(startIntensity('?intensity=wild', store), Intensity.Gentle);
+    assert.strictEqual(startIntensity('', store), Intensity.Gentle);
+    assert.strictEqual(startIntensity('', memory()), Intensity.Moderate);
   });
 });

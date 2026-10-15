@@ -1,10 +1,9 @@
 association: psia
 drill: stork-turns
 task: Stork Turns
-level: 2
+level: { label: Level 2, ordinal: 2 }
 category: Individual
-fundamentals:
-  - Control edge angles through a combination of inclination and angulation
-  - Control the relationship of the Center of Mass to the Base of Support to direct pressure along the length of the skis
+# The page joins the two with "and/or".
+fundamentals: { relation: and/or, ids: [edge-angles, fore-aft] }
 url: https://psia-c.org/education/alpine/alpine-resources/stork-turns/
 reviewed_by: []

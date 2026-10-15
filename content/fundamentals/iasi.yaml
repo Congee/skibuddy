@@ -1,0 +1,25 @@
+# The four skills of the IASI Skills Model (manual pp. 26-39), pressure control split as the manual does (p. 32).
+# IASI names no fundamentals per drill; what each requires of a drill is our reading.
+association: iasi
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=26
+fundamentals:
+  - id: rotation
+    name: Rotation
+    requires: [leg-rotation]
+    basis: Turning the legs in the hip sockets with a calm upper body
+  - id: edging
+    name: Edging
+    requires: [tipping]
+    basis: Tilting the skis on and off their edges
+  - id: pressure-ski-to-ski
+    name: Pressure control, ski to ski
+    requires: [stance-leg-edge-hold]
+    basis: More pressure on the outside ski
+  - id: pressure-fore-aft
+    name: Pressure control, fore/aft
+    requires: [ankle-flexion]
+    basis: Pressure moved along the ski, tip to tail, through the ankle
+  - id: timing
+    name: Timing
+    requires: [{ any_of: [pole-touch, extension-transition, flexion-transition] }]
+    basis: Timing has no single movement; the nearest are the pole touch and the timing of the transition
