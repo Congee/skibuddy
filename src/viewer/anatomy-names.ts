@@ -1,3 +1,4 @@
+import type { Object3D } from 'three';
 import { Side } from '../content/schema';
 import type { TurnSide } from './slots';
 
@@ -21,4 +22,13 @@ export const parseAnatomyNode = (name: string): AnatomyNode | null => {
   const [, muscle, side] = m;
   if (muscle === undefined) return null;
   return { kind: NodeKind.Muscle, muscle, side: side === 'outside' ? Side.Outside : Side.Inside };
+};
+
+/** The parsed name of the nearest named ancestor; multi-material meshes load as a group of primitives. */
+export const nodeOf = (object: Object3D): { readonly node: AnatomyNode; readonly owner: Object3D } | null => {
+  for (let o: Object3D | null = object; o !== null; o = o.parent) {
+    const node = parseAnatomyNode(o.name);
+    if (node !== null) return { node, owner: o };
+  }
+  return null;
 };

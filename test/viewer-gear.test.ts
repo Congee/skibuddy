@@ -1,7 +1,8 @@
 import { assert, describe, it } from '@effect/vitest';
-import { Vector3 } from 'three';
-import type { BufferGeometry } from 'three';
-import { cuffGeometry, poleGeometry, shellGeometry } from '../src/viewer/gear';
+import { vi } from 'vitest';
+import { BufferGeometry, Vector3 } from 'three/webgpu';
+import { BodySide } from '../src/viewer/figure';
+import { createGear, cuffGeometry, poleGeometry, shellGeometry } from '../src/viewer/gear';
 import { CAPSULE_BOOT, bootFitFrom, coveredByBoot, parseGearFit } from '../src/viewer/gear-fit';
 import type { RawFit } from '../src/viewer/gear-fit';
 import { GearMode, isGearMode } from '../src/viewer/gear-mode';
@@ -90,6 +91,25 @@ describe('gear geometry', () => {
     assert.closeTo(g.boundingBox?.min.y ?? 0, -POLE.reach, 1e-6);
     assert.isAbove(g.boundingBox?.max.y ?? 0, 0.05);
     assert.strictEqual(g.groups.length, 2);
+  });
+});
+
+describe('createGear', () => {
+  it('frees every geometry it builds but does not keep', () => {
+    const disposed = new Set<number>();
+    const spy = vi.spyOn(BufferGeometry.prototype, 'dispose').mockImplementation(function (this: BufferGeometry) {
+      disposed.add(this.id);
+    });
+    try {
+      const first = new BufferGeometry().id + 1;
+      const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT });
+      const end = new BufferGeometry().id;
+      const kept = new Set([...gear.shells, ...gear.soles, ...gear.cuffs, ...gear.poles].map((p) => p.mesh.geometry.id));
+      const leaked = Array.from({ length: end - first }, (_, i) => first + i).filter((id) => !kept.has(id) && !disposed.has(id));
+      assert.deepStrictEqual(leaked, []);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 

@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "lint": "oxlint",
     "test": "vitest run",
+    "test:model": "vitest run --config vitest.model.config.ts",
     "check": "bun run typecheck && bun run lint && bun run test"
   },
   "dependencies": {

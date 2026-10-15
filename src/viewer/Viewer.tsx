@@ -1,5 +1,5 @@
 import { useAtomValue } from '@effect/atom-solid';
-import { Show, createEffect, createSignal, onCleanup, onMount } from 'solid-js';
+import { Show, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { MuscleLevel } from '../content/activation';
 import { MAX_EFFORT, effortAt } from '../content/effort';
@@ -13,7 +13,6 @@ const params = new URLSearchParams(window.location.search);
 // The capsule is the fallback when the anatomy model fails to load; ?figure=capsule forces it.
 const FIGURE: FigureKind = params.get('figure') === 'capsule' ? 'capsule' : 'anatomy';
 const FORCE_WEBGL = params.get('renderer') === 'webgl';
-const SKELETON = params.get('skeleton') === '1';
 
 /** Default error state: fills the figure area so the layout does not jump. */
 export const ViewerError = (props: { readonly message: string }): JSX.Element => (
@@ -80,8 +79,10 @@ export const Viewer = (props: {
       : (anchors) => props.onAnchors?.(dx === 0 && dy === 0 ? anchors : anchors.map((a) => ({ ...a, x: a.x + dx, y: a.y + dy })));
 
   // The figure's glow follows the board's continuous effort scale.
-  const levels = (at: number): ReadonlyArray<MuscleLevel> =>
-    props.movement.activations.map((a) => ({ muscle: a.muscle, side: a.side, level: effortAt(a.intensity, at) / MAX_EFFORT }));
+  const levels = createMemo(() => {
+    const { activations } = props.movement;
+    return (at: number): ReadonlyArray<MuscleLevel> => activations.map((a) => ({ muscle: a.muscle, side: a.side, level: effortAt(a.intensity, at) / MAX_EFFORT }));
+  });
 
   onMount(() => {
     if (canvas === undefined) return;
@@ -94,7 +95,7 @@ export const Viewer = (props: {
         createViewer(target, props.muscles, {
           figure: FIGURE,
           forceWebGL: FORCE_WEBGL,
-          levels,
+          levels: levels(),
           ...(onAnchors === undefined ? {} : { onAnchors }),
         }),
       )
@@ -105,9 +106,7 @@ export const Viewer = (props: {
             return;
           }
           viewer = v;
-          v.setSkeleton(props.skeleton ?? SKELETON);
-          v.setGear(props.gear ?? GearMode.Translucent);
-          if (props.ground !== undefined) v.setGround(props.ground);
+          // The effects below hand the viewer its inputs once it shows.
           setShown(v.figure);
           props.onReady?.();
         },
@@ -126,6 +125,12 @@ export const Viewer = (props: {
   });
 
   // Each change asks the viewer for one frame; nothing draws otherwise.
+  // Another drill keeps the canvas and swaps only the levels.
+  createEffect(() => {
+    const next = levels();
+    if (shown() !== null) viewer?.setLevels(next);
+  });
+
   createEffect(() => {
     const at = t();
     if (shown() !== null) viewer?.setTime(at);
@@ -142,7 +147,7 @@ export const Viewer = (props: {
   });
 
   createEffect(() => {
-    const on = props.skeleton ?? SKELETON;
+    const on = props.skeleton ?? false;
     if (shown() !== null) viewer?.setSkeleton(on);
   });
 

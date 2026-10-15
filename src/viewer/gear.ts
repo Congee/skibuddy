@@ -190,8 +190,10 @@ export const createGear = (boots: Readonly<Record<LegSide, BootFit>>): Gear => {
     mesh.renderOrder = order;
     return { mesh, side };
   };
-  const shells = SIDES.map((side) => make(mergeOrThrow([shellGeometry(boots[side]), trimGeometry(boots[side], side).shell], true), side, ORDER.shell));
-  const cuffs = SIDES.map((side) => make(mergeOrThrow([cuffGeometry(boots[side]), trimGeometry(boots[side], side).cuff], true), side, ORDER.cuff));
+  const trims = SIDES.map((side) => ({ side, trim: trimGeometry(boots[side], side) }));
+  // mergeOrThrow frees each trim half once it is merged.
+  const shells = trims.map(({ side, trim }) => make(mergeOrThrow([shellGeometry(boots[side]), trim.shell], true), side, ORDER.shell));
+  const cuffs = trims.map(({ side, trim }) => make(mergeOrThrow([cuffGeometry(boots[side]), trim.cuff], true), side, ORDER.cuff));
   // Trim colour only: the second material slot.
   const soles = SIDES.map((side) => {
     const g = soleGeometry(boots[side]);

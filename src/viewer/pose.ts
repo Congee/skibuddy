@@ -159,7 +159,8 @@ const skiIndex = (side: BodySide): number => SEGMENTS.findIndex((s) => s.kind ==
 
 const insideTipHeight = (pose: Pose): number => transformPoint(segmentMatrices(pose)[skiIndex(BodySide.Left)] ?? identity(), SKI_TIP)[1];
 
-export const poseAt = (t: number): Pose => {
+/** The exact pose, solved by bisection; costs about 45 skeleton passes, so frames read `poseAt`. */
+export const solvePose = (t: number): Pose => {
   const k = keyValuesAt(t);
   const outside: LegPose = { hipFlex: k.hipFlex, ankleFlex: k.ankleFlex, tailLift: 0 };
   const withFlex = (extra: number): Pose => ({
@@ -183,6 +184,42 @@ export const poseAt = (t: number): Pose => {
   }
   const legs = withFlex((lo + hi) / 2);
   return legs.poleTouch > 0 ? { ...legs, insideReach: legs.poleTouch * solveReach(legs) } : legs;
+};
+
+/** Solved poses per turn; a multiple of the bake's 24 frames, so those frames are exact. */
+export const POSE_SAMPLES = 96;
+let table: ReadonlyArray<Pose> | null = null;
+
+const mixLeg = (a: LegPose, b: LegPose, f: number): LegPose => ({
+  hipFlex: a.hipFlex + (b.hipFlex - a.hipFlex) * f,
+  ankleFlex: a.ankleFlex + (b.ankleFlex - a.ankleFlex) * f,
+  tailLift: a.tailLift + (b.tailLift - a.tailLift) * f,
+});
+
+/** The pose at turn time `t`, interpolated from a table solved once. */
+export const poseAt = (t: number): Pose => {
+  table ??= Array.from({ length: POSE_SAMPLES }, (_, i) => solvePose(i / POSE_SAMPLES));
+  const u = (((t % 1) + 1) % 1) * POSE_SAMPLES;
+  // Sample times such as 1/24 land a rounding error off their sample.
+  const near = Math.round(u);
+  const i = Math.abs(u - near) < 1e-9 ? near : Math.floor(u);
+  const f = Math.max(0, u - i);
+  const a = table[i % POSE_SAMPLES];
+  const b = table[(i + 1) % POSE_SAMPLES];
+  if (a === undefined || b === undefined) throw new Error('empty pose table');
+  if (f < 1e-9) return a;
+  const mix = (x: number, y: number): number => x + (y - x) * f;
+  return {
+    lean: mix(a.lean, b.lean),
+    hipAngulation: mix(a.hipAngulation, b.hipAngulation),
+    kneeAngulation: mix(a.kneeAngulation, b.kneeAngulation),
+    trunkFlex: mix(a.trunkFlex, b.trunkFlex),
+    trunkTurn: mix(a.trunkTurn, b.trunkTurn),
+    poleTouch: poleTouchAt(t),
+    insideReach: mix(a.insideReach, b.insideReach),
+    outside: mixLeg(a.outside, b.outside, f),
+    inside: mixLeg(a.inside, b.inside, f),
+  };
 };
 
 /** How far ahead of the inside ankle a full touch lands. */

@@ -2,7 +2,7 @@ import { assert, describe, it } from '@effect/vitest';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
-import { SKI_TIP as TIP, poseAt, segmentMatrices, turnDepth } from '../src/viewer/pose';
+import { POSE_SAMPLES, SKI_TIP as TIP, poseAt, segmentMatrices, solvePose, turnDepth } from '../src/viewer/pose';
 
 const indexOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 const matrixAt = (t: number, kind: SegmentKind, side: BodySide): Mat4 => {
@@ -114,5 +114,33 @@ describe('segmentMatrices', () => {
     const [x, , z] = point(0.5, SegmentKind.Trunk, BodySide.Center, [0, 0, 1]);
     const [ox, , oz] = point(0.5, SegmentKind.Trunk, BodySide.Center, [0, 0, 0]);
     assert.isBelow(Math.atan2(x - ox, z - oz), -0.05);
+  });
+});
+
+describe('poseAt', () => {
+  it('returns the solved pose at each table sample', () => {
+    for (const i of [0, 4, 16, 48, 80]) assert.deepStrictEqual(poseAt(i / POSE_SAMPLES), solvePose(i / POSE_SAMPLES));
+  });
+
+  it('stays within a millimetre of the solved pose between samples', () => {
+    const ski = indexOf(SegmentKind.Ski, BodySide.Left);
+    for (let i = 0; i < POSE_SAMPLES; i++) {
+      const t = (i + 0.5) / POSE_SAMPLES;
+      const table = segmentMatrices(poseAt(t));
+      const solved = segmentMatrices(solvePose(t));
+      table.forEach((m, k) => {
+        const p = transformPoint(m, [0, 0.3, 0]);
+        const q = transformPoint(solved[k] ?? m, [0, 0.3, 0]);
+        assert.isBelow(Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]), 1e-3, `t=${t}, segment ${k}`);
+      });
+      const m = table[ski];
+      if (m === undefined) throw new Error('no inside ski');
+      assert.closeTo(transformPoint(m, TIP)[1], 0, 1e-3, `tip at t=${t}`);
+    }
+  });
+
+  it('wraps like the turn', () => {
+    assert.deepStrictEqual(poseAt(1.25), poseAt(0.25));
+    assert.deepStrictEqual(poseAt(-0.75), poseAt(0.25));
   });
 });

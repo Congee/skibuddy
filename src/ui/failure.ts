@@ -1,4 +1,5 @@
-import { Cause, Schema } from 'effect';
+import { Cause } from 'effect';
+import { ContentError } from '../content/validate';
 import { ContentFetchError } from '../state/content';
 
 export interface FailureCopy {
@@ -18,11 +19,11 @@ export const describeFailure = (cause: Cause.Cause<unknown>): FailureCopy => {
       detail: error.message,
     };
   }
-  if (Schema.isSchemaError(error)) {
+  if (error instanceof ContentError) {
     return {
-      title: 'The drill content is in the wrong shape',
+      title: 'The drill content has a problem',
       body: 'This is a bug in skibuddy, not something you did. Reloading will not fix it; please report it with the detail below.',
-      detail: error.message,
+      detail: error.problems.join('\n'),
     };
   }
   return {

@@ -12,4 +12,7 @@ nix run nixpkgs#blender -- -b --disable-autoexec "$blend" --python-exit-code 1 \
   --python "$here/build_anatomy.py" -- --out "$work/anatomy-raw.glb" --report "$work/report.json" --pose "$work/pose-track.json" "${@:3}"
 # -kv keeps the fibre UVs, which no material references; -kn/-km/-ke keep the names and extras the viewer reads.
 nix run nixpkgs#meshoptimizer -- -i "$work/anatomy-raw.glb" -o "$repo/public/models/anatomy.glb" -cc -kv -kn -km -ke -v
+# After gltfpack, which reorders vertices: pin candidates as vertex indices, then the unit tests' probe fixture.
+(cd "$repo" && bun scripts/anatomy/stamp-anchors.ts public/models/anatomy.glb)
+(cd "$repo" && bun scripts/anatomy/probe-fixture.ts public/models/anatomy.glb) > "$repo/test/anatomy-probe.json"
 ls -l "$work/anatomy-raw.glb" "$repo/public/models/anatomy.glb"

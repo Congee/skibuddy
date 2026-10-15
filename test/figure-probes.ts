@@ -1,11 +1,9 @@
-import { Vector3 } from 'three';
-import type { Mesh, Object3D } from 'three';
+import type { ProbeFrame } from '../scripts/anatomy/probe-fixture';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
-import { parseGearFit } from '../src/viewer/gear-fit';
 import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
 import { CAPSULE_GRIP, SKI_TIP, poseAt, segmentMatrices } from '../src/viewer/pose';
-import { loadAnatomy } from './anatomy-model';
+import fixture from './anatomy-probe.json';
 
 export type LegSide = typeof BodySide.Left | typeof BodySide.Right;
 
@@ -41,45 +39,30 @@ export const capsuleProbe: FigureProbe = {
   },
 };
 
-const vec = (v: Vector3): Vec3 => [v.x, v.y, v.z];
+const isVec3 = (v: unknown): v is Vec3 => Array.isArray(v) && v.length === 3 && v.every((x) => typeof x === 'number');
+const isSided = (v: unknown): v is Readonly<Record<LegSide, Vec3>> =>
+  typeof v === 'object' && v !== null && isVec3((v as Record<string, unknown>)[BodySide.Right]) && isVec3((v as Record<string, unknown>)[BodySide.Left]);
+const isFrame = (v: unknown): v is ProbeFrame =>
+  typeof v === 'object' && v !== null && ['grip', 'ankle', 'tip', 'tail'].every((k) => isSided((v as Record<string, unknown>)[k]));
 
-const letter = (side: LegSide): string => (side === BodySide.Right ? 'R' : 'L');
-
-/** The committed, baked anatomy model. */
-export const anatomyProbe = async (): Promise<FigureProbe> => {
-  const model = await loadAnatomy();
-  const raw = parseGearFit(model.root.getObjectByName('bones')?.userData['gear_fit']);
-  if (raw === null) throw new Error('anatomy model has no gear fit');
-  // Ski ends at the rest pose, from the ski mesh itself.
-  const skiEnds = (side: LegSide): { readonly tip: () => Vector3; readonly tail: () => Vector3 } => {
-    let mesh: Mesh | undefined;
-    model.root.getObjectByName(`gear_ski_${letter(side)}`)?.traverse((o: Object3D) => {
-      if ((o as Mesh).isMesh) mesh = o as Mesh;
-    });
-    const ski = mesh;
-    if (ski === undefined) throw new Error('no ski mesh');
-    const pos = ski.geometry.getAttribute('position');
-    const pts = Array.from({ length: pos.count }, (_, i) => new Vector3(pos.getX(i), pos.getY(i), pos.getZ(i)).applyMatrix4(ski.matrixWorld));
-    const low = Math.min(...pts.map((p) => p.y));
-    const base = pts.filter((p) => p.y < low + 1e-3);
-    const tip = base.reduce((a, b) => (b.z > a.z ? b : a));
-    const tail = base.reduce((a, b) => (b.z < a.z ? b : a));
-    const x = (tip.x + tail.x) / 2;
-    return { tip: model.carried(`foot.${letter(side)}`, new Vector3(x, low, tip.z)), tail: model.carried(`foot.${letter(side)}`, new Vector3(x, low, tail.z)) };
-  };
-  const ends = { [BodySide.Right]: skiEnds(BodySide.Right), [BodySide.Left]: skiEnds(BodySide.Left) };
-  const grips = {
-    [BodySide.Right]: model.carried('hand.R', new Vector3(...raw.right.grip)),
-    [BodySide.Left]: model.carried('hand.L', new Vector3(...raw.left.grip)),
-  };
+/**
+ * The baked anatomy model, sampled by scripts/anatomy/probe-fixture.ts when the model is built;
+ * `bun run test:model` checks the fixture still matches the model.
+ */
+export const anatomyProbe = (): FigureProbe => {
+  const raw: ReadonlyArray<unknown> = fixture.frames;
+  const frames = raw.filter(isFrame);
+  if (frames.length !== fixture.samples) throw new Error('anatomy probe fixture is malformed');
   return {
     name: 'anatomy',
     at: (t) => {
-      model.pose(t);
+      const u = (((t % 1) + 1) % 1) * fixture.samples;
+      const frame = Math.abs(u - Math.round(u)) < 1e-9 ? frames[Math.round(u) % fixture.samples] : undefined;
+      if (frame === undefined) throw new Error(`anatomy probe has no sample at t=${t}`);
       return {
-        grip: (side) => vec(grips[side]()),
-        ankle: (side) => vec(model.bone(`foot.${letter(side)}`).getWorldPosition(new Vector3())),
-        ski: (side) => ({ tip: vec(ends[side].tip()), tail: vec(ends[side].tail()) }),
+        grip: (side) => frame.grip[side],
+        ankle: (side) => frame.ankle[side],
+        ski: (side) => ({ tip: frame.tip[side], tail: frame.tail[side] }),
       };
     },
   };

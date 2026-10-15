@@ -2,10 +2,14 @@ import { readFileSync } from 'node:fs';
 import { AnimationMixer } from 'three';
 import type { Object3D, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import type { GLTF } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
-/** The committed anatomy model, posed by its baked clip, for invariant tests on the real figure. */
+export const MODEL_PATH = new URL('../../public/models/anatomy.glb', import.meta.url);
+
+/** A baked anatomy model read from disk, posed by its clip. */
 export interface AnatomyModel {
+  readonly gltf: GLTF;
   readonly root: Object3D;
   readonly pose: (t: number) => void;
   readonly bone: (name: string) => Object3D;
@@ -13,9 +17,9 @@ export interface AnatomyModel {
   readonly carried: (bone: string, rest: Vector3) => () => Vector3;
 }
 
-export const loadAnatomy = async (): Promise<AnatomyModel> => {
+export const loadAnatomy = async (path: string | URL = MODEL_PATH): Promise<AnatomyModel> => {
   await MeshoptDecoder.ready;
-  const file = readFileSync(new URL('../public/models/anatomy.glb', import.meta.url));
+  const file = readFileSync(path);
   const data = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -33,6 +37,7 @@ export const loadAnatomy = async (): Promise<AnatomyModel> => {
     return b;
   };
   return {
+    gltf,
     root,
     bone,
     pose: (t) => {

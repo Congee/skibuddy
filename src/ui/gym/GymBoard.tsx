@@ -1,4 +1,3 @@
-import { SegmentGroup } from '@ark-ui/solid/segment-group';
 import { useAtom } from '@effect/atom-solid';
 import { For, Match, Show, Switch } from 'solid-js';
 import type { JSX } from 'solid-js';
@@ -6,6 +5,7 @@ import type { ExerciseMatch } from '../../content/match';
 import type { Content, Dosing, DosingRange, Movement, Source } from '../../content/schema';
 import { DosingView, dosingViewAtom, parseDosingView } from '../../state/preferences';
 import * as b from '../board/board.css';
+import { Segmented } from '../components/Segmented';
 import { Caution } from '../icons';
 import { visuallyHidden } from '../theme/global.css';
 import { DOSING_DISCLAIMER, formatRange, formatRest, formatSuggestion, goalName, shortCitation } from './dosing';
@@ -19,27 +19,7 @@ const VIEW_OPTIONS: ReadonlyArray<{ readonly value: DosingView; readonly label: 
 ];
 
 const DosingPicker = (props: { readonly value: DosingView; readonly onChange: (v: DosingView) => void }): JSX.Element => (
-  <div class={s.dosingPick}>
-    <span id="dosing-label" class={s.dosingLabel}>
-      Dosing
-    </span>
-    <SegmentGroup.Root
-      class={s.segments}
-      aria-labelledby="dosing-label"
-      value={props.value}
-      onValueChange={(d) => props.onChange(parseDosingView(d.value))}
-    >
-      <For each={VIEW_OPTIONS}>
-        {(option) => (
-          <SegmentGroup.Item class={s.segment} value={option.value}>
-            <SegmentGroup.ItemText>{option.label}</SegmentGroup.ItemText>
-            <SegmentGroup.ItemControl />
-            <SegmentGroup.ItemHiddenInput />
-          </SegmentGroup.Item>
-        )}
-      </For>
-    </SegmentGroup.Root>
-  </div>
+  <Segmented label="Dosing" showLabel look="plate" options={VIEW_OPTIONS} value={props.value} onChange={(v) => props.onChange(parseDosingView(v))} />
 );
 
 const DosingBlock = (props: {

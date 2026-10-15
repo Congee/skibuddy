@@ -1,5 +1,5 @@
 import { globalStyle, style } from '@vanilla-extract/css';
-import { easeOut, motionOk, phone } from '../theme/global.css';
+import { phone } from '../theme/global.css';
 import { vars } from '../theme/theme.css';
 
 export const gym = style({ marginTop: 24, '@media': { [phone]: { marginTop: 16 } } });
@@ -92,62 +92,6 @@ export const plateHead = style({
 });
 
 export const plateText = style({ flex: '1 1 32ch', minWidth: 0 });
-
-export const dosingPick = style({
-  display: 'grid',
-  gap: 6,
-  flex: '0 1 auto',
-  '@media': { [phone]: { flex: '1 1 100%' } },
-});
-
-export const dosingLabel = style({
-  fontSize: 13,
-  fontWeight: 700,
-  fontStretch: '85%',
-  textTransform: 'uppercase',
-  letterSpacing: '0.08em',
-  color: vars.color.plateInk2,
-});
-
-export const segments = style({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, auto)',
-  gap: 4,
-  '@media': { [phone]: { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' } },
-});
-
-export const segment = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minHeight: 44,
-  padding: '0 14px',
-  border: `1.5px solid ${vars.color.plateInk2}`,
-  borderRadius: 3,
-  color: vars.color.plateInk,
-  cursor: 'pointer',
-  fontSize: 14,
-  fontWeight: 700,
-  fontStretch: '88%',
-  textTransform: 'uppercase',
-  letterSpacing: '0.06em',
-  whiteSpace: 'nowrap',
-  '@media': {
-    [motionOk]: { transition: `background-color 160ms ${easeOut}, color 160ms ${easeOut}` },
-    [phone]: { minHeight: 52, padding: '0 8px' },
-  },
-  selectors: {
-    '&:hover': { borderColor: vars.color.plateInk },
-    '&[data-state="checked"]': {
-      background: vars.color.plateInk,
-      borderColor: vars.color.plateInk,
-      color: vars.color.plate,
-      fontWeight: 900,
-    },
-    // Magenta focus is too dark on spruce.
-    '&:has(input:focus-visible)': { outline: `3px solid ${vars.color.plateInk}`, outlineOffset: 2 },
-  },
-});
 
 export const dosing = style({
   gridColumn: '1 / -1',

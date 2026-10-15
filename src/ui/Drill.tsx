@@ -73,10 +73,11 @@ export const DrillView = (props: { readonly content: Content }): JSX.Element => 
   const drill = createMemo(() => props.content.drills.find((d) => d.id === drillId()) ?? props.content.drills[0]);
   const movement = createMemo(() => props.content.movements.find((m) => m.id === drill()?.movement));
   return (
-    <Show when={drill()} keyed fallback={<p class={s.status}>No drills yet.</p>}>
+    // Not keyed: another drill updates the Lodge in place, so the 3D view and its model stay loaded.
+    <Show when={drill()} fallback={<p class={s.status}>No drills yet.</p>}>
       {(d) => (
-        <Show when={movement()} keyed fallback={<p class={s.status} role="alert">This drill has no movement data yet.</p>}>
-          {(m) => <Lodge content={props.content} drill={d} movement={m} />}
+        <Show when={movement()} fallback={<p class={s.status} role="alert">This drill has no movement data yet.</p>}>
+          {(m) => <Lodge content={props.content} drill={d()} movement={m()} />}
         </Show>
       )}
     </Show>

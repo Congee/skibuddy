@@ -28,6 +28,7 @@ export const browserTickerClock: TickerClock = {
 export const createTicker = (step: (seconds: number) => void, fps: number, clock: TickerClock = browserTickerClock): Ticker => {
   const interval = 1000 / fps;
   let timer: number | null = null;
+  let running = false;
   let last = 0;
 
   const schedule = (): void => {
@@ -38,19 +39,22 @@ export const createTicker = (step: (seconds: number) => void, fps: number, clock
     const now = clock.now();
     step(Math.min(now - last, MAX_STEP_MS) / 1000);
     last = now;
-    schedule();
+    // The step may have stopped, or stopped and restarted, the ticker.
+    if (running && timer === null) schedule();
   };
 
   return {
     start: () => {
-      if (timer !== null) return;
+      if (running) return;
+      running = true;
       last = clock.now();
       schedule();
     },
     stop: () => {
       if (timer !== null) clock.clearTimer(timer);
       timer = null;
+      running = false;
     },
-    running: () => timer !== null,
+    running: () => running,
   };
 };

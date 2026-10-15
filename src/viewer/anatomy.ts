@@ -1,5 +1,5 @@
 import { AnimationMixer, DoubleSide, Matrix4, MeshStandardNodeMaterial, PropertyBinding, SkinnedMesh, Uint32BufferAttribute, Vector3, Vector4 } from 'three/webgpu';
-import type { AnimationAction, Object3D, Scene, Skeleton } from 'three/webgpu';
+import type { AnimationAction, AnimationClip, Object3D, Scene, Skeleton } from 'three/webgpu';
 import {
   attribute,
   color,
@@ -21,18 +21,16 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import type { MuscleLevel } from '../content/activation';
-import { spreadCandidates } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
 import type { Vec3 } from './mat4';
 import { BodySide } from './figure';
 import { createGear, placePole } from './gear';
-import type { LegSide } from './gear';
-import { bootFitFrom, coveredByBoot, parseGearFit } from './gear-fit';
+import type { Gear, LegSide } from './gear';
+import { bootFitFrom, parseGearFit } from './gear-fit';
 import type { BootFit, RawFit } from './gear-fit';
 import type { GearMode } from './gear-mode';
 import { poleDirection, poleTouchAt } from './pose';
-import { NodeKind, parseAnatomyNode } from './anatomy-names';
-import type { AnatomyNode } from './anatomy-names';
+import { NodeKind, nodeOf } from './anatomy-names';
 import { fillSlotLevels } from './slots';
 import type { SlotTable, TurnSide } from './slots';
 import { levelColour, levelOn } from './level-colour';
@@ -110,20 +108,6 @@ interface Anchor {
   readonly index: number;
 }
 
-/** Candidate pin vertices spread around the muscle's middle, picked at the bind pose. */
-const ANCHOR_CANDIDATES = 8;
-const candidateVertices = (mesh: SkinnedMesh, centre: Vec3, hidden: (p: Vec3) => boolean): ReadonlyArray<number> => {
-  const count = mesh.geometry.getAttribute('position').count;
-  const all = Array.from({ length: count }, (_, i): Vec3 => {
-    const p = skinned(mesh, i, vertexIn(mesh, 'position', i, 1));
-    return [p.x, p.y, p.z];
-  });
-  // Skip points inside the boots unless the whole muscle is.
-  const open = all.map((p, i) => ({ p, i })).filter(({ p }) => !hidden(p));
-  const pool = open.length > 0 ? open : all.map((p, i) => ({ p, i }));
-  return spreadCandidates(pool.map((e) => e.p), centre, ANCHOR_CANDIDATES).flatMap((k) => pool[k]?.i ?? []);
-};
-
 /** Boot fits and pole grips per leg side, with the rest-pose ankles the boots hang from. */
 interface Fitting {
   readonly side: LegSide;
@@ -146,17 +130,9 @@ const fittings = (root: Object3D): Readonly<Record<LegSide, Fitting>> | null => 
   return { [BodySide.Right]: fitting(BodySide.Right, raw.right), [BodySide.Left]: fitting(BodySide.Left, raw.left) };
 };
 
-/** The parsed name of the nearest named ancestor; multi-material meshes load as a group of primitives. */
-const nodeOf = (object: Object3D): { readonly node: AnatomyNode; readonly owner: Object3D } | null => {
-  for (let o: Object3D | null = object; o !== null; o = o.parent) {
-    const node = parseAnatomyNode(o.name);
-    if (node !== null) return { node, owner: o };
-  }
-  return null;
-};
-
-const isAnchor = (value: unknown): value is readonly [number, number, number] =>
-  Array.isArray(value) && value.length === 3 && value.every((x) => typeof x === 'number');
+/** The bake's candidate pin vertices for a muscle mesh, from scripts/anatomy/stamp-anchors.ts. */
+const anchorVertices = (value: unknown, count: number): ReadonlyArray<number> =>
+  Array.isArray(value) ? value.filter((i): i is number => Number.isInteger(i) && i >= 0 && i < count) : [];
 
 const isSkinned = (o: Object3D): o is SkinnedMesh => o instanceof SkinnedMesh;
 
@@ -168,9 +144,17 @@ export interface AnatomyFigure extends Figure {
 export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: string = ANATOMY_URL): Promise<AnatomyFigure> => {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
-  const gltf = await loader.loadAsync(url);
+  return buildAnatomyFigure(scene, table, await loader.loadAsync(url));
+};
+
+/** The parts of a loaded glTF the figure reads. */
+export interface AnatomyModel {
+  readonly scene: Object3D;
+  readonly animations: ReadonlyArray<AnimationClip>;
+}
+
+export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: AnatomyModel): AnatomyFigure => {
   const root = gltf.scene;
-  scene.add(root);
   root.updateMatrixWorld(true);
 
   const levels = Array.from({ length: table.size }, () => 0);
@@ -182,14 +166,21 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
   const gear = new MeshStandardNodeMaterial({ color: GEAR, roughness: 0.6, side: DoubleSide });
   const fading = [muscle, tendon];
 
-  // Older models without the bake's fit carry no gear.
   const fitted = fittings(root);
-  const hidden = (p: Vec3): boolean => (fitted === null ? [] : Object.values(fitted)).some((f) => coveredByBoot(f.fit, f.ankle, p));
+  let kit: Gear | null = null;
+  const release = (): void => {
+    kit?.dispose();
+    root.removeFromParent();
+    root.traverse((o) => {
+      if (isSkinned(o)) o.geometry.dispose();
+    });
+    for (const m of [muscle, tendon, bone, cartilage, gear]) m.dispose();
+  };
 
   const anchors: Array<Anchor> = [];
   const skeletons = new Set<Skeleton>();
   const seen = new Set<Object3D>();
-  root.traverse((o) => {
+  const dress = (o: Object3D): void => {
     if (!isSkinned(o)) return;
     const found = nodeOf(o);
     if (found === null) return;
@@ -206,39 +197,36 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
       const slot = node.kind === NodeKind.Muscle ? table.slotOf(node.muscle, node.side) : 0;
       const count = o.geometry.getAttribute('position').count;
       o.geometry.setAttribute('muscleSlot', new Uint32BufferAttribute(new Uint32Array(count).fill(slot), 1));
-      const anchor: unknown = owner.userData['anchor'];
-      if (node.kind === NodeKind.Muscle && !seen.has(owner) && isAnchor(anchor)) {
+      if (node.kind === NodeKind.Muscle && !seen.has(owner)) {
         seen.add(owner);
-        for (const index of candidateVertices(o, anchor, hidden)) anchors.push({ muscle: node.muscle, side: node.side, mesh: o, index });
+        for (const index of anchorVertices(owner.userData['anchor_vertices'], count)) anchors.push({ muscle: node.muscle, side: node.side, mesh: o, index });
       }
     }
-  });
+  };
 
-  // Boots ride the foot and shin bones; poles are placed from the fist every frame.
-  const kit = fitted === null ? null : createGear({ [BodySide.Right]: fitted.right.fit, [BodySide.Left]: fitted.left.fit });
   const joint = (part: string, side: LegSide): Object3D => {
     const found = root.getObjectByName(boneName(part, side));
     if (found === undefined) throw new Error(`anatomy model has no ${part} bone`);
     return found;
   };
   const fists: Array<{ readonly side: LegSide; readonly hand: Object3D; readonly foot: Object3D; readonly local: Vector3 }> = [];
-  if (kit !== null && fitted !== null) {
-    // Geometry built in rest-pose world space, re-expressed in the bone's frame.
-    const attach = (part: string, side: LegSide, mesh: Object3D, origin: Vec3): void => {
-      const parent = joint(part, side);
-      mesh.applyMatrix4(new Matrix4().copy(parent.matrixWorld).invert().multiply(new Matrix4().makeTranslation(...origin)));
-      parent.add(mesh);
-    };
-    for (const f of Object.values(fitted)) {
-      for (const [parts, part] of [[kit.shells, 'foot'], [kit.soles, 'foot'], [kit.cuffs, 'shin']] as const) {
+  // Geometry built in rest-pose world space, re-expressed in the bone's frame.
+  const attach = (part: string, side: LegSide, mesh: Object3D, origin: Vec3): void => {
+    const parent = joint(part, side);
+    mesh.applyMatrix4(new Matrix4().copy(parent.matrixWorld).invert().multiply(new Matrix4().makeTranslation(...origin)));
+    parent.add(mesh);
+  };
+  // Boots ride the foot and shin bones; poles are placed from the fist every frame.
+  const fitGear = (worn: Gear, sides: Readonly<Record<LegSide, Fitting>>): void => {
+    for (const f of Object.values(sides)) {
+      for (const [parts, part] of [[worn.shells, 'foot'], [worn.soles, 'foot'], [worn.cuffs, 'shin']] as const) {
         const mesh = own(parts, f.side);
         if (mesh !== undefined) attach(part, f.side, mesh, f.ankle);
       }
       const hand = joint('hand', f.side);
       fists.push({ side: f.side, hand, foot: joint('foot', f.side), local: hand.worldToLocal(new Vector3(...f.grip)) });
     }
-    for (const p of kit.poles) scene.add(p.mesh);
-  }
+  };
   const fist = new Vector3();
   const ankle = new Vector3();
   const placePoles = (t: number): void => {
@@ -253,10 +241,26 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
     }
   };
 
-  const clip = gltf.animations.find((a) => a.name === 'stork-turn') ?? gltf.animations[0];
-  if (clip === undefined) throw new Error('anatomy model has no stork-turn animation');
+  let clip: AnimationClip | undefined;
+  try {
+    root.traverse(dress);
+    // Older models without the bake's fit carry no gear.
+    if (fitted !== null) {
+      kit = createGear({ [BodySide.Right]: fitted.right.fit, [BodySide.Left]: fitted.left.fit });
+      fitGear(kit, fitted);
+    }
+    clip = gltf.animations.find((a) => a.name === 'stork-turn') ?? gltf.animations[0];
+    if (clip === undefined) throw new Error('anatomy model has no stork-turn animation');
+  } catch (e: unknown) {
+    release();
+    throw e;
+  }
+  // Nothing joins the scene until the figure is whole, so a failed build leaves no trace.
+  scene.add(root);
+  for (const p of kit?.poles ?? []) scene.add(p.mesh);
+  const turn = clip;
   const mixer = new AnimationMixer(root);
-  const action: AnimationAction = mixer.clipAction(clip);
+  const action: AnimationAction = mixer.clipAction(turn);
   action.play();
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -276,7 +280,7 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
 
   return {
     update: (t: number, current: ReadonlyArray<MuscleLevel>) => {
-      action.time = (((t % 1) + 1) % 1) * clip.duration;
+      action.time = (((t % 1) + 1) % 1) * turn.duration;
       mixer.update(0);
       root.updateMatrixWorld(true);
       // Otherwise the bone matrices upload a draw late and the hands trail their poles.
@@ -307,13 +311,8 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
     setGear: (mode: GearMode) => kit?.setMode(mode),
     setDark: (dark: boolean) => kit?.setDark(dark),
     dispose: () => {
-      kit?.dispose();
       mixer.stopAllAction();
-      scene.remove(root);
-      root.traverse((o) => {
-        if (isSkinned(o)) o.geometry.dispose();
-      });
-      for (const m of [muscle, tendon, bone, cartilage, gear]) m.dispose();
+      release();
     },
   };
 };

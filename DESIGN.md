@@ -448,7 +448,7 @@ One easing for everything: `cubic-bezier(0.16, 1, 0.3, 1)`, an assertive ease-ou
 **The Still Board Rule.** Under `prefers-reduced-motion: reduce` playback stops when the setting is on or turns on, the detail height, rotations and transitions are dropped, and the skeleton fade is instant. All CSS motion is written inside a no-preference query, so new motion must be too.
 
 ### Asset Provenance
-The anatomy model is Z-Anatomy (CC BY-SA 4.0), derived from BodyParts3D (© The Database Center for Life Science, CC BY-SA 2.1 JP). It is built locally by `scripts/anatomy/build.sh` (Blender and meshoptimizer via nix) into `public/models/anatomy.glb`, which is gitignored and never committed. The attribution with links to both sources and both licences sits in the footer (`#credits`), and the figure caption links to it. Any new 3D or raster asset must carry an open licence and a footer credit the same way.
+The anatomy model is Z-Anatomy (CC BY-SA 4.0), derived from BodyParts3D (© The Database Center for Life Science, CC BY-SA 2.1 JP). It is built locally by `scripts/anatomy/build.sh` (Blender and meshoptimizer via nix) into `public/models/anatomy.glb`, which is committed (about 1.2 MB) so static hosts serve it; its attribution is in `public/models/README.md`. The attribution with links to both sources and both licences sits in the footer (`#credits`), and the figure caption links to it. Any new 3D or raster asset must carry an open licence and a footer credit the same way.
 
 ## Do's and Don'ts
 

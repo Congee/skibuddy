@@ -78,6 +78,24 @@ describe('createTicker', () => {
     assert.isFalse(ticker.running());
   });
 
+  it('stays stopped when a step stops it', () => {
+    const clock = virtualClock();
+    let steps = 0;
+    const ticker = createTicker(
+      () => {
+        steps++;
+        ticker.stop();
+      },
+      PLAYBACK_FPS,
+      clock,
+    );
+    ticker.start();
+    clock.advance(1000);
+    assert.strictEqual(steps, 1);
+    assert.isTrue(clock.idle());
+    assert.isFalse(ticker.running());
+  });
+
   it('never schedules anything before start', () => {
     const clock = virtualClock();
     createTicker(() => undefined, PLAYBACK_FPS, clock);

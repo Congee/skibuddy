@@ -47,6 +47,8 @@ export interface Viewer {
   readonly setGear: (mode: GearMode) => void;
   /** CSS colour of the ground. */
   readonly setGround: (css: string) => void;
+  /** Each muscle's level through the turn, such as another drill's; draws a frame. */
+  readonly setLevels: (levels: (t: number) => ReadonlyArray<MuscleLevel>) => void;
   /** Position through the turn; draws a frame when it changed. */
   readonly setTime: (t: number) => void;
   /** Playback draws at a lower pixel ratio. */
@@ -135,6 +137,7 @@ export const createViewer = async (
   // Inputs to the next frame; a draw runs only when one of them changed.
   let time = 0;
   let posedAt = Number.NaN;
+  let levels = options.levels;
   let playing = false;
   let pins = options.onAnchors !== undefined;
   let lastDraw = 0;
@@ -169,7 +172,7 @@ export const createViewer = async (
     }
     if (time !== posedAt) {
       posedAt = time;
-      figure.update(time, options.levels(time));
+      figure.update(time, levels(time));
     }
     if (figure.animate?.(now) === true) moving = true;
     // No bloom pass: the muscle material carries its own glow.
@@ -252,6 +255,12 @@ export const createViewer = async (
       // Dark snow means the dark theme.
       const { r, g, b } = groundColour.value;
       figure.setDark?.(0.2126 * r + 0.7152 * g + 0.0722 * b < 0.25);
+      invalidate();
+    },
+    setLevels: (next) => {
+      if (next === levels) return;
+      levels = next;
+      posedAt = Number.NaN;
       invalidate();
     },
     setTime: (t) => {

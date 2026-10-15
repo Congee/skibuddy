@@ -14,6 +14,8 @@ bun run check   # typecheck, lint, test
 
 `bun run content` rebuilds and validates the content on its own; it prints every problem with its file and exits non-zero.
 
+`bun run test:model` checks the built anatomy model (`public/models/anatomy.glb`) against what the unit tests read; run it after `scripts/anatomy/build.sh`.
+
 ## Content
 
 All content is YAML under `content/`:

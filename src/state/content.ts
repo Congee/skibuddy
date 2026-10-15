@@ -1,6 +1,6 @@
 import { Effect, Schema } from 'effect';
 import * as Atom from 'effect/reactivity/Atom';
-import { Content } from '../content/schema';
+import { validateContent } from '../content/validate';
 
 export class ContentFetchError extends Schema.TaggedError<ContentFetchError>()('ContentFetchError', {
   message: Schema.String,
@@ -18,7 +18,7 @@ const fetchJson = (url: string): Effect.Effect<unknown, ContentFetchError> =>
 
 const loadContent = Effect.gen(function* () {
   const json = yield* fetchJson(`${import.meta.env.BASE_URL}content.json`);
-  return yield* Schema.decodeUnknownEffect(Content)(json);
+  return yield* validateContent(json);
 });
 
 export const contentAtom = Atom.keepAlive(Atom.make(loadContent));
