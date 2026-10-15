@@ -1,0 +1,12 @@
+id: single-leg-rdl
+name: Single-leg Romanian deadlift
+targets:
+  - { muscle: gluteus-medius, contraction: isometric }
+  - { muscle: gluteus-maximus, contraction: eccentric }
+  - { muscle: hamstrings, contraction: eccentric }
+singleLeg: true
+matchesOnSnow: One-leg balance with a level pelvis
+easier: Kickstand version
+harder: Hold a dumbbell
+cautions: [Acute low-back pain]
+reviewedBy: []

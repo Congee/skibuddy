@@ -1,0 +1,140 @@
+import { Schema } from 'effect';
+
+// Enum values are lowercase because they are the spellings used in content YAML.
+export const Side = { Outside: 'outside', Inside: 'inside', Both: 'both' } as const;
+export type Side = (typeof Side)[keyof typeof Side];
+
+export const Contraction = { Concentric: 'concentric', Eccentric: 'eccentric', Isometric: 'isometric' } as const;
+export type Contraction = (typeof Contraction)[keyof typeof Contraction];
+
+/** High = measured in this movement; Medium = inferred from related studies; Low = mechanics or expert opinion. */
+export const Confidence = { High: 'high', Medium: 'medium', Low: 'low' } as const;
+export type Confidence = (typeof Confidence)[keyof typeof Confidence];
+
+export const Phase = { Initiation: 'initiation', Shaping: 'shaping', Finish: 'finish' } as const;
+export type Phase = (typeof Phase)[keyof typeof Phase];
+export const PHASES: ReadonlyArray<Phase> = [Phase.Initiation, Phase.Shaping, Phase.Finish];
+
+export const Association = { Psia: 'psia', Csia: 'csia', Basi: 'basi', Nzsia: 'nzsia' } as const;
+export type Association = (typeof Association)[keyof typeof Association];
+
+/** Whether we read a source's full text or only its abstract. */
+export const SourceRead = { Abstract: 'abstract', Full: 'full' } as const;
+export type SourceRead = (typeof SourceRead)[keyof typeof SourceRead];
+
+export const BodyRegion = { Leg: 'leg', Hip: 'hip', Trunk: 'trunk', Arm: 'arm' } as const;
+export type BodyRegion = (typeof BodyRegion)[keyof typeof BodyRegion];
+
+const Slug = Schema.String.check(Schema.isPattern(/^[a-z0-9]+(-[a-z0-9]+)*$/));
+const Text = Schema.String.check(Schema.isMinLength(1));
+
+export const MuscleId = Slug.pipe(Schema.brand('MuscleId'));
+export type MuscleId = typeof MuscleId.Type;
+export const MovementId = Slug.pipe(Schema.brand('MovementId'));
+export type MovementId = typeof MovementId.Type;
+export const ExerciseId = Slug.pipe(Schema.brand('ExerciseId'));
+export type ExerciseId = typeof ExerciseId.Type;
+export const SourceId = Slug.pipe(Schema.brand('SourceId'));
+export type SourceId = typeof SourceId.Type;
+
+/** Relative effort, 0 (idle) to 3 (high); never a percentage unless a source measured one. */
+export const Intensity = Schema.Number.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 3 }));
+export type Intensity = typeof Intensity.Type;
+
+export const PhaseIntensity = Schema.Struct({
+  initiation: Intensity,
+  shaping: Intensity,
+  finish: Intensity,
+});
+export type PhaseIntensity = typeof PhaseIntensity.Type;
+
+export const Muscle = Schema.Struct({
+  id: MuscleId,
+  name: Text,
+  region: Schema.Enum(BodyRegion),
+  /** Foundational Model of Anatomy id, e.g. "FMA:22315"; omitted until verified. */
+  fma: Schema.optionalKey(Schema.String.check(Schema.isPattern(/^FMA:\d+$/))),
+});
+export type Muscle = typeof Muscle.Type;
+
+export const Activation = Schema.Struct({
+  muscle: MuscleId,
+  side: Schema.Enum(Side),
+  intensity: PhaseIntensity,
+  contraction: Schema.Array(Schema.Enum(Contraction)).check(Schema.isMinLength(1)),
+  role: Text,
+  confidence: Schema.Enum(Confidence),
+  /** Plain-words basis, shown to users next to the confidence. */
+  basis: Text,
+  sources: Schema.Array(SourceId),
+});
+export type Activation = typeof Activation.Type;
+
+export const JointAction = Schema.Struct({
+  joint: Text,
+  side: Schema.Enum(Side),
+  action: Text,
+  confidence: Schema.Enum(Confidence),
+});
+export type JointAction = typeof JointAction.Type;
+
+export const Movement = Schema.Struct({
+  id: MovementId,
+  name: Text,
+  activations: Schema.Array(Activation).check(Schema.isMinLength(1)),
+  jointActions: Schema.Array(JointAction),
+  reviewedBy: Schema.Array(Text),
+});
+export type Movement = typeof Movement.Type;
+
+export const AssociationTask = Schema.Struct({
+  association: Schema.Enum(Association),
+  task: Text,
+  level: Schema.Number.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 4 })),
+  category: Text,
+  /** The association's own fundamental names, kept verbatim. */
+  fundamentals: Schema.Array(Text),
+  movement: MovementId,
+  /** Our own words; never copied from the association. */
+  summary: Text,
+  terrain: Text,
+  url: Schema.String.check(Schema.isPattern(/^https:\/\//)),
+  reviewedBy: Schema.Array(Text),
+});
+export type AssociationTask = typeof AssociationTask.Type;
+
+export const ExerciseTarget = Schema.Struct({
+  muscle: MuscleId,
+  contraction: Schema.Enum(Contraction),
+});
+export type ExerciseTarget = typeof ExerciseTarget.Type;
+
+export const Exercise = Schema.Struct({
+  id: ExerciseId,
+  name: Text,
+  targets: Schema.Array(ExerciseTarget).check(Schema.isMinLength(1)),
+  singleLeg: Schema.Boolean,
+  matchesOnSnow: Text,
+  easier: Text,
+  harder: Text,
+  cautions: Schema.Array(Text),
+  reviewedBy: Schema.Array(Text),
+});
+export type Exercise = typeof Exercise.Type;
+
+export const Source = Schema.Struct({
+  id: SourceId,
+  citation: Text,
+  url: Schema.String.check(Schema.isPattern(/^https?:\/\//)),
+  read: Schema.Enum(SourceRead),
+});
+export type Source = typeof Source.Type;
+
+export const Content = Schema.Struct({
+  muscles: Schema.Array(Muscle),
+  movements: Schema.Array(Movement),
+  tasks: Schema.Array(AssociationTask),
+  exercises: Schema.Array(Exercise),
+  sources: Schema.Array(Source),
+});
+export type Content = typeof Content.Type;

@@ -1,0 +1,9 @@
+id: pallof-press
+name: Pallof press
+targets: [{ muscle: obliques, contraction: isometric }]
+singleLeg: false
+matchesOnSnow: A still upper body while the legs turn
+easier: Shorter lever
+harder: Split stance
+cautions: []
+reviewedBy: []

@@ -1,0 +1,9 @@
+id: tibialis-calf-raise
+name: Tibialis raise and calf raise
+targets: [{ muscle: tibialis-anterior, contraction: concentric }, { muscle: calf, contraction: concentric }]
+singleLeg: false
+matchesOnSnow: Fore-aft balance in the boot
+easier: Two legs
+harder: Single leg
+cautions: [Achilles pain]
+reviewedBy: []

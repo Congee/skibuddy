@@ -1,0 +1,9 @@
+id: split-squat-hold
+name: Split-squat isometric hold
+targets: [{ muscle: quadriceps, contraction: isometric }, { muscle: gluteus-maximus, contraction: isometric }]
+singleLeg: false
+matchesOnSnow: Holding the flexed stance at a ski-like knee bend
+easier: Shorter hold
+harder: Single-leg wall sit
+cautions: [Knee pain]
+reviewedBy: []

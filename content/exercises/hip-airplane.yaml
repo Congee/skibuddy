@@ -1,0 +1,9 @@
+id: hip-airplane
+name: Hip airplane
+targets: [{ muscle: deep-hip-rotators, contraction: concentric }, { muscle: gluteus-medius, contraction: isometric }]
+singleLeg: true
+matchesOnSnow: The femur turning under a still pelvis
+easier: Hand on a wall
+harder: Eyes closed, slower
+cautions: [Hip impingement]
+reviewedBy: []

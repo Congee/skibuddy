@@ -1,0 +1,9 @@
+id: nordic-curl
+name: Nordic hamstring curl
+targets: [{ muscle: hamstrings, contraction: eccentric }]
+singleLeg: false
+matchesOnSnow: Hamstring strength for the co-contraction that protects the ACL
+easier: Band-assisted
+harder: Slower lowering
+cautions: [Very sore at first - start with few reps]
+reviewedBy: []

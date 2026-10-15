@@ -1,0 +1,13 @@
+# FMA ids are left out until checked against the anatomy model.
+- { id: quadriceps, name: Quadriceps, region: leg }
+- { id: hamstrings, name: Hamstrings, region: leg }
+- { id: adductors, name: Adductors, region: hip }
+- { id: gluteus-maximus, name: Gluteus maximus, region: hip }
+- { id: gluteus-medius, name: Gluteus medius, region: hip }
+- { id: deep-hip-rotators, name: Deep hip rotators, region: hip }
+- { id: hip-flexors, name: Hip flexors, region: hip }
+- { id: tibialis-anterior, name: Tibialis anterior, region: leg }
+- { id: calf, name: Calf (gastrocnemius and soleus), region: leg }
+- { id: peroneals, name: Peroneals, region: leg }
+- { id: obliques, name: Obliques, region: trunk }
+- { id: erector-spinae, name: Erector spinae, region: trunk }

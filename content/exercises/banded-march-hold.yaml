@@ -1,0 +1,9 @@
+id: banded-march-hold
+name: Banded standing march, hold at top
+targets: [{ muscle: hip-flexors, contraction: isometric }]
+singleLeg: true
+matchesOnSnow: Holding the inside ski's tail up
+easier: No band
+harder: Stand on a balance pad
+cautions: [Hip-flexor strain]
+reviewedBy: []

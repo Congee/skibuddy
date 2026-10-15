@@ -1,0 +1,9 @@
+id: copenhagen-plank
+name: Copenhagen plank
+targets: [{ muscle: adductors, contraction: isometric }]
+singleLeg: false
+matchesOnSnow: Frontal-plane control with the abductors
+easier: Knee on the bench
+harder: Foot on the bench
+cautions: [Recent groin strain]
+reviewedBy: []

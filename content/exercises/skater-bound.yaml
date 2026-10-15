@@ -1,0 +1,12 @@
+id: skater-bound
+name: Lateral skater bound, stick the landing
+targets:
+  - { muscle: quadriceps, contraction: eccentric }
+  - { muscle: gluteus-medius, contraction: isometric }
+  - { muscle: gluteus-maximus, contraction: eccentric }
+singleLeg: true
+matchesOnSnow: Catching load on one leg without the knee caving in
+easier: Small hops
+harder: Continuous bounds
+cautions: [Knee instability]
+reviewedBy: []

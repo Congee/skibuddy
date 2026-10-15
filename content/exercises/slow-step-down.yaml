@@ -1,0 +1,9 @@
+id: slow-step-down
+name: Slow step-down
+targets: [{ muscle: quadriceps, contraction: eccentric }, { muscle: gluteus-medius, contraction: isometric }]
+singleLeg: true
+matchesOnSnow: Eccentric knee control, lowering over 3-4 seconds
+easier: Lower step
+harder: Higher step, added load
+cautions: [Knee pain - reduce depth]
+reviewedBy: []
