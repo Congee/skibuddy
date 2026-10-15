@@ -106,9 +106,9 @@ activations:
     confidence: medium
     basis: Measured in normal turns
     sources: [hintermeister-1997]
-jointActions:
+joint_actions:
   - { joint: hip, side: outside, action: Femur rotates inward in the hip socket while the pelvis stays level, confidence: medium }
   - { joint: knee and ankle, side: outside, action: Stay flexed; the shin presses the boot tongue, confidence: medium }
   - { joint: hip and knee, side: inside, action: Flex so the foot rides beside the outside boot with the tail up, confidence: high }
   - { joint: spine, side: both, action: Stays quiet; movement here is a fault the drill reveals, confidence: medium }
-reviewedBy: []
+reviewed_by: []

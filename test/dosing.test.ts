@@ -6,13 +6,13 @@ import { formatRange, formatRest, formatSuggestion, shortCitation } from '../src
 import { decode as decodeContent, exercise, rawContent } from './fixtures';
 
 const dosing = {
-  perSide: true,
+  per_side: true,
   ranges: [
     {
       goal: 'strength',
       sets: { min: 2, max: 3 },
       reps: { min: 8, max: 12 },
-      restSeconds: { min: 60, max: 120 },
+      rest_seconds: { min: 60, max: 120 },
       note: 'Hard by the last rep',
       basis: 'General loading zones',
       sources: ['study-1'],
@@ -20,8 +20,8 @@ const dosing = {
     {
       goal: 'endurance',
       sets: { min: 2, max: 3 },
-      holdSeconds: { min: 20, max: 40 },
-      restSeconds: { min: 30, max: 60 },
+      hold_seconds: { min: 20, max: 40 },
+      rest_seconds: { min: 30, max: 60 },
       note: 'Steady',
       basis: 'Holds below a maximal effort',
       sources: ['study-1'],
@@ -50,7 +50,7 @@ describe('dosing schema', () => {
   it('rejects a range with min above max', () => {
     assert.isTrue(fails(withRange({ sets: { min: 4, max: 2 } })));
     assert.isTrue(fails(withRange({ reps: { min: 12, max: 8 } })));
-    assert.isTrue(fails(withRange({ restSeconds: { min: 120, max: 60 } })));
+    assert.isTrue(fails(withRange({ rest_seconds: { min: 120, max: 60 } })));
   });
 
   it('rejects zero or fractional counts', () => {
@@ -58,19 +58,19 @@ describe('dosing schema', () => {
     assert.isTrue(fails(withRange({ reps: { min: 8.5, max: 12 } })));
   });
 
-  it('needs exactly one of reps or holdSeconds', () => {
-    assert.isTrue(fails(withRange({ holdSeconds: { min: 10, max: 20 } })));
-    assert.isTrue(fails({ ...dosing, ranges: [{ ...dosing.ranges[1], holdSeconds: undefined }] }));
+  it('needs exactly one of reps or hold_seconds', () => {
+    assert.isTrue(fails(withRange({ hold_seconds: { min: 10, max: 20 } })));
+    assert.isTrue(fails({ ...dosing, ranges: [{ ...dosing.ranges[1], hold_seconds: undefined }] }));
   });
 
   it('rejects a suggestion outside its range', () => {
     assert.isTrue(fails({ ...dosing, suggested: { goal: 'strength', sets: 5, reps: 8 } }));
     assert.isTrue(fails({ ...dosing, suggested: { goal: 'strength', sets: 3, reps: 15 } }));
-    assert.isTrue(fails({ ...dosing, suggested: { goal: 'endurance', sets: 2, holdSeconds: 60 } }));
+    assert.isTrue(fails({ ...dosing, suggested: { goal: 'endurance', sets: 2, hold_seconds: 60 } }));
   });
 
   it('rejects a suggestion whose unit or goal does not match a range', () => {
-    assert.isTrue(fails({ ...dosing, suggested: { goal: 'strength', sets: 3, holdSeconds: 30 } }));
+    assert.isTrue(fails({ ...dosing, suggested: { goal: 'strength', sets: 3, hold_seconds: 30 } }));
     assert.isTrue(fails({ ...dosing, suggested: { goal: 'power', sets: 3, reps: 5 } }));
   });
 

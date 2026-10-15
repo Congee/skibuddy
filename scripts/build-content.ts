@@ -2,7 +2,7 @@ import { Glob } from 'bun';
 import { Effect } from 'effect';
 import { assembleContent } from '../src/content/assemble';
 import type { ContentFile } from '../src/content/assemble';
-import { ContentError } from '../src/content/validate';
+import { ContentError, encodeContent } from '../src/content/validate';
 
 const CONTENT_DIR = 'content';
 const OUTPUT = 'public/content.json';
@@ -20,7 +20,8 @@ const readFiles = Effect.fn('readFiles')(function* (): Effect.fn.Return<Readonly
 const program = Effect.gen(function* () {
   const files = yield* readFiles();
   const content = yield* assembleContent(files);
-  yield* Effect.promise(() => Bun.write(OUTPUT, JSON.stringify(content)));
+  const json = yield* encodeContent(content);
+  yield* Effect.promise(() => Bun.write(OUTPUT, JSON.stringify(json)));
   console.log(
     `${OUTPUT}: ${content.movements.length} movements, ${content.drills.length} drills, ${content.tasks.length} tasks, ${content.exercises.length} exercises`,
   );

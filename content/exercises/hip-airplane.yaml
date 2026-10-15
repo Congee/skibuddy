@@ -1,20 +1,20 @@
 id: hip-airplane
 name: Hip airplane
 targets: [{ muscle: deep-hip-rotators, contraction: concentric }, { muscle: gluteus-medius, contraction: isometric }]
-singleLeg: true
-matchesOnSnow: The femur turning under a still pelvis
+single_leg: true
+matches_on_snow: The femur turning under a still pelvis
 easier: Hand on a wall
 harder: Eyes closed, slower
 cautions: [Hip impingement]
 dosing:
-  perSide: true
+  per_side: true
   ranges:
     - goal: control
       sets: { min: 2, max: 3 }
       reps: { min: 5, max: 8 }
-      restSeconds: { min: 60, max: 90 }
+      rest_seconds: { min: 60, max: 90 }
       note: Turn slowly, about 2-3 seconds each way, with the pelvis moving over a still stance leg.
       basis: Our own conservative reading for slow, form-first work, not a published dose; the rest follows ACSM's general guidance.
       sources: [acsm-2009]
   suggested: { goal: control, sets: 2, reps: 6 }
-reviewedBy: []
+reviewed_by: []

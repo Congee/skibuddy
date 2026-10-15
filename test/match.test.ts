@@ -11,8 +11,8 @@ const content = contentWith({
         activation,
         { ...activation, muscle: 'gluteus-medius', intensity: { initiation: 1, shaping: 1, finish: 1 }, contraction: ['isometric'] },
       ],
-      jointActions: [],
-      reviewedBy: [],
+      joint_actions: [],
+      reviewed_by: [],
     },
   ],
   exercises: [

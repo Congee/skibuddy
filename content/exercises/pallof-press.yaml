@@ -1,27 +1,27 @@
 id: pallof-press
 name: Pallof press
 targets: [{ muscle: obliques, contraction: isometric }]
-singleLeg: false
-matchesOnSnow: A still upper body while the legs turn
+single_leg: false
+matches_on_snow: A still upper body while the legs turn
 easier: Shorter lever
 harder: Split stance
 cautions: []
 dosing:
-  perSide: true
+  per_side: true
   ranges:
     - goal: control
       sets: { min: 2, max: 3 }
       reps: { min: 8, max: 12 }
-      restSeconds: { min: 45, max: 90 }
+      rest_seconds: { min: 45, max: 90 }
       note: Pause 2 seconds with the arms out; nothing rotates.
       basis: Our own conservative reading for slow, form-first work, not a published dose; the rest follows ACSM's general guidance.
       sources: [acsm-2009]
     - goal: endurance
       sets: { min: 2, max: 3 }
       reps: { min: 15, max: 20 }
-      restSeconds: { min: 30, max: 60 }
+      rest_seconds: { min: 30, max: 60 }
       note: Lighter band, short rest, same still trunk.
       basis: Rep and rest ranges follow ACSM's endurance zone for healthy adults, kept at the conservative end.
       sources: [acsm-2009]
   suggested: { goal: control, sets: 3, reps: 10 }
-reviewedBy: []
+reviewed_by: []

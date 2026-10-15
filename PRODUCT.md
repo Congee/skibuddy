@@ -49,7 +49,7 @@ skibuddy shows a drill on a 3D figure, highlights the muscles at work through in
 
 - `content/sources.yaml`: 10 peer-reviewed sources verified on PubMed, most read as abstract only (marked `read: abstract`).
 - No EMG study of stork or one-legged drills exists; those activations are inferred and must stay marked so.
-- `reviewedBy` is empty on all content: no instructor, examiner or physio has reviewed it yet. Never imply review or endorsement.
+- `reviewed_by` is empty on all content: no instructor, examiner or physio has reviewed it yet. Never imply review or endorsement.
 - No testimonials, users or partner associations exist.
 
 ## Product Principles

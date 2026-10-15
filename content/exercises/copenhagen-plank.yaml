@@ -1,27 +1,27 @@
 id: copenhagen-plank
 name: Copenhagen plank
 targets: [{ muscle: adductors, contraction: isometric }]
-singleLeg: false
-matchesOnSnow: Frontal-plane control with the abductors
+single_leg: false
+matches_on_snow: Frontal-plane control with the abductors
 easier: Knee on the bench
 harder: Foot on the bench
 cautions: [Recent groin strain]
 dosing:
-  perSide: true
+  per_side: true
   ranges:
     - goal: strength
       sets: { min: 2, max: 3 }
-      holdSeconds: { min: 10, max: 20 }
-      restSeconds: { min: 60, max: 120 }
+      hold_seconds: { min: 10, max: 20 }
+      rest_seconds: { min: 60, max: 120 }
       note: Start with the knee on the bench; move to the foot only when the short lever is easy.
       basis: A trial of the dynamic Copenhagen adduction found large adductor strength gains; this held version starts short because the groin is often sore at first.
       sources: [ishoi-2016]
     - goal: endurance
       sets: { min: 2, max: 3 }
-      holdSeconds: { min: 20, max: 40 }
-      restSeconds: { min: 60, max: 90 }
+      hold_seconds: { min: 20, max: 40 }
+      rest_seconds: { min: 60, max: 90 }
       note: Hips stay high and in line; end the set when they sag.
       basis: Body-weight holds sit well below a maximal effort, so the holds are longer than in maximal isometric training.
       sources: [lum-2019]
-  suggested: { goal: strength, sets: 2, holdSeconds: 15 }
-reviewedBy: []
+  suggested: { goal: strength, sets: 2, hold_seconds: 15 }
+reviewed_by: []

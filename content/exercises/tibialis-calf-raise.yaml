@@ -1,27 +1,27 @@
 id: tibialis-calf-raise
 name: Tibialis raise and calf raise
 targets: [{ muscle: tibialis-anterior, contraction: concentric }, { muscle: calf, contraction: concentric }]
-singleLeg: false
-matchesOnSnow: Fore-aft balance in the boot
+single_leg: false
+matches_on_snow: Fore-aft balance in the boot
 easier: Two legs
 harder: Single leg
 cautions: [Achilles pain]
 dosing:
-  perSide: false
+  per_side: false
   ranges:
     - goal: endurance
       sets: { min: 2, max: 3 }
       reps: { min: 15, max: 20 }
-      restSeconds: { min: 30, max: 60 }
+      rest_seconds: { min: 30, max: 60 }
       note: Two legs, full range, smooth tempo.
       basis: Rep and rest ranges follow ACSM's endurance zone for healthy adults, kept at the conservative end.
       sources: [acsm-2009]
     - goal: strength
       sets: { min: 2, max: 3 }
       reps: { min: 8, max: 12 }
-      restSeconds: { min: 60, max: 120 }
+      rest_seconds: { min: 60, max: 120 }
       note: Single leg or loaded; a slow lowering on each rep.
       basis: Rep and rest ranges follow ACSM's strength zone for healthy adults, kept at the conservative end.
       sources: [acsm-2009]
   suggested: { goal: endurance, sets: 2, reps: 15 }
-reviewedBy: []
+reviewed_by: []

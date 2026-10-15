@@ -1,6 +1,6 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Effect } from 'effect';
-import { ContentError, findProblems, validateContent } from '../src/content/validate';
+import { ContentError, encodeContent, findProblems, validateContent } from '../src/content/validate';
 import { activation, contentWith, rawContent } from './fixtures';
 
 const movementWith = (patch: Partial<typeof activation>): typeof rawContent.movements =>
@@ -75,6 +75,17 @@ describe('validateContent', () => {
     Effect.gen(function* () {
       const error = yield* Effect.flip(validateContent({ ...rawContent, sources: 'none' }));
       assert.strictEqual(error.problems.length, 1);
+    }),
+  );
+});
+
+describe('encodeContent', () => {
+  it.effect('writes snake_case keys that validateContent reads back', () =>
+    Effect.gen(function* () {
+      const encoded = yield* encodeContent(contentWith({}));
+      assert.deepStrictEqual(encoded, rawContent);
+      const content = yield* validateContent(encoded);
+      assert.strictEqual(content.exercises[0]?.matchesOnSnow, 'Knee flexion');
     }),
   );
 });

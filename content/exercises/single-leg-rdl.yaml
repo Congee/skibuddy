@@ -4,27 +4,27 @@ targets:
   - { muscle: gluteus-medius, contraction: isometric }
   - { muscle: gluteus-maximus, contraction: eccentric }
   - { muscle: hamstrings, contraction: eccentric }
-singleLeg: true
-matchesOnSnow: One-leg balance with a level pelvis
+single_leg: true
+matches_on_snow: One-leg balance with a level pelvis
 easier: Kickstand version
 harder: Hold a dumbbell
 cautions: [Acute low-back pain]
 dosing:
-  perSide: true
+  per_side: true
   ranges:
     - goal: control
       sets: { min: 2, max: 3 }
       reps: { min: 6, max: 10 }
-      restSeconds: { min: 60, max: 90 }
+      rest_seconds: { min: 60, max: 90 }
       note: Body weight, slow, pelvis level and square to the floor.
       basis: Our own conservative reading for slow, form-first work, not a published dose; the rest follows ACSM's general guidance.
       sources: [acsm-2009]
     - goal: strength
       sets: { min: 2, max: 3 }
       reps: { min: 8, max: 12 }
-      restSeconds: { min: 60, max: 120 }
+      rest_seconds: { min: 60, max: 120 }
       note: A load you could lift one or two more times with clean form.
       basis: Rep and rest ranges follow ACSM's strength zone for healthy adults, kept at the conservative end.
       sources: [acsm-2009]
   suggested: { goal: strength, sets: 3, reps: 8 }
-reviewedBy: []
+reviewed_by: []

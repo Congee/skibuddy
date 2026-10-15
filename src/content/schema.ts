@@ -1,5 +1,6 @@
 import { Schema } from 'effect';
 
+// Encoded keys are snake_case, as in content YAML and content.json; encodeKeys maps them to camelCase fields.
 // Enum values are lowercase because they are the spellings used in content YAML.
 export const Side = { Outside: 'outside', Inside: 'inside', Both: 'both' } as const;
 export type Side = (typeof Side)[keyof typeof Side];
@@ -86,7 +87,7 @@ export const Movement = Schema.Struct({
   activations: Schema.Array(Activation).check(Schema.isMinLength(1)),
   jointActions: Schema.Array(JointAction),
   reviewedBy: Schema.Array(Text),
-});
+}).pipe(Schema.encodeKeys({ jointActions: 'joint_actions', reviewedBy: 'reviewed_by' }));
 export type Movement = typeof Movement.Type;
 
 /** An association-neutral drill; associations map their own tasks onto it. */
@@ -99,7 +100,7 @@ export const Drill = Schema.Struct({
   summary: Text,
   terrain: Text,
   reviewedBy: Schema.Array(Text),
-});
+}).pipe(Schema.encodeKeys({ reviewedBy: 'reviewed_by' }));
 export type Drill = typeof Drill.Type;
 
 /** One association's name and placement for a drill. */
@@ -115,7 +116,7 @@ export const AssociationTask = Schema.Struct({
   fundamentals: Schema.Array(Text),
   url: Schema.String.check(Schema.isPattern(/^https:\/\//)),
   reviewedBy: Schema.Array(Text),
-});
+}).pipe(Schema.encodeKeys({ reviewedBy: 'reviewed_by' }));
 export type AssociationTask = typeof AssociationTask.Type;
 
 export const ExerciseTarget = Schema.Struct({
@@ -136,9 +137,9 @@ export const Span = Schema.Struct({ min: Count, max: Count }).check(
 );
 export type Span = typeof Span.Type;
 
-/** Exactly one of `reps` or `holdSeconds`; body-weight holds use seconds. */
+/** Exactly one of `reps` or `hold_seconds`; body-weight holds use seconds. */
 const oneUnit = (d: { readonly reps?: unknown; readonly holdSeconds?: unknown }): string | undefined =>
-  (d.reps === undefined) !== (d.holdSeconds === undefined) ? undefined : 'needs exactly one of reps or holdSeconds';
+  (d.reps === undefined) !== (d.holdSeconds === undefined) ? undefined : 'needs exactly one of reps or hold_seconds';
 
 /** General guidance for one goal, never a prescription. */
 export const DosingRange = Schema.Struct({
@@ -152,7 +153,9 @@ export const DosingRange = Schema.Struct({
   /** Plain-words basis for this goal's numbers only. */
   basis: Text,
   sources: Schema.Array(SourceId).check(Schema.isMinLength(1)),
-}).check(Schema.makeFilter(oneUnit));
+}).check(Schema.makeFilter(oneUnit)).pipe(
+  Schema.encodeKeys({ holdSeconds: 'hold_seconds', restSeconds: 'rest_seconds' }),
+);
 export type DosingRange = typeof DosingRange.Type;
 
 /** One sets × reps (or hold) that sits inside the range for its goal. */
@@ -161,7 +164,7 @@ export const DosingSuggestion = Schema.Struct({
   sets: Count,
   reps: Schema.optionalKey(Count),
   holdSeconds: Schema.optionalKey(Count),
-}).check(Schema.makeFilter(oneUnit));
+}).check(Schema.makeFilter(oneUnit)).pipe(Schema.encodeKeys({ holdSeconds: 'hold_seconds' }));
 export type DosingSuggestion = typeof DosingSuggestion.Type;
 
 const inSpan = (n: number, s: Span): boolean => n >= s.min && n <= s.max;
@@ -202,7 +205,7 @@ export const Dosing = Schema.Struct({
     const problem = suggestionProblem(d);
     return problem === undefined ? undefined : { path: ['suggested'], issue: problem };
   }),
-);
+).pipe(Schema.encodeKeys({ perSide: 'per_side' }));
 export type Dosing = typeof Dosing.Type;
 
 export const Exercise = Schema.Struct({
@@ -216,7 +219,9 @@ export const Exercise = Schema.Struct({
   cautions: Schema.Array(Text),
   dosing: Schema.optionalKey(Dosing),
   reviewedBy: Schema.Array(Text),
-});
+}).pipe(
+  Schema.encodeKeys({ singleLeg: 'single_leg', matchesOnSnow: 'matches_on_snow', reviewedBy: 'reviewed_by' }),
+);
 export type Exercise = typeof Exercise.Type;
 
 export const Source = Schema.Struct({

@@ -2,7 +2,7 @@ import { Effect, Schema } from 'effect';
 import { parse } from 'yaml';
 import { AssociationTask, Drill, Exercise, Movement, Muscle, Source } from './schema';
 import type { Content } from './schema';
-import { ContentError, validateContent } from './validate';
+import { checkContent, ContentError } from './validate';
 
 /** A content file's path relative to `content/` and its raw text. */
 export interface ContentFile {
@@ -91,7 +91,7 @@ export const assembleContent = Effect.fn('assembleContent')(function* (
   );
 
   if (problems.length > 0) return yield* new ContentError({ problems });
-  return yield* validateContent({
+  return yield* checkContent({
     muscles,
     sources,
     movements: movements.flat(),

@@ -58,13 +58,24 @@ export const findProblems = (content: Content): ReadonlyArray<string> => {
   return problems;
 };
 
+/** Fails with every cross-reference problem in already decoded content. */
+export const checkContent = (content: Content): Effect.Effect<Content, ContentError> => {
+  const problems = findProblems(content);
+  return problems.length > 0 ? Effect.fail(new ContentError({ problems })) : Effect.succeed(content);
+};
+
+/** Decodes snake_case content, then runs the cross-reference checks. */
 export const validateContent = Effect.fn('validateContent')(function* (
   input: unknown,
 ): Effect.fn.Return<Content, ContentError> {
   const content = yield* decodeContent(input).pipe(
     Effect.mapError((error) => new ContentError({ problems: [error.message] })),
   );
-  const problems = findProblems(content);
-  if (problems.length > 0) return yield* new ContentError({ problems });
-  return content;
+  return yield* checkContent(content);
 });
+
+const encode = Schema.encodeEffect(Content);
+
+/** Content in its snake_case JSON form, as written to content.json. */
+export const encodeContent = (content: Content): Effect.Effect<unknown, ContentError> =>
+  encode(content).pipe(Effect.mapError((error) => new ContentError({ problems: [error.message] })));

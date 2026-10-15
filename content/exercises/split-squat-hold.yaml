@@ -1,27 +1,27 @@
 id: split-squat-hold
 name: Split-squat isometric hold
 targets: [{ muscle: quadriceps, contraction: isometric }, { muscle: gluteus-maximus, contraction: isometric }]
-singleLeg: false
-matchesOnSnow: Holding the flexed stance at a ski-like knee bend
+single_leg: false
+matches_on_snow: Holding the flexed stance at a ski-like knee bend
 easier: Shorter hold
 harder: Single-leg wall sit
 cautions: [Knee pain]
 dosing:
-  perSide: true
+  per_side: true
   ranges:
     - goal: strength
       sets: { min: 3, max: 4 }
-      holdSeconds: { min: 15, max: 30 }
-      restSeconds: { min: 60, max: 120 }
+      hold_seconds: { min: 15, max: 30 }
+      rest_seconds: { min: 60, max: 120 }
       note: Held with load at a ski-like knee bend; hard by the end of the hold.
       basis: Body-weight holds sit well below a maximal effort, so the holds are longer than in maximal isometric training. Isometric work gains strength mostly near the trained knee angle, so hold at the angle you ski.
       sources: [lum-2019]
     - goal: endurance
       sets: { min: 2, max: 3 }
-      holdSeconds: { min: 30, max: 60 }
-      restSeconds: { min: 60, max: 90 }
+      hold_seconds: { min: 30, max: 60 }
+      rest_seconds: { min: 60, max: 90 }
       note: Body weight; a steady burn, not a shake.
       basis: Body-weight holds sit well below a maximal effort, so the holds are longer than in maximal isometric training.
       sources: [lum-2019]
-  suggested: { goal: endurance, sets: 3, holdSeconds: 30 }
-reviewedBy: []
+  suggested: { goal: endurance, sets: 3, hold_seconds: 30 }
+reviewed_by: []

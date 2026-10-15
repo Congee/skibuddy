@@ -16,12 +16,12 @@ export const exercise = {
   id: 'split-squat',
   name: 'Split squat',
   targets: [{ muscle: 'quadriceps', contraction: 'eccentric' }],
-  singleLeg: false,
-  matchesOnSnow: 'Knee flexion',
+  single_leg: false,
+  matches_on_snow: 'Knee flexion',
   easier: 'Shallower',
   harder: 'Deeper',
   cautions: [],
-  reviewedBy: [],
+  reviewed_by: [],
 };
 
 export const rawContent = {
@@ -31,8 +31,8 @@ export const rawContent = {
     { id: 'gluteus-medius', name: 'Gluteus medius', region: 'hip' },
   ],
   sources: [{ id: 'study-1', citation: 'A study', url: 'https://example.org/1', read: 'abstract' }],
-  movements: [{ id: 'turn', name: 'Turn', activations: [activation], jointActions: [], reviewedBy: [] }],
-  drills: [{ id: 'stork-turns', name: 'Stork turns', movement: 'turn', summary: 'Our words', terrain: 'Easy', reviewedBy: [] }],
+  movements: [{ id: 'turn', name: 'Turn', activations: [activation], joint_actions: [], reviewed_by: [] }],
+  drills: [{ id: 'stork-turns', name: 'Stork turns', movement: 'turn', summary: 'Our words', terrain: 'Easy', reviewed_by: [] }],
   tasks: [
     {
       association: 'psia',
@@ -42,7 +42,7 @@ export const rawContent = {
       category: 'Individual',
       fundamentals: [],
       url: 'https://example.org/task',
-      reviewedBy: [],
+      reviewed_by: [],
     },
   ],
   exercises: [exercise],

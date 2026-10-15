@@ -1,27 +1,27 @@
 id: side-plank-leg-lift
 name: Side plank with top-leg lift
 targets: [{ muscle: gluteus-medius, contraction: isometric }, { muscle: obliques, contraction: isometric }]
-singleLeg: false
-matchesOnSnow: Lateral hip and trunk stability
+single_leg: false
+matches_on_snow: Lateral hip and trunk stability
 easier: Knees bent
 harder: Longer hold
 cautions: [Shoulder pain]
 dosing:
-  perSide: true
+  per_side: true
   ranges:
     - goal: control
       sets: { min: 2, max: 3 }
-      holdSeconds: { min: 10, max: 20 }
-      restSeconds: { min: 30, max: 60 }
+      hold_seconds: { min: 10, max: 20 }
+      rest_seconds: { min: 30, max: 60 }
       note: Hips stacked and high; the top leg lifts without the pelvis rolling back.
       basis: Our own conservative reading for slow, form-first work, not a published dose; the rest follows ACSM's general guidance.
       sources: [acsm-2009]
     - goal: endurance
       sets: { min: 2, max: 3 }
-      holdSeconds: { min: 20, max: 40 }
-      restSeconds: { min: 30, max: 60 }
+      hold_seconds: { min: 20, max: 40 }
+      rest_seconds: { min: 30, max: 60 }
       note: End the set when the hips sag or the shoulder complains.
       basis: Body-weight holds sit well below a maximal effort, so the holds are longer than in maximal isometric training.
       sources: [lum-2019]
-  suggested: { goal: endurance, sets: 3, holdSeconds: 30 }
-reviewedBy: []
+  suggested: { goal: endurance, sets: 3, hold_seconds: 30 }
+reviewed_by: []

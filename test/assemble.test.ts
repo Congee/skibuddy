@@ -24,8 +24,8 @@ activations:
     confidence: medium
     basis: Measured
     sources: [study-1]
-jointActions: []
-reviewedBy: []
+joint_actions: []
+reviewed_by: []
 `;
 const drill = `
 id: stork-turns
@@ -33,7 +33,7 @@ name: Stork turns
 movement: turn
 summary: Our words
 terrain: Easy
-reviewedBy: []
+reviewed_by: []
 `;
 const task = (association: string): string => `
 association: ${association}
@@ -43,18 +43,18 @@ level: 2
 category: Individual
 fundamentals: []
 url: https://example.org/task
-reviewedBy: []
+reviewed_by: []
 `;
 const exercise = `
 id: split-squat
 name: Split squat
 targets: [{ muscle: quadriceps, contraction: eccentric }]
-singleLeg: false
-matchesOnSnow: Knee flexion
+single_leg: false
+matches_on_snow: Knee flexion
 easier: Shallower
 harder: Deeper
 cautions: []
-reviewedBy: []
+reviewed_by: []
 `;
 
 const files: ReadonlyArray<ContentFile> = [
@@ -78,6 +78,26 @@ describe('assembleContent', () => {
       assert.strictEqual(content.drills[0]?.id, 'stork-turns');
       assert.strictEqual(content.tasks[0]?.association, 'psia');
       assert.strictEqual(content.exercises[0]?.id, 'split-squat');
+    }),
+  );
+
+  it.effect('decodes snake_case keys into camelCase fields', () =>
+    Effect.gen(function* () {
+      const content = yield* assembleContent(files);
+      assert.strictEqual(content.exercises[0]?.matchesOnSnow, 'Knee flexion');
+      assert.strictEqual(content.exercises[0]?.singleLeg, false);
+      assert.deepStrictEqual(content.movements[0]?.jointActions, []);
+      assert.deepStrictEqual(content.drills[0]?.reviewedBy, []);
+    }),
+  );
+
+  it.effect('rejects a camelCase key', () =>
+    Effect.gen(function* () {
+      const camel = exercise.replace('matches_on_snow:', 'matchesOnSnow:');
+      const error = yield* Effect.flip(assembleContent(replace('exercises/split-squat.yaml', camel)));
+      assert.strictEqual(error.problems.length, 1);
+      assert.isTrue(error.problems[0]?.startsWith('exercises/split-squat.yaml: '));
+      assert.include(error.problems[0], 'matches_on_snow');
     }),
   );
 

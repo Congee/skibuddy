@@ -1,20 +1,20 @@
 id: nordic-curl
 name: Nordic hamstring curl
 targets: [{ muscle: hamstrings, contraction: eccentric }]
-singleLeg: false
-matchesOnSnow: Hamstring strength for the co-contraction that protects the ACL
+single_leg: false
+matches_on_snow: Hamstring strength for the co-contraction that protects the ACL
 easier: Band-assisted
 harder: Slower lowering
 cautions: [Very sore at first - start with few reps]
 dosing:
-  perSide: false
+  per_side: false
   ranges:
     - goal: strength
       sets: { min: 2, max: 3 }
       reps: { min: 3, max: 6 }
-      restSeconds: { min: 120, max: 180 }
+      rest_seconds: { min: 120, max: 180 }
       note: Lower as slowly as you can; begin at the low end, since soreness is heavy at first.
       basis: Low volume to start, built up over weeks, as in progressive Nordic programmes; the rest follows ACSM's strength zone.
       sources: [petersen-2011, acsm-2009]
   suggested: { goal: strength, sets: 2, reps: 5 }
-reviewedBy: []
+reviewed_by: []
