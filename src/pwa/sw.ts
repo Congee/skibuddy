@@ -1,5 +1,5 @@
 // Service worker entry; built to <base>sw.js by scripts/pwa/plugin.ts, which fills in MANIFEST.
-import { CONTENT_TIMEOUT_MS, CacheKind, HASHED_DIR, Strategy, currentCaches, route, staleCaches } from './policy';
+import { CacheKind, HASHED_DIR, Strategy, currentCaches, route, staleCaches } from './policy';
 import type { SwManifest } from './policy';
 
 // The project's lib is DOM, not WebWorker; these are the few worker types used here.
@@ -69,31 +69,6 @@ const cacheFirst = async (request: Request, cacheName: string): Promise<Response
   return response;
 };
 
-const networkFirst = async (request: Request, cacheName: string): Promise<Response> => {
-  const cache = await caches.open(cacheName);
-  const network = fetch(request, { cache: 'no-cache' }).then(async (response) => {
-    if (response.ok) await cache.put(request, response.clone());
-    return response;
-  });
-  // A late failure after the cache has answered is expected, not an error.
-  network.catch(() => undefined);
-  let timer: number | undefined;
-  const timeout = new Promise<undefined>((resolve) => {
-    timer = self.setTimeout(resolve, CONTENT_TIMEOUT_MS);
-  });
-  try {
-    const first = await Promise.race([network, timeout]);
-    if (first?.ok === true) return first;
-  } catch {
-    // Offline or refused: fall through to the cache.
-  } finally {
-    self.clearTimeout(timer);
-  }
-  const held = await cache.match(request);
-  // Nothing cached: keep waiting on the slow network rather than fail.
-  return held ?? network;
-};
-
 const shell = async (request: Request, cacheName: string): Promise<Response> => {
   const held = await (await caches.open(cacheName)).match(at('index.html'));
   return held ?? fetch(request);
@@ -107,9 +82,6 @@ worker.addEventListener('fetch', (event) => {
   switch (decision.strategy) {
     case Strategy.Shell:
       event.respondWith(shell(request, cacheName));
-      return;
-    case Strategy.NetworkFirst:
-      event.respondWith(networkFirst(request, cacheName));
       return;
     case Strategy.CacheFirst:
       event.respondWith(cacheFirst(request, cacheName));

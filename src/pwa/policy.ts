@@ -13,7 +13,6 @@ export const Strategy = {
   /** Navigation: the cached index.html, the network only if it is missing. */
   Shell: 'shell',
   CacheFirst: 'cache-first',
-  NetworkFirst: 'network-first',
   /** Not handled by the worker. */
   Network: 'network',
 } as const;
@@ -25,9 +24,6 @@ export type CacheKind = (typeof CacheKind)[keyof typeof CacheKind];
 export type Route =
   | { readonly strategy: typeof Strategy.Network }
   | { readonly strategy: Exclude<Strategy, typeof Strategy.Network>; readonly cache: CacheKind };
-
-/** Long enough for a slow lift-line connection, short enough not to stall the board. */
-export const CONTENT_TIMEOUT_MS = 3000;
 
 const PREFIX = 'skibuddy';
 export const HASHED_DIR = 'assets/';
@@ -69,7 +65,8 @@ export const route = (request: RouteRequest, scope: URL, manifest: SwManifest): 
   }
   if (request.mode === 'navigate') return { strategy: Strategy.Shell, cache: CacheKind.Shell };
   const path = url.pathname.slice(scope.pathname.length);
-  if (path === manifest.content) return { strategy: Strategy.NetworkFirst, cache: CacheKind.Shell };
+  // Same build as the cached app, so the decoder always matches the content.
+  if (path === manifest.content) return { strategy: Strategy.CacheFirst, cache: CacheKind.Shell };
   if (path === manifest.model.path) return { strategy: Strategy.CacheFirst, cache: CacheKind.Model };
   if (path.startsWith(HASHED_DIR) || manifest.shell.includes(path)) {
     return { strategy: Strategy.CacheFirst, cache: CacheKind.Shell };

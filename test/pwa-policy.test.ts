@@ -63,9 +63,9 @@ describe('route', () => {
     assert.deepStrictEqual(route(get('./?drill=stork', 'navigate'), scope, manifest), shell);
   });
 
-  it('goes to the network first for content.json', () => {
+  it('serves content.json from the same build as the shell', () => {
     assert.deepStrictEqual(route(get('content.json'), scope, manifest), {
-      strategy: Strategy.NetworkFirst,
+      strategy: Strategy.CacheFirst,
       cache: CacheKind.Shell,
     });
   });
@@ -95,6 +95,6 @@ describe('route', () => {
 
   it('works under the root base too', () => {
     const root = new URL('http://localhost:5173/');
-    assert.deepStrictEqual(route(get('http://localhost:5173/content.json'), root, manifest).strategy, Strategy.NetworkFirst);
+    assert.deepStrictEqual(route(get('http://localhost:5173/content.json'), root, manifest).strategy, Strategy.CacheFirst);
   });
 });
