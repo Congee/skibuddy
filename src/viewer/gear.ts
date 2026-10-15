@@ -2,7 +2,7 @@ import { BoxGeometry, BufferAttribute, BufferGeometry, Color, CylinderGeometry, 
 import { color, dot, float, mix, normalView, positionViewDirection, pow, saturate, uniform } from 'three/tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { BodySide } from './figure';
-import type { BootFit, GloveFit } from './gear-fit';
+import type { BootFit } from './gear-fit';
 import { GearMode } from './gear-mode';
 import type { Vec3 } from './mat4';
 import { POLE } from './pose';
@@ -14,7 +14,7 @@ const TRIM = 0x17212b;
 /** Fresnel edge on the snow, and brighter on the dark field. */
 const EDGE = { light: 0x9dbde6, dark: 0xe8f2ff } as const;
 /** Above the ground (0) and contact shadow (1), in a fixed order so the sort never flips. */
-const ORDER = { pole: 2, glove: 3, cuff: 4, shell: 5 } as const;
+const ORDER = { pole: 2, cuff: 4, shell: 5 } as const;
 
 type Ring = ReadonlyArray<Vec3>;
 
@@ -131,55 +131,14 @@ const mergeOrThrow = (parts: ReadonlyArray<BufferGeometry>, groups = false): Buf
   return merged;
 };
 
-const cross = (p: Vec3, q: Vec3): Vec3 => [p[1] * q[2] - p[2] * q[1], p[2] * q[0] - p[0] * q[2], p[0] * q[1] - p[1] * q[0]];
-
-/**
- * A mitten closed round the fist with a gauntlet over the wrist, in the fit's
- * own frame. The grip passes through it across the palm.
- */
-export const gloveGeometry = (fit: GloveFit): BufferGeometry => {
-  const { grip, a, n, extents } = fit;
-  const u = cross(n, a);
-  const [a0, a1, n0, n1, u0, u1] = extents;
-  const margin = 0.006;
-  const at = (ya: number, zn: number, xu: number): Vec3 => [
-    grip[0] + a[0] * ya + n[0] * zn + u[0] * xu,
-    grip[1] + a[1] * ya + n[1] * zn + u[1] * xu,
-    grip[2] + a[2] * ya + n[2] * zn + u[2] * xu,
-  ];
-  const start = a0 - 0.07;
-  const wrist = a0 + 0.01;
-  const end = a1 + margin;
-  const fist = { n: (n0 + n1) / 2, u: (u0 + u1) / 2, hn: (n1 - n0) / 2 + margin, hu: (u1 - u0) / 2 + margin };
-  const steps = 16;
-  const rings = Array.from({ length: steps + 1 }, (_, i): Ring => {
-    const y = start + ((end - start) * i) / steps;
-    // Gauntlet to fist, rounded shut over the fingers and at the open cuff.
-    const blend = smooth(start, wrist, y);
-    const hn = 0.042 + (fist.hn - 0.042) * blend;
-    const hu = 0.045 + (fist.hu - 0.045) * blend;
-    const cn = fist.n * blend;
-    const cu = fist.u * blend;
-    const tip = Math.max(0, (y - (end - fist.hn)) / fist.hn);
-    const round = Math.sqrt(Math.max(0, 1 - tip ** 2)) * (i === 0 ? 0 : 1);
-    return Array.from({ length: AROUND }, (__, k) => {
-      const t = (2 * Math.PI * k) / AROUND;
-      return at(y, cn + hn * round * superCos(t, 0.7), cu - hu * round * superSin(t, 0.7));
-    });
-  });
-  // Trim colour: without a group the multi-material mesh draws nothing.
-  const g = loft(rings);
-  g.addGroup(0, g.index?.count ?? 0, 1);
-  return g;
-};
-
 /** One pole in its own frame: fist at the origin, shaft down -y to the spike. */
 export const poleGeometry = (): BufferGeometry => {
   const shaftEnd = POLE.reach - 0.03;
   const shaft = plain(new CylinderGeometry(0.009, 0.0065, shaftEnd - 0.08, 8, 1, true));
   shaft.translate(0, -(0.08 + shaftEnd) / 2, 0);
+  // Reaches above the fist, where the thumb wraps it.
   const grip = plain(new CylinderGeometry(0.019, 0.016, 0.16, 12));
-  grip.translate(0, -0.005, 0);
+  grip.translate(0, 0.025, 0);
   const basket = plain(new CylinderGeometry(0.045, 0.04, 0.008, 18));
   basket.translate(0, -POLE.basket, 0);
   const spike = plain(new CylinderGeometry(0.0065, 0.002, 0.03, 8));
@@ -212,7 +171,6 @@ export interface Gear {
   readonly shells: ReadonlyArray<GearPart>;
   readonly soles: ReadonlyArray<GearPart>;
   readonly cuffs: ReadonlyArray<GearPart>;
-  readonly gloves: ReadonlyArray<GearPart>;
   readonly poles: ReadonlyArray<GearPart>;
   readonly setMode: (mode: GearMode) => void;
   /** Brightens the translucent edges over a dark field. */
@@ -222,8 +180,8 @@ export interface Gear {
 
 const SIDES: ReadonlyArray<LegSide> = [BodySide.Right, BodySide.Left];
 
-/** Boots, gloves and poles, unparented; each figure places them. */
-export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, hands: Readonly<Record<LegSide, GloveFit>>): Gear => {
+/** Boots and poles, unparented; each figure places them. */
+export const createGear = (boots: Readonly<Record<LegSide, BootFit>>): Gear => {
   const backdrop: Backdrop = { edge: uniform(new Color(EDGE.light)), gain: uniform(0.65) };
   const glass = [translucent(SHELL, 0.16, backdrop), translucent(TRIM, 0.45, backdrop)] as const;
   const opaque = [solid(SHELL), solid(TRIM)] as const;
@@ -240,15 +198,13 @@ export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, hands: Rea
     g.addGroup(0, g.index?.count ?? 0, 1);
     return make(g, side, ORDER.shell);
   });
-  const gloves = SIDES.map((side) => make(gloveGeometry(hands[side]), side, ORDER.glove));
   const pole = poleGeometry();
   const poles = SIDES.map((side) => make(pole, side, ORDER.pole));
-  const all = [...shells, ...soles, ...cuffs, ...gloves, ...poles];
+  const all = [...shells, ...soles, ...cuffs, ...poles];
   return {
     shells,
     soles,
     cuffs,
-    gloves,
     poles,
     setMode: (mode) => {
       for (const { mesh } of all) {

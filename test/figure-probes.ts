@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 import type { Mesh, Object3D } from 'three';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
-import { gloveFrom, parseGearFit } from '../src/viewer/gear-fit';
+import { parseGearFit } from '../src/viewer/gear-fit';
 import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
 import { CAPSULE_GRIP, SKI_TIP, poseAt, segmentMatrices } from '../src/viewer/pose';
@@ -69,8 +69,8 @@ export const anatomyProbe = async (): Promise<FigureProbe> => {
   };
   const ends = { [BodySide.Right]: skiEnds(BodySide.Right), [BodySide.Left]: skiEnds(BodySide.Left) };
   const grips = {
-    [BodySide.Right]: model.carried('hand.R', new Vector3(...gloveFrom(raw.right).grip)),
-    [BodySide.Left]: model.carried('hand.L', new Vector3(...gloveFrom(raw.left).grip)),
+    [BodySide.Right]: model.carried('hand.R', new Vector3(...raw.right.grip)),
+    [BodySide.Left]: model.carried('hand.L', new Vector3(...raw.left.grip)),
   };
   return {
     name: 'anatomy',

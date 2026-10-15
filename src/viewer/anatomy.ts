@@ -1,5 +1,5 @@
 import { AnimationMixer, DoubleSide, Matrix4, MeshStandardNodeMaterial, PropertyBinding, SkinnedMesh, Uint32BufferAttribute, Vector3, Vector4 } from 'three/webgpu';
-import type { AnimationAction, Object3D, Scene } from 'three/webgpu';
+import type { AnimationAction, Object3D, Scene, Skeleton } from 'three/webgpu';
 import {
   attribute,
   color,
@@ -27,8 +27,8 @@ import type { Vec3 } from './mat4';
 import { BodySide } from './figure';
 import { createGear, placePole } from './gear';
 import type { LegSide } from './gear';
-import { bootFitFrom, coveredByBoot, gloveFrom, parseGearFit } from './gear-fit';
-import type { BootFit, GloveFit, RawFit } from './gear-fit';
+import { bootFitFrom, coveredByBoot, parseGearFit } from './gear-fit';
+import type { BootFit, RawFit } from './gear-fit';
 import type { GearMode } from './gear-mode';
 import { poleDirection, poleTouchAt } from './pose';
 import { NodeKind, parseAnatomyNode } from './anatomy-names';
@@ -124,12 +124,12 @@ const candidateVertices = (mesh: SkinnedMesh, centre: Vec3, hidden: (p: Vec3) =>
   return spreadCandidates(pool.map((e) => e.p), centre, ANCHOR_CANDIDATES).flatMap((k) => pool[k]?.i ?? []);
 };
 
-/** Boot fits and fists per leg side, with the rest-pose ankles they hang from. */
+/** Boot fits and pole grips per leg side, with the rest-pose ankles the boots hang from. */
 interface Fitting {
   readonly side: LegSide;
   readonly fit: BootFit;
   readonly ankle: Vec3;
-  readonly glove: GloveFit;
+  readonly grip: Vec3;
 }
 
 const own = (parts: ReadonlyArray<{ readonly mesh: Object3D; readonly side: LegSide }>, side: LegSide): Object3D | undefined =>
@@ -138,7 +138,7 @@ const own = (parts: ReadonlyArray<{ readonly mesh: Object3D; readonly side: LegS
 /** Bone names lose their dots in three's loader. */
 const boneName = (part: string, side: LegSide): string => PropertyBinding.sanitizeNodeName(`${part}.${side === BodySide.Right ? 'R' : 'L'}`);
 
-const fitting = (side: LegSide, r: RawFit): Fitting => ({ side, fit: bootFitFrom(r), ankle: r.ankle, glove: gloveFrom(r) });
+const fitting = (side: LegSide, r: RawFit): Fitting => ({ side, fit: bootFitFrom(r), ankle: r.ankle, grip: r.grip });
 
 const fittings = (root: Object3D): Readonly<Record<LegSide, Fitting>> | null => {
   const raw = parseGearFit(root.getObjectByName('bones')?.userData['gear_fit']);
@@ -187,6 +187,7 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
   const hidden = (p: Vec3): boolean => (fitted === null ? [] : Object.values(fitted)).some((f) => coveredByBoot(f.fit, f.ankle, p));
 
   const anchors: Array<Anchor> = [];
+  const skeletons = new Set<Skeleton>();
   const seen = new Set<Object3D>();
   root.traverse((o) => {
     if (!isSkinned(o)) return;
@@ -197,6 +198,7 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
     const name = source?.name ?? '';
     source?.dispose();
     o.frustumCulled = false;
+    skeletons.add(o.skeleton);
     if (node.kind === NodeKind.Bones) o.material = name === 'cartilage' ? cartilage : bone;
     else if (node.kind === NodeKind.Gear) o.material = gear;
     else {
@@ -212,11 +214,8 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
     }
   });
 
-  // Boots ride the foot and shin bones, gloves the hands; poles are placed from the fist every frame.
-  const kit =
-    fitted === null
-      ? null
-      : createGear({ [BodySide.Right]: fitted.right.fit, [BodySide.Left]: fitted.left.fit }, { [BodySide.Right]: fitted.right.glove, [BodySide.Left]: fitted.left.glove });
+  // Boots ride the foot and shin bones; poles are placed from the fist every frame.
+  const kit = fitted === null ? null : createGear({ [BodySide.Right]: fitted.right.fit, [BodySide.Left]: fitted.left.fit });
   const joint = (part: string, side: LegSide): Object3D => {
     const found = root.getObjectByName(boneName(part, side));
     if (found === undefined) throw new Error(`anatomy model has no ${part} bone`);
@@ -235,10 +234,8 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
         const mesh = own(parts, f.side);
         if (mesh !== undefined) attach(part, f.side, mesh, f.ankle);
       }
-      const glove = own(kit.gloves, f.side);
-      if (glove !== undefined) attach('hand', f.side, glove, [0, 0, 0]);
       const hand = joint('hand', f.side);
-      fists.push({ side: f.side, hand, foot: joint('foot', f.side), local: hand.worldToLocal(new Vector3(...f.glove.grip)) });
+      fists.push({ side: f.side, hand, foot: joint('foot', f.side), local: hand.worldToLocal(new Vector3(...f.grip)) });
     }
     for (const p of kit.poles) scene.add(p.mesh);
   }
@@ -282,6 +279,8 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
       action.time = (((t % 1) + 1) % 1) * clip.duration;
       mixer.update(0);
       root.updateMatrixWorld(true);
+      // Otherwise the bone matrices upload a draw late and the hands trail their poles.
+      for (const s of skeletons) s.update();
       placePoles(t);
       fillSlotLevels(table, current, levels);
     },

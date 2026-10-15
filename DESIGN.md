@@ -409,7 +409,7 @@ Borders are 1.5 to 2px solid ink, never hairline greys, except the dashed opinio
 
 ### Gear Control (segmented)
 - A "Gear" label, then three joined cells, Translucent (default), Solid and Off, inside a 2px ink border with 3px corners and divided by 1.5px Ink 2 rules. Cells are at least 40px tall (48px on phone, full width), 13px uppercase 700 in Ink 2; hover goes to ink; checked fills ink with ground text at 900.
-- The gear is boots, gloves and poles. Translucent is a nearly clear face with a fresnel edge (pale blue on snow, near white on the dark field) so the shin muscles stay readable; Solid is opaque navy shell (figure-ski) with near-black trim (figure-gear-trim); Off hides everything but the boot sole, so the foot still stands on the ski.
+- The gear is boots and poles; the bare hands close round the pole grips. Translucent is a nearly clear face with a fresnel edge (pale blue on snow, near white on the dark field) so the shin muscles stay readable; Solid is opaque navy shell (figure-ski) with near-black trim (figure-gear-trim); Off hides everything but the boot sole, so the foot still stands on the ski.
 
 ### Select (drill picker)
 - **Trigger:** 44px tall, 1.5px Ink 2 border, 3px corners, 700 weight, chevron that rotates when open. Hover and open: ink border on Well.

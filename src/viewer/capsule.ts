@@ -4,6 +4,7 @@ import {
   BufferGeometry,
   CapsuleGeometry,
   Color,
+  Group,
   Matrix4,
   Mesh,
   MeshStandardNodeMaterial,
@@ -12,6 +13,7 @@ import {
 } from 'three/webgpu';
 import type { NodeBuilder, Scene } from 'three/webgpu';
 import { attribute, mix, normalLocal, positionLocal, uniformArray, varying, vec4 } from 'three/tsl';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { MuscleLevel } from '../content/activation';
 import { Side } from '../content/schema';
 import { spreadCandidates } from './anchor-projection';
@@ -22,7 +24,7 @@ import { BodySide, SEGMENTS, SegmentKind } from './figure';
 import type { Segment } from './figure';
 import { createGear, placePole } from './gear';
 import type { LegSide } from './gear';
-import { CAPSULE_BOOT, capsuleGlove, coveredByBoot } from './gear-fit';
+import { CAPSULE_BOOT, coveredByBoot } from './gear-fit';
 import type { GearMode } from './gear-mode';
 import { compose, transformPoint, translation } from './mat4';
 import { CAPSULE_GRIP, poleDirection, poseAt, segmentMatrices } from './pose';
@@ -153,6 +155,26 @@ class FigureMaterial extends MeshStandardNodeMaterial {
   }
 }
 
+/**
+ * A fist closed on the pole grip, in a frame with the grip up +y, the fingers
+ * toward +z and the palm's far side toward `medial` x; the thumb lies over it.
+ */
+const createFist = (material: MeshStandardNodeMaterial, medial: 1 | -1): Group => {
+  const hand = new RoundedBoxGeometry(0.065, 0.09, 0.075, 3, 0.02);
+  hand.translate(medial * -0.0025, 0, 0.0025);
+  const thumb = new CapsuleGeometry(0.011, 0.03, 4, 10);
+  thumb.rotateX(Math.PI / 2);
+  thumb.translate(medial * 0.026, 0.034, 0.006);
+  const fist = new Group();
+  fist.add(new Mesh(hand, material), new Mesh(thumb, material));
+  return fist;
+};
+
+const fistBasis = new Matrix4();
+const up = new Vector3();
+const ahead = new Vector3();
+const across = new Vector3();
+
 /** The placeholder capsule skier. */
 export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: ReadonlyArray<string>): Figure => {
   const { geometry, anchors } = buildFigureGeometry(table);
@@ -162,13 +184,19 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
   figure.frustumCulled = false;
   scene.add(figure);
 
-  // The glove's palm faces the midline: -x for the left hand.
-  const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT }, { [BodySide.Right]: capsuleGlove(1), [BodySide.Left]: capsuleGlove(-1) });
-  for (const part of [...gear.shells, ...gear.soles, ...gear.cuffs, ...gear.gloves]) {
+  const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT });
+  for (const part of [...gear.shells, ...gear.soles, ...gear.cuffs]) {
     part.mesh.matrixAutoUpdate = false;
     scene.add(part.mesh);
   }
   for (const part of gear.poles) scene.add(part.mesh);
+  // The midline is +x for the right hand once the fist's grip points up and its fingers forward.
+  const skin = new MeshStandardNodeMaterial({ color: SKIN, roughness: 0.75 });
+  const fists = [
+    { side: BodySide.Right, fist: createFist(skin, 1) },
+    { side: BodySide.Left, fist: createFist(skin, -1) },
+  ] as const;
+  for (const { fist } of fists) scene.add(fist);
 
   const owners = new Map<number, { readonly muscle: string; readonly side: typeof Side.Outside | typeof Side.Inside }>();
   for (const muscle of muscles) for (const side of [Side.Outside, Side.Inside]) owners.set(table.slotOf(muscle, side), { muscle, side });
@@ -184,20 +212,26 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         const boot = world[segmentOf(SegmentKind.Boot, side)];
         if (boot !== undefined) mesh.matrix.fromArray(boot);
       }
-      for (const { mesh, side } of gear.gloves) {
-        const forearm = world[segmentOf(SegmentKind.Forearm, side)];
-        if (forearm !== undefined) mesh.matrix.fromArray(forearm);
-      }
       for (const { mesh, side } of gear.cuffs) {
         const shin = world[segmentOf(SegmentKind.Shin, side)];
         if (shin !== undefined) mesh.matrix.fromArray(compose(shin, translation(ANKLE)));
       }
-      for (const { mesh, side } of gear.poles) {
+      for (const { side, fist } of fists) {
         const forearm = world[segmentOf(SegmentKind.Forearm, side)];
         if (forearm === undefined) continue;
         const grip = transformPoint(forearm, CAPSULE_GRIP);
         const ankle = transformPoint(world[segmentOf(SegmentKind.Boot, side)] ?? forearm, [0, 0, 0]);
-        placePole(mesh, grip, poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0, ankle));
+        const direction = poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0, ankle);
+        const pole = gear.poles.find((g) => g.side === side);
+        if (pole !== undefined) placePole(pole.mesh, grip, direction);
+        // The fist closes round the grip, its fingers along the forearm.
+        up.set(-direction[0], -direction[1], -direction[2]);
+        const wrist = transformPoint(forearm, [0, -0.28, 0]);
+        ahead.set(grip[0] - wrist[0], grip[1] - wrist[1], grip[2] - wrist[2]);
+        ahead.addScaledVector(up, -ahead.dot(up)).normalize();
+        across.crossVectors(up, ahead);
+        fist.position.set(grip[0], grip[1], grip[2]);
+        fist.quaternion.setFromRotationMatrix(fistBasis.makeBasis(across, up, ahead));
       }
       fillSlotLevels(table, levels, material.levels);
     },
@@ -214,6 +248,13 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
     setDark: (dark: boolean) => gear.setDark(dark),
     dispose: () => {
       gear.dispose();
+      for (const { fist } of fists) {
+        fist.removeFromParent();
+        fist.traverse((o) => {
+          if (o instanceof Mesh) o.geometry.dispose();
+        });
+      }
+      skin.dispose();
       geometry.dispose();
       material.dispose();
     },

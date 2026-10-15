@@ -1,8 +1,8 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Vector3 } from 'three';
 import type { BufferGeometry } from 'three';
-import { cuffGeometry, gloveGeometry, poleGeometry, shellGeometry } from '../src/viewer/gear';
-import { CAPSULE_BOOT, bootFitFrom, capsuleGlove, coveredByBoot, gloveFrom, parseGearFit } from '../src/viewer/gear-fit';
+import { cuffGeometry, poleGeometry, shellGeometry } from '../src/viewer/gear';
+import { CAPSULE_BOOT, bootFitFrom, coveredByBoot, parseGearFit } from '../src/viewer/gear-fit';
 import type { RawFit } from '../src/viewer/gear-fit';
 import { GearMode, isGearMode } from '../src/viewer/gear-mode';
 import { POLE } from '../src/viewer/pose';
@@ -10,9 +10,6 @@ import { POLE } from '../src/viewer/pose';
 const RAW: RawFit = {
   ankle: [0.07, 0.066, -0.035],
   grip: [0.28, 0.78, 0.05],
-  fistA: [0, -1, 0],
-  fistN: [-1, 0, 0],
-  fist: [-0.06, 0.05, -0.03, 0.05, -0.05, 0.05],
   sole: -0.021,
   toe: 0.137,
   heel: -0.092,
@@ -66,21 +63,12 @@ describe('gear geometry', () => {
   it('faces outward, so front-face-only translucency shows one layer', () => {
     assert.isAbove(outward(shellGeometry(CAPSULE_BOOT)), 0.95);
     assert.isAbove(outward(cuffGeometry(CAPSULE_BOOT)), 0.95);
-    assert.isAbove(outward(gloveGeometry(capsuleGlove(1))), 0.9);
-    assert.isAbove(outward(gloveGeometry(gloveFrom(RAW))), 0.9);
   });
 
-  it('closes the glove round the grip', () => {
-    const g = gloveGeometry(gloveFrom(RAW));
-    g.computeBoundingBox();
-    assert.isTrue(g.boundingBox?.containsPoint(new Vector3(...RAW.grip)));
-  });
-
-  it('gives every gear geometry a material group over all its triangles', () => {
-    for (const g of [gloveGeometry(gloveFrom(RAW)), gloveGeometry(capsuleGlove(1)), poleGeometry()]) {
-      const covered = g.groups.reduce((sum, group) => sum + group.count, 0);
-      assert.strictEqual(covered, g.index?.count);
-    }
+  it('gives the pole a material group over all its triangles', () => {
+    const g = poleGeometry();
+    const covered = g.groups.reduce((sum, group) => sum + group.count, 0);
+    assert.strictEqual(covered, g.index?.count);
   });
 
   it('spans the boot from heel to toe and sole to cuff top', () => {
