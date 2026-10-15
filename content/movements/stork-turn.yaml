@@ -8,9 +8,9 @@ name: Turn balanced on the outside ski, inside tail held up
 #
 # Intensity (the drill's scenarios): with the inside ski up, the outside leg carries 100 % of the snow force.
 # Load factor n, Lind & Sanders eq 4.9 (p 103), at the top, the fall line and below it (heading 135°):
-#   gentle    6 m/s, R 10 m,  8°, brushed:              about 1.02, 1.06, 1.09
-#   moderate  8 m/s, R 12 m, 12°, brushed to carved:    about 1.03, 1.12, 1.20
-#   dynamic  10 m/s, R 14 m, 15°, mostly carved:        about 1.07, 1.21, 1.33
+#   gentle    6 m/s, R 10 m,  8°: about 1.02, 1.06, 1.09
+#   moderate  8 m/s, R 12 m, 12°: about 1.03, 1.12, 1.20
+#   dynamic  10 m/s, R 14 m, 15°: about 1.07, 1.21, 1.33
 # The load builds past the fall line and peaks in late shaping or early finish, then eases as the radius opens
 # toward the traverse (falda-buscaiot-2017, zorko-2015, L&S Table 6.1, P&T p 27), so outside-leg efforts hold
 # up into the finish while the tail is still up.

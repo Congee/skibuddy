@@ -4,7 +4,7 @@ movement: stork-turn
 summary: Linked round turns on easy to moderate terrain, balanced on the outside ski. After a pole touch, the inside ski's tail lifts through the middle of initiation while its tip stays on the snow, and it comes back down through the middle of the finish. A tail that touches early shows balance drifting inside or back.
 # Sources back smooth, firm, not icy snow; "slush or ruts" is our own wording.
 terrain: Easy to moderate groomed slopes with smooth, edgeable snow, dynamic on a steeper blue; not ice, slush or ruts
-# Gentle is brushed, moderate brushed to carved, dynamic mostly carved. Loads follow Lind & Sanders eq 4.9, p 103,
+# Turn shape (carved or brushed) is technique, independent of the setting. Loads follow Lind & Sanders eq 4.9, p 103,
 # peaking below the fall line. Speeds and radii are our inference, well under race levels.
 scenarios:
   gentle: { speed_mps: 6, radius_m: 10, slope_deg: 8 }
