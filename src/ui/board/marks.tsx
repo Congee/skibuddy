@@ -3,9 +3,7 @@ import { Confidence } from '../../content/schema';
 import type { Phase } from '../../content/schema';
 import { stamp } from './board.css';
 
-export const LEVEL_WORDS = ['rest', 'light', 'working', 'hard'] as const;
-
-export const CONFIDENCE_WORDS: Record<Confidence, string> = {
+const CONFIDENCE_WORDS: Record<Confidence, string> = {
   [Confidence.High]: 'Measured',
   [Confidence.Medium]: 'Inferred',
   [Confidence.Low]: 'Opinion',

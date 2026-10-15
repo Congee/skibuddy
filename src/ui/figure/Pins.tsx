@@ -13,14 +13,14 @@ import { Column, layoutPins } from './pin-layout';
 import type { PinBox, PlacedPin } from './pin-layout';
 import { pinInputs, pinKey } from './pin-inputs';
 
-export interface PinSize {
+interface PinSize {
   readonly width: number;
   readonly height: number;
   readonly compact: boolean;
 }
 
 // Label heights are estimates until each pin is measured.
-export const boxFor = (size: PinSize): PinBox =>
+const boxFor = (size: PinSize): PinBox =>
   size.compact
     ? { width: size.width, height: size.height, labelWidth: Math.round(Math.min(size.width * 0.36, 150)), labelHeight: 58, gap: 6, pad: 6, maxPins: 4 }
     : { width: size.width, height: size.height, labelWidth: Math.round(Math.min(216, Math.max(150, size.width * 0.3))), labelHeight: 50, gap: 10, pad: 16, maxPins: 7 };

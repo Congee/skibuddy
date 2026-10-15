@@ -5,7 +5,7 @@ import type { MuscleAnchor } from '../../viewer/anchors';
 import type { GearMode } from '../../viewer/gear-mode';
 import { PHONE, createMedia } from '../media';
 import { vars } from '../theme/theme.css';
-import { readEffortRamp } from './effort-ramp';
+import { readEffortRamp } from '../effort-ramp';
 import * as s from './figure.css';
 import { Pins } from './Pins';
 

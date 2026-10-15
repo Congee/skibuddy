@@ -10,11 +10,12 @@ const SAMPLES = 60;
 /** Vertical position of effort `v` inside a strip, in px from the top. */
 export const stripY = (v: number): number => s.STRIP_HEIGHT - (v / MAX_EFFORT) * (s.STRIP_HEIGHT - s.STRIP_TOP);
 
-/** One muscle's effort across the whole turn, with a playhead and a dot at `--board-t`. */
+/** One muscle's effort across the whole turn, with a playhead and a dot the board moves. */
 export const Strip = (props: {
   readonly intensity: PhaseIntensity;
   readonly label: string;
   readonly ramp: Accessor<EffortRamp>;
+  readonly playhead: (el: HTMLSpanElement) => void;
   readonly dot: (el: HTMLSpanElement) => void;
 }): JSX.Element => {
   const id = `strip-${createUniqueId()}`;
@@ -39,7 +40,7 @@ export const Strip = (props: {
         <path class={s.stripEdge} d={edge} vector-effect="non-scaling-stroke" />
         <line class={s.stripBase} x1="0" y1={h} x2="100" y2={h} vector-effect="non-scaling-stroke" />
       </svg>
-      <span class={s.playhead} aria-hidden="true" />
+      <span class={s.playhead} ref={props.playhead} aria-hidden="true" />
       <span class={s.dot} ref={props.dot} aria-hidden="true" />
     </span>
   );

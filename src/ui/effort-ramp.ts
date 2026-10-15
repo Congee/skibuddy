@@ -1,8 +1,8 @@
-import { hexRgb } from '../../content/effort';
-import type { EffortRamp, Rgb } from '../../content/effort';
-import { vars } from '../theme/theme.css';
+import { hexRgb } from '../content/effort';
+import type { EffortRamp, Rgb } from '../content/effort';
+import { vars } from './theme/theme.css';
 
-/** The effort ramp (rest, l1, l2, l3) from the live theme, as the board reads it. */
+/** The effort ramp (rest, l1, l2, l3) from the live theme. */
 export const readEffortRamp = (): EffortRamp => {
   const style = typeof document === 'undefined' ? undefined : getComputedStyle(document.documentElement);
   const read = (v: string, fallback: Rgb): Rgb => {

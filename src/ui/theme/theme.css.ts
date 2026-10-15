@@ -17,7 +17,6 @@ export const vars = createThemeContract({
     field: null,
     snow: null,
     snowLine: null,
-    tagRim: null,
     focus: null,
     selection: null,
     pinBg: null,
@@ -32,7 +31,7 @@ export const vars = createThemeContract({
     l3Ink: null,
   },
   font: { body: null },
-  shadow: { tag: null, pop: null },
+  shadow: { pop: null },
 });
 
 const level = {
@@ -63,7 +62,6 @@ const light = {
     field: '#1E3A32',
     snow: '#E4EBE7',
     snowLine: '#C3CFC9',
-    tagRim: '#12231E',
     focus: '#9E1F63',
     selection: '#F2B33D',
     pinBg: '#FFFFFF',
@@ -74,7 +72,6 @@ const light = {
   },
   font,
   shadow: {
-    tag: '0 1px 2px rgba(10, 25, 20, 0.28)',
     pop: '0 12px 32px -8px rgba(10, 25, 20, 0.35), 0 2px 6px rgba(10, 25, 20, 0.18)',
   },
 };
@@ -96,7 +93,6 @@ const dark = {
     field: '#142A23',
     snow: '#1B352D',
     snowLine: '#21403A',
-    tagRim: 'rgba(243, 245, 241, 0.7)',
     focus: '#F2B33D',
     selection: '#9E1F63',
     pinBg: '#E4EBE7',
@@ -107,7 +103,6 @@ const dark = {
   },
   font,
   shadow: {
-    tag: '0 1px 2px rgba(0, 0, 0, 0.5)',
     pop: '0 12px 32px -8px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.5)',
   },
 };

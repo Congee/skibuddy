@@ -23,7 +23,7 @@ const host = (url: string): string => {
 const capitalise = (x: string): string => x.charAt(0).toUpperCase() + x.slice(1);
 
 /** "initiation Working, shaping Working, finish Hard" */
-export const phaseWords = (a: Activation): string => PHASES.map((p) => `${p} ${effortWord(a.intensity[p])}`).join(', ');
+const phaseWords = (a: Activation): string => PHASES.map((p) => `${p} ${effortWord(a.intensity[p])}`).join(', ');
 
 export const Slat = (props: {
   readonly activation: Activation;
@@ -33,6 +33,7 @@ export const Slat = (props: {
   readonly keys: ReadonlyMap<SourceId, number>;
   readonly source: (id: SourceId) => Source | undefined;
   readonly ramp: Accessor<EffortRamp>;
+  readonly playhead: (el: HTMLSpanElement) => void;
   readonly dot: (el: HTMLSpanElement) => void;
 }): JSX.Element => {
   const [open, setOpen] = createSignal(false);
@@ -56,7 +57,13 @@ export const Slat = (props: {
               </Show>
             </span>
           </span>
-          <Strip intensity={a().intensity} label={`${short()}, ${a().side}: ${phaseWords(a())}`} ramp={props.ramp} dot={props.dot} />
+          <Strip
+            intensity={a().intensity}
+            label={`${short()}, ${a().side}: ${phaseWords(a())}`}
+            ramp={props.ramp}
+            playhead={props.playhead}
+            dot={props.dot}
+          />
           <ChevronDown class={s.caret} />
         </Collapsible.Trigger>
         <Collapsible.Content class={s.detail}>

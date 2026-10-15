@@ -166,13 +166,12 @@ export const evidence = style({
 export const STRIP_HEIGHT = 40;
 export const STRIP_TOP = 5;
 
-/** Turn position 0..1, written once per frame on the list. */
-export const turnProperty = '--board-t';
-
 export const strip = style({
   position: 'relative',
   display: 'block',
   height: STRIP_HEIGHT,
+  // Playhead and dot move by transform in cqw, so a playback step never lays out.
+  containerType: 'inline-size',
   '@container': { [stacked]: { gridColumn: '1 / -1' } },
 });
 
@@ -188,21 +187,24 @@ export const playhead = style({
   position: 'absolute',
   top: -5,
   bottom: -5,
-  left: `calc(var(${turnProperty}, 0.5) * 100% - 1px)`,
+  left: -1,
   width: 2,
+  transform: 'translateX(50cqw)',
   background: vars.color.ink,
   borderRadius: 1,
 });
 
 export const dot = style({
   position: 'absolute',
-  left: `calc(var(${turnProperty}, 0.5) * 100%)`,
+  top: 0,
+  left: 0,
   width: 14,
   height: 14,
   margin: '-7px 0 0 -7px',
   borderRadius: '50%',
   border: `2px solid ${vars.color.ink}`,
   background: vars.color.rest,
+  transform: 'translateX(50cqw)',
 });
 
 export const caret = style({
@@ -212,101 +214,6 @@ export const caret = style({
   '@media': { [motionOk]: { transition: `transform 200ms ${easeOut}` } },
   '@container': { [stacked]: { display: 'none' } },
   selectors: { '[data-state="open"] > &': { transform: 'rotate(180deg)' } },
-});
-
-const flip = keyframes({
-  from: { transform: 'perspective(240px) rotateX(-80deg)', filter: 'brightness(0.7)' },
-  to: { transform: 'none', filter: 'none' },
-});
-
-/** Enamel flip-tag: numeral, fill and hatch density all carry the level. */
-export const tag = recipe({
-  base: {
-    position: 'relative',
-    justifySelf: 'center',
-    display: 'grid',
-    placeItems: 'start center',
-    width: 30,
-    height: 40,
-    paddingTop: 9,
-    borderRadius: 3,
-    fontWeight: 800,
-    fontStretch: '75%',
-    fontSize: 22,
-    lineHeight: 1,
-    overflow: 'hidden',
-    boxShadow: `inset 0 0 0 1.5px ${vars.color.tagRim}, ${vars.shadow.tag}`,
-    transformOrigin: '50% 0',
-    selectors: {
-      // The hanging hole.
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 3,
-        left: '50%',
-        width: 4,
-        height: 4,
-        marginLeft: -2,
-        borderRadius: '50%',
-        background: 'currentColor',
-        opacity: 0.6,
-      },
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: 9,
-        borderTop: '1px solid currentColor',
-      },
-    },
-  },
-  variants: {
-    level: {
-      0: {
-        background: 'transparent',
-        color: vars.color.ink3,
-        boxShadow: `inset 0 0 0 1.5px ${vars.color.ink3}`,
-        selectors: { '&::after': { borderTopStyle: 'dashed' } },
-      },
-      1: {
-        background: vars.color.l1,
-        color: vars.color.l1Ink,
-        selectors: { '&::after': { background: 'repeating-linear-gradient(135deg, currentColor 0 1.5px, transparent 1.5px 9px)' } },
-      },
-      2: {
-        background: vars.color.l2,
-        color: vars.color.l2Ink,
-        selectors: { '&::after': { background: 'repeating-linear-gradient(135deg, currentColor 0 1.5px, transparent 1.5px 5px)' } },
-      },
-      3: {
-        background: vars.color.l3,
-        color: vars.color.l3Ink,
-        selectors: { '&::after': { background: 'repeating-linear-gradient(135deg, currentColor 0 1.5px, transparent 1.5px 3px)' } },
-      },
-    },
-    size: {
-      small: {},
-      now: {
-        width: 44,
-        height: 50,
-        paddingTop: 10,
-        fontSize: 30,
-        selectors: { '&::after': { height: 11 } },
-        '@media': { [motionOk]: { animation: `${flip} 420ms ${easeOut}` } },
-      },
-      mini: {
-        width: 22,
-        height: 26,
-        paddingTop: 4,
-        fontSize: 15,
-        boxShadow: 'none',
-        selectors: { '&::before': { display: 'none' }, '&::after': { height: 6 } },
-      },
-    },
-  },
-  defaultVariants: { level: 0, size: 'small' },
 });
 
 /** solid = measured, outlined = inferred, dashed = opinion. */

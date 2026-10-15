@@ -2,21 +2,20 @@ import { Collapsible } from '@ark-ui/solid/collapsible';
 import { useAtomValue } from '@effect/atom-solid';
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, untrack } from 'solid-js';
 import type { Accessor, JSX } from 'solid-js';
-import { EFFORTS, effortAt, effortColour, effortWord, hexRgb, steadyOrder } from '../../content/effort';
-import type { Effort, EffortRamp, Rgb } from '../../content/effort';
+import { EFFORTS, effortAt, effortColour, effortWord, steadyOrder } from '../../content/effort';
+import type { Effort } from '../../content/effort';
 import { Confidence, PHASES } from '../../content/schema';
 import type { Activation, AssociationTask, Content, Drill, Movement, Phase, Source, SourceId } from '../../content/schema';
 import { phaseCentre, playingAtom, turnTimeAtom } from '../../state/playback';
 import { slotClasses } from '../components/slot-recipe';
+import { readEffortRamp } from '../effort-ramp';
 import { ArrowOut, ChevronDown } from '../icons';
 import { PHONE, createMedia } from '../media';
 import { visuallyHidden } from '../theme/global.css';
-import { vars } from '../theme/theme.css';
 import * as s from './board.css';
 import { Stamp, phaseLabel, shortName } from './marks';
-import { sourceKeys } from './rank';
-import type { RankedSlat } from './rank';
 import { Slat } from './Slat';
+import { sourceKeys } from './source-keys';
 import { stripY } from './Strip';
 
 const assocName = (task: AssociationTask): string => task.association.toUpperCase();
@@ -66,21 +65,6 @@ const AssociationNames = (props: { readonly tasks: ReadonlyArray<AssociationTask
 
 const DARK = '(prefers-color-scheme: dark)';
 
-/** Reads the effort ramp from the live theme; vars are `var(--name)` strings. */
-const readRamp = (): EffortRamp => {
-  const style = typeof document === 'undefined' ? undefined : getComputedStyle(document.documentElement);
-  const read = (v: string, fallback: Rgb): Rgb => {
-    const name = /^var\((--[^,)]+)/.exec(v)?.[1];
-    return (name === undefined ? undefined : hexRgb(style?.getPropertyValue(name) ?? '')) ?? fallback;
-  };
-  return [
-    read(vars.color.rest, [185, 197, 191]),
-    read(vars.color.l1, [242, 179, 61]),
-    read(vars.color.l2, [224, 96, 42]),
-    read(vars.color.l3, [158, 31, 99]),
-  ];
-};
-
 /** "Shaping. Hard: quadriceps outside. Working: ..." */
 const announce = (phase: Phase, rows: ReadonlyArray<{ readonly word: Effort; readonly name: string }>): string =>
   [
@@ -97,10 +81,6 @@ export const Board = (props: {
   readonly tasks: ReadonlyArray<AssociationTask>;
   readonly content: Content;
   readonly phase: Phase;
-  /** Unused; the board keeps a steady order. */
-  readonly ranked?: ReadonlyArray<RankedSlat>;
-  /** Unused; the board reads playback itself and never animates on its own. */
-  readonly reducedMotion?: Accessor<boolean>;
 }): JSX.Element => {
   const t = useAtomValue(() => turnTimeAtom);
   const playing = useAtomValue(() => playingAtom);
@@ -112,7 +92,7 @@ export const Board = (props: {
   const dark = createMedia(DARK);
   const ramp = createMemo(() => {
     dark();
-    return readRamp();
+    return readEffortRamp();
   });
 
   // Spoken effort follows the phase while playing and the playhead while paused, never every frame.
@@ -137,20 +117,24 @@ export const Board = (props: {
     }),
   );
 
-  // Per frame: one custom property for every playhead, then each dot's height and colour.
-  const [list, setList] = createSignal<HTMLOListElement>();
+  // Per frame: transforms only, so a step neither invalidates inherited styles nor lays out.
+  const playheads = new Set<HTMLSpanElement>();
   const dots = new Map<Activation, HTMLSpanElement>();
   createEffect(() => {
     const now = t();
     const colours = ramp();
-    list()?.style.setProperty(s.turnProperty, String(now));
+    const x = `calc(${now} * 100cqw)`;
+    for (const playhead of playheads) playhead.style.transform = `translateX(${x})`;
     for (const [a, dot] of dots) {
       const v = effortAt(a.intensity, now);
-      dot.style.top = `${stripY(v)}px`;
+      dot.style.transform = `translate(${x}, ${stripY(v)}px)`;
       dot.style.background = effortColour(v, colours);
     }
   });
-  onCleanup(() => dots.clear());
+  onCleanup(() => {
+    playheads.clear();
+    dots.clear();
+  });
 
   const unreviewed = (): boolean => props.drill.reviewedBy.length === 0 && props.movement.reviewedBy.length === 0;
   // On a phone the summary follows the slats, so a slat reaches the first screen.
@@ -185,7 +169,7 @@ export const Board = (props: {
         </div>
       </div>
 
-      <ol class={s.slats} ref={setList} aria-labelledby="board-heading" aria-describedby="board-order">
+      <ol class={s.slats} aria-labelledby="board-heading" aria-describedby="board-order">
         <For each={order()}>
           {(a) => (
             <Slat
@@ -195,6 +179,7 @@ export const Board = (props: {
               keys={keys()}
               source={source}
               ramp={ramp}
+              playhead={(el) => playheads.add(el)}
               dot={(el) => dots.set(a, el)}
             />
           )}
