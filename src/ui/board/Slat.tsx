@@ -1,5 +1,5 @@
 import { Collapsible } from '@ark-ui/solid/collapsible';
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show } from 'solid-js';
 import type { Accessor, JSX } from 'solid-js';
 import { effortWord } from '../../content/effort';
 import type { Effort, EffortRamp } from '../../content/effort';
@@ -25,6 +25,9 @@ const capitalise = (x: string): string => x.charAt(0).toUpperCase() + x.slice(1)
 /** "initiation Working, shaping Working, finish Hard" */
 const phaseWords = (a: Activation): string => PHASES.map((p) => `${p} ${effortWord(a.intensity[p])}`).join(', ');
 
+// Touch taps fire pointerenter too; only a hovering pointer previews.
+const hovering = (e: PointerEvent): boolean => e.pointerType === 'mouse' || e.pointerType === 'pen';
+
 export const Slat = (props: {
   readonly activation: Activation;
   readonly muscleName: string;
@@ -35,14 +38,33 @@ export const Slat = (props: {
   readonly ramp: Accessor<EffortRamp>;
   readonly playhead: (el: HTMLSpanElement) => void;
   readonly dot: (el: HTMLSpanElement) => void;
+  /** Shared with the muscle's pin. */
+  readonly slatKey: string;
+  readonly open: boolean;
+  /** This slat's muscle is the one on the figure. */
+  readonly focused: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  /** Hover or keyboard focus on the row previews the muscle on the figure. */
+  readonly onPreview: (on: boolean) => void;
 }): JSX.Element => {
-  const [open, setOpen] = createSignal(false);
   const a = (): Activation => props.activation;
   const short = (): string => shortName(props.muscleName);
   return (
-    <li class={s.slat} data-open={open() ? '' : undefined}>
-      <Collapsible.Root open={open()} onOpenChange={(d) => setOpen(d.open)}>
-        <Collapsible.Trigger class={s.slatRow}>
+    <li class={s.slat} data-slat={props.slatKey} data-open={props.open ? '' : undefined} data-focus={props.focused ? '' : undefined}>
+      <Collapsible.Root open={props.open} onOpenChange={(d) => props.onOpenChange(d.open)}>
+        <Collapsible.Trigger
+          class={s.slatRow}
+          onPointerEnter={(e) => {
+            if (hovering(e)) props.onPreview(true);
+          }}
+          onPointerLeave={(e) => {
+            if (hovering(e)) props.onPreview(false);
+          }}
+          onFocus={(e) => {
+            if (e.currentTarget.matches(':focus-visible')) props.onPreview(true);
+          }}
+          onBlur={() => props.onPreview(false)}
+        >
           <span class={s.name}>
             <span class={s.muscle}>{short()}</span>{' '}
             <span class={s.side}>{a().side}</span>

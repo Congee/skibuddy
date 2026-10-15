@@ -6,6 +6,16 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0D1915" media="(prefers-color-scheme: dark)" />
+    <script>
+      // Theme before first paint; the key and colours match src/state/theme.ts.
+      try {
+        var theme = localStorage.getItem('skibuddy.theme');
+        if (theme === 'light' || theme === 'dark') {
+          document.documentElement.dataset.theme = theme;
+          for (var meta of document.querySelectorAll('meta[name="theme-color"]')) meta.content = theme === 'dark' ? '#0D1915' : '#F3F5F1';
+        }
+      } catch (e) {}
+    </script>
     <meta name="description" content="See which muscles a ski drill works through the turn, how sure the evidence is, and gym exercises that train them the same way." />
     <title>skibuddy</title>
   </head>

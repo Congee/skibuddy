@@ -12,7 +12,23 @@ import {
   Vector3,
 } from 'three/webgpu';
 import type { NodeBuilder, Scene } from 'three/webgpu';
-import { attribute, mix, normalLocal, positionLocal, uniformArray, varying, vec4 } from 'three/tsl';
+import {
+  attribute,
+  color,
+  dot,
+  float,
+  mix,
+  normalLocal,
+  normalView,
+  positionLocal,
+  positionViewDirection,
+  pow,
+  saturate,
+  uniform,
+  uniformArray,
+  varying,
+  vec4,
+} from 'three/tsl';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { MuscleLevel } from '../content/activation';
 import { Side } from '../content/schema';
@@ -28,6 +44,7 @@ import { CAPSULE_BOOT, coveredByBoot } from './gear-fit';
 import type { GearMode } from './gear-mode';
 import { compose, transformPoint, translation } from './mat4';
 import { CAPSULE_GRIP, poleDirection, poseAt, segmentMatrices } from './pose';
+import { markChanges } from './highlight';
 import { fillSlotLevels, musclePartAt } from './slots';
 import type { SlotTable } from './slots';
 import type { Figure } from './scene';
@@ -135,16 +152,24 @@ const buildFigureGeometry = (table: SlotTable): { readonly geometry: BufferGeome
 class FigureMaterial extends MeshStandardNodeMaterial {
   readonly matrices = SEGMENTS.map(() => new Matrix4());
   readonly levels: Array<number>;
+  readonly marks: Array<number>;
+  readonly strength = uniform(0);
   readonly #matrixNode = uniformArray<'mat4'>(this.matrices, 'mat4');
 
   constructor(slotCount: number) {
     super({ roughness: 0.75 });
     this.levels = Array.from({ length: slotCount }, () => 0);
-    const level = varying(uniformArray<'float'>(this.levels, 'float').element(attribute('muscleSlot', 'uint')));
+    this.marks = Array.from({ length: slotCount }, () => 0);
+    const slot = attribute('muscleSlot', 'uint');
+    const marked = varying(uniformArray<'float'>(this.marks, 'float').element(slot));
+    // Unmarked muscles dim while one is highlighted; the marked one gains a pale outline.
+    const others = this.strength.mul(float(1).sub(marked));
+    const level = varying(uniformArray<'float'>(this.levels, 'float').element(slot)).mul(float(1).sub(others.mul(0.97)));
     const highlight = levelColour(level);
     const on = levelOn(level);
+    const outline = pow(float(1).sub(saturate(dot(normalView, positionViewDirection))), 2.4).mul(marked.mul(this.strength).mul(1.5));
     this.colorNode = mix(attribute('color', 'vec3'), highlight, on);
-    this.emissiveNode = highlight.mul(level.mul(0.35));
+    this.emissiveNode = highlight.mul(level.mul(0.35)).add(color(0xf3f5f1).mul(outline));
   }
 
   override setupPosition(builder: NodeBuilder): ReturnType<MeshStandardNodeMaterial['setupPosition']> {
@@ -202,6 +227,7 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
   for (const muscle of muscles) for (const side of [Side.Outside, Side.Inside]) owners.set(table.slotOf(muscle, side), { muscle, side });
   const p = new Vector3();
   const n = new Vector3();
+  let marked: ReadonlyArray<number> = [];
 
   return {
     update: (t: number, levels: ReadonlyArray<MuscleLevel>) => {
@@ -246,6 +272,11 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
       }),
     setGear: (mode: GearMode) => gear.setMode(mode),
     setDark: (dark: boolean) => gear.setDark(dark),
+    setHighlight: (slots: ReadonlyArray<number>, strength: number) => {
+      for (const [slot, value] of markChanges(marked, slots)) material.marks[slot] = value;
+      marked = slots;
+      material.strength.value = strength;
+    },
     dispose: () => {
       gear.dispose();
       for (const { fist } of fists) {

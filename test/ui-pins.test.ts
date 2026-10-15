@@ -127,4 +127,12 @@ describe('pinInputs', () => {
     const inputs = pinInputs(order, [anchor('a', 'outside'), anchor('b', 'outside')]);
     assert.isAbove(inputs.find((p) => p.key === 'b:outside')?.priority ?? 0, inputs.find((p) => p.key === 'a:outside')?.priority ?? 0);
   });
+
+  it('keeps the focused muscle pinned ahead of the top pins, even at rest', () => {
+    const order = [act('b', 'outside', 3), act('c', 'outside', 2), act('idle', 'outside', 0)];
+    const anchors = [anchor('b', 'outside'), anchor('c', 'outside'), anchor('idle', 'outside')];
+    const inputs = pinInputs(order, anchors, new Map(), 'idle:outside');
+    const kept = layoutPins(inputs, { ...box, maxPins: 1 }).map((p) => p.key);
+    assert.deepStrictEqual(kept, ['idle:outside']);
+  });
 });

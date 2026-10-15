@@ -9,6 +9,7 @@ import { drillIdAtom } from '../state/playback';
 import * as s from './app.css';
 import { Select } from './components/Select';
 import { DrillView } from './Drill';
+import { ThemeControl } from './ThemeControl';
 import { describeFailure } from './failure';
 import { visuallyHidden } from './theme/global.css';
 
@@ -60,6 +61,7 @@ export const App = (): JSX.Element => {
       <header class={s.bar}>
         <span class={s.mark}>skibuddy</span>
         <Show when={content()}>{(c) => <DrillPicker content={c()} />}</Show>
+        <ThemeControl />
         <p class={s.note}>Not medical advice. Not affiliated with any instructor association.</p>
       </header>
       {AsyncResult.match(result(), {

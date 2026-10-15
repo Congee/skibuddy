@@ -7,7 +7,9 @@ import type { AnchorsListener, MuscleAnchor } from './anchors';
 import { createCapsuleFigure } from './capsule';
 import { createFrameScheduler } from './frame-scheduler';
 import type { GearMode } from './gear-mode';
-import { dampOrbit } from './orbit';
+import { highlightSlots, highlightStrength, pointsFor, turnAzimuth } from './highlight';
+import type { FigureHighlight } from './highlight';
+import { DRAG_DAMPING, TURN_DAMPING, dampOrbit } from './orbit';
 import type { Orbit } from './orbit';
 import { pixelRatio } from './pixel-ratio';
 import { makeSlotTable } from './slots';
@@ -26,6 +28,8 @@ export interface Figure {
   readonly setGear?: (mode: GearMode) => void;
   /** The field behind the figure is dark. */
   readonly setDark?: (dark: boolean) => void;
+  /** Marks these slots and dims the rest by `strength` (0 clears). */
+  readonly setHighlight?: (slots: ReadonlyArray<number>, strength: number) => void;
   readonly dispose: () => void;
 }
 
@@ -55,6 +59,8 @@ export interface Viewer {
   readonly setPlaying: (on: boolean) => void;
   /** Pin anchors are projected only while pins show. */
   readonly setPins: (on: boolean) => void;
+  /** Singles out one muscle; a focus also turns the figure toward it if it faces away. */
+  readonly setHighlight: (highlight: FigureHighlight | null) => void;
   readonly dispose: () => void;
 }
 
@@ -127,6 +133,7 @@ export const createViewer = async (
   // The drag moves `aim`; the camera eases toward it and stops once there.
   let aim: Orbit = { azimuth: 0.7, elevation: 0.25 };
   let orbit: Orbit = aim;
+  let damping = DRAG_DAMPING;
   const placeCamera = (): void => {
     const r = DISTANCE * Math.cos(orbit.elevation);
     camera.position.set(target.x + r * Math.sin(orbit.azimuth), target.y + DISTANCE * Math.sin(orbit.elevation), target.z + r * Math.cos(orbit.azimuth));
@@ -142,6 +149,10 @@ export const createViewer = async (
   let pins = options.onAnchors !== undefined;
   let lastDraw = 0;
   let anchors: ReadonlyArray<MuscleAnchor> = [];
+  let highlight: FigureHighlight | null = null;
+  // Set by a new focus; the turn is worked out once the pose is current.
+  let turnPending = false;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const viewProjection = new Matrix4();
   const vp = new Float32Array(16);
   const eye: [number, number, number] = [0, 0, 0];
@@ -160,19 +171,32 @@ export const createViewer = async (
     options.onAnchors(next);
   };
 
+  const turnToward = (): void => {
+    if (highlight === null || drag !== null) return;
+    const points = pointsFor(figure.anchors(), highlight);
+    const azimuth = turnAzimuth(points, [camera.position.x, camera.position.y, camera.position.z], orbit.azimuth);
+    if (azimuth === null) return;
+    aim = { azimuth, elevation: aim.elevation };
+    damping = TURN_DAMPING;
+  };
+
   const draw = (now: number): boolean => {
     const seconds = lastDraw === 0 ? 0 : (now - lastDraw) / 1000;
     lastDraw = now;
     let moving = false;
-    if (orbit !== aim) {
-      const step = dampOrbit(orbit, aim, seconds);
-      orbit = step.orbit;
-      moving = !step.settled;
-      placeCamera();
-    }
     if (time !== posedAt) {
       posedAt = time;
       figure.update(time, levels(time));
+    }
+    if (turnPending) {
+      turnPending = false;
+      turnToward();
+    }
+    if (orbit !== aim) {
+      const step = reducedMotion.matches ? { orbit: aim, settled: true } : dampOrbit(orbit, aim, seconds, damping);
+      orbit = step.orbit;
+      moving = !step.settled;
+      placeCamera();
     }
     if (figure.animate?.(now) === true) moving = true;
     // No bloom pass: the muscle material carries its own glow.
@@ -182,12 +206,15 @@ export const createViewer = async (
     if (!moving) lastDraw = 0;
     return moving;
   };
+  let drag: { x: number; y: number } | null = null;
   const scheduler = createFrameScheduler(draw);
   const invalidate = scheduler.invalidate;
 
-  let drag: { x: number; y: number } | null = null;
   const onDown = (e: PointerEvent): void => {
     drag = { x: e.clientX, y: e.clientY };
+    damping = DRAG_DAMPING;
+    // A drag takes over from a focus turn where the camera is now.
+    aim = orbit;
     canvas.setPointerCapture(e.pointerId);
   };
   const onMove = (e: PointerEvent): void => {
@@ -279,6 +306,14 @@ export const createViewer = async (
       pins = on && options.onAnchors !== undefined;
       // Fresh anchors when pins come back.
       anchors = [];
+      invalidate();
+    },
+    setHighlight: (next) => {
+      if (next?.muscle === highlight?.muscle && next?.side === highlight?.side && next?.focus === highlight?.focus) return;
+      highlight = next;
+      figure.setHighlight?.(highlightSlots(table, next), highlightStrength(next));
+      // Only a new focus turns the camera; hover and collapse leave it.
+      if (next?.focus === true) turnPending = true;
       invalidate();
     },
     dispose: () => {

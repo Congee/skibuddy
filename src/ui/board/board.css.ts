@@ -122,7 +122,14 @@ export const slat = style({
   background: vars.color.slat,
   color: vars.color.ink,
   borderRadius: 2,
-  selectors: { '&[data-open]': { background: vars.color.slatOpen } },
+  // Clears the sticky phase tabs when a pin scrolls its slat into view.
+  scrollMarginTop: 12,
+  selectors: {
+    '&[data-open]': { background: vars.color.slatOpen },
+    // The slat whose muscle the figure shows: an ink bar inset from its leading edge, so it never merges with the frame.
+    '&[data-focus]': { boxShadow: `inset 3px 0 0 ${vars.color.slatOpen}, inset 7px 0 0 ${vars.color.ink}` },
+  },
+  '@media': { [phone]: { scrollMarginTop: 80 } },
 });
 
 export const slatRow = style({

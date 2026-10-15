@@ -7,6 +7,7 @@ import type { Movement } from '../content/schema';
 import { playingAtom, turnTimeAtom } from '../state/playback';
 import type { AnchorsListener } from './anchors';
 import { GearMode } from './gear-mode';
+import type { FigureHighlight } from './highlight';
 import type { FigureKind, Viewer as SceneViewer } from './scene';
 
 const params = new URLSearchParams(window.location.search);
@@ -48,6 +49,8 @@ export const Viewer = (props: {
   readonly gear?: GearMode;
   /** CSS colour of the ground under the figure. */
   readonly ground?: string;
+  /** The muscle the board singles out, if any. */
+  readonly highlight?: FigureHighlight | null;
   /** Caption under the figure; the default names the outside ski. */
   readonly caption?: JSX.Element;
   readonly onReady?: () => void;
@@ -154,6 +157,11 @@ export const Viewer = (props: {
   createEffect(() => {
     const mode = props.gear ?? GearMode.Translucent;
     if (shown() !== null) viewer?.setGear(mode);
+  });
+
+  createEffect(() => {
+    const h = props.highlight ?? null;
+    if (shown() !== null) viewer?.setHighlight(h);
   });
 
   createEffect(() => {

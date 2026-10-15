@@ -1,8 +1,9 @@
-import { useAtomValue } from '@effect/atom-solid';
-import { Show, createMemo, createSignal } from 'solid-js';
+import { useAtom, useAtomValue } from '@effect/atom-solid';
+import { Show, createEffect, createMemo, createSignal, on } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { matchExercises } from '../content/match';
 import type { Content, Drill, Movement } from '../content/schema';
+import { NO_FOCUS, focusAtom, openSlat } from '../state/focus';
 import { drillIdAtom, phaseAt, pinsAtom, turnTimeAtom } from '../state/playback';
 import * as s from './app.css';
 import { Board } from './board/Board';
@@ -13,7 +14,7 @@ import { GearControl } from './figure/GearControl';
 import { GymBoard } from './gym/GymBoard';
 import { LiftLine, PhaseStops, usePlayback } from './lift/LiftLine';
 import { phoneTabs } from './lift/lift.css';
-import { REDUCED_MOTION, createMedia } from './media';
+import { PHONE, REDUCED_MOTION, createMedia } from './media';
 import { GearMode, isGearMode } from '../viewer/gear-mode';
 
 // ?skeleton=1 and ?gear=solid|off only set the starting state.
@@ -35,6 +36,16 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
   const muscleName = (id: string): string => props.content.muscles.find((m) => m.id === id)?.name ?? id;
   const tasks = createMemo(() => props.content.tasks.filter((x) => x.drill === props.drill.id));
   const matches = createMemo(() => matchExercises(props.movement, props.content.exercises));
+  const [focus, setFocus] = useAtom(() => focusAtom);
+  // Another drill starts with every slat closed.
+  createEffect(on(() => props.movement, () => setFocus(NO_FOCUS), { defer: true }));
+  const compact = createMedia(PHONE);
+  // A pin opens its slat and brings it into view.
+  const pick = (key: string): void => {
+    setFocus(openSlat(focus(), key));
+    const slat = document.querySelector(`[data-slat="${CSS.escape(key)}"]`);
+    slat?.scrollIntoView({ block: compact() ? 'start' : 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
+  };
 
   return (
     <main class={s.lodge}>
@@ -47,6 +58,7 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
           skeleton={skeleton()}
           gear={gear()}
           muscleName={(id) => shortName(muscleName(id))}
+          onPick={pick}
           ref={setField}
         />
         <LiftLine skeleton={skeleton()} onSkeleton={setSkeleton} controls={<GearControl value={gear()} onChange={setGear} />} />

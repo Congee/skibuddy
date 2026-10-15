@@ -83,6 +83,10 @@ export const leaderUnder = style({ stroke: vars.color.field, strokeWidth: 3.5, f
 export const leaderLine = style({ stroke: vars.color.leader, strokeWidth: 1.5, fill: 'none' });
 export const leaderDot = style({ fill: vars.color.leader, stroke: vars.color.field, strokeWidth: 2 });
 
+globalStyle(`[data-mark="focus"] > ${leaderLine}`, { strokeWidth: 2.5 });
+globalStyle(`[data-mark="focus"] > ${leaderUnder}`, { strokeWidth: 5.5 });
+globalStyle(`${overlay}[data-focused] g:not([data-mark])`, { opacity: 0.6 });
+
 /** A sign-white slat: white margin, then an ink rule, no soft shadow. */
 export const pin = style({
   position: 'absolute',
@@ -97,11 +101,26 @@ export const pin = style({
   background: vars.color.pinBg,
   color: vars.color.pinInk,
   boxShadow: `inset 0 0 0 2px ${vars.color.pinBg}, inset 0 0 0 3.5px ${vars.color.pinInk}`,
+  // The overlay lets drags through to the canvas; pins themselves open their slat.
+  pointerEvents: 'auto',
+  cursor: 'pointer',
   '@media': {
-    [motionOk]: { transition: `transform 320ms ${easeOut}` },
+    [motionOk]: { transition: `transform 320ms ${easeOut}, opacity 160ms ${easeOut}` },
     [phone]: { columnGap: 6, padding: '6px 7px 6px 6px' },
   },
 });
+
+// A pale outer ring like the figure's focus outline: full for the focused muscle, thin for a preview or hover.
+const ring = (width: number): string => `inset 0 0 0 2px ${vars.color.pinBg}, inset 0 0 0 3.5px ${vars.color.pinInk}, 0 0 0 ${width}px ${vars.color.leader}`;
+
+globalStyle(`${pin}[data-mark="focus"]`, {
+  zIndex: 1,
+  boxShadow: `inset 0 0 0 2px ${vars.color.pinBg}, inset 0 0 0 4.5px ${vars.color.pinInk}, 0 0 0 3.5px ${vars.color.leader}`,
+});
+globalStyle(`${pin}[data-mark="preview"], ${pin}:hover`, { boxShadow: ring(2) });
+
+// While a slat is focused the other pins step back, as their muscles do.
+globalStyle(`${overlay}[data-focused] ${pin}:not([data-mark])`, { opacity: 0.6 });
 
 // Pins follow every played frame; easing each step would keep the compositor busy.
 globalStyle(`${overlay}[data-playing] ${pin}`, { transition: 'none' });

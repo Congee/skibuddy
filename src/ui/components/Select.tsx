@@ -4,7 +4,7 @@ import type { JSX } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { Check, ChevronDown } from '../icons';
 import { visuallyHidden } from '../theme/global.css';
-import { indicatorIcon, select } from './select.css';
+import { indicatorIcon, select, triggerIcon } from './select.css';
 import { slotClasses } from './slot-recipe';
 
 export interface SelectOption {
@@ -18,8 +18,10 @@ export const Select = (props: {
   readonly options: ReadonlyArray<SelectOption>;
   readonly value: string;
   readonly onChange: (value: string) => void;
+  /** Shows this icon alone in the trigger; the value stays as hidden text. */
+  readonly icon?: (props: { readonly class: string }) => JSX.Element;
 }): JSX.Element => {
-  const c = slotClasses(select);
+  const c = slotClasses(select, { compact: props.icon !== undefined });
   const collection = createMemo(() =>
     createListCollection({ items: [...props.options], itemToValue: (o) => o.value, itemToString: (o) => o.label }),
   );
@@ -37,10 +39,24 @@ export const Select = (props: {
       <ArkSelect.Label class={visuallyHidden}>{props.label}</ArkSelect.Label>
       <ArkSelect.Control>
         <ArkSelect.Trigger class={c.trigger}>
-          <ArkSelect.ValueText class={c.value} />
-          <ArkSelect.Indicator class={c.indicator}>
-            <ChevronDown class={indicatorIcon} />
-          </ArkSelect.Indicator>
+          <Show
+            when={props.icon}
+            fallback={
+              <>
+                <ArkSelect.ValueText class={c.value} />
+                <ArkSelect.Indicator class={c.indicator}>
+                  <ChevronDown class={indicatorIcon} />
+                </ArkSelect.Indicator>
+              </>
+            }
+          >
+            {(icon) => (
+              <>
+                {icon()({ class: triggerIcon })}
+                <ArkSelect.ValueText class={visuallyHidden} />
+              </>
+            )}
+          </Show>
         </ArkSelect.Trigger>
       </ArkSelect.Control>
       <Portal>

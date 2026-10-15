@@ -61,6 +61,18 @@ export const select = slotRecipe({
     itemDetail: { gridColumn: 1, fontSize: 14, color: 'inherit', opacity: 0.85 },
     itemIndicator: { gridColumn: 2, gridRow: '1 / span 2', width: 16, height: 16 },
   },
+  variants: {
+    // An icon-only trigger at glove size.
+    compact: {
+      true: {
+        trigger: { justifyContent: 'center', width: 48, minHeight: 48, padding: 0 },
+        content: { minWidth: 180 },
+      },
+      false: {},
+    },
+  },
 });
+
+export const triggerIcon = style({ width: 22, height: 22 });
 
 export const indicatorIcon = style({ width: 14, height: 14 });

@@ -31,6 +31,7 @@ import type { BootFit, RawFit } from './gear-fit';
 import type { GearMode } from './gear-mode';
 import { poleDirection, poleTouchAt } from './pose';
 import { NodeKind, nodeOf } from './anatomy-names';
+import { markChanges } from './highlight';
 import { fillSlotLevels } from './slots';
 import type { SlotTable, TurnSide } from './slots';
 import { levelColour, levelOn } from './level-colour';
@@ -46,6 +47,8 @@ const GEAR = 0x2f4d7a;
 const RIM_COOL = 0x9fc6ff;
 const GHOST = 0x2a3440;
 const WARM_WHITE = 0xfff0dc;
+/** The focus outline: the pins' leader colour, so a focused muscle and its pin match. */
+const FOCUS_RIM = 0xf3f5f1;
 /** Fibre stripe spacing in metres; the UVs are metres around and along each muscle. */
 const FIBRE_SPACING = 0.006;
 /** Seconds for the skeleton fade. */
@@ -53,15 +56,26 @@ const FADE_SECONDS = 0.35;
 
 type Uniform = ReturnType<typeof uniform<'float'>>;
 
+/** Marks per slot and how strongly the marked muscle stands out. */
+interface HighlightInputs {
+  readonly marks: Array<number>;
+  readonly strength: Uniform;
+}
+
 /**
  * Natural fibred red muscle at rest. Working muscles take the board's level
  * colour and glow: emissive lift and a fresnel rim both grow with level, so the
  * level reads from brightness and halo width, not hue alone. `skeleton` fades
  * muscles to a dark translucent ghost, leaving working muscles partly visible.
+ * A highlighted muscle keeps its effort and gains a pale outline; the rest dim toward resting red.
  */
-const muscleMaterial = (levels: Array<number>, skeleton: Uniform, tendon: boolean): MeshStandardNodeMaterial => {
+const muscleMaterial = (levels: Array<number>, highlight: HighlightInputs, skeleton: Uniform, tendon: boolean): MeshStandardNodeMaterial => {
   const m = new MeshStandardNodeMaterial({ roughness: tendon ? 0.35 : 0.5 });
-  const level = varying(uniformArray<'float'>(levels, 'float').element(attribute('muscleSlot', 'uint')));
+  const slot = attribute('muscleSlot', 'uint');
+  const marked = varying(uniformArray<'float'>(highlight.marks, 'float').element(slot));
+  const mark = marked.mul(highlight.strength);
+  const others = highlight.strength.mul(float(1).sub(marked));
+  const level = varying(uniformArray<'float'>(levels, 'float').element(slot)).mul(float(1).sub(others.mul(0.97)));
   const facing = saturate(dot(normalView, positionViewDirection));
   // Higher levels get a wider rim.
   const rim = pow(float(1).sub(facing), mix(float(3.2), float(0.8), level));
@@ -74,7 +88,7 @@ const muscleMaterial = (levels: Array<number>, skeleton: Uniform, tendon: boolea
   const hot = levelColour(level);
   const on = levelOn(level);
   const lit = mix(base, hot, on.mul(tendon ? 0.3 : 0.9));
-  const shaded = lit.mul(float(1).sub(fibre.mul(tendon ? 0.06 : 0.22)));
+  const shaded = lit.mul(float(1).sub(fibre.mul(tendon ? 0.06 : 0.22))).mul(float(1).sub(others.mul(0.3)));
   m.colorNode = mix(shaded, color(GHOST), skeleton.mul(float(1).sub(on)));
   // level is 0..1: level 1 is a subtle lift, level 3 a strong glow. With no bloom pass,
   // hard muscles also burn toward warm white.
@@ -83,8 +97,10 @@ const muscleMaterial = (levels: Array<number>, skeleton: Uniform, tendon: boolea
   const burn = color(WARM_WHITE).mul(pow(level, 2).mul(tendon ? 0 : 0.2));
   const rimGain = on.mul(float(0.6).add(pow(level, 1.5).mul(tendon ? 0.8 : 4.5)));
   const rimColour = mix(hot, color(WARM_WHITE), 0.5);
-  m.emissiveNode = glow.add(burn).add(rimColour.mul(rim.mul(rimGain))).add(color(RIM_COOL).mul(rim.mul(0.06)));
-  m.opacityNode = mix(float(1), saturate(rim.mul(0.35).add(0.12).add(level.mul(0.55))), skeleton);
+  const outline = color(FOCUS_RIM).mul(pow(float(1).sub(facing), 2.4).mul(mark.mul(tendon ? 1 : 2.6)));
+  const lifted = base.mul(mark.mul(0.18));
+  m.emissiveNode = glow.add(burn).add(rimColour.mul(rim.mul(rimGain))).add(color(RIM_COOL).mul(rim.mul(0.06))).add(outline).add(lifted);
+  m.opacityNode = mix(float(1), saturate(rim.mul(0.35).add(0.12).add(level.mul(0.55)).add(mark.mul(0.5))), skeleton);
   return m;
 };
 
@@ -159,8 +175,10 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
 
   const levels = Array.from({ length: table.size }, () => 0);
   const skeleton = uniform(0);
-  const muscle = muscleMaterial(levels, skeleton, false);
-  const tendon = muscleMaterial(levels, skeleton, true);
+  const highlight: HighlightInputs = { marks: Array.from({ length: table.size }, () => 0), strength: uniform(0) };
+  const muscle = muscleMaterial(levels, highlight, skeleton, false);
+  const tendon = muscleMaterial(levels, highlight, skeleton, true);
+  let marked: ReadonlyArray<number> = [];
   const bone = new MeshStandardNodeMaterial({ color: BONE, roughness: 0.55 });
   const cartilage = new MeshStandardNodeMaterial({ color: CARTILAGE, roughness: 0.3 });
   const gear = new MeshStandardNodeMaterial({ color: GEAR, roughness: 0.6, side: DoubleSide });
@@ -310,6 +328,11 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
     },
     setGear: (mode: GearMode) => kit?.setMode(mode),
     setDark: (dark: boolean) => kit?.setDark(dark),
+    setHighlight: (slots: ReadonlyArray<number>, strength: number) => {
+      for (const [slot, value] of markChanges(marked, slots)) highlight.marks[slot] = value;
+      marked = slots;
+      highlight.strength.value = strength;
+    },
     dispose: () => {
       mixer.stopAllAction();
       release();

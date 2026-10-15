@@ -5,6 +5,8 @@ import { effortAt, effortColour, effortWord } from '../../content/effort';
 import type { EffortRamp } from '../../content/effort';
 import { Side } from '../../content/schema';
 import type { Activation } from '../../content/schema';
+import { Emphasis } from '../../state/focus';
+import type { Highlight } from '../../state/focus';
 import { playingAtom, turnTimeAtom } from '../../state/playback';
 import type { MuscleAnchor } from '../../viewer/anchors';
 import { Stamp } from '../board/marks';
@@ -41,7 +43,12 @@ export const Pins = (props: {
   readonly size: PinSize;
   readonly ramp: EffortRamp;
   readonly muscleName: (id: string) => string;
+  /** The board's focused or previewed muscle. */
+  readonly highlight: Highlight | null;
+  readonly onPick: (key: string) => void;
 }): JSX.Element => {
+  const focused = (): string | null => (props.highlight?.emphasis === Emphasis.Focus ? props.highlight.key : null);
+  const mark = (key: string): Emphasis | undefined => (props.highlight?.key === key ? props.highlight.emphasis : undefined);
   const t = useAtomValue(() => turnTimeAtom);
   const playing = useAtomValue(() => playingAtom);
   const box = createMemo(() => boxFor(props.size));
@@ -58,7 +65,7 @@ export const Pins = (props: {
   });
   onCleanup(() => measure.disconnect());
   const placed = createMemo(
-    () => new Map(layoutPins(pinInputs(props.order, props.anchors, heights()), box()).map((p) => [p.key, p])),
+    () => new Map(layoutPins(pinInputs(props.order, props.anchors, heights(), focused()), box()).map((p) => [p.key, p])),
   );
 
   // Effort swatches and words follow the playhead by direct writes, so a frame of play re-renders nothing.
@@ -77,7 +84,11 @@ export const Pins = (props: {
   // Iterate stable keys so pins move instead of remounting.
   const keys = createMemo(() => [...placed().keys()]);
   return (
-    <div class={s.overlay} data-playing={playing() ? '' : undefined} style={{ width: `${props.size.width}px`, height: `${props.size.height}px` }} aria-hidden="true">
+    <div
+      class={s.overlay}
+      data-playing={playing() ? '' : undefined}
+      data-focused={focused() === null ? undefined : ''}
+      style={{ width: `${props.size.width}px`, height: `${props.size.height}px` }} aria-hidden="true">
       <svg class={s.leaders}>
         <For each={keys()}>
           {(key) => {
@@ -86,11 +97,11 @@ export const Pins = (props: {
             const y = (): number => p().y + p().height / 2;
             const d = (): string => `M${x()} ${y()} L${p().anchorX} ${p().anchorY}`;
             return (
-              <>
+              <g data-mark={mark(key)}>
                 <path class={s.leaderUnder} d={d()} />
                 <path class={s.leaderLine} d={d()} />
-                <circle class={s.leaderDot} cx={p().anchorX} cy={p().anchorY} r="4" />
-              </>
+                <circle class={s.leaderDot} cx={p().anchorX} cy={p().anchorY} r={mark(key) === undefined ? 4 : 6} />
+              </g>
             );
           }}
         </For>
@@ -112,6 +123,8 @@ export const Pins = (props: {
                 <div
                   class={s.pin}
                   data-key={key}
+                  data-mark={mark(key)}
+                  onClick={() => props.onPick(key)}
                   ref={(el) => {
                     measure.observe(el);
                     onCleanup(() => measure.unobserve(el));

@@ -1,12 +1,17 @@
+import { useAtomValue } from '@effect/atom-solid';
 import { Show, Suspense, createMemo, createSignal, lazy, onCleanup, onMount } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { Activation, Movement } from '../../content/schema';
+import { Emphasis, focusAtom, highlight, sameHighlight } from '../../state/focus';
 import type { MuscleAnchor } from '../../viewer/anchors';
+import type { FigureHighlight } from '../../viewer/highlight';
 import type { GearMode } from '../../viewer/gear-mode';
 import { PHONE, createMedia } from '../media';
+import { useActiveTheme } from '../theme/active-theme';
 import { vars } from '../theme/theme.css';
 import { readEffortRamp } from '../effort-ramp';
 import * as s from './figure.css';
+import { pinKey } from './pin-inputs';
 import { Pins } from './Pins';
 
 // The board paints before the 3D code arrives.
@@ -33,19 +38,28 @@ export const FigureField = (props: {
   readonly skeleton: boolean;
   readonly gear: GearMode;
   readonly muscleName: (id: string) => string;
+  /** A pin was clicked or tapped. */
+  readonly onPick: (key: string) => void;
   /** The field's element, for watching whether it is on screen. */
   readonly ref?: (el: HTMLDivElement) => void;
 }): JSX.Element => {
   let host: HTMLDivElement | undefined;
   const compact = createMedia(PHONE);
-  const dark = createMedia('(prefers-color-scheme: dark)');
+  const theme = useActiveTheme();
   const ground = createMemo(() => {
-    dark();
+    theme();
     return themeColour(vars.color.snow);
   });
   const ramp = createMemo(() => {
-    dark();
+    theme();
     return readEffortRamp();
+  });
+  const focus = useAtomValue(() => focusAtom);
+  const lit = createMemo(() => highlight(focus()), null, { equals: sameHighlight });
+  const figureHighlight = createMemo((): FigureHighlight | null => {
+    const h = lit();
+    const a = h === null ? undefined : props.order.find((x) => pinKey(x) === h.key);
+    return h === null || a === undefined ? null : { muscle: a.muscle, side: a.side, focus: h.emphasis === Emphasis.Focus };
   });
   const [size, setSize] = createSignal({ width: 0, height: 0 });
   const [ready, setReady] = createSignal(false);
@@ -94,6 +108,7 @@ export const FigureField = (props: {
           skeleton={props.skeleton}
           gear={props.gear}
           ground={ground()}
+          highlight={figureHighlight()}
           caption={<Caption />}
           onAnchors={setAnchors}
           pins={props.pins}
@@ -113,6 +128,8 @@ export const FigureField = (props: {
           size={{ ...size(), compact: compact() }}
           ramp={ramp()}
           muscleName={props.muscleName}
+          highlight={lit()}
+          onPick={props.onPick}
         />
       </Show>
     </div>

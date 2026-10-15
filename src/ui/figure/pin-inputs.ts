@@ -16,18 +16,21 @@ const works = (a: Activation): boolean => PHASES.some((p) => a.intensity[p] > 0)
 
 /**
  * Muscles that work at some point in the turn and have a visible anchor, ready
- * for layout. `order` is the board's steady order, so pins keep their priority through the turn.
+ * for layout. `order` is the board's steady order, so pins keep their priority through the turn;
+ * the `focused` pin outranks them all, so it shows even outside the top pins.
  */
 export const pinInputs = (
   order: ReadonlyArray<Activation>,
   anchors: ReadonlyArray<MuscleAnchor>,
   heights: ReadonlyMap<string, number> = new Map(),
+  focused: string | null = null,
 ): ReadonlyArray<PinInput> =>
   order.flatMap((a, rank) => {
-    if (!works(a)) return [];
+    const key = pinKey(a);
+    const focus = key === focused;
+    if (!works(a) && !focus) return [];
     const anchor = anchorFor(a, anchors);
     if (anchor === undefined) return [];
-    const key = pinKey(a);
     const height = heights.get(key);
-    return [{ key, x: anchor.x, y: anchor.y, priority: order.length - rank, ...(height === undefined ? {} : { height }) }];
+    return [{ key, x: anchor.x, y: anchor.y, priority: focus ? order.length + 1 : order.length - rank, ...(height === undefined ? {} : { height }) }];
   });

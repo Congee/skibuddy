@@ -22,6 +22,8 @@ export const mark = style({
 
 export const picker = style({ minWidth: 0, '@media': { [phone]: { marginLeft: 'auto' } } });
 
+export const theme = style({ flex: 'none' });
+
 export const note = style({
   marginLeft: 'auto',
   fontSize: 14,

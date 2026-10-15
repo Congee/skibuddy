@@ -1,16 +1,19 @@
 import { Collapsible } from '@ark-ui/solid/collapsible';
-import { useAtomValue } from '@effect/atom-solid';
+import { useAtom, useAtomValue } from '@effect/atom-solid';
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, untrack } from 'solid-js';
 import type { Accessor, JSX } from 'solid-js';
 import { EFFORTS, effortAt, effortColour, effortWord, steadyOrder } from '../../content/effort';
 import type { Effort } from '../../content/effort';
 import { Confidence, PHASES } from '../../content/schema';
 import type { Activation, AssociationTask, Content, Drill, Movement, Phase, Source, SourceId } from '../../content/schema';
+import { closeSlat, focusAtom, focusedKey, hoverSlat, isOpen, leaveSlat, openSlat } from '../../state/focus';
 import { phaseCentre, playingAtom, turnTimeAtom } from '../../state/playback';
+import { pinKey } from '../figure/pin-inputs';
 import { slotClasses } from '../components/slot-recipe';
 import { readEffortRamp } from '../effort-ramp';
 import { ArrowOut, ChevronDown } from '../icons';
 import { PHONE, createMedia } from '../media';
+import { useActiveTheme } from '../theme/active-theme';
 import { visuallyHidden } from '../theme/global.css';
 import * as s from './board.css';
 import { Stamp, phaseLabel, shortName } from './marks';
@@ -63,8 +66,6 @@ const AssociationNames = (props: { readonly tasks: ReadonlyArray<AssociationTask
   );
 };
 
-const DARK = '(prefers-color-scheme: dark)';
-
 /** "Shaping. Hard: quadriceps outside. Working: ..." */
 const announce = (phase: Phase, rows: ReadonlyArray<{ readonly word: Effort; readonly name: string }>): string =>
   [
@@ -88,10 +89,12 @@ export const Board = (props: {
   const muscleName = (id: string): string => props.content.muscles.find((m) => m.id === id)?.name ?? id;
   const source = (id: SourceId): Source | undefined => props.content.sources.find((x) => x.id === id);
   const order = createMemo(() => steadyOrder(props.movement.activations));
+  const [focus, setFocus] = useAtom(() => focusAtom);
+  const focused = createMemo(() => focusedKey(focus()));
 
-  const dark = createMedia(DARK);
+  const theme = useActiveTheme();
   const ramp = createMemo(() => {
-    dark();
+    theme();
     return readEffortRamp();
   });
 
@@ -181,6 +184,11 @@ export const Board = (props: {
               ramp={ramp}
               playhead={(el) => playheads.add(el)}
               dot={(el) => dots.set(a, el)}
+              slatKey={pinKey(a)}
+              open={isOpen(focus(), pinKey(a))}
+              focused={focused() === pinKey(a)}
+              onOpenChange={(open) => setFocus((open ? openSlat : closeSlat)(focus(), pinKey(a)))}
+              onPreview={(shown) => setFocus((shown ? hoverSlat : leaveSlat)(focus(), pinKey(a)))}
             />
           )}
         </For>

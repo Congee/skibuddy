@@ -107,10 +107,17 @@ const dark = {
   },
 };
 
+// Light by default; dark from the OS unless data-theme="light", or always with data-theme="dark".
 createGlobalTheme(':root', vars, light);
 
-globalStyle(':root', {
+globalStyle(':root', { colorScheme: 'light dark' });
+
+globalStyle(':root:not([data-theme="light"])', {
   '@media': {
     '(prefers-color-scheme: dark)': { vars: assignVars(vars, dark) },
   },
 });
+
+globalStyle(':root[data-theme="light"]', { colorScheme: 'light' });
+
+globalStyle(':root[data-theme="dark"]', { colorScheme: 'dark', vars: assignVars(vars, dark) });
