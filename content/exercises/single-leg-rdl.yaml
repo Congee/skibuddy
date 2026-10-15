@@ -9,4 +9,20 @@ matchesOnSnow: One-leg balance with a level pelvis
 easier: Kickstand version
 harder: Hold a dumbbell
 cautions: [Acute low-back pain]
+dosing:
+  perSide: true
+  ranges:
+    - goal: control
+      sets: { min: 2, max: 3 }
+      reps: { min: 6, max: 10 }
+      restSeconds: { min: 60, max: 90 }
+      note: Body weight, slow, pelvis level and square to the floor.
+    - goal: strength
+      sets: { min: 2, max: 3 }
+      reps: { min: 8, max: 12 }
+      restSeconds: { min: 60, max: 120 }
+      note: A load you could lift one or two more times with clean form.
+  suggested: { goal: strength, sets: 3, reps: 8 }
+  basis: Rep and rest ranges follow ACSM's general loading zones for healthy adults, kept at the conservative end. The control range is our own conservative reading for slow, form-first work, not a published dose.
+  sources: [acsm-2009]
 reviewedBy: []

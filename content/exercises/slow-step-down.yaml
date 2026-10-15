@@ -6,4 +6,20 @@ matchesOnSnow: Eccentric knee control, lowering over 3-4 seconds
 easier: Lower step
 harder: Higher step, added load
 cautions: [Knee pain - reduce depth]
+dosing:
+  perSide: true
+  ranges:
+    - goal: control
+      sets: { min: 2, max: 3 }
+      reps: { min: 6, max: 10 }
+      restSeconds: { min: 60, max: 90 }
+      note: Lower over 3-4 seconds with the knee tracking over the second toe.
+    - goal: strength
+      sets: { min: 2, max: 3 }
+      reps: { min: 8, max: 12 }
+      restSeconds: { min: 60, max: 120 }
+      note: Higher step or added load, still lowering slowly.
+  suggested: { goal: control, sets: 3, reps: 8 }
+  basis: Rep and rest ranges follow ACSM's general loading zones for healthy adults, kept at the conservative end. The control range is our own conservative reading for slow, form-first work, not a published dose.
+  sources: [acsm-2009]
 reviewedBy: []

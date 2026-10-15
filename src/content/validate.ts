@@ -49,6 +49,9 @@ export const findProblems = (content: Content): ReadonlyArray<string> => {
     for (const t of exercise.targets) {
       if (!muscles.has(t.muscle)) problems.push(`exercise ${exercise.id}: unknown muscle ${t.muscle}`);
     }
+    for (const s of exercise.dosing?.sources ?? []) {
+      if (!sources.has(s)) problems.push(`exercise ${exercise.id}, dosing: unknown source ${s}`);
+    }
   }
   return problems;
 };

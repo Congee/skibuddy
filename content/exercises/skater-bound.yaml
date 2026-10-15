@@ -9,4 +9,20 @@ matchesOnSnow: Catching load on one leg without the knee caving in
 easier: Small hops
 harder: Continuous bounds
 cautions: [Knee instability]
+dosing:
+  perSide: true
+  ranges:
+    - goal: control
+      sets: { min: 2, max: 3 }
+      reps: { min: 5, max: 8 }
+      restSeconds: { min: 60, max: 90 }
+      note: Small hops; stick each landing for 2 seconds with the knee over the foot.
+    - goal: power
+      sets: { min: 2, max: 4 }
+      reps: { min: 3, max: 6 }
+      restSeconds: { min: 120, max: 180 }
+      note: Full rest between sets; stop when landings get loud or the knee caves in.
+  suggested: { goal: control, sets: 2, reps: 6 }
+  basis: Power work uses few reps with long rest, as in ACSM's power guidance; the control range is our own conservative reading for slow, form-first work, not a published dose.
+  sources: [acsm-2009]
 reviewedBy: []

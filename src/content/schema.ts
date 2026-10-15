@@ -124,6 +124,87 @@ export const ExerciseTarget = Schema.Struct({
 });
 export type ExerciseTarget = typeof ExerciseTarget.Type;
 
+/** What a dosing range trains for. */
+export const DosingGoal = { Strength: 'strength', Endurance: 'endurance', Power: 'power', Control: 'control' } as const;
+export type DosingGoal = (typeof DosingGoal)[keyof typeof DosingGoal];
+
+const Count = Schema.Number.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1));
+
+/** An inclusive whole-number range. */
+export const Span = Schema.Struct({ min: Count, max: Count }).check(
+  Schema.makeFilter((s) => (s.min <= s.max ? undefined : { path: ['max'], issue: `max ${s.max} is below min ${s.min}` })),
+);
+export type Span = typeof Span.Type;
+
+/** Exactly one of `reps` or `holdSeconds`; body-weight holds use seconds. */
+const oneUnit = (d: { readonly reps?: unknown; readonly holdSeconds?: unknown }): string | undefined =>
+  (d.reps === undefined) !== (d.holdSeconds === undefined) ? undefined : 'needs exactly one of reps or holdSeconds';
+
+/** General guidance for one goal, never a prescription. */
+export const DosingRange = Schema.Struct({
+  goal: Schema.Enum(DosingGoal),
+  sets: Span,
+  reps: Schema.optionalKey(Span),
+  holdSeconds: Schema.optionalKey(Span),
+  restSeconds: Span,
+  /** Plain words on how it should feel or what to watch. */
+  note: Text,
+}).check(Schema.makeFilter(oneUnit));
+export type DosingRange = typeof DosingRange.Type;
+
+/** One sets × reps (or hold) that sits inside the range for its goal. */
+export const DosingSuggestion = Schema.Struct({
+  goal: Schema.Enum(DosingGoal),
+  sets: Count,
+  reps: Schema.optionalKey(Count),
+  holdSeconds: Schema.optionalKey(Count),
+}).check(Schema.makeFilter(oneUnit));
+export type DosingSuggestion = typeof DosingSuggestion.Type;
+
+const inSpan = (n: number, s: Span): boolean => n >= s.min && n <= s.max;
+
+/** Why the suggestion fails its range, or undefined when it fits. */
+export const suggestionProblem = (dosing: {
+  readonly ranges: ReadonlyArray<DosingRange>;
+  readonly suggested: DosingSuggestion;
+}): string | undefined => {
+  const { suggested } = dosing;
+  const range = dosing.ranges.find((r) => r.goal === suggested.goal);
+  if (range === undefined) return `suggested goal ${suggested.goal} has no range`;
+  if (!inSpan(suggested.sets, range.sets)) return `suggested ${suggested.sets} sets is outside ${range.sets.min}-${range.sets.max}`;
+  if (suggested.reps !== undefined) {
+    if (range.reps === undefined) return 'suggested reps but the range is a hold';
+    if (!inSpan(suggested.reps, range.reps)) return `suggested ${suggested.reps} reps is outside ${range.reps.min}-${range.reps.max}`;
+  }
+  if (suggested.holdSeconds !== undefined) {
+    if (range.holdSeconds === undefined) return 'suggested a hold but the range is reps';
+    if (!inSpan(suggested.holdSeconds, range.holdSeconds)) {
+      return `suggested ${suggested.holdSeconds} s is outside ${range.holdSeconds.min}-${range.holdSeconds.max}`;
+    }
+  }
+  return undefined;
+};
+
+/** Optional general dosing; shown only when the viewer turns it on. */
+export const Dosing = Schema.Struct({
+  /** Counts are per side (one leg or one side of the body). */
+  perSide: Schema.Boolean,
+  ranges: Schema.Array(DosingRange).check(Schema.isMinLength(1)),
+  suggested: DosingSuggestion,
+  /** Plain-words basis for the numbers. */
+  basis: Text,
+  sources: Schema.Array(SourceId).check(Schema.isMinLength(1)),
+}).check(
+  Schema.makeFilter((d) => {
+    const goals = d.ranges.map((r) => r.goal);
+    const repeated = goals.find((g, i) => goals.indexOf(g) !== i);
+    if (repeated !== undefined) return { path: ['ranges'], issue: `goal ${repeated} appears twice` };
+    const problem = suggestionProblem(d);
+    return problem === undefined ? undefined : { path: ['suggested'], issue: problem };
+  }),
+);
+export type Dosing = typeof Dosing.Type;
+
 export const Exercise = Schema.Struct({
   id: ExerciseId,
   name: Text,
@@ -133,6 +214,7 @@ export const Exercise = Schema.Struct({
   easier: Text,
   harder: Text,
   cautions: Schema.Array(Text),
+  dosing: Schema.optionalKey(Dosing),
   reviewedBy: Schema.Array(Text),
 });
 export type Exercise = typeof Exercise.Type;

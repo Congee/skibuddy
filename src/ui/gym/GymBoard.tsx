@@ -1,12 +1,109 @@
+import { SegmentGroup } from '@ark-ui/solid/segment-group';
+import { useAtom } from '@effect/atom-solid';
 import { For, Match, Show, Switch } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { ExerciseMatch } from '../../content/match';
-import type { Content, Movement } from '../../content/schema';
+import type { Content, Dosing, DosingRange, Movement, Source } from '../../content/schema';
+import { DosingView, dosingViewAtom, parseDosingView } from '../../state/preferences';
 import * as b from '../board/board.css';
 import { Caution } from '../icons';
 import { visuallyHidden } from '../theme/global.css';
+import { DOSING_DISCLAIMER, formatRange, formatRest, formatSuggestion, goalName, shortCitation } from './dosing';
 import { TargetFit, targetMatch } from './fit';
 import * as s from './gym.css';
+
+const VIEW_OPTIONS: ReadonlyArray<{ readonly value: DosingView; readonly label: string }> = [
+  { value: DosingView.Off, label: 'Off' },
+  { value: DosingView.Ranges, label: 'Ranges' },
+  { value: DosingView.SetsReps, label: 'Sets & reps' },
+];
+
+const DosingPicker = (props: { readonly value: DosingView; readonly onChange: (v: DosingView) => void }): JSX.Element => (
+  <div class={s.dosingPick}>
+    <span id="dosing-label" class={s.dosingLabel}>
+      Dosing
+    </span>
+    <SegmentGroup.Root
+      class={s.segments}
+      aria-labelledby="dosing-label"
+      value={props.value}
+      onValueChange={(d) => props.onChange(parseDosingView(d.value))}
+    >
+      <For each={VIEW_OPTIONS}>
+        {(option) => (
+          <SegmentGroup.Item class={s.segment} value={option.value}>
+            <SegmentGroup.ItemText>{option.label}</SegmentGroup.ItemText>
+            <SegmentGroup.ItemControl />
+            <SegmentGroup.ItemHiddenInput />
+          </SegmentGroup.Item>
+        )}
+      </For>
+    </SegmentGroup.Root>
+  </div>
+);
+
+const DosingBlock = (props: {
+  readonly dosing: Dosing;
+  readonly view: DosingView;
+  readonly sources: ReadonlyArray<Source>;
+}): JSX.Element => {
+  const cited = (): ReadonlyArray<Source> => props.sources.filter((x) => props.dosing.sources.includes(x.id));
+  const suggestedRange = (): DosingRange | undefined => props.dosing.ranges.find((r) => r.goal === props.dosing.suggested.goal);
+  return (
+    <section class={s.dosing} aria-label="Dosing">
+      <Switch>
+        <Match when={props.view === DosingView.Ranges}>
+          <dl class={s.doses}>
+            <For each={props.dosing.ranges}>
+              {(r) => (
+                <>
+                  <dt class={s.doseGoal}>{goalName(r.goal)}</dt>
+                  <dd class={s.dose}>
+                    <span class={s.doseLine}>
+                      {formatRange(r, props.dosing.perSide)}
+                      <span class={s.doseRest}><span class={visuallyHidden}>, </span>Rest {formatRest(r.restSeconds)}</span>
+                    </span>
+                    <span class={s.doseNote}>{r.note}</span>
+                  </dd>
+                </>
+              )}
+            </For>
+          </dl>
+        </Match>
+        <Match when={props.view === DosingView.SetsReps}>
+          <dl class={s.doses}>
+            <dt class={s.doseGoal}>{goalName(props.dosing.suggested.goal)}</dt>
+            <dd class={s.dose}>
+              <span class={s.doseLine}>
+                {formatSuggestion(props.dosing.suggested, props.dosing.perSide)}
+                <Show when={suggestedRange()}>
+                  {(r) => <span class={s.doseRest}><span class={visuallyHidden}>, </span>Rest {formatRest(r().restSeconds)}</span>}
+                </Show>
+              </span>
+              <Show when={suggestedRange()}>{(r) => <span class={s.doseNote}>{r().note}</span>}</Show>
+            </dd>
+          </dl>
+        </Match>
+      </Switch>
+      <div class={s.doseFoot}>
+        <p class={s.disclaimer}>{DOSING_DISCLAIMER}</p>
+        <p>
+          {props.dosing.basis}{' '}
+          <For each={cited()}>
+            {(src, i) => (
+              <>
+                {i() > 0 ? ', ' : ''}
+                <a href={src.url} title={src.citation} target="_blank" rel="noreferrer">
+                  {shortCitation(src.citation)}
+                </a>
+              </>
+            )}
+          </For>
+        </p>
+      </div>
+    </section>
+  );
+};
 
 export const GymBoard = (props: {
   readonly matches: ReadonlyArray<ExerciseMatch>;
@@ -14,15 +111,19 @@ export const GymBoard = (props: {
   readonly content: Content;
 }): JSX.Element => {
   const muscleName = (id: string): string => props.content.muscles.find((m) => m.id === id)?.name ?? id;
+  const [view, setView] = useAtom(() => dosingViewAtom);
   return (
     <section class={`${b.frame} ${s.gym}`} aria-labelledby="gym-heading">
-      <div class={b.plate}>
-        <h2 id="gym-heading" class={b.plateTitle}>
-          Gym board
-        </h2>
-        <p class={s.intro}>
-          Exercises for the muscles on the board, best match first. A match is the same muscle worked the same way.
-        </p>
+      <div class={`${b.plate} ${s.plateHead}`}>
+        <div class={s.plateText}>
+          <h2 id="gym-heading" class={b.plateTitle}>
+            Gym board
+          </h2>
+          <p class={s.intro}>
+            Exercises for the muscles on the board, best match first. A match is the same muscle worked the same way.
+          </p>
+        </div>
+        <DosingPicker value={view()} onChange={setView} />
       </div>
       <Show when={props.matches.length > 0} fallback={<p class={s.empty}>No exercises match this drill yet.</p>}>
         <ol class={s.list}>
@@ -82,6 +183,9 @@ export const GymBoard = (props: {
                     </ul>
                   </Show>
                 </div>
+                <Show when={view() !== DosingView.Off ? exercise.dosing : undefined}>
+                  {(d) => <DosingBlock dosing={d()} view={view()} sources={props.content.sources} />}
+                </Show>
               </li>
             )}
           </For>

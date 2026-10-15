@@ -6,4 +6,20 @@ matchesOnSnow: Holding the flexed stance at a ski-like knee bend
 easier: Shorter hold
 harder: Single-leg wall sit
 cautions: [Knee pain]
+dosing:
+  perSide: true
+  ranges:
+    - goal: strength
+      sets: { min: 3, max: 4 }
+      holdSeconds: { min: 15, max: 30 }
+      restSeconds: { min: 60, max: 120 }
+      note: Held with load at a ski-like knee bend; hard by the end of the hold.
+    - goal: endurance
+      sets: { min: 2, max: 3 }
+      holdSeconds: { min: 30, max: 60 }
+      restSeconds: { min: 60, max: 90 }
+      note: Body weight; a steady burn, not a shake.
+  suggested: { goal: endurance, sets: 3, holdSeconds: 30 }
+  basis: Body-weight holds sit well below a maximal effort, so the holds are longer than in maximal isometric training. Isometric work gains strength mostly near the trained knee angle, so hold at the angle you ski.
+  sources: [lum-2019]
 reviewedBy: []

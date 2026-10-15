@@ -6,4 +6,20 @@ matchesOnSnow: Holding the inside ski's tail up
 easier: No band
 harder: Stand on a balance pad
 cautions: [Hip-flexor strain]
+dosing:
+  perSide: true
+  ranges:
+    - goal: control
+      sets: { min: 2, max: 3 }
+      holdSeconds: { min: 10, max: 20 }
+      restSeconds: { min: 30, max: 60 }
+      note: Stand tall with the pelvis level; stop the set when the standing hip drops.
+    - goal: endurance
+      sets: { min: 2, max: 3 }
+      holdSeconds: { min: 20, max: 30 }
+      restSeconds: { min: 30, max: 60 }
+      note: Easy enough to breathe through the whole hold.
+  suggested: { goal: control, sets: 2, holdSeconds: 15 }
+  basis: The control range is our own conservative reading for slow, form-first work, not a published dose. Body-weight holds sit well below a maximal effort, so the holds are longer than in maximal isometric training.
+  sources: [lum-2019, acsm-2009]
 reviewedBy: []

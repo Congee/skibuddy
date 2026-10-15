@@ -27,7 +27,9 @@ All content is YAML under `content/`:
 | `associations/<association>/<task>.yaml` | One association's name, level and fundamentals for a drill |
 | `exercises/<id>.yaml` | Gym exercises and the muscles they train |
 
-Intensities are 0 (idle) to 3 (high) for ### Adding a drill
+Intensities are 0 (idle) to 3 (high) for the `initiation`, `shaping` and `finish` phases. Any confidence above `low` needs at least one source.
+
+### Adding a drill
 
 Drills are association-neutral. Add `content/drills/<id>.yaml` under a generic name, and a movement if no existing one fits:
 
@@ -53,11 +55,6 @@ url: https://psia-c.org/education/alpine/alpine-resources/stork-turns/
 reviewedBy: []
 ```
 
-lue, groomed
-url: https://psia-c.org/education/alpine/alpine-resources/stork-turns/
-reviewedBy: []
-```
-
 ### Adding an exercise
 
 ```yaml
@@ -69,9 +66,33 @@ singleLeg: true
 matchesOnSnow: Holding a flexed outside leg against turn forces
 easier: Shallower depth
 harder: Add load
-cautions: []
+cautions: [Knee pain]
+dosing:
+  perSide: true
+  ranges:
+    - goal: strength
+      sets: { min: 3, max: 4 }
+      holdSeconds: { min: 15, max: 30 }
+      restSeconds: { min: 60, max: 120 }
+      note: Held with load; hard by the end of the hold.
+    - goal: endurance
+      sets: { min: 2, max: 3 }
+      holdSeconds: { min: 30, max: 60 }
+      restSeconds: { min: 60, max: 90 }
+      note: Body weight; a steady burn, not a shake.
+  suggested: { goal: endurance, sets: 3, holdSeconds: 30 }
+  basis: Plain words on where the numbers come from.
+  sources: [lum-2019]
 reviewedBy: []
 ```
+
+`dosing` is optional general guidance, never a prescription; the app shows it only when the viewer turns it on, beside "General guidance, not a prescription; adjust with a coach or physio."
+
+- Goals are `strength`, `endurance`, `power` and `control`, each at most once.
+- Each range has `sets`, `restSeconds` and exactly one of `reps` or `holdSeconds` (body-weight holds use seconds), all as `{ min, max }` with min ≤ max.
+- `suggested` is one sets × reps (or hold) that must sit inside the range for its goal.
+- `perSide: true` means the counts are for each leg or side.
+- `sources` must cite ids in `sources.yaml`; keep ranges conservative and say in `basis` which parts are our own reading.
 
 Run `bun run content` before opening a pull request.
 

@@ -34,7 +34,9 @@ skibuddy shows a drill on a 3D figure, highlights the muscles at work through in
 - Association text is linked or paraphrased in our own words, never copied (© PSIA-AASI Central and others).
 - No video capture; the maintainer has limited disk. Large 3D assets stay out of the repo.
 - Asset licences must allow open redistribution. Non-commercial or research-only datasets (AMASS, SMPL, EPFL Ski-Pose) are excluded.
-- Open: whether exercises show sets and reps or general ranges for a coach to set; which association mappings to add next; anatomical mesh source (Z-Anatomy per-mesh licence audit pending).
+- Exercise dosing is an optional viewer preference: off, general ranges, or sets and reps. It is never shown as a prescription.
+- The figure wears boots and poles; the gear can be shown translucent or hidden so the lower-leg muscles stay readable.
+- Open: which association mappings to add next; the Z-Anatomy per-mesh licence audit; where the anatomy model is hosted; how the turn's motion is captured.
 
 ## Brand Commitments
 

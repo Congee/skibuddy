@@ -6,4 +6,20 @@ matchesOnSnow: Lateral hip and trunk stability
 easier: Knees bent
 harder: Longer hold
 cautions: [Shoulder pain]
+dosing:
+  perSide: true
+  ranges:
+    - goal: control
+      sets: { min: 2, max: 3 }
+      holdSeconds: { min: 10, max: 20 }
+      restSeconds: { min: 30, max: 60 }
+      note: Hips stacked and high; the top leg lifts without the pelvis rolling back.
+    - goal: endurance
+      sets: { min: 2, max: 3 }
+      holdSeconds: { min: 20, max: 40 }
+      restSeconds: { min: 30, max: 60 }
+      note: End the set when the hips sag or the shoulder complains.
+  suggested: { goal: endurance, sets: 3, holdSeconds: 30 }
+  basis: Body-weight holds sit well below a maximal effort, so the holds are longer than in maximal isometric training. The control range is our own conservative reading for slow, form-first work, not a published dose.
+  sources: [lum-2019, acsm-2009]
 reviewedBy: []

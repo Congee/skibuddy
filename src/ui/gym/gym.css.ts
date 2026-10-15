@@ -1,5 +1,5 @@
 import { globalStyle, style } from '@vanilla-extract/css';
-import { phone } from '../theme/global.css';
+import { easeOut, motionOk, phone } from '../theme/global.css';
 import { vars } from '../theme/theme.css';
 
 export const gym = style({ marginTop: 24, '@media': { [phone]: { marginTop: 16 } } });
@@ -82,3 +82,106 @@ export const caution = style({ display: 'flex', gap: 8, alignItems: 'flex-start'
 globalStyle(`${caution} svg`, { width: 16, height: 16, flex: 'none', marginTop: 2, color: vars.color.ink });
 
 export const empty = style({ padding: '12px 6px', color: vars.color.plateInk2 });
+
+export const plateHead = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'flex-end',
+  justifyContent: 'space-between',
+  gap: '12px 20px',
+});
+
+export const plateText = style({ flex: '1 1 32ch', minWidth: 0 });
+
+export const dosingPick = style({
+  display: 'grid',
+  gap: 6,
+  flex: '0 1 auto',
+  '@media': { [phone]: { flex: '1 1 100%' } },
+});
+
+export const dosingLabel = style({
+  fontSize: 13,
+  fontWeight: 700,
+  fontStretch: '85%',
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  color: vars.color.plateInk2,
+});
+
+export const segments = style({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, auto)',
+  gap: 4,
+  '@media': { [phone]: { gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' } },
+});
+
+export const segment = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: 44,
+  padding: '0 14px',
+  border: `1.5px solid ${vars.color.plateInk2}`,
+  borderRadius: 3,
+  color: vars.color.plateInk,
+  cursor: 'pointer',
+  fontSize: 14,
+  fontWeight: 700,
+  fontStretch: '88%',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  whiteSpace: 'nowrap',
+  '@media': {
+    [motionOk]: { transition: `background-color 160ms ${easeOut}, color 160ms ${easeOut}` },
+    [phone]: { minHeight: 52, padding: '0 8px' },
+  },
+  selectors: {
+    '&:hover': { borderColor: vars.color.plateInk },
+    '&[data-state="checked"]': {
+      background: vars.color.plateInk,
+      borderColor: vars.color.plateInk,
+      color: vars.color.plate,
+      fontWeight: 900,
+    },
+    // Magenta focus is too dark on spruce.
+    '&:has(input:focus-visible)': { outline: `3px solid ${vars.color.plateInk}`, outlineOffset: 2 },
+  },
+});
+
+export const dosing = style({
+  gridColumn: '1 / -1',
+  display: 'grid',
+  gap: 8,
+  padding: '10px 12px',
+  background: vars.color.well,
+  borderRadius: 2,
+});
+
+export const doses = style({
+  display: 'grid',
+  gridTemplateColumns: 'minmax(10ch, auto) minmax(0, 1fr)',
+  gap: '8px 14px',
+  margin: 0,
+  '@media': { [phone]: { gridTemplateColumns: 'minmax(0, 1fr)', gap: 2 } },
+});
+
+export const doseGoal = style({
+  fontWeight: 800,
+  fontStretch: '85%',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  '@media': { [phone]: { selectors: { '&:not(:first-child)': { marginTop: 8 } } } },
+});
+
+export const dose = style({ display: 'grid', gap: 2 });
+
+export const doseLine = style({ display: 'flex', flexWrap: 'wrap', columnGap: 12, fontWeight: 700 });
+
+export const doseRest = style({ fontWeight: 400, color: vars.color.ink2, whiteSpace: 'nowrap' });
+
+export const doseNote = style({ color: vars.color.ink2 });
+
+export const doseFoot = style({ display: 'grid', gap: 2, fontSize: 14, color: vars.color.ink3 });
+
+export const disclaimer = style({ fontWeight: 700, color: vars.color.ink2 });
