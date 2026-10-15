@@ -8,13 +8,13 @@ web
 
 ## Users
 
-- **Primary:** ski instructors studying for certification with any professional association (PSIA, CSIA, BASI, NZSIA and others), all on equal footing; none is the default. They need to know which muscles and joints a drill works, in which phase of the turn, and how sure the evidence is.
-- **Also served:** trainers and clinic leaders who show a drill to a group; coaches who assign off-snow work to athletes; recreational skiers preparing for a season; physios and S&C coaches who review or extend the exercise content.
+- **Primary:** ski instructors studying for certification with any professional association (PSIA, CSIA, BASI, NZSIA and others), all on equal footing; none is the default. They need to know which muscles and joints a kind of skiing or a drill works, in which phase of the turn, and how sure the evidence is.
+- **Also served:** recreational skiers who want to understand their own skiing; trainers and clinic leaders who show a drill to a group; coaches who assign off-snow work to athletes; recreational skiers preparing for a season; physios and S&C coaches who review or extend the exercise content.
 - **Scene:** used equally at a desk while studying (laptop or tablet) and on the hill between runs (a phone, often with gloves, in glare and cold).
 
 ## Product Purpose
 
-skibuddy shows a drill on a 3D figure, highlights the muscles at work through initiation, shaping and finish, and recommends gym exercises that train the same muscles in the same way (side, contraction type). It succeeds when a candidate can explain a drill's demands in exam terms, and when an exercise recommendation can be traced back to the muscle and the evidence behind it.
+skibuddy is about regular skiing first: cruising, carved turns, short turns, moguls and the rest. Drills are a supporting layer, since nobody drills all the time. A 3D figure skis each one, highlights the muscles at work through initiation, shaping and finish, and recommends gym exercises that train the same muscles in the same way (side, contraction type). The 3D figure is core to every screen design. It succeeds when a skier or candidate can explain what a kind of skiing or a drill demands, and when an exercise recommendation can be traced back to the muscle and the evidence behind it.
 
 ## Positioning
 
@@ -56,9 +56,10 @@ skibuddy shows a drill on a 3D figure, highlights the muscles at work through in
 
 1. Show the evidence level with every claim; uncertainty is content, not noise.
 2. Stay association-neutral at the core; use each association's own vocabulary only in its mapping.
-3. Every gym exercise traces back to a muscle and a drill.
-4. Work at a desk and in the cold: the essentials must be readable at a glance on a phone.
-5. Open by default: content a reviewer can check, correct and extend.
+3. Every gym exercise traces back to a muscle and the skiing or drill that loads it.
+4. The 3D figure leads: a phone user finds what to train by playing with the model; text is short, and depth comes only on request.
+5. Work at a desk and in the cold: the essentials must be readable at a glance on a phone.
+6. Open by default: content a reviewer can check, correct and extend.
 
 ## Accessibility & Inclusion
 
