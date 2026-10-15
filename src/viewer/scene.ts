@@ -6,6 +6,7 @@ import { bestAnchors, sameAnchors } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
 import type { AnchorsListener, MuscleAnchor } from './anchors';
 import { createCapsuleFigure } from './capsule';
+import type { GearMode } from './gear-mode';
 import { makeSlotTable } from './slots';
 
 export const FigureKind = { Capsule: 'capsule', Anatomy: 'anatomy' } as const;
@@ -17,6 +18,7 @@ export interface Figure {
   /** One point per muscle and side, in world space, for the current pose. */
   readonly anchors: () => ReadonlyArray<AnchorPoint>;
   readonly setSkeleton?: (on: boolean) => void;
+  readonly setGear?: (mode: GearMode) => void;
   readonly dispose: () => void;
 }
 
@@ -37,6 +39,8 @@ export interface Viewer {
   readonly figure: FigureKind;
   /** Fades the muscles to show the skeleton; the capsule figure ignores it. */
   readonly setSkeleton: (on: boolean) => void;
+  /** Boots and poles: translucent, solid or hidden. */
+  readonly setGear: (mode: GearMode) => void;
   /** CSS colour of the ground. */
   readonly setGround: (css: string) => void;
   readonly dispose: () => void;
@@ -179,6 +183,7 @@ export const createViewer = async (
   return {
     figure: anatomy ? FigureKind.Anatomy : FigureKind.Capsule,
     setSkeleton: (on) => figure.setSkeleton?.(on),
+    setGear: (mode) => figure.setGear?.(mode),
     setGround: (css) => {
       groundColour.value.set(css);
     },

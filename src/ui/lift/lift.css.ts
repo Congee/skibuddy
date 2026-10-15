@@ -95,7 +95,9 @@ export const stops = style({
 
 export const toggles = style({
   display: 'flex',
-  gap: 16,
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  gap: '0 16px',
   marginLeft: 'auto',
   '@media': { [phone]: { width: '100%', justifyContent: 'space-between', gap: 8 } },
 });

@@ -9,18 +9,24 @@ import { Board } from './board/Board';
 import { shortName } from './board/marks';
 import { rankSlats } from './board/rank';
 import { FigureField } from './figure/FigureField';
+import { GearControl } from './figure/GearControl';
 import { GymBoard } from './gym/GymBoard';
 import { LiftLine, PhaseStops, usePlayback } from './lift/LiftLine';
 import { phoneTabs } from './lift/lift.css';
 import { REDUCED_MOTION, createMedia } from './media';
+import { GearMode, isGearMode } from '../viewer/gear-mode';
 
-// ?skeleton=1 only sets the starting state.
-const SKELETON_AT_START = new URLSearchParams(window.location.search).get('skeleton') === '1';
+// ?skeleton=1 and ?gear=solid|off only set the starting state.
+const params = new URLSearchParams(window.location.search);
+const SKELETON_AT_START = params.get('skeleton') === '1';
+const gearParam = params.get('gear');
+const GEAR_AT_START: GearMode = isGearMode(gearParam) ? gearParam : GearMode.Translucent;
 
 const Lodge = (props: { readonly content: Content; readonly drill: Drill; readonly movement: Movement }): JSX.Element => {
   const t = useAtomValue(() => turnTimeAtom);
   const pins = useAtomValue(() => pinsAtom);
   const [skeleton, setSkeleton] = createSignal(SKELETON_AT_START);
+  const [gear, setGear] = createSignal<GearMode>(GEAR_AT_START);
   const reducedMotion = createMedia(REDUCED_MOTION);
   usePlayback(reducedMotion);
   const phase = createMemo(() => phaseAt(t()));
@@ -38,9 +44,10 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
           ranked={ranked()}
           pins={pins()}
           skeleton={skeleton()}
+          gear={gear()}
           muscleName={(id) => shortName(muscleName(id))}
         />
-        <LiftLine skeleton={skeleton()} onSkeleton={setSkeleton} />
+        <LiftLine skeleton={skeleton()} onSkeleton={setSkeleton} controls={<GearControl value={gear()} onChange={setGear} />} />
       </section>
       <div class={phoneTabs}>
         <PhaseStops look="tabs" />

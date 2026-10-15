@@ -14,6 +14,8 @@ export interface Pose {
   readonly trunkFlex: number;
   /** Torso yaw toward the outside ski, so it faces down the fall line. */
   readonly trunkTurn: number;
+  /** 0..1: the inside pole swings forward and plants at 1. */
+  readonly poleTouch: number;
   readonly outside: LegPose;
   readonly inside: LegPose;
 }
@@ -102,10 +104,10 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
       // Eyes ahead, not at the snow.
       return rotationX(-HEAD_LIFT * pose.trunkFlex);
     case SegmentKind.UpperArm:
-      // Hands forward at hip-to-chest height, wider than the hips.
-      return compose(rotationZ(out * 0.35), rotationX(-0.9));
+      // Hands forward at hip-to-chest height, wider than the hips; the inside arm reaches to plant its pole.
+      return compose(rotationZ(out * 0.35), rotationX(-0.9 - REACH_SHOULDER * reach(segment, pose)));
     case SegmentKind.Forearm:
-      return rotationX(-1.1);
+      return rotationX(-1.1 + REACH_ELBOW * reach(segment, pose));
     case SegmentKind.Thigh:
       // Both feet move toward the outside of the turn, so the legs incline more than the pelvis.
       return compose(rotationZ(-pose.hipAngulation), rotationX(-leg.hipFlex));
@@ -118,6 +120,12 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
       return identity();
   }
 };
+
+const reach = (segment: Segment, pose: Pose): number => (segment.side === BodySide.Left ? pose.poleTouch : 0);
+
+/** Inside-arm shoulder flexion and elbow extension at the pole touch; mirrored in build_anatomy.py. */
+export const REACH_SHOULDER = 0.15;
+export const REACH_ELBOW = 0.4;
 
 /** Share of the torso's pitch the neck takes back out. */
 export const HEAD_LIFT = 0.6;
@@ -156,6 +164,7 @@ export const poseAt = (t: number): Pose => {
     kneeAngulation: k.kneeAngulation,
     trunkFlex: k.trunkFlex,
     trunkTurn: k.trunkTurn,
+    poleTouch: poleTouchAt(t),
     outside,
     inside: { hipFlex: k.hipFlex + extra, ankleFlex: k.ankleFlex + 0.6 * extra, tailLift: Math.max(0, k.insideTailLift) },
   });
@@ -169,3 +178,47 @@ export const poseAt = (t: number): Pose => {
   }
   return withFlex((lo + hi) / 2);
 };
+
+/** Turn time of the inside pole touch: initiation. */
+export const POLE_TOUCH_T = 1 / 6;
+const TOUCH_HOLD = 0.02;
+const TOUCH_SWING = 0.11;
+
+/** 1 while the inside basket is planted, easing to 0 over the swing either side. */
+export const poleTouchAt = (t: number): number => {
+  const u = (((t - POLE_TOUCH_T) % 1) + 1) % 1;
+  const d = Math.min(u, 1 - u) - TOUCH_HOLD;
+  if (d <= 0) return 1;
+  if (d >= TOUCH_SWING) return 0;
+  return 0.5 + 0.5 * Math.cos((Math.PI * d) / TOUCH_SWING);
+};
+
+/** Pole measured from the centre of the fist. */
+export const POLE = {
+  /** Fist to the spike's point. */
+  reach: 1.17,
+  /** Fist to the basket. */
+  basket: 1.09,
+  /** Basket height while carried. */
+  carry: 0.32,
+} as const;
+
+/** Heading of the shaft from +z (forward) toward the pole's own side. */
+const CARRY_HEADING = Math.PI - 0.35;
+const PLANT_HEADING = -0.2;
+
+/**
+ * Unit shaft direction, fist to tip, in world space. The pitch is solved so the
+ * basket hangs at the carry height, or touches the snow at a full touch; the
+ * heading swings from back-and-out to forward through the side.
+ */
+export const poleDirection = (grip: Vec3, side: typeof BodySide.Left | typeof BodySide.Right, touch: number): Vec3 => {
+  const out = side === BodySide.Left ? 1 : -1;
+  const heading = CARRY_HEADING + (PLANT_HEADING - CARRY_HEADING) * touch;
+  const drop = Math.min(POLE.basket, Math.max(0, grip[1] - POLE.carry * (1 - touch) ** 2));
+  const flat = Math.sqrt(POLE.basket ** 2 - drop ** 2);
+  return [(out * Math.sin(heading) * flat) / POLE.basket, -drop / POLE.basket, (Math.cos(heading) * flat) / POLE.basket];
+};
+
+/** The capsule figure's fist, in its forearm frame. */
+export const CAPSULE_GRIP: Vec3 = [0, -0.3, 0.01];

@@ -18,9 +18,14 @@ import { spreadCandidates } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
 import { levelColour } from './level-colour';
 import type { Vec3 } from './mat4';
-import { SEGMENTS, SegmentKind } from './figure';
+import { BodySide, SEGMENTS, SegmentKind } from './figure';
 import type { Segment } from './figure';
-import { poseAt, segmentMatrices } from './pose';
+import { createGear, placePole } from './gear';
+import type { LegSide } from './gear';
+import { CAPSULE_BOOT, coveredByBoot } from './gear-fit';
+import type { GearMode } from './gear-mode';
+import { compose, transformPoint, translation } from './mat4';
+import { CAPSULE_GRIP, poleDirection, poseAt, segmentMatrices } from './pose';
 import { fillSlotLevels, musclePartAt } from './slots';
 import type { SlotTable } from './slots';
 import type { Figure } from './scene';
@@ -68,6 +73,11 @@ const pickAnchors = (points: Map<number, Array<SlotPoint>>): ReadonlyArray<Local
     });
   });
 
+/** The ankle in the shin's frame. */
+const ANKLE: Vec3 = SEGMENTS.find((s) => s.kind === SegmentKind.Boot)?.joint ?? [0, 0, 0];
+
+const segmentOf = (kind: SegmentKind, side: LegSide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
+
 /** Merges every segment into one geometry tagged with `segment` and `muscleSlot`, both uint per vertex. */
 const buildFigureGeometry = (table: SlotTable): { readonly geometry: BufferGeometry; readonly anchors: ReadonlyArray<LocalAnchor> } => {
   const parts = SEGMENTS.map(shapeGeometry);
@@ -87,7 +97,9 @@ const buildFigureGeometry = (table: SlotTable): { readonly geometry: BufferGeome
     if (segment === undefined) return;
     const pos = part.getAttribute('position');
     const nor = part.getAttribute('normal');
-    const gear = segment.kind === SegmentKind.Boot || segment.kind === SegmentKind.Ski;
+    const gear = segment.kind === SegmentKind.Ski;
+    // Pins skip the shin inside the boot cuff.
+    const booted = segment.kind === SegmentKind.Shin;
     for (const k of part.index?.array ?? []) index[i++] = k + v;
     for (let k = 0; k < pos.count; k++, v++) {
       const p = [pos.getX(k), pos.getY(k), pos.getZ(k)] as const;
@@ -99,7 +111,7 @@ const buildFigureGeometry = (table: SlotTable): { readonly geometry: BufferGeome
       colour.set([base.r, base.g, base.b], v * 3);
       segmentIds[v] = s;
       const slot = slots[v] ?? 0;
-      if (slot > 0) {
+      if (slot > 0 && !(booted && coveredByBoot(CAPSULE_BOOT, ANKLE, p))) {
         const list = points.get(slot) ?? [];
         list.push({ segment: s, position: new Vector3(...p), normal: new Vector3(nor.getX(k), nor.getY(k), nor.getZ(k)) });
         points.set(slot, list);
@@ -150,6 +162,13 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
   figure.frustumCulled = false;
   scene.add(figure);
 
+  const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT });
+  for (const part of [...gear.shells, ...gear.cuffs]) {
+    part.mesh.matrixAutoUpdate = false;
+    scene.add(part.mesh);
+  }
+  for (const part of gear.poles) scene.add(part.mesh);
+
   const owners = new Map<number, { readonly muscle: string; readonly side: typeof Side.Outside | typeof Side.Inside }>();
   for (const muscle of muscles) for (const side of [Side.Outside, Side.Inside]) owners.set(table.slotOf(muscle, side), { muscle, side });
   const p = new Vector3();
@@ -157,7 +176,23 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
 
   return {
     update: (t: number, levels: ReadonlyArray<MuscleLevel>) => {
-      segmentMatrices(poseAt(t)).forEach((m, k) => material.matrices[k]?.fromArray(m));
+      const pose = poseAt(t);
+      const world = segmentMatrices(pose);
+      world.forEach((m, k) => material.matrices[k]?.fromArray(m));
+      for (const { mesh, side } of gear.shells) {
+        const boot = world[segmentOf(SegmentKind.Boot, side)];
+        if (boot !== undefined) mesh.matrix.fromArray(boot);
+      }
+      for (const { mesh, side } of gear.cuffs) {
+        const shin = world[segmentOf(SegmentKind.Shin, side)];
+        if (shin !== undefined) mesh.matrix.fromArray(compose(shin, translation(ANKLE)));
+      }
+      for (const { mesh, side } of gear.poles) {
+        const forearm = world[segmentOf(SegmentKind.Forearm, side)];
+        if (forearm === undefined) continue;
+        const grip = transformPoint(forearm, CAPSULE_GRIP);
+        placePole(mesh, grip, poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0));
+      }
       fillSlotLevels(table, levels, material.levels);
     },
     anchors: (): ReadonlyArray<AnchorPoint> =>
@@ -169,7 +204,9 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         n.copy(a.normal).transformDirection(m);
         return [{ ...owner, position: [p.x, p.y, p.z] as const, normal: [n.x, n.y, n.z] as const }];
       }),
+    setGear: (mode: GearMode) => gear.setMode(mode),
     dispose: () => {
+      gear.dispose();
       geometry.dispose();
       material.dispose();
     },

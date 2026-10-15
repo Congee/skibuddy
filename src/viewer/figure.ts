@@ -46,7 +46,7 @@ const arm = (side: BodySide, trunk: number): ReadonlyArray<Segment> => [
 const leg = (side: BodySide, first: number): ReadonlyArray<Segment> => [
   { name: `${side}-thigh`, kind: SegmentKind.Thigh, side, parent: 0, joint: [sideX(side, 0.1), -0.06, 0], shape: capsule(0.075, 0.3, [0, -0.22, 0]) },
   { name: `${side}-shin`, kind: SegmentKind.Shin, side, parent: first, joint: [0, -0.45, 0], shape: capsule(0.055, 0.36, [0, -0.2, 0]) },
-  { name: `${side}-boot`, kind: SegmentKind.Boot, side, parent: first + 1, joint: [0, -0.43, 0], shape: box([0.11, 0.13, 0.3], [0, -0.02, 0.04]) },
+  { name: `${side}-boot`, kind: SegmentKind.Boot, side, parent: first + 1, joint: [0, -0.43, 0], shape: box([0.08, 0.07, 0.25], [0, -0.05, 0.03]) },
   { name: `${side}-ski`, kind: SegmentKind.Ski, side, parent: first + 2, joint: [0, -0.095, 0.02], shape: box([0.09, 0.02, 1.6], [0, 0, 0.05]) },
 ];
 

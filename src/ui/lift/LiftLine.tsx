@@ -67,7 +67,12 @@ const Tower = (props: { readonly at: number }): JSX.Element => (
   </svg>
 );
 
-export const LiftLine = (props: { readonly skeleton: boolean; readonly onSkeleton: (on: boolean) => void }): JSX.Element => {
+export const LiftLine = (props: {
+  readonly skeleton: boolean;
+  readonly onSkeleton: (on: boolean) => void;
+  /** More figure controls after the switches. */
+  readonly controls?: JSX.Element;
+}): JSX.Element => {
   const [t, setT] = useAtom(() => turnTimeAtom);
   const [playing, setPlaying] = useAtom(() => playingAtom);
   const [pins, setPins] = useAtom(() => pinsAtom);
@@ -120,6 +125,7 @@ export const LiftLine = (props: { readonly skeleton: boolean; readonly onSkeleto
         <div class={s.toggles}>
           <Switch label="Names on figure" checked={pins()} onChange={setPins} />
           <Switch label="Skeleton" checked={props.skeleton} onChange={props.onSkeleton} />
+          {props.controls}
         </div>
       </div>
       <p class={visuallyHidden} aria-live="polite">

@@ -2,6 +2,7 @@ import { Show, Suspense, createMemo, createSignal, lazy, onCleanup, onMount } fr
 import type { JSX } from 'solid-js';
 import type { Movement } from '../../content/schema';
 import type { MuscleAnchor } from '../../viewer/anchors';
+import type { GearMode } from '../../viewer/gear-mode';
 import type { RankedSlat } from '../board/rank';
 import { PHONE, createMedia } from '../media';
 import { vars } from '../theme/theme.css';
@@ -29,6 +30,7 @@ export const FigureField = (props: {
   readonly ranked: ReadonlyArray<RankedSlat>;
   readonly pins: boolean;
   readonly skeleton: boolean;
+  readonly gear: GearMode;
   readonly muscleName: (id: string) => string;
 }): JSX.Element => {
   let host: HTMLDivElement | undefined;
@@ -77,6 +79,7 @@ export const FigureField = (props: {
           movement={props.movement}
           muscles={props.muscles}
           skeleton={props.skeleton}
+          gear={props.gear}
           ground={ground()}
           caption={<Caption />}
           onAnchors={setAnchors}

@@ -312,6 +312,9 @@ def rot_y3(a):
 
 
 HEAD_LIFT = 0.6  # matches HEAD_LIFT in src/viewer/pose.ts
+REACH_SHOULDER, REACH_ELBOW = 0.15, 0.4  # match src/viewer/pose.ts
+# Boot sole below the lowest foot bone: heel pad, liner and shell sole.
+BOOT_SOLE = 0.03
 
 
 def local_rotations(p, rest_abduction, inside_extra=0.0):
@@ -327,8 +330,10 @@ def local_rotations(p, rest_abduction, inside_extra=0.0):
         R[f'shin.{s}'] = rot_z3(-p['kneeAngulation']) @ rot_x(hip + ankle)
         # Undo the shin's net pitch so the sole stays level, then pitch the tail up.
         R[f'foot.{s}'] = rot_x(-ankle + leg['tailLift'])
-        R[f'upper_arm.{s}'] = rot_z3(sign * 0.35) @ rot_x(-0.9) @ rot_z3(-rest_abduction[s])
-        R[f'forearm.{s}'] = rot_x(-1.1)
+        # The inside arm reaches to plant its pole.
+        reach = p.get('poleTouch', 0.0) if s == 'L' else 0.0
+        R[f'upper_arm.{s}'] = rot_z3(sign * 0.35) @ rot_x(-0.9 - REACH_SHOULDER * reach) @ rot_z3(-rest_abduction[s])
+        R[f'forearm.{s}'] = rot_x(-1.1 + REACH_ELBOW * reach)
         R[f'hand.{s}'] = Matrix()
     return R
 
@@ -409,6 +414,25 @@ def make_object(name, verts, tris, mats, materials, rig, weights, uv=None, extra
 def to_gltf(p):
     """Blender (Z up, front -Y) to glTF (Y up, front +Z)."""
     return [float(p[0]), float(p[2]), float(-p[1])]
+
+
+def boot_fit(J, cloud):
+    """Per side, the foot and lower-leg extents the viewer fits its boot around, in glTF coordinates."""
+    fit = {}
+    for s in ('R', 'L'):
+        j = J[s]
+        a = j['ankle']
+        leg = cloud[np.abs(cloud[:, 0] - a[0]) < 0.08]
+        foot = leg[(leg[:, 2] < a[2] + 0.01) & (leg[:, 1] > j['toe'][1] - 0.01) & (leg[:, 1] < j['heel'][1] + 0.01)]
+        shin = leg[(leg[:, 2] > a[2] + 0.02) & (leg[:, 2] < a[2] + 0.22) & (np.abs(leg[:, 1] - a[1]) < 0.12)]
+        fit[s] = dict(
+            ankle=to_gltf(a), knee=to_gltf(j['knee']), wrist=to_gltf(j['wrist']), fingertip=to_gltf(j['fingertip']),
+            sole=float(j['sole'] - BOOT_SOLE), toe=float(-foot[:, 1].min()), heel=float(-foot[:, 1].max()),
+            footX=[float(foot[:, 0].min()), float(foot[:, 0].max())],
+            shinX=[float(shin[:, 0].min()), float(shin[:, 0].max())],
+            shinZ=[float(-shin[:, 1].max()), float(-shin[:, 1].min())],
+        )
+    return fit
 
 
 def main():
@@ -514,8 +538,10 @@ def main():
         else:
             ws += [[(f'thigh.{b["side"]}', 0.5), (f'shin.{b["side"]}', 0.5)]] * len(b['verts'])
         offset += len(b['verts'])
+    cloud = np.concatenate([x['verts'] for x in bone_meshes + muscles])
+    fit = boot_fit(J, cloud)
     make_object('bones', np.concatenate(vs), np.concatenate(ts), np.concatenate(ms),
-                [mats['bone'], mats['cartilage']], rig, ws)
+                [mats['bone'], mats['cartilage']], rig, ws, extras={'gear_fit': json.dumps(fit)})
 
     # Muscles grouped by (muscle id, side); unmapped ones share one resting mesh.
     groups = {}
@@ -563,12 +589,12 @@ def main():
                     rig, ws, np.concatenate(uvs), extras)
         report['groups'][key] = dict(meshes=[m['name'] for m in items], tris=int(sum(len(t) for t in ts)))
 
-    # Skis: 1.6 m x 9 cm x 2 cm under each foot, as in figure.ts.
+    # Skis: 1.6 m x 9 cm x 2 cm under each boot sole, as in figure.ts.
     ski_pivot = None
     for s in ('R', 'L'):
         j = J[s]
         mid_y = (j['toe'][1] + j['heel'][1]) / 2 - 0.03
-        top = j['sole'] - 0.002
+        top = j['sole'] - BOOT_SOLE
         x0, x1, y0, y1, z0, z1 = j['ankle'][0] - 0.045, j['ankle'][0] + 0.045, mid_y - 0.8, mid_y + 0.8, top - 0.02, top
         verts = np.array([[x, y, z] for x in (x0, x1) for y in (y0, y1) for z in (z0, z1)])
         quads = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]

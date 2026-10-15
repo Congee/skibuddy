@@ -1,4 +1,4 @@
-import { AnimationMixer, DoubleSide, MeshStandardNodeMaterial, SkinnedMesh, Uint32BufferAttribute, Vector3, Vector4 } from 'three/webgpu';
+import { AnimationMixer, DoubleSide, Matrix4, MeshStandardNodeMaterial, PropertyBinding, SkinnedMesh, Uint32BufferAttribute, Vector3, Vector4 } from 'three/webgpu';
 import type { AnimationAction, Object3D, Scene } from 'three/webgpu';
 import {
   attribute,
@@ -24,6 +24,13 @@ import type { MuscleLevel } from '../content/activation';
 import { spreadCandidates } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
 import type { Vec3 } from './mat4';
+import { BodySide } from './figure';
+import { createGear, placePole } from './gear';
+import type { LegSide } from './gear';
+import { bootFitFrom, coveredByBoot, gripFrom, parseGearFit } from './gear-fit';
+import type { BootFit, RawFit } from './gear-fit';
+import type { GearMode } from './gear-mode';
+import { poleDirection, poleTouchAt } from './pose';
 import { NodeKind, parseAnatomyNode } from './anatomy-names';
 import type { AnatomyNode } from './anatomy-names';
 import { fillSlotLevels } from './slots';
@@ -102,13 +109,35 @@ interface Anchor {
 
 /** Candidate pin vertices spread around the muscle's middle, picked at the bind pose. */
 const ANCHOR_CANDIDATES = 8;
-const candidateVertices = (mesh: SkinnedMesh, centre: Vec3): ReadonlyArray<number> => {
+const candidateVertices = (mesh: SkinnedMesh, centre: Vec3, hidden: (p: Vec3) => boolean): ReadonlyArray<number> => {
   const count = mesh.geometry.getAttribute('position').count;
-  const points = Array.from({ length: count }, (_, i): Vec3 => {
+  const all = Array.from({ length: count }, (_, i): Vec3 => {
     const p = skinned(mesh, i, vertexIn(mesh, 'position', i, 1));
     return [p.x, p.y, p.z];
   });
-  return spreadCandidates(points, centre, ANCHOR_CANDIDATES);
+  // Skip points inside the boots unless the whole muscle is.
+  const open = all.map((p, i) => ({ p, i })).filter(({ p }) => !hidden(p));
+  const pool = open.length > 0 ? open : all.map((p, i) => ({ p, i }));
+  return spreadCandidates(pool.map((e) => e.p), centre, ANCHOR_CANDIDATES).flatMap((k) => pool[k]?.i ?? []);
+};
+
+/** Boot fits and fists per leg side, with the rest-pose ankles they hang from. */
+interface Fitting {
+  readonly side: LegSide;
+  readonly fit: BootFit;
+  readonly ankle: Vec3;
+  readonly grip: Vec3;
+}
+
+/** Bone names lose their dots in three's loader. */
+const boneName = (part: string, side: LegSide): string => PropertyBinding.sanitizeNodeName(`${part}.${side === BodySide.Right ? 'R' : 'L'}`);
+
+const fitting = (side: LegSide, r: RawFit): Fitting => ({ side, fit: bootFitFrom(r), ankle: r.ankle, grip: gripFrom(r) });
+
+const fittings = (root: Object3D): Readonly<Record<LegSide, Fitting>> | null => {
+  const raw = parseGearFit(root.getObjectByName('bones')?.userData['gear_fit']);
+  if (raw === null) return null;
+  return { [BodySide.Right]: fitting(BodySide.Right, raw.right), [BodySide.Left]: fitting(BodySide.Left, raw.left) };
 };
 
 /** The parsed name of the nearest named ancestor; multi-material meshes load as a group of primitives. */
@@ -147,6 +176,10 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
   const gear = new MeshStandardNodeMaterial({ color: GEAR, roughness: 0.6, side: DoubleSide });
   const fading = [muscle, tendon];
 
+  // Older models without the bake's fit carry no gear.
+  const fitted = fittings(root);
+  const hidden = (p: Vec3): boolean => (fitted === null ? [] : Object.values(fitted)).some((f) => coveredByBoot(f.fit, f.ankle, p));
+
   const anchors: Array<Anchor> = [];
   const seen = new Set<Object3D>();
   root.traverse((o) => {
@@ -168,10 +201,42 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
       const anchor: unknown = owner.userData['anchor'];
       if (node.kind === NodeKind.Muscle && !seen.has(owner) && isAnchor(anchor)) {
         seen.add(owner);
-        for (const index of candidateVertices(o, anchor)) anchors.push({ muscle: node.muscle, side: node.side, mesh: o, index });
+        for (const index of candidateVertices(o, anchor, hidden)) anchors.push({ muscle: node.muscle, side: node.side, mesh: o, index });
       }
     }
   });
+
+  // Boots ride the foot and shin bones; poles are placed from the fist every frame.
+  const kit = fitted === null ? null : createGear({ [BodySide.Right]: fitted.right.fit, [BodySide.Left]: fitted.left.fit });
+  const fists: Array<{ readonly side: LegSide; readonly hand: Object3D; readonly local: Vector3 }> = [];
+  if (kit !== null && fitted !== null) {
+    const attach = (part: string, side: LegSide, mesh: Object3D, ankle: Vec3): void => {
+      const joint = root.getObjectByName(boneName(part, side));
+      if (joint === undefined) throw new Error(`anatomy model has no ${part} bone`);
+      mesh.applyMatrix4(new Matrix4().copy(joint.matrixWorld).invert().multiply(new Matrix4().makeTranslation(...ankle)));
+      joint.add(mesh);
+    };
+    for (const f of Object.values(fitted)) {
+      const shell = kit.shells.find((g) => g.side === f.side);
+      const cuff = kit.cuffs.find((g) => g.side === f.side);
+      if (shell !== undefined) attach('foot', f.side, shell.mesh, f.ankle);
+      if (cuff !== undefined) attach('shin', f.side, cuff.mesh, f.ankle);
+      const hand = root.getObjectByName(boneName('hand', f.side));
+      if (hand !== undefined) fists.push({ side: f.side, hand, local: hand.worldToLocal(new Vector3(...f.grip)) });
+    }
+    for (const p of kit.poles) scene.add(p.mesh);
+  }
+  const fist = new Vector3();
+  const placePoles = (t: number): void => {
+    if (kit === null) return;
+    for (const { side, hand, local } of fists) {
+      const pole = kit.poles.find((p) => p.side === side);
+      if (pole === undefined) continue;
+      fist.copy(local).applyMatrix4(hand.matrixWorld);
+      const grip: Vec3 = [fist.x, fist.y, fist.z];
+      placePole(pole.mesh, grip, poleDirection(grip, side, side === BodySide.Left ? poleTouchAt(t) : 0));
+    }
+  };
 
   const clip = gltf.animations.find((a) => a.name === 'stork-turn') ?? gltf.animations[0];
   if (clip === undefined) throw new Error('anatomy model has no stork-turn animation');
@@ -196,6 +261,7 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
       action.time = (((t % 1) + 1) % 1) * clip.duration;
       mixer.update(0);
       root.updateMatrixWorld(true);
+      placePoles(t);
       fillSlotLevels(table, current, levels);
       const now = performance.now();
       const step = reducedMotion.matches ? 1 : (now - last) / 1000 / FADE_SECONDS;
@@ -213,7 +279,9 @@ export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: s
     setSkeleton: (on: boolean) => {
       target = on ? 1 : 0;
     },
+    setGear: (mode: GearMode) => kit?.setMode(mode),
     dispose: () => {
+      kit?.dispose();
       mixer.stopAllAction();
       scene.remove(root);
       root.traverse((o) => {

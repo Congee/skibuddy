@@ -5,6 +5,7 @@ import { levelsAt } from '../content/activation';
 import type { Movement } from '../content/schema';
 import { turnTimeAtom } from '../state/playback';
 import type { AnchorsListener } from './anchors';
+import { GearMode } from './gear-mode';
 import type { FigureKind, Viewer as SceneViewer } from './scene';
 
 const params = new URLSearchParams(window.location.search);
@@ -41,6 +42,8 @@ export const Viewer = (props: {
   readonly onAnchors?: AnchorsListener;
   /** Fades the muscles to show the skeleton (anatomy figure only). */
   readonly skeleton?: boolean;
+  /** Boots and poles; translucent by default. */
+  readonly gear?: GearMode;
   /** CSS colour of the ground under the figure. */
   readonly ground?: string;
   /** Caption under the figure; the default names the outside ski. */
@@ -90,6 +93,7 @@ export const Viewer = (props: {
           }
           viewer = v;
           v.setSkeleton(props.skeleton ?? SKELETON);
+          v.setGear(props.gear ?? GearMode.Translucent);
           if (props.ground !== undefined) v.setGround(props.ground);
           setShown(v.figure);
           props.onReady?.();
@@ -110,6 +114,11 @@ export const Viewer = (props: {
   createEffect(() => {
     const on = props.skeleton ?? SKELETON;
     if (shown() !== null) viewer?.setSkeleton(on);
+  });
+
+  createEffect(() => {
+    const mode = props.gear ?? GearMode.Translucent;
+    if (shown() !== null) viewer?.setGear(mode);
   });
 
   createEffect(() => {
