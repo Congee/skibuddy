@@ -27,12 +27,12 @@ export const EQUIPMENT: Equipment = {
   forwardLean: 15 * DEG,
   // Typical; varies by model: boot boards ship at about 2–4°.
   bootBoardRamp: 3 * DEG,
-  // Typical; varies by model: alpine bindings run about 0 to +6 mm heel over toe.
-  bindingDelta: 0.003,
+  // Recreational mean, heel minus toe stand height (ruedl-2022).
+  bindingDelta: 0.0047,
   // About a mondopoint 26.5 shell; varies by size.
   soleLength: 0.305,
-  // Typical recreational; varies by model: FIS caps race skis at 50 mm.
-  standHeight: 0.045,
+  // Recreational mean of toe 39.9 and heel 44.6 mm (ruedl-2022); FIS caps race skis at 50 mm.
+  standHeight: 0.042,
   // Typical; varies by model.
   plateHeight: 0.012,
   // A simplified slab; real skis run about 15–20 mm underfoot.

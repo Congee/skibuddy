@@ -179,7 +179,7 @@ describe('equipment', () => {
   it('defaults to a typical boot and binding', () => {
     assert.isAtLeast(EQUIPMENT.forwardLean, FORWARD_LEAN_RANGE[0]);
     assert.isAtMost(EQUIPMENT.forwardLean, FORWARD_LEAN_RANGE[1]);
-    assert.closeTo(deltaAngle(EQUIPMENT) / DEG, 0.56, 0.01);
+    assert.closeTo(deltaAngle(EQUIPMENT) / DEG, 0.88, 0.01);
     assert.closeTo(totalRamp(EQUIPMENT), EQUIPMENT.bootBoardRamp + deltaAngle(EQUIPMENT), 1e-12);
   });
 
