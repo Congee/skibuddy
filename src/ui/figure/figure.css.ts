@@ -22,9 +22,31 @@ globalStyle(`${field} canvas`, {
   borderRadius: 4,
   touchAction: 'none',
   cursor: 'grab',
-  background: `linear-gradient(to bottom, ${vars.color.field} 0 76%, ${vars.color.snowLine} 76% calc(76% + 1px), ${vars.color.snow} calc(76% + 1px))`,
+  // The scene draws its own ground.
+  background: vars.color.field,
   '@media': { [phone]: { borderRadius: 0 } },
 });
+
+/** Stands in for the canvas while the 3D code loads. */
+export const pending = style({
+  borderRadius: 4,
+  background: vars.color.field,
+  '@media': { [phone]: { borderRadius: 0 } },
+});
+
+export const loading = style({
+  position: 'absolute',
+  top: '40%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  margin: 0,
+  fontSize: 16,
+  fontWeight: 600,
+  color: vars.color.plateInk2,
+  pointerEvents: 'none',
+});
+
+globalStyle(`${field} figcaption a`, { color: vars.color.ink2 });
 
 globalStyle(`${field} figcaption`, {
   padding: '6px 2px 0',
@@ -61,42 +83,44 @@ export const leaderUnder = style({ stroke: vars.color.field, strokeWidth: 3.5, f
 export const leaderLine = style({ stroke: vars.color.leader, strokeWidth: 1.5, fill: 'none' });
 export const leaderDot = style({ fill: vars.color.leader, stroke: vars.color.field, strokeWidth: 2 });
 
+/** A sign-white slat: white margin, then an ink rule, no soft shadow. */
 export const pin = style({
   position: 'absolute',
   top: 0,
   left: 0,
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  padding: '0 10px 0 4px',
+  display: 'grid',
+  gridTemplateColumns: 'auto minmax(0, 1fr)',
+  alignItems: 'start',
+  columnGap: 8,
+  padding: '7px 9px 7px 7px',
   borderRadius: 3,
   background: vars.color.pinBg,
   color: vars.color.pinInk,
-  boxShadow: vars.shadow.pop,
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
+  boxShadow: `inset 0 0 0 2px ${vars.color.pinBg}, inset 0 0 0 3.5px ${vars.color.pinInk}`,
   '@media': {
     [motionOk]: { transition: `transform 320ms ${easeOut}` },
-    [phone]: { gap: 6, padding: '0 6px 0 3px' },
+    [phone]: { columnGap: 6, padding: '6px 7px 6px 6px' },
   },
 });
 
+export const pinBody = style({ display: 'grid', rowGap: 4, minWidth: 0 });
+
 export const pinName = style({
-  minWidth: 0,
+  display: '-webkit-box',
+  WebkitBoxOrient: 'vertical',
+  WebkitLineClamp: 2,
   overflow: 'hidden',
-  textOverflow: 'ellipsis',
+  whiteSpace: 'normal',
+  overflowWrap: 'break-word',
   fontSize: 14,
+  lineHeight: 1.15,
   fontWeight: 800,
   fontStretch: '80%',
   textTransform: 'uppercase',
   letterSpacing: '0.04em',
-  '@media': { [phone]: { fontSize: 12, letterSpacing: '0.02em' } },
+  '@media': { [phone]: { fontSize: 13, letterSpacing: '0.02em' } },
 });
 
-export const pinSide = style({
-  marginLeft: 'auto',
-  fontSize: 12,
-  fontWeight: 600,
-  opacity: 0.9,
-  '@media': { [phone]: { display: 'none' } },
-});
+export const pinMeta = style({ display: 'flex', alignItems: 'center', gap: 6 });
+
+export const pinSide = style({ fontSize: 12, fontWeight: 600 });

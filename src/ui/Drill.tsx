@@ -1,5 +1,5 @@
 import { useAtomValue } from '@effect/atom-solid';
-import { Show, createMemo } from 'solid-js';
+import { Show, createMemo, createSignal } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { matchExercises } from '../content/match';
 import type { Content, Drill, Movement } from '../content/schema';
@@ -14,9 +14,13 @@ import { LiftLine, PhaseStops, usePlayback } from './lift/LiftLine';
 import { phoneTabs } from './lift/lift.css';
 import { REDUCED_MOTION, createMedia } from './media';
 
+// ?skeleton=1 only sets the starting state.
+const SKELETON_AT_START = new URLSearchParams(window.location.search).get('skeleton') === '1';
+
 const Lodge = (props: { readonly content: Content; readonly drill: Drill; readonly movement: Movement }): JSX.Element => {
   const t = useAtomValue(() => turnTimeAtom);
   const pins = useAtomValue(() => pinsAtom);
+  const [skeleton, setSkeleton] = createSignal(SKELETON_AT_START);
   const reducedMotion = createMedia(REDUCED_MOTION);
   usePlayback(reducedMotion);
   const phase = createMemo(() => phaseAt(t()));
@@ -33,9 +37,10 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
           muscles={props.content.muscles.map((m) => m.id)}
           ranked={ranked()}
           pins={pins()}
+          skeleton={skeleton()}
           muscleName={(id) => shortName(muscleName(id))}
         />
-        <LiftLine />
+        <LiftLine skeleton={skeleton()} onSkeleton={setSkeleton} />
       </section>
       <div class={phoneTabs}>
         <PhaseStops look="tabs" />

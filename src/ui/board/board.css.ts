@@ -9,8 +9,12 @@ export const frame = style({
   background: vars.color.frame,
   borderRadius: 4,
   padding: 8,
+  containerType: 'inline-size',
   '@media': { [phone]: { padding: 6, borderRadius: 3 } },
 });
+
+/** Below this board width the slats stack: name and evidence over two rows, tags beside. */
+const stacked = '(max-width: 580px)';
 
 export const plate = style({
   background: vars.color.plate,
@@ -47,10 +51,13 @@ export const meta = style({
 
 export const summary = style({ marginTop: 8, maxWidth: '62ch', fontSize: 16, color: vars.color.plateInk });
 
+/** The summary plate when it follows the slats on a phone. */
+export const plateAfter = style({ marginTop: 4, paddingTop: 4 });
+
 // Shared grid for the column heads and every slat row.
 const columns = {
   display: 'grid',
-  gridTemplateColumns: '16px minmax(0, 1fr) 46px 46px 46px 92px 96px 14px',
+  gridTemplateColumns: '16px minmax(15ch, 1fr) 46px 46px 46px 92px 96px 14px',
   columnGap: 6,
   alignItems: 'center',
 } as const;
@@ -68,7 +75,7 @@ export const heads = style({
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
   borderRadius: 2,
-  '@media': { [phone]: { display: 'none' } },
+  '@container': { [stacked]: { display: 'none' } },
 });
 
 export const headTitle = style({
@@ -81,13 +88,15 @@ export const headPhase = recipe({
   base: { textAlign: 'center', color: vars.color.plateInk2, letterSpacing: '0.03em' },
   variants: {
     now: {
+      // Stays inside its own column so it never touches a neighbour.
       true: {
         background: vars.color.plateInk,
         color: vars.color.plate,
         borderRadius: 2,
         padding: '3px 0',
-        margin: '0 -5px',
         fontWeight: 900,
+        fontStretch: '75%',
+        letterSpacing: 0,
       },
       false: {},
     },
@@ -117,8 +126,8 @@ export const slatRow = style({
   selectors: {
     '&:hover': { boxShadow: `inset 0 0 0 2px ${vars.color.ink3}` },
   },
-  '@media': {
-    [phone]: {
+  '@container': {
+    [stacked]: {
       gridTemplateColumns: '16px minmax(0, 1fr) 46px 46px 46px',
       columnGap: 4,
       gridTemplateRows: 'auto auto',
@@ -133,17 +142,16 @@ export const change = style({
   width: 14,
   height: 14,
   color: vars.color.ink,
-  '@media': { [phone]: { gridColumn: 1, gridRow: 1 } },
+  '@container': { [stacked]: { gridColumn: 1, gridRow: 1, alignSelf: 'start', marginTop: 3 } },
 });
 
 export const changeSame = style({ color: vars.color.ink3 });
 
+// Wraps instead of truncating; the side word sits on its own line.
 export const name = style({
   minWidth: 0,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  '@media': { [phone]: { gridColumn: 2, gridRow: 1, whiteSpace: 'normal' } },
+  lineHeight: 1.2,
+  '@container': { [stacked]: { gridColumn: 2, gridRow: 1 } },
 });
 
 export const muscle = style({
@@ -153,15 +161,15 @@ export const muscle = style({
   letterSpacing: '0.03em',
 });
 
-export const side = style({ marginLeft: 6, color: vars.color.ink3 });
+export const side = style({ display: 'block', fontWeight: 400, color: vars.color.ink3 });
 
 /** Phone grid cells for the initiation, shaping and finish tags. */
-export const tagCells = [3, 4, 5].map((column) => style({ '@media': { [phone]: { gridColumn: column, gridRow: '1 / span 2' } } }));
+export const tagCells = [3, 4, 5].map((column) => style({ '@container': { [stacked]: { gridColumn: column, gridRow: '1 / span 2' } } }));
 
 export const evidence = style({
   display: 'contents',
-  '@media': {
-    [phone]: {
+  '@container': {
+    [stacked]: {
       gridColumn: 2,
       gridRow: 2,
       display: 'flex',
@@ -176,10 +184,8 @@ export const caret = style({
   width: 14,
   height: 14,
   color: vars.color.ink2,
-  '@media': {
-    [motionOk]: { transition: `transform 200ms ${easeOut}` },
-    [phone]: { display: 'none' },
-  },
+  '@media': { [motionOk]: { transition: `transform 200ms ${easeOut}` } },
+  '@container': { [stacked]: { display: 'none' } },
   selectors: { '[data-state="open"] > &': { transform: 'rotate(180deg)' } },
 });
 
@@ -308,10 +314,20 @@ export const stamp = recipe({
         borderColor: vars.color.plateInk2,
         color: vars.color.plateInk2,
       },
+      pin: {
+        fontSize: 12,
+        padding: '1px 5px',
+        borderWidth: 1.5,
+        borderColor: vars.color.pinInk,
+        color: vars.color.pinInk,
+        '@media': { [phone]: { fontSize: 12, padding: '1px 4px' } },
+      },
     },
   },
   compoundVariants: [
     { variants: { confidence: 'high', tone: 'plate' }, style: { background: vars.color.plateInk2, color: vars.color.plate } },
+    { variants: { confidence: 'high', tone: 'pin' }, style: { background: vars.color.pinInk, color: vars.color.pinBg } },
+    { variants: { confidence: 'low', tone: 'pin' }, style: { borderColor: vars.color.pinInk, color: vars.color.pinInk } },
   ],
   defaultVariants: { confidence: 'medium', tone: 'slat' },
 });

@@ -13,10 +13,17 @@ const anchorFor = (slat: RankedSlat, anchors: ReadonlyArray<MuscleAnchor>): Musc
   return visible.find((a) => a.side === Side.Outside) ?? visible[0];
 };
 
-/** Working slats that have a visible anchor, ready for layout. */
-export const pinInputs = (ranked: ReadonlyArray<RankedSlat>, anchors: ReadonlyArray<MuscleAnchor>): ReadonlyArray<PinInput> =>
+/** Working slats that have a visible anchor, ready for layout, with any measured label heights. */
+export const pinInputs = (
+  ranked: ReadonlyArray<RankedSlat>,
+  anchors: ReadonlyArray<MuscleAnchor>,
+  heights: ReadonlyMap<string, number> = new Map(),
+): ReadonlyArray<PinInput> =>
   ranked.flatMap((slat, rank) => {
     if (slat.level <= 0) return [];
     const anchor = anchorFor(slat, anchors);
-    return anchor === undefined ? [] : [{ key: slatKey(slat), x: anchor.x, y: anchor.y, priority: ranked.length - rank }];
+    if (anchor === undefined) return [];
+    const key = slatKey(slat);
+    const height = heights.get(key);
+    return [{ key, x: anchor.x, y: anchor.y, priority: ranked.length - rank, ...(height === undefined ? {} : { height }) }];
   });

@@ -1,5 +1,5 @@
-import { CircleGeometry, DirectionalLight, HemisphereLight, Matrix4, Mesh, MeshStandardNodeMaterial, PerspectiveCamera, RenderPipeline, Scene, WebGPURenderer } from 'three/webgpu';
-import { emissive, float, length, luminance, max, mrt, output, pass, positionLocal, smoothstep, vec4 } from 'three/tsl';
+import { CircleGeometry, Color, DirectionalLight, HemisphereLight, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, RenderPipeline, Scene, WebGPURenderer } from 'three/webgpu';
+import { color, emissive, float, length, luminance, max, mrt, output, pass, positionLocal, smoothstep, uniform, vec2, vec4 } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import type { MuscleLevel } from '../content/activation';
 import { bestAnchors, sameAnchors } from './anchor-projection';
@@ -37,10 +37,14 @@ export interface Viewer {
   readonly figure: FigureKind;
   /** Fades the muscles to show the skeleton; the capsule figure ignores it. */
   readonly setSkeleton: (on: boolean) => void;
+  /** CSS colour of the ground. */
+  readonly setGround: (css: string) => void;
   readonly dispose: () => void;
 }
 
-const GROUND_RADIUS = 1.1;
+/** The ground fades out between these radii, so the horizon follows the camera. */
+const GROUND_SOLID = 1.6;
+const GROUND_RADIUS = 6.5;
 
 export const createViewer = async (
   canvas: HTMLCanvasElement,
@@ -58,12 +62,23 @@ export const createViewer = async (
   sun.position.set(2, 4, 3);
   scene.add(sun);
 
-  // A small patch of snow that fades into the background instead of a hard disc.
-  const groundMaterial = new MeshStandardNodeMaterial({ color: 0xc9d3de, roughness: 1, transparent: true, depthWrite: false });
-  groundMaterial.opacityNode = smoothstep(float(GROUND_RADIUS), float(GROUND_RADIUS * 0.35), length(positionLocal.xz)).mul(0.55);
-  const ground = new Mesh(new CircleGeometry(GROUND_RADIUS, 48).rotateX(-Math.PI / 2), groundMaterial);
-  ground.position.y = -0.001;
+  // Unlit snow at y = 0 in the page's own colour, fading into the field with distance.
+  const groundColour = uniform(new Color(0xe4ebe7));
+  const groundMaterial = new MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
+  groundMaterial.colorNode = groundColour;
+  groundMaterial.opacityNode = smoothstep(float(GROUND_RADIUS), float(GROUND_SOLID), length(positionLocal.xz));
+  const ground = new Mesh(new CircleGeometry(GROUND_RADIUS, 96).rotateX(-Math.PI / 2), groundMaterial);
+  ground.position.y = -0.002;
   scene.add(ground);
+
+  // A soft contact shadow along the skis.
+  const shadowMaterial = new MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
+  shadowMaterial.colorNode = color(0x050c0a);
+  shadowMaterial.opacityNode = smoothstep(float(1), float(0.15), length(positionLocal.xz.div(vec2(0.42, 1.0)))).mul(0.6);
+  const contact = new Mesh(new PlaneGeometry(0.84, 2).rotateX(-Math.PI / 2), shadowMaterial);
+  contact.position.y = -0.001;
+  contact.renderOrder = 1;
+  scene.add(contact);
 
   const table = makeSlotTable(muscles);
   const loadAnatomy = async (): Promise<Figure | null> => {
@@ -101,7 +116,7 @@ export const createViewer = async (
     pipeline = new RenderPipeline(renderer);
     const scenePass = pass(scene, camera);
     scenePass.setMRT(mrt({ output, emissive }));
-    const glow = bloom(scenePass.getTextureNode('emissive'), 0.9, 0.4, 0);
+    const glow = bloom(scenePass.getTextureNode('emissive'), 1.25, 0.5, 0);
     const colour = scenePass.getTextureNode('output');
     // Keep the canvas transparent around the figure, but let the glow spill past its edge.
     pipeline.outputNode = vec4(colour.rgb.add(glow.rgb), max(colour.a, luminance(glow.rgb)));
@@ -164,6 +179,9 @@ export const createViewer = async (
   return {
     figure: anatomy ? FigureKind.Anatomy : FigureKind.Capsule,
     setSkeleton: (on) => figure.setSkeleton?.(on),
+    setGround: (css) => {
+      groundColour.value.set(css);
+    },
     dispose: () => {
       void renderer.setAnimationLoop(null);
       observer.disconnect();
@@ -173,8 +191,10 @@ export const createViewer = async (
       canvas.removeEventListener('pointercancel', onUp);
       figure.dispose();
       pipeline?.dispose();
-      ground.geometry.dispose();
-      ground.material.dispose();
+      for (const m of [ground, contact]) {
+        m.geometry.dispose();
+        m.material.dispose();
+      }
       void renderer.dispose();
     },
   };

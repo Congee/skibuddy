@@ -35,7 +35,7 @@ export const Tag = (props: {
   );
 };
 
-export const Stamp = (props: { readonly confidence: Confidence; readonly tone?: 'slat' | 'plate' }): JSX.Element => (
+export const Stamp = (props: { readonly confidence: Confidence; readonly tone?: 'slat' | 'plate' | 'pin' }): JSX.Element => (
   <span class={stamp({ confidence: props.confidence, tone: props.tone ?? 'slat' })}>
     {CONFIDENCE_WORDS[props.confidence]}
   </span>

@@ -61,6 +61,28 @@ describe('layoutPins', () => {
     assert.strictEqual(placed.filter((p) => p.column === Column.Right).length, 2);
   });
 
+  it('stacks measured labels by their own heights', () => {
+    const tall = (key: string, y: number): PinInput => ({ ...pin(key, 100, y), height: 64 });
+    const placed = layoutPins([tall('a', 200), pin('b', 100, 205), tall('c', 210), tall('d', 215)], box);
+    assert.deepStrictEqual(placed.map((p) => [p.key, p.height]).toSorted(), [['a', 64], ['b', 30], ['c', 64], ['d', 64]]);
+    for (const column of [Column.Left, Column.Right]) {
+      const sorted = placed.filter((p) => p.column === column).toSorted((a, b) => a.y - b.y);
+      sorted.forEach((p, i) => {
+        const next = sorted[i + 1];
+        if (next !== undefined) assert.isAtLeast(next.y, p.y + p.height + box.gap);
+      });
+    }
+  });
+
+  it('fits a column by measured heights, not the estimate', () => {
+    const tight: PinBox = { ...box, height: 200 };
+    // Two 80px labels fill a column of 180px usable height.
+    const placed = layoutPins([1, 2, 3, 4, 5].map((i): PinInput => ({ key: `p${i}`, x: 100, y: 50, priority: i, height: 80 })), tight);
+    assert.strictEqual(placed.length, 4);
+    assert.isUndefined(placed.find((p) => p.key === 'p1'));
+    for (const p of placed) assert.isAtMost(p.y + p.height, 190);
+  });
+
   it('honours maxPins by priority', () => {
     const placed = layoutPins([pin('a', 1, 1, 1), pin('b', 1, 1, 3), pin('c', 1, 1, 2)], { ...box, maxPins: 2 });
     assert.deepStrictEqual(placed.map((p) => p.key).toSorted(), ['b', 'c']);
@@ -89,6 +111,13 @@ describe('pinInputs', () => {
     const anchors = [anchor('quads', 'outside'), anchor('calf', 'outside'), anchor('core', 'inside'), anchor('idle', 'outside'), anchor('hidden', 'outside', false)];
     const keys = pinInputs(ranked, anchors).map((p) => p.key);
     assert.deepStrictEqual(keys, ['quads:outside', 'core:both']);
+  });
+
+  it('carries measured label heights', () => {
+    const ranked = rankSlats([act('a', 'outside', 2), act('b', 'outside', 2)], 'shaping');
+    const inputs = pinInputs(ranked, [anchor('a', 'outside'), anchor('b', 'outside')], new Map([['a:outside', 52]]));
+    assert.strictEqual(inputs.find((p) => p.key === 'a:outside')?.height, 52);
+    assert.isUndefined(inputs.find((p) => p.key === 'b:outside')?.height);
   });
 
   it('gives higher-ranked slats higher priority', () => {

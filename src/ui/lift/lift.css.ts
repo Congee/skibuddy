@@ -52,18 +52,20 @@ export const range = style({ height: 4, marginTop: -1, background: vars.color.l2
 
 export const tower = style({
   position: 'absolute',
-  top: 2,
-  width: 3,
-  height: 18,
-  marginLeft: -1.5,
-  background: vars.color.ink,
+  top: 1,
+  width: 18,
+  height: 32,
+  marginLeft: -9,
+  overflow: 'visible',
   pointerEvents: 'none',
 });
 
+export const towerInk = style({ fill: vars.color.ink, stroke: vars.color.ink, strokeLinecap: 'square' });
+
 export const thumb = style({
   top: 0,
-  width: 28,
-  height: 44,
+  width: 32,
+  height: 48,
   outline: 'none',
   cursor: 'grab',
   selectors: {
@@ -72,23 +74,31 @@ export const thumb = style({
   },
 });
 
-export const chair = style({ display: 'block', width: 28, height: 44, overflow: 'visible' });
-export const chairInk = style({ fill: vars.color.ink, stroke: vars.color.ink });
-export const chairSeat = style({ fill: vars.color.l2, stroke: vars.color.ink, strokeWidth: 1.5 });
+export const chair = style({ display: 'block', width: 32, height: 48, overflow: 'visible' });
+export const chairInk = style({ fill: vars.color.ink });
+export const chairLine = style({ fill: 'none', stroke: vars.color.ink, strokeLinejoin: 'round' });
+export const chairSeat = style({ fill: vars.color.l2, stroke: vars.color.ink, strokeWidth: 1.75, strokeLinejoin: 'round' });
 
 export const below = style({
+  gridColumn: 2,
   display: 'flex',
+  flexWrap: 'wrap',
   alignItems: 'center',
-  gap: 12,
-  marginTop: -6,
+  gap: '0 12px',
+  '@media': { [phone]: { gridColumn: '1 / -1' } },
 });
 
 export const stops = style({
-  flex: 1,
+  flex: '1 1 300px',
   '@media': { [phone]: { display: 'none' } },
 });
 
-export const pinsToggle = style({ marginLeft: 'auto', flex: 'none' });
+export const toggles = style({
+  display: 'flex',
+  gap: 16,
+  marginLeft: 'auto',
+  '@media': { [phone]: { width: '100%', justifyContent: 'space-between', gap: 8 } },
+});
 
 export const phoneTabs = style({
   display: 'none',

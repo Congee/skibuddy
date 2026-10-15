@@ -41,6 +41,12 @@ export const Viewer = (props: {
   readonly onAnchors?: AnchorsListener;
   /** Fades the muscles to show the skeleton (anatomy figure only). */
   readonly skeleton?: boolean;
+  /** CSS colour of the ground under the figure. */
+  readonly ground?: string;
+  /** Caption under the figure; the default names the outside ski. */
+  readonly caption?: JSX.Element;
+  readonly onReady?: () => void;
+  readonly onError?: (message: string) => void;
   /** Replaces the built-in error state when the 3D view cannot start. */
   readonly fallback?: (message: string) => JSX.Element;
 }): JSX.Element => {
@@ -84,9 +90,15 @@ export const Viewer = (props: {
           }
           viewer = v;
           v.setSkeleton(props.skeleton ?? SKELETON);
+          if (props.ground !== undefined) v.setGround(props.ground);
           setShown(v.figure);
+          props.onReady?.();
         },
-        (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
+        (e: unknown) => {
+          const message = e instanceof Error ? e.message : String(e);
+          setError(message);
+          props.onError?.(message);
+        },
       );
   });
 
@@ -100,18 +112,19 @@ export const Viewer = (props: {
     if (shown() !== null) viewer?.setSkeleton(on);
   });
 
+  createEffect(() => {
+    const colour = props.ground;
+    if (shown() !== null && colour !== undefined) viewer?.setGround(colour);
+  });
+
   return (
     <figure class="viewer" ref={(el) => (root = el)} style={{ position: 'relative' }}>
       <canvas ref={(el) => (canvas = el)} aria-label="Skier figure with working muscles highlighted; drag to rotate" />
       <Show when={error()}>{(message) => props.fallback?.(message()) ?? <ViewerError message={message()} />}</Show>
-      <Show
-        when={shown() === 'anatomy'}
-        fallback={<figcaption class="muted">Placeholder figure. Outside ski = skier's right.</figcaption>}
-      >
-        <figcaption class="muted">
-          Outside ski = skier's right. Anatomy: Z-Anatomy (CC BY-SA 4.0), from BodyParts3D, © The Database Center for Life Science (CC BY-SA 2.1 JP).
-        </figcaption>
-      </Show>
+      <figcaption class="muted">
+        {shown() === 'capsule' ? 'Placeholder figure. ' : ''}
+        {props.caption ?? "Outside ski = skier's right."}
+      </figcaption>
     </figure>
   );
 };

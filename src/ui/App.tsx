@@ -10,6 +10,7 @@ import * as s from './app.css';
 import { Select } from './components/Select';
 import { DrillView } from './Drill';
 import { describeFailure } from './failure';
+import { visuallyHidden } from './theme/global.css';
 
 const DrillPicker = (props: { readonly content: Content }): JSX.Element => {
   const [drillId, setDrillId] = useAtom(() => drillIdAtom);
@@ -41,6 +42,13 @@ const Failure = (props: { readonly title: string; readonly body: string; readonl
   </div>
 );
 
+const Ext = (props: { readonly href: string; readonly children: JSX.Element }): JSX.Element => (
+  <a href={props.href} target="_blank" rel="noopener noreferrer">
+    {props.children}
+    <span class={visuallyHidden}> (opens in a new tab)</span>
+  </a>
+);
+
 export const App = (): JSX.Element => {
   const result = useAtomValue(() => contentAtom);
   const content = (): Content | undefined => {
@@ -64,7 +72,13 @@ export const App = (): JSX.Element => {
         onSuccess: (success) => <DrillView content={success.value} />,
       })}
       <footer class={s.foot}>
-        Not medical advice. Not affiliated with or endorsed by any instructor association. Code MIT, content CC BY-SA 4.0.
+        <p>Not medical advice. Not affiliated with or endorsed by any instructor association. Code MIT, content CC BY-SA 4.0.</p>
+        <p id="credits">
+          Anatomy: <Ext href="https://www.z-anatomy.com/">Z-Anatomy</Ext> (
+          <Ext href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</Ext>), from{' '}
+          <Ext href="https://lifesciencedb.jp/bp3d/">BodyParts3D</Ext>, © The Database Center for Life Science (
+          <Ext href="https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en">CC BY-SA 2.1 JP</Ext>)
+        </p>
       </footer>
     </>
   );

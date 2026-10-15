@@ -5,6 +5,7 @@ import { Confidence, PHASES, Phase } from '../../content/schema';
 import type { AssociationTask, Content, Drill, Movement, Source, SourceId } from '../../content/schema';
 import { slotClasses } from '../components/slot-recipe';
 import { ArrowOut, ChevronDown } from '../icons';
+import { PHONE, createMedia } from '../media';
 import { easeOut, visuallyHidden } from '../theme/global.css';
 import * as s from './board.css';
 import { LEVEL_WORDS, Stamp, Tag } from './marks';
@@ -110,6 +111,16 @@ export const Board = (props: {
   );
 
   const unreviewed = (): boolean => props.drill.reviewedBy.length === 0 && props.movement.reviewedBy.length === 0;
+  // On a phone the summary follows the slats, so a slat reaches the first screen.
+  const compact = createMedia(PHONE);
+  const about = (): JSX.Element => (
+    <>
+      <p class={s.summary}>{props.drill.summary}</p>
+      <Show when={props.tasks.length > 0}>
+        <AssociationNames tasks={props.tasks} />
+      </Show>
+    </>
+  );
 
   return (
     <section class={s.frame} aria-labelledby="drill-heading">
@@ -120,10 +131,7 @@ export const Board = (props: {
         <p class={s.meta}>
           <span>Terrain: {props.drill.terrain}</span>
         </p>
-        <p class={s.summary}>{props.drill.summary}</p>
-        <Show when={props.tasks.length > 0}>
-          <AssociationNames tasks={props.tasks} />
-        </Show>
+        <Show when={!compact()}>{about()}</Show>
       </div>
 
       <div class={s.heads}>
@@ -160,6 +168,10 @@ export const Board = (props: {
           )}
         </For>
       </ol>
+
+      <Show when={compact()}>
+        <div class={`${s.plate} ${s.plateAfter}`}>{about()}</div>
+      </Show>
 
       <div class={s.legend}>
         <For each={LEVEL_WORDS}>

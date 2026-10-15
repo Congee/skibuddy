@@ -89,5 +89,7 @@ export const foot = style({
   borderTop: `1px solid ${vars.color.rule}`,
   fontSize: 14,
   color: vars.color.ink3,
+  display: 'grid',
+  gap: 6,
   '@media': { [phone]: { padding: 16 } },
 });

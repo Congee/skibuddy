@@ -1,5 +1,5 @@
-import { AnimationMixer, DoubleSide, MeshStandardNodeMaterial, Uint32BufferAttribute, Vector3, Vector4 } from 'three/webgpu';
-import type { AnimationAction, Object3D, Scene, SkinnedMesh } from 'three/webgpu';
+import { AnimationMixer, DoubleSide, MeshStandardNodeMaterial, SkinnedMesh, Uint32BufferAttribute, Vector3, Vector4 } from 'three/webgpu';
+import type { AnimationAction, Object3D, Scene } from 'three/webgpu';
 import {
   attribute,
   color,
@@ -49,15 +49,16 @@ type Uniform = ReturnType<typeof uniform<'float'>>;
 
 /**
  * Natural fibred red muscle at rest. Working muscles take the board's level
- * colour, glow (the bloom pass picks up emissive) and gain a fresnel rim, so the
- * level also reads from brightness and outline, not hue alone. `skeleton` fades
+ * colour and glow: emissive lift and a fresnel rim both grow with level, so the
+ * level reads from brightness and halo width, not hue alone. `skeleton` fades
  * muscles to a dark translucent ghost, leaving working muscles partly visible.
  */
 const muscleMaterial = (levels: Array<number>, skeleton: Uniform, tendon: boolean): MeshStandardNodeMaterial => {
   const m = new MeshStandardNodeMaterial({ roughness: tendon ? 0.35 : 0.5 });
   const level = varying(uniformArray<'float'>(levels, 'float').element(attribute('muscleSlot', 'uint')));
   const facing = saturate(dot(normalView, positionViewDirection));
-  const rim = pow(float(1).sub(facing), 2.5);
+  // Higher levels get a wider rim.
+  const rim = pow(float(1).sub(facing), mix(float(3.2), float(1.4), level));
 
   const phase = uv().x.mul((2 * Math.PI) / FIBRE_SPACING).add(sin(uv().y.mul(40)).mul(1.5));
   // Fade the stripes out once they get close to a pixel apart, before they alias.
@@ -69,8 +70,12 @@ const muscleMaterial = (levels: Array<number>, skeleton: Uniform, tendon: boolea
   const lit = mix(base, hot, on.mul(tendon ? 0.3 : 0.75));
   const shaded = lit.mul(float(1).sub(fibre.mul(tendon ? 0.06 : 0.22)));
   m.colorNode = mix(shaded, color(GHOST), skeleton.mul(float(1).sub(on)));
-  const glow = hot.mul(pow(level, 1.3).mul(tendon ? 0.25 : 0.8)).mul(float(0.75).add(fibre.mul(0.25)));
-  m.emissiveNode = glow.add(hot.mul(rim.mul(on).mul(1.4))).add(color(RIM_COOL).mul(rim.mul(0.06)));
+  // level is 0..1: level 1 is a subtle lift, level 3 a strong glow.
+  const lift = pow(level, 1.4).mul(tendon ? 0.3 : 1.1);
+  const glow = hot.mul(lift).mul(float(0.75).add(fibre.mul(0.25)));
+  const rimGain = on.mul(float(0.4).add(pow(level, 2).mul(tendon ? 0.8 : 3.4)));
+  const rimColour = mix(hot, color(0xffffff), 0.3);
+  m.emissiveNode = glow.add(rimColour.mul(rim.mul(rimGain))).add(color(RIM_COOL).mul(rim.mul(0.06)));
   m.opacityNode = mix(float(1), saturate(rim.mul(0.35).add(0.12).add(level.mul(0.55))), skeleton);
   return m;
 };
@@ -118,8 +123,7 @@ const nodeOf = (object: Object3D): { readonly node: AnatomyNode; readonly owner:
 const isAnchor = (value: unknown): value is readonly [number, number, number] =>
   Array.isArray(value) && value.length === 3 && value.every((x) => typeof x === 'number');
 
-// GLTFLoader imports 'three', which Vite's dev pre-bundle can split from 'three/webgpu', so instanceof fails.
-const isSkinned = (o: Object3D): o is SkinnedMesh => (o as Partial<SkinnedMesh>).isSkinnedMesh === true;
+const isSkinned = (o: Object3D): o is SkinnedMesh => o instanceof SkinnedMesh;
 
 export interface AnatomyFigure extends Figure {
   readonly setSkeleton: (on: boolean) => void;
