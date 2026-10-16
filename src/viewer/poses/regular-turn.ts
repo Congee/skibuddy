@@ -4,8 +4,6 @@ import type { TurnScenarios } from '../../physics/turn';
 import type { PoseDefinition, PoseKey } from '../pose-definition';
 
 const DEG = Math.PI / 180;
-// 5 deg of shin moves the mass about 7.6 cm with the other joints held (lemaster-2010 p58).
-const SHIN_TRAVEL = 0.076 / 5;
 
 /** The kinds of skiing a regular two-footed turn is shown for; each is a pose id. */
 export const RegularTurn = {
@@ -36,9 +34,7 @@ export interface TurnStyle {
   readonly counterCurve: PhaseValues;
   /** Trunk bent toward the outside ski at shaping. */
   readonly bend: number;
-  /** Outside ankle dorsiflexion at shaping. */
-  readonly dorsiflexion: number;
-  /** Degrees off `dorsiflexion` at each phase key: shin into the tongue to load the tip, opened to use the tail. */
+  /** Ankle dorsiflexion at each phase key: closed draws the feet back, opened pushes them ahead (lemaster-2010 p81). */
   readonly ankle: PhaseValues;
   /** Low back flexed on the pelvis at moderate intensity; racers measure 11-27 deg (sporri-2016). */
   readonly spineFlex: number;
@@ -46,8 +42,8 @@ export interface TurnStyle {
   readonly narrow: number;
   /** Both femurs turned inward, so the knees meet while the boots stay apart. */
   readonly kneesIn: number;
-  /** Mass ahead of the outside mid-foot at shaping, metres. */
-  readonly comAhead: number;
+  /** Mass ahead of the outside mid-foot at each phase key, metres; 10 deg of ankle moves it about 15 cm (lemaster-2010 p81). */
+  readonly comAhead: PhaseValues;
   /** Share of the peak angulation already in at the initiation key: feet and knees tip the new edges early. */
   readonly early: number;
   /** A pole plant at the transition. */
@@ -106,12 +102,12 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 2,
     counterCurve: FOLLOW,
     bend: 2,
-    dorsiflexion: 13,
-    ankle: [0, 1, 0, 0, -1],
+    // Forward at initiation, slightly back while steering (debertin-2022); skidded turns lean back less than carving.
+    ankle: [13.5, 15.8, 15, 14, 13.2],
     spineFlex: 20,
     narrow: 0,
     kneesIn: 0,
-    comAhead: 0.05,
+    comAhead: [0.05, 0.1, 0.07, 0.05, 0.04],
     early: 0.4,
     polePlant: false,
     poleTrim: 0,
@@ -128,12 +124,13 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 1,
     counterCurve: FOLLOW,
     bend: 6,
-    dorsiflexion: 14,
-    ankle: [-1, 4, 2, 0, -2],
+    // Ankles close and the mass moves forward at initiation, then the feet slide ahead to the finish (debertin-2022,
+    // falda-buscaiot-2017, lemaster-2010 p79). GS ankles reach 18-27 deg (heinrich-2022); past 19 the knee passes 50.
+    ankle: [13, 19, 16, 15, 12],
     spineFlex: 21,
     narrow: 0,
     kneesIn: 0,
-    comAhead: 0.08,
+    comAhead: [0.05, 0.13, 0.08, 0.05, 0.02],
     early: 0.65,
     polePlant: false,
     poleTrim: 0,
@@ -149,12 +146,12 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 5,
     counterCurve: SWIVEL,
     bend: 5,
-    dorsiflexion: 15,
-    ankle: [0, 3, 2, 0, -2],
+    // Feet drawn back through the transition, forward into the new turn, centred by the edge set (lemaster-2010 p86).
+    ankle: [19, 23, 18, 16, 16],
     spineFlex: 22,
     narrow: 0,
     kneesIn: 0,
-    comAhead: 0.06,
+    comAhead: [0.06, 0.12, 0.09, 0.06, 0.04],
     early: 0.6,
     polePlant: true,
     poleTrim: 0,
@@ -167,7 +164,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
       dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22 },
     },
     outsideShare: [0.6, 0.75],
-    hip: [36, 75],
+    // Elite mogul skiers fold the hip much deeper over the bump than the knee (arndt-1992 p85).
+    hip: [35, 85],
     hipStep: 5,
     angulation: 6,
     // Zipper line about 2 m wide.
@@ -175,12 +173,13 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 0,
     counterCurve: HEADING,
     bend: 3,
-    dorsiflexion: 17,
-    ankle: [4, 2, -1, -1, 2],
+    // Crest at the transition: ankles, knees and hips fold and the feet are pulled back; into the trough the legs
+    // extend and the tips are pushed down. Elite ankles span about 35 deg (arndt-1992 p67); half that recreationally, inferred.
+    ankle: [28, 22, 12, 12, 20],
     spineFlex: 24,
     narrow: 0,
     kneesIn: 0,
-    comAhead: 0.05,
+    comAhead: [0.12, 0.08, 0.01, 0.01, 0.06],
     early: 0.4,
     polePlant: true,
     // Shorter for quick plants on the bumps' backs.
@@ -202,12 +201,12 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 6,
     counterCurve: SWIVEL,
     bend: 9,
-    dorsiflexion: 15,
-    ankle: [-1, 4, 2, 0, -2],
+    // Forward relative to the feet as the slope steepens (lemaster-2010 pp83-84), low and over the feet (p200); values inferred.
+    ankle: [18, 24, 19, 17, 17],
     spineFlex: 24,
     narrow: 0,
     kneesIn: 0,
-    comAhead: 0.06,
+    comAhead: [0.06, 0.12, 0.09, 0.07, 0.05],
     early: 0.6,
     polePlant: true,
     poleTrim: 0,
@@ -228,12 +227,12 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 3,
     counterCurve: SWIVEL,
     bend: 2,
-    dorsiflexion: 13,
-    ankle: [0, 1, 0, -1, -1],
+    // Onto the balls of the feet into the turn, feet slightly forward near the bottom, never sitting back (lemaster-2010 pp193-199).
+    ankle: [15, 19, 16, 14, 13],
     spineFlex: 19,
     narrow: 2,
     kneesIn: 0,
-    comAhead: 0.04,
+    comAhead: [0.05, 0.1, 0.08, 0.05, 0.03],
     early: 0.5,
     polePlant: true,
     poleTrim: 0,
@@ -261,12 +260,12 @@ export const CLOSED_STANCE: TurnStyle = {
   twist: 0,
   counterCurve: HEADING,
   bend: 1,
-  dorsiflexion: 15,
-  ankle: [0, 3, 2, 0, -2],
+  // The moguls' pattern, damped: closed ankles keep the mass over the feet in the deep stance; inferred.
+  ankle: [25, 23, 22, 21, 24],
   spineFlex: 22,
   narrow: 7,
   kneesIn: 10,
-  comAhead: 0.06,
+  comAhead: [0.11, 0.11, 0.1, 0.09, 0.1],
   early: 0.6,
   polePlant: true,
   poleTrim: 0,
@@ -282,17 +281,16 @@ interface Phase {
   readonly t: number;
   readonly share: number | null;
   readonly hip: number;
-  readonly ahead: number;
 }
 
 // Flexed through the transition, longest at shaping, flexing again through the finish
 // (lemaster-2010 pp40-42); edge, counter and angulation build to late shaping.
 const PHASES: ReadonlyArray<Phase> = [
-  { t: 0, share: 0, hip: 1, ahead: 0.5 },
-  { t: 1 / 6, share: null, hip: 0.45, ahead: 1 },
-  { t: 1 / 2, share: 0.9, hip: 0, ahead: 1 },
-  { t: 0.65, share: 1, hip: 0.08, ahead: 0.9 },
-  { t: 5 / 6, share: 0.4, hip: 0.55, ahead: 0.6 },
+  { t: 0, share: 0, hip: 1 },
+  { t: 1 / 6, share: null, hip: 0.45 },
+  { t: 1 / 2, share: 0.9, hip: 0 },
+  { t: 0.65, share: 1, hip: 0.08 },
+  { t: 5 / 6, share: 0.4, hip: 0.55 },
 ];
 
 /** The kind's two-footed turn as a pose definition: both skis on the snow, the inside leg shorter. */
@@ -303,8 +301,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
   return {
     keys: PHASES.map((p, i): PoseKey => {
       const share = p.share ?? style.early;
-      const offset = style.ankle[i] ?? 0;
-      const ankle = (style.dorsiflexion + offset) * DEG;
+      const ankle = (style.ankle[i] ?? 0) * DEG;
       return {
         t: p.t,
         angulation: share,
@@ -321,7 +318,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
         protraction: 6 * DEG,
         elevation: 0,
         insideTailLift: 0,
-        comAhead: style.comAhead * p.ahead + SHIN_TRAVEL * offset,
+        comAhead: style.comAhead[i] ?? 0,
       };
     }),
     constraints: {

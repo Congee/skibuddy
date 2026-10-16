@@ -58,6 +58,31 @@ describe('regular turn', () => {
     assert.isAbove(angles(RegularTurn.Moguls, Intensity.Moderate, 0).knee.right, angles(RegularTurn.Carving, Intensity.Moderate, 0).knee.right + 15);
   });
 
+  it('moves forward at initiation and back through the finish, most in moguls', () => {
+    const range = (kind: RegularTurn, f: (a: ReturnType<typeof poseAngles>) => number): number => {
+      const v = Array.from({ length: 24 }, (_, k) => f(angles(kind, Intensity.Moderate, k / 24)));
+      return Math.max(...v) - Math.min(...v);
+    };
+    for (const kind of [RegularTurn.Cruising, RegularTurn.Carving]) {
+      const com = (t: number): number => angles(kind, Intensity.Moderate, t).comAhead;
+      assert.isAbove(com(1 / 6), com(1 / 2) + 0.02, kind);
+      assert.isAbove(com(1 / 2), com(5 / 6), kind);
+    }
+    // Crest at the transition: ankles closed, feet pulled back; trough at the fall line: legs long, tips down.
+    const mogul = (t: number): ReturnType<typeof poseAngles> => angles(RegularTurn.Moguls, Intensity.Moderate, t);
+    assert.isAbove(mogul(0).dorsiflexion.right, mogul(1 / 2).dorsiflexion.right + 12);
+    assert.isAbove(mogul(0).comAhead, mogul(1 / 2).comAhead + 0.08);
+    assert.isAbove(mogul(0).knee.right, mogul(1 / 2).knee.right + 25);
+    assert.isAbove(range(RegularTurn.Moguls, (a) => a.dorsiflexion.right), 2 * range(RegularTurn.Carving, (a) => a.dorsiflexion.right));
+  });
+
+  it('keeps the closed-stance hips near the boots in the deep stance', () => {
+    for (let k = 0; k < 24; k++) {
+      const a = poseAngles(samplePose(poseTable('closed-stance-short-turns', Intensity.Moderate), k / 24));
+      assert.isAbove(a.hipsAhead, -0.1, `${k}/24`);
+    }
+  });
+
   it('keeps both skis on the snow, the inside leg more flexed mid-turn', () => {
     for (const kind of KINDS) {
       const a = angles(kind, Intensity.Moderate, 1 / 2);
