@@ -1,5 +1,6 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
+import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS } from '../src/viewer/poses';
 import { ROUND, ROUND_PHASE } from '../src/viewer/poses/regular-turn';
 import { heightAt, MogulLine, pathAt, surfaceFor } from '../src/viewer/surface';
@@ -63,5 +64,11 @@ describe('round line', () => {
     assert.isAtLeast(release - SET, 0.1 - 1e-9);
     assert.isAtMost(release - SET, 0.15 + 1e-9);
     for (const intensity of INTENSITIES) assert.isAtLeast(fraction(intensity, release), 0.7, intensity);
+  });
+
+  it('plants the downhill pole: the outside arm of the finishing turn, the inside of the new one', () => {
+    const at = ROUND.poleTouchAt ?? 0;
+    // Negative is the outside pole touching for the next turn.
+    for (const intensity of INTENSITIES) assert.isBelow(samplePose(poseTable(ROUND_POSE, intensity), at).poleTouch, -0.9, intensity);
   });
 });
