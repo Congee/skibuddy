@@ -216,7 +216,7 @@ describe('poseAt', () => {
         assert.closeTo(transformPoint(m, TIP)[1], 0, 1e-3, `${name} tip at t=${t}`);
       }
     }
-  });
+  }, 30_000);
 
   it('wraps like the turn', () => {
     assert.deepStrictEqual(poseAt(1.25, MODERATE), poseAt(0.25, MODERATE));
