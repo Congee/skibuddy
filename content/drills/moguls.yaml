@@ -9,7 +9,7 @@ terrain: A steep, even mogul field; FIS courses run about 25° at FIS level and 
 scenarios:
   gentle: { speed_mps: 6, radius_m: 5, com_radius_m: 20, slope_deg: 18, braking_share: 0.5 }
   moderate: { speed_mps: 8, radius_m: 5, com_radius_m: 20, slope_deg: 25, braking_share: 0.5 }
-  dynamic: { speed_mps: 10, radius_m: 5.5, com_radius_m: 22, slope_deg: 28, braking_share: 0.5 }
+  dynamic: { speed_mps: 10, radius_m: 5, com_radius_m: 20, slope_deg: 28, braking_share: 0.5 }
 equipment: Efforts assume recreational skis of about 12-15 m sidecut and boots with about 15° of cuff lean. Competitors use stiff, narrow mogul skis with little sidecut and much shorter poles (fis-moguls-101-2026); a softer boot cuff lets the ankles and knees flex further and keeps the mass further forward (kersting-2011).
 cautions:
   - "Common mistake: turning the skis across the hill. Past about 45° the tails slide out of the tips' track and the side of the ski hits the next mogul (fis-freestyle-judging-2025 p28)."

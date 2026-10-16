@@ -41,8 +41,8 @@ describe('surfaceFor', () => {
     assert.strictEqual(groomed.kind, SurfaceKind.Groomed);
   });
 
-  it('grows mogul relief and powder depth with intensity', () => {
-    const relief = INTENSITIES.map((i) => surfaceFor(RegularTurn.Moguls, i).relief);
+  it('grows the tops field and powder depth with intensity', () => {
+    const relief = INTENSITIES.map((i) => surfaceFor(TOPS_POSE, i).relief);
     const depth = INTENSITIES.map((i) => surfaceFor(RegularTurn.Powder, i).depth);
     for (const xs of [relief, depth]) {
       assert.isAbove(xs[1] ?? 0, xs[0] ?? 0);
@@ -90,14 +90,14 @@ describe('heightAt', () => {
   it('keeps the zipper path in the ruts, clear of every crest', () => {
     for (const i of INTENSITIES) {
       const s = surfaceFor(RegularTurn.Moguls, i);
-      // Crests: the field's local maxima on a grid around the turn.
+      // Crests: the field's local maxima on a grid around the turn, above the rut floor's own high points.
       const step = 0.05;
       const crests: Array<readonly [number, number]> = [];
       for (let x = -2; x <= 2; x += step)
         for (let z = -s.spacing; z <= 2 * s.spacing; z += step) {
           const h = heightAt(s, x, z);
           const around = [-step, 0, step].flatMap((dx) => [-step, 0, step].map((dz) => heightAt(s, x + dx, z + dz)));
-          if (h > s.relief / 4 && around.every((v) => v <= h)) crests.push([x, z]);
+          if (h > s.relief / 2 && around.every((v) => v <= h)) crests.push([x, z]);
         }
       assert.isNotEmpty(crests, i);
       for (let k = 0; k < 48; k++) {
@@ -107,11 +107,51 @@ describe('heightAt', () => {
     }
   });
 
-  it('lowers the zipper snow toward mid-turn and raises it again toward the switch', () => {
-    // The highest snow just past the switch, the lowest near the fall line; times inferred.
+  it('lays one competition course at every intensity, a mogul every 3.5 m along the line', () => {
     for (const i of INTENSITIES) {
       const s = surfaceFor(RegularTurn.Moguls, i);
-      assert.isBelow(s.crest, 0.15, i);
+      close(s.spacing, moguls.spacing, 1e-9);
+      assert.isAbove(s.spacing, 3.4, i);
+      assert.isBelow(s.spacing, 3.6, i);
+      assert.strictEqual(s.relief, 1);
+      for (const [x, z] of POINTS) close(heightAt(s, x, z), heightAt(moguls, x, z), 1e-12);
+    }
+  });
+
+  it('crests the zipper columns either side of the line, alternating sides, a relief over the saddle between them', () => {
+    const s = moguls;
+    // The highest snow within a pitch of a point, by a coarse then fine grid search.
+    const top = (x0: number, z0: number): readonly [number, number, number] => {
+      let best: [number, number, number] = [x0, z0, -Infinity];
+      for (const step of [0.05, 0.002]) {
+        const [cx, cz] = best;
+        for (let i = -30; i <= 30; i++)
+          for (let j = -30; j <= 30; j++) {
+            const x = (step === 0.05 ? x0 : cx) + i * step;
+            const z = (step === 0.05 ? z0 : cz) + j * step;
+            const h = heightAt(s, x, z);
+            if (h > best[2]) best = [x, z, h];
+          }
+      }
+      return best;
+    };
+    const right = top(s.columns / 2, 0.5);
+    const left = top(-s.columns / 2, s.spacing + 0.5);
+    close(right[0], s.columns / 2, 0.01);
+    close(left[0], -s.columns / 2, 0.01);
+    close(left[1] - right[1], s.spacing, 0.01);
+    // Each column repeats every second spacing.
+    close(heightAt(s, right[0], right[1] + 2 * s.spacing), right[2], 1e-9);
+    const saddle = heightAt(s, 0, (right[1] + left[1]) / 2);
+    // The rut's rim grazes the saddle.
+    close(right[2] - saddle, s.relief, 0.1);
+  });
+
+  it('lowers the zipper snow toward mid-turn and raises it again toward the switch', () => {
+    // The highest snow at the switch, over the inner shoulder, the lowest in the bowl mid-turn (fis-freestyle-judging-2025 pp25-28).
+    for (const i of INTENSITIES) {
+      const s = surfaceFor(RegularTurn.Moguls, i);
+      assert.isBelow(Math.min(s.crest, 1 - s.crest), 0.1, i);
       assert.isAbove(s.trough, 0.4, i);
       assert.isBelow(s.trough, 0.6, i);
     }

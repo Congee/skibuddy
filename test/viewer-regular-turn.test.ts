@@ -383,6 +383,7 @@ describe('regular turn', () => {
   it('stands in for a turning drill without its own pose', () => {
     assert.strictEqual(motionFor('stork-turns', true), 'stork-turns');
     assert.strictEqual(motionFor(RegularTurn.Moguls, true), RegularTurn.Moguls);
+    assert.strictEqual(motionFor('moguls', true), RegularTurn.Moguls);
     assert.strictEqual(motionFor('javelin-turns', true), RegularTurn.Cruising);
     assert.isNull(motionFor('hockey-stops', false));
   });

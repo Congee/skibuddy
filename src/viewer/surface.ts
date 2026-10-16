@@ -38,15 +38,30 @@ export interface Surface {
   readonly trough: number;
 }
 
-/** Recreational fields, gentle smaller, within what the legs absorb; competition moguls run 1-1.5 m (arndt-1992 p1); inferred. */
+/** The tops line's recreational fields, gentle smaller, within what the legs absorb; competition moguls run 1-1.5 m (arndt-1992 p1); inferred. */
 const MOGUL_RELIEF: Readonly<Record<Intensity, number>> = { gentle: 0.4, moderate: 0.55, dynamic: 0.7 };
 /** Diagonal neighbours about 3.8 m apart, close to the spacing along the line; inferred. */
 const MOGUL_COLUMNS = 3;
 /**
- * The zipper's field, depths as shares of the relief and places as shares of the spacing: columns a metre either side
- * of the line, crest rows just past each switch, the rut deepest a little past mid-turn; shape inferred.
+ * The zipper's competition course: moguls 3.5 m apart along the line, alternating sides, so each column repeats every
+ * 7 m (kurpiers-2010 p10, abom-mogul-construction), crests 0.8-1.2 m high (kurpiers-2010 p10), the same at every
+ * intensity. Inferred: the 1 m pick over the saddle, the column pitch, the raised-cosine footprint, the four columns
+ * either side of the line (a symmetric strip, as the mirrored next turn needs) and the skied-in rut, flat-floored,
+ * deepest in the bowl at the foot of each face, shallow over the shoulders.
  */
-const ZIPPER = { columns: 2, crestShare: 0.435, rutShare: 0.35, rutWidth: 0.65, crestAt: 1.1, rutAt: 0.6, trackShare: 1.4 } as const;
+const ZIPPER = {
+  height: 1,
+  pitch: 3.4,
+  columns: 4,
+  reach: 3.2,
+  crestAt: 0.26,
+  floor: 0.32,
+  wall: 1,
+  deep: 0.25,
+  shallow: 0.1,
+  rutAt: 0.6,
+  trackShare: 1.4,
+} as const;
 /**
  * Snow over the ski base: 15 cm or less still skis like packed snow, deeper calls for near even weighting
  * (lemaster-2010 p197), which the powder pose uses; depths inferred, boots partly buried.
@@ -106,8 +121,8 @@ export const surfaceFor = (pose: string, intensity: Intensity): Surface => {
     line,
     path,
     spacing: speed * (zs[SAMPLES] ?? 0),
-    columns: line === MogulLine.Zipper ? ZIPPER.columns : MOGUL_COLUMNS,
-    relief: kind === SurfaceKind.Moguls ? MOGUL_RELIEF[intensity] : 0,
+    columns: line === MogulLine.Zipper ? ZIPPER.pitch : MOGUL_COLUMNS,
+    relief: line === MogulLine.Zipper ? ZIPPER.height : kind === SurfaceKind.Moguls ? MOGUL_RELIEF[intensity] : 0,
     depth: kind === SurfaceKind.Powder ? POWDER_DEPTH[intensity] : 0,
     speed,
     crest: 0,
@@ -166,22 +181,55 @@ const zipperSlopes = (s: Surface, x: number, z: number): { readonly dx: number; 
 const trackX = (s: Surface, z: number): number => (-ZIPPER.trackShare * s.path.corridor * Math.sin((Math.PI * z) / s.spacing)) / 2;
 
 /**
- * The zipper field: an egg crate whose columns sit either side of the line, crests alternating side each turn and
- * flat between the columns, with a flat-floored rut along the skis' track whose depth swells once per turn. The floor
- * lies level across the track, so the pressed skis rest on it edge to edge. Reflected in x and moved a spacing down
- * it is unchanged, so the mirrored next turn rides the same snow.
+ * The course's moguls without the rut, unit crests: raised-cosine bumps in a diamond lattice, the columns half a pitch
+ * either side of the line, a column's moguls every second spacing, the next column's offset by one.
+ */
+const bumps = (s: Surface, x: number, z: number): number => {
+  let h = 0;
+  const z0 = z - ZIPPER.crestAt * s.spacing;
+  const first = Math.floor((z0 - ZIPPER.reach) / s.spacing);
+  const last = Math.ceil((z0 + ZIPPER.reach) / s.spacing);
+  for (let m = -ZIPPER.columns / 2; m < ZIPPER.columns / 2; m++)
+    for (let k = first; k <= last; k++) {
+      // Abreast of each switch, on the side the turn before swung toward (fis-freestyle-judging-2025 pp25-28).
+      if ((m + k) % 2 !== 0) continue;
+      const r = Math.hypot(x - (m + 0.5) * ZIPPER.pitch, z0 - k * s.spacing);
+      if (r < ZIPPER.reach) h += Math.cos((Math.PI * r) / (2 * ZIPPER.reach)) ** 2;
+    }
+  return h;
+};
+
+/** Metres per unit crest, so a crest stands the course's height over the saddle between diagonal neighbours. */
+const scales = new Map<number, number>();
+const scaleOf = (s: Surface): number => {
+  let k = scales.get(s.spacing);
+  if (k === undefined) {
+    k = ZIPPER.height / (bumps(s, ZIPPER.pitch / 2, ZIPPER.crestAt * s.spacing) - bumps(s, 0, (0.5 + ZIPPER.crestAt) * s.spacing));
+    scales.set(s.spacing, k);
+  }
+  return k;
+};
+
+/**
+ * The zipper course with a flat-floored rut cut along the skis' track, its depth swelling once per turn. The floor lies
+ * level across the track, so the pressed skis rest on it edge to edge, and never stands proud of the snow beside it.
+ * Reflected in x and moved a spacing down it is unchanged, so the mirrored next turn rides the same snow.
  */
 const zipper = (s: Surface, x: number, z: number): number => {
-  const egg = (ex: number, ez: number): number =>
-    -ZIPPER.crestShare * s.relief * Math.cos((Math.PI * (ez - ZIPPER.crestAt * s.spacing)) / s.spacing) * Math.sin((Math.PI * ex) / s.columns) ** 3;
+  const k = scaleOf(s);
+  const base = k * bumps(s, x, z);
   const off = x - trackX(s, z);
   const e = 1e-4;
   const slope = (trackX(s, z + e) - trackX(s, z - e)) / (2 * e);
   // The nearest point on the track, so the floor is level across it rather than across x.
   const along = z + (off * slope) / (1 + slope * slope);
-  const depth = (ZIPPER.rutShare * s.relief * (1 + Math.cos((2 * Math.PI * (along - ZIPPER.rutAt * s.spacing)) / s.spacing))) / 2;
-  const rut = Math.exp(-((off / ZIPPER.rutWidth) ** 4));
-  return (1 - rut) * egg(x, z) + rut * (egg(trackX(s, along), along) - depth);
+  const a = Math.abs(off) / Math.sqrt(1 + slope * slope);
+  if (a >= ZIPPER.wall) return base;
+  const rut = a <= ZIPPER.floor ? 1 : (1 + Math.cos((Math.PI * (a - ZIPPER.floor)) / (ZIPPER.wall - ZIPPER.floor))) / 2;
+  const swell = (1 + Math.cos((2 * Math.PI * (along - ZIPPER.rutAt * s.spacing)) / s.spacing)) / 2;
+  const depth = ZIPPER.shallow + (ZIPPER.deep - ZIPPER.shallow) * swell;
+  const floor = k * bumps(s, trackX(s, along), along) - depth;
+  return base - rut * Math.max(0, base - floor);
 };
 
 /** Height of what the skis ride on: the packed base under any loose snow. */
