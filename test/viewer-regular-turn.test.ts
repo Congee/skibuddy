@@ -142,8 +142,10 @@ describe('regular turn', () => {
       for (const i of INTENSITIES) {
         const knees = Array.from({ length: 24 }, (_, k) => anglesOf(drill, i, k / 24).knee);
         const v = knees.map((k) => k.right);
-        // The tops line's long leg in the trough (duncan-smith-2021 4:34-4:40), on the saddle shoulder; amount inferred.
-        assert.isAtMost(Math.min(...v), drill === TOPS_POSE ? 35 : 40, `${drill} ${i} trough`);
+        // The tops line's long leg in the trough (duncan-smith-2021 4:34-4:40), still flexed (fis-freestyle-judging-2025
+        // p28); amounts inferred.
+        assert.isAtMost(Math.min(...v), 40, `${drill} ${i} trough`);
+        if (drill === TOPS_POSE) assert.isAtLeast(Math.min(...v), 25, `${i} tops trough flexed`);
         assert.isAtLeast(Math.max(...v), Math.min(...v) + 35, `${drill} ${i} crest`);
         if (drill === RegularTurn.Moguls) assert.isAtLeast(Math.min(...knees.map((k) => Math.min(k.left, k.right))), 15, `${i} never straight`);
       }

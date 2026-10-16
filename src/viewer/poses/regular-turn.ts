@@ -146,8 +146,8 @@ const TOPS_COM = 2;
 export const TOPS_EARLY = 0.7;
 /** Turn time of the tops plant: at the release, just before the crest. */
 export const TOPS_PLANT = 0.9;
-// Hands wide and forward, the poles out to the side (duncan-smith-2021 1:28-1:32, 4:26).
-const HANDS_WIDE = 30;
+// Hands wide and forward, the poles out to the side (duncan-smith-2021 1:28-1:32, 4:26); past ARM_ABDUCTION's 29 deg.
+const HANDS_WIDE = 50;
 // Upper arms forward, the hands at chest height (duncan-smith-2021 1:28-1:32, 4:26); inferred.
 const HANDS_FORWARD = 45;
 /** The zipper line swings about a rut's width across, between two mogul columns; inferred. */
@@ -493,7 +493,9 @@ export const TOPS: TurnStyle = {
   spineFlex: 18,
   trunkOverShin: 12,
   trunkOverShinGain: 0,
-  absorb: { open: 15, deep: { gentle: 88, moderate: 98, dynamic: 100 } },
+  // A deep squat on the crest, thighs near level (duncan-smith-2021 4:26); never straight in the trough (fis p28,
+  // arndt-1992 pp79, 87, 93); amounts inferred.
+  absorb: { open: 30, deep: { gentle: 110, moderate: 118, dynamic: 122 } },
   // Along the snow, so the bumps' pitch sets the contact: centred on top, tip down the backside, feet ahead and tail
   // into the face (duncan-smith-2021 2:37-3:57); amounts inferred.
   comAhead: [0.05, 0.16, 0.09, -0.05, -0.16],

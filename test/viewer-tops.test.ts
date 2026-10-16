@@ -5,7 +5,7 @@ import { INTENSITIES } from '../src/content/schema';
 import type { Intensity } from '../src/content/schema';
 import { BodySide } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
-import { ARM_FLEXION, segmentMatrices, skiIndex } from '../src/viewer/pose';
+import { ARM_ABDUCTION, ARM_FLEXION, segmentMatrices, skiIndex } from '../src/viewer/pose';
 import { forceTiltAt } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS } from '../src/viewer/poses';
@@ -59,15 +59,17 @@ describe('turns on the tops', () => {
     }
   });
 
-  it('is deepest on the crest, knees near 90 deg', () => {
-    // Smallest on top while releasing (duncan-smith-2021 4:24-5:07), knees near 90 deg (6:56-7:04); band inferred.
+  it('is deepest on the crest, the thighs near level, and still flexed in the trough', () => {
+    // Smallest on top while releasing (duncan-smith-2021 4:24-5:07), a deep squat with the thighs near level (4:26 freeze);
+    // band inferred.
     for (const i of INTENSITIES) {
       const knees = TIMES.map((t) => kneeAt(i, t));
       const deepest = TIMES[knees.indexOf(Math.max(...knees))] ?? 0.5;
       assert.isTrue(deepest >= 0.9 || deepest <= 0.1, `${i} deepest at t ${deepest}`);
-      assert.approximately(kneeAt(i, 0), 92, 12, `${i} on top`);
-      // Long leg into the trough (duncan-smith-2021 4:34-4:40); amount inferred.
+      assert.approximately(kneeAt(i, 0), 118, 12, `${i} on top`);
+      // Long leg into the trough (duncan-smith-2021 4:34-4:40), not straight (fis-freestyle-judging-2025 p28); amounts inferred.
       assert.isAtMost(Math.min(...knees), 40, `${i} trough`);
+      assert.isAtLeast(Math.min(...knees), 25, `${i} trough flexed`);
     }
   });
 
@@ -88,7 +90,7 @@ describe('turns on the tops', () => {
   it('holds the hands wide and plants the pole at the release on top', () => {
     // Hands wide, poles out to the side (duncan-smith-2021 1:28-1:32); planted downhill at the release (1:31).
     const c = POSE_DEFINITIONS[TOPS_POSE]?.constraints;
-    assert.isAtLeast((c?.armAbduction ?? 0) * DEG, 25);
+    assert.isAbove((c?.armAbduction ?? 0) - ARM_ABDUCTION, 15 / DEG, 'wider than the default');
     const plant = c?.poleTouch?.t ?? 0;
     assert.isTrue(plant > 5 / 6 && plant < 1, `plant at t ${plant}`);
   });
@@ -100,7 +102,7 @@ describe('turns on the tops', () => {
       const a = anglesAt(i, 0);
       assert.isAtLeast(a.hip.right, 70, `${i} hip`);
       assert.isAtMost(a.spineFlex, 21, `${i} low back`);
-      assert.approximately(a.trunkForward - a.shinForward.right, -7, 8, `${i} trunk on shin`);
+      assert.approximately(a.trunkForward - a.shinForward.right, -9, 9, `${i} trunk on shin`);
     }
   });
 

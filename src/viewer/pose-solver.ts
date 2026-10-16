@@ -404,7 +404,7 @@ const snowAt = (surface: Surface, t: number): number => {
 };
 
 /**
- * Off the zipper, midway between the mass folded deepest over the crest and stretched longest into the trough. On the
+ * Off the zipper, from the mass stretched longest in the trough to folded deepest on the crest with the snow's rise. On the
  * zipper, the legs fold with the snow's rise under the skis, from stretched to folded deepest, each end inside the
  * knee's reach by its spare share, so the mass rises only by what the legs cannot take.
  */
@@ -424,12 +424,14 @@ const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: S
     for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, surface, ride, hip, true));
     return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, surface, ride, hip, true)))[1];
   };
-  if (surface.line !== MogulLine.Zipper) {
-    const middle = (at(surface.crest, hi) + at(surface.trough, lo)) / 2;
-    return cache({ at: () => middle });
-  }
   const high = snowAt(surface, surface.crest);
   const low = snowAt(surface, surface.trough);
+  if (surface.line !== MogulLine.Zipper) {
+    // Folded deepest on the crest and long in the trough, the mass sinking on top by what the relief does not take.
+    const crest = at(surface.crest, hi);
+    const trough = at(surface.trough, lo);
+    return cache({ at: (t) => trough + (crest - trough) * Math.min(1, Math.max(0, (snowAt(surface, t) - low) / (high - low))) });
+  }
   const rows = Array.from({ length: REACH_SAMPLES }, (_, k) => {
     const t = k / REACH_SAMPLES;
     const stretched = at(t, lo);
