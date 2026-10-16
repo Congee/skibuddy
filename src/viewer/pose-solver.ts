@@ -125,8 +125,8 @@ const leadShape = (u: number): number =>
         ? hermite(0, 0.5, LEAD_SWITCH_RATE, LEAD_PEAK_RATE, LEAD_PEAK, u / LEAD_PEAK)
         : hermite(0.5, 1, LEAD_PEAK_RATE, LEAD_SWITCH_RATE, 1 - LEAD_PEAK, (u - LEAD_PEAK) / (1 - LEAD_PEAK))),
   );
-/** Most the inside tip leads: half a boot sole. */
-const LEAD_MAX = EQUIPMENT.soleLength / 2;
+/** Most the inside tip leads: Olivia Giaccio's 13 cm peak side-on, within half a boot sole. */
+const LEAD_MAX = Math.min(0.13, EQUIPMENT.soleLength / 2);
 /** Hip to ankle, metres, near enough to step the inside leg's swing toward its lead. */
 const LEG_REACH = 0.8;
 
@@ -535,7 +535,7 @@ const solveOn = (
   // The lead builds progressively from level at the edge change to about what square boots under the most countered
   // hips give, the hip spacing times the sine of the counter (Olivia Giaccio side-on).
   const peakCounter = c.scissor === true ? Math.max(...Array.from({ length: 48 }, (_, j) => keyValuesAt(def.keys, j / 48)).map((v) => v.counter * (1 + (c.gains.counter ?? 0) * effort.scale) + v.counterStep * effort.scale)) : 0;
-  const lead = c.scissor === true ? Math.min(LEAD_MAX, HIP_SPACING * Math.sin(peakCounter) * leadShape(wrapTime(t))) : null;
+  const lead = c.scissor === true ? Math.min(LEAD_MAX, HIP_SPACING * Math.sin(peakCounter)) * leadShape(wrapTime(t)) : null;
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
