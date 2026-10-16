@@ -1,7 +1,9 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
 import { PLAYBACK_RATES, PlaybackRate, TURN_SECONDS, cycleAdvance, parseRate } from '../src/state/playback';
-import { RegularTurn } from '../src/viewer/poses/regular-turn';
+import { RegularTurn, TOPS, TURN_STYLES } from '../src/viewer/poses/regular-turn';
+import { surfaceFor } from '../src/viewer/surface';
+import { TOPS_POSE } from '../src/viewer/turn-heading';
 import { realTurnSeconds } from '../src/viewer/turn-time';
 
 describe('playback rate', () => {
@@ -21,11 +23,29 @@ describe('playback rate', () => {
     assert.strictEqual(parseRate('2'), PlaybackRate.Full);
   });
 
-  it('times a turn from its speed and shape, quicker as it is skied harder', () => {
-    const gentle = realTurnSeconds(RegularTurn.Moguls, Intensity.Gentle);
-    const dynamic = realTurnSeconds(RegularTurn.Moguls, Intensity.Dynamic);
-    assert.isTrue(dynamic < gentle);
-    assert.isTrue(realTurnSeconds(RegularTurn.Moguls, Intensity.Moderate) < realTurnSeconds(RegularTurn.Carving, Intensity.Moderate));
+  it('times a turn as its path length over its speed', () => {
+    const cases = [
+      [RegularTurn.Moguls, TURN_STYLES[RegularTurn.Moguls].scenarios.moderate.speedMps],
+      [TOPS_POSE, TOPS.scenarios.moderate.speedMps],
+      [RegularTurn.Carving, TURN_STYLES[RegularTurn.Carving].scenarios.moderate.speedMps],
+    ] as const;
+    for (const [pose, speed] of cases) {
+      const surface = surfaceFor(pose, Intensity.Moderate);
+      const seconds = realTurnSeconds(pose, Intensity.Moderate);
+      assert.closeTo(seconds, surface.speed / speed, 1e-12);
+      // The path is at least the turn's run down the fall line.
+      assert.isTrue(seconds >= surface.spacing / speed);
+    }
+  });
+
+  it('turns about one mogul spacing apart in the zipper, near two turns a second', () => {
+    const surface = surfaceFor(RegularTurn.Moguls, Intensity.Moderate);
+    const speed = TURN_STYLES[RegularTurn.Moguls].scenarios.moderate.speedMps;
+    const seconds = realTurnSeconds(RegularTurn.Moguls, Intensity.Moderate);
+    assert.closeTo(seconds, surface.spacing / speed, 0.1 * seconds);
+    assert.isTrue(seconds < 0.7);
+    assert.isTrue(seconds < realTurnSeconds(TOPS_POSE, Intensity.Moderate));
+    assert.isTrue(realTurnSeconds(RegularTurn.Moguls, Intensity.Dynamic) < realTurnSeconds(RegularTurn.Moguls, Intensity.Gentle));
   });
 
   it('keeps the old fixed turn for a motion with no speed', () => {
