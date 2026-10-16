@@ -253,9 +253,9 @@ const shinTilt = (shin: Mat4): number => {
 };
 
 /**
- * Foot orientation before the lean: after it, both skis point straight ahead on the
- * outside ski's edge angle, the outside shin's tilt plus its foot's subtalar eversion, and only
- * the inside tail pitches up; the foot sits heel-up on its ski by the total ramp.
+ * Foot orientation before the lean: after it, both skis point straight ahead on one edge angle,
+ * the shins' tilt (edgeOf) plus the outside foot's subtalar eversion, and only the inside tail pitches
+ * up; the foot sits heel-up on its ski by the total ramp.
  * Mirrored in build_anatomy.py.
  */
 const bootRotation = (segment: Segment, pose: Pose, edge: number): Mat4 =>
@@ -270,7 +270,17 @@ const SKI_BASE = -EQUIPMENT.skiThickness / 2;
 export const MID_FOOT: Vec3 = transformPoint(CAPSULE_BINDING, [0, 0, 0]);
 export const SKI_TIP: Vec3 = [0, SKI_BASE, 0.85];
 
-const OUTSIDE_SHIN = SEGMENTS.findIndex((s) => s.kind === SegmentKind.Shin && s.side === BodySide.Right);
+const FOOT_KINDS: ReadonlySet<SegmentKind> = new Set([SegmentKind.Boot, SegmentKind.Ski]);
+const SHINS = [BodySide.Right, BodySide.Left].map((side) => SEGMENTS.findIndex((s) => s.kind === SegmentKind.Shin && s.side === side));
+/** Lean by which the outside shin alone sets the edge. */
+const EDGE_HANDOVER = (10 * Math.PI) / 180;
+/** Both shins' tilt, evenly at the switch where the lean is nil, so the edge flips with the mirrored pose. */
+const edgeOf = (world: ReadonlyArray<Mat4>, pose: Pose): number => {
+  const u = Math.min(1, Math.abs(pose.lean) / EDGE_HANDOVER);
+  const outside = 0.5 + 0.5 * u * u * (3 - 2 * u);
+  const [right, left] = SHINS.map((i) => shinTilt(world[i] ?? identity()));
+  return outside * (right ?? 0) + (1 - outside) * (left ?? 0) + pose.eversion;
+};
 
 /**
  * World matrix per segment: the outside ski base rests on y = 0 and the whole
@@ -278,14 +288,16 @@ const OUTSIDE_SHIN = SEGMENTS.findIndex((s) => s.kind === SegmentKind.Shin && s.
  */
 export const segmentMatrices = (pose: Pose): ReadonlyArray<Mat4> => {
   const world: Array<Mat4> = [];
-  for (const segment of SEGMENTS) {
-    const parent = segment.parent === null ? identity() : (world[segment.parent] ?? identity());
-    const local =
-      segment.kind === SegmentKind.Boot
-        ? compose(inverseRotation(parent), bootRotation(segment, pose, shinTilt(world[OUTSIDE_SHIN] ?? identity()) + pose.eversion))
-        : localRotation(segment, pose);
-    world.push(compose(parent, translation(segment.joint), local));
-  }
+  const place = (feet: boolean, edge: number): void =>
+    SEGMENTS.forEach((segment, i) => {
+      if (FOOT_KINDS.has(segment.kind) !== feet) return;
+      const parent = segment.parent === null ? identity() : (world[segment.parent] ?? identity());
+      const local = segment.kind === SegmentKind.Boot ? compose(inverseRotation(parent), bootRotation(segment, pose, edge)) : localRotation(segment, pose);
+      world[i] = compose(parent, translation(segment.joint), local);
+    });
+  // The boots wait for both shins.
+  place(false, 0);
+  place(true, edgeOf(world, pose));
   const outsideSki = world[skiIndex(BodySide.Right)] ?? identity();
   const [cx, cy, cz] = transformPoint(outsideSki, [0, SKI_BASE, 0]);
   // Negative z rotation tips the figure toward +x, the inside (left) side.

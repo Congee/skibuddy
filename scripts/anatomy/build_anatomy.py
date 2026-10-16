@@ -400,10 +400,19 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
     return R
 
 
-def foot_rotation(p, s, rest, outside_shin):
-    """bootRotation in pose.ts: both skis on the outside shin's tilt plus its eversion, the foot heel-up by the ramp."""
-    up = outside_shin.to_3x3() @ Vector((0, 0, 1))
-    edge = math.atan2(up.x, up.z) + p['eversion']
+EDGE_HANDOVER = math.radians(10)
+
+
+def shin_tilt(shin):
+    up = shin.to_3x3() @ Vector((0, 0, 1))
+    return math.atan2(up.x, up.z)
+
+
+def foot_rotation(p, s, rest, shins):
+    """bootRotation in pose.ts: both skis on the shins' tilt (edgeOf) plus the eversion, the foot heel-up by the ramp."""
+    u = min(1.0, abs(p['lean']) / EDGE_HANDOVER)
+    outside = 0.5 + 0.5 * u * u * (3 - 2 * u)
+    edge = outside * shin_tilt(shins['R']) + (1 - outside) * shin_tilt(shins['L']) + p['eversion']
     tail = (p['outside'] if s == 'R' else p['inside'])['tailLift']
     return rot_z3(p['lean']) @ rot_x(tail) @ rot_z3(-p['lean'] - edge) @ rot_x(rest['ramp'])
 
@@ -423,12 +432,14 @@ def subtalar_undo(shin, foot):
 
 def world_pose(bones, order, R, ski_pivot, p, rest):
     D = {}
-    for name in order:
+    feet = ('foot.', 'talus.')
+    # The feet wait for both shins.
+    for name in [n for n in order if not n.startswith(feet)] + [n for n in order if n.startswith(feet)]:
         b = bones[name]
         j = Vector(b.head_local)
         parent = D[b.parent.name] if b.parent else Matrix()
         if name.startswith('foot.'):
-            r = parent.to_3x3().to_4x4().inverted() @ foot_rotation(p, name[-1], rest, D['shin.R'])
+            r = parent.to_3x3().to_4x4().inverted() @ foot_rotation(p, name[-1], rest, {'R': D['shin.R'], 'L': D['shin.L']})
         elif name.startswith('talus.'):
             r = subtalar_undo(D[f'shin.{name[-1]}'], parent)
         else:

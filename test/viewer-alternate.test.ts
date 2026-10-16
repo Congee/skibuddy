@@ -1,6 +1,6 @@
 import { assert, describe, it } from '@effect/vitest';
 import { INTENSITIES } from '../src/content/schema';
-import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
+import { BodySide, SEGMENTS } from '../src/viewer/figure';
 import { hipLock, slopeLock } from '../src/viewer/hip-lock';
 import { compose, identity, transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
@@ -19,14 +19,8 @@ const TWIN = SEGMENTS.map((s) => SEGMENTS.findIndex((t) => t.kind === s.kind && 
 
 const points = (root: Mat4, pose: Pose): ReadonlyArray<Vec3> =>
   segmentMatrices(pose).map((m) => transformPoint(compose(root, m), [0, 0.1, 0.05]));
-const FEET: ReadonlyArray<SegmentKind> = [SegmentKind.Boot, SegmentKind.Ski];
-/** Farthest gap over the body, or over the boots and skis alone. */
-const farthest = (a: ReadonlyArray<Vec3>, b: ReadonlyArray<Vec3>, feet = false): number =>
-  Math.max(
-    ...a.map((p, i) => (FEET.includes(SEGMENTS[i]?.kind ?? SegmentKind.Pelvis) === feet ? Math.hypot(...p.map((v, k) => v - (b[i]?.[k] ?? Number.NaN))) : 0)),
-  );
-/** The boots take their edge from the outside shin alone, so they step a few mm at the switch. */
-const FEET_GAP = 1e-2;
+/** Farthest gap over the body, boots and skis included. */
+const farthest = (a: ReadonlyArray<Vec3>, b: ReadonlyArray<Vec3>): number => Math.max(...a.map((p, i) => Math.hypot(...p.map((v, k) => v - (b[i]?.[k] ?? Number.NaN)))));
 
 describe('alternating turns', () => {
   it('mirrors a pose back onto itself', () => {
@@ -42,7 +36,6 @@ describe('alternating turns', () => {
       const twin = points(identity(), mirrorPose(start));
       const mirrored = TWIN.map((j) => twin[j] ?? ORIGIN);
       assert.isBelow(farthest(reflected, mirrored), 1e-3, drill);
-      assert.isBelow(farthest(reflected, mirrored, true), FEET_GAP, drill);
     }
   });
 
@@ -82,7 +75,6 @@ describe('alternating turns', () => {
         const next = points(compose(MIRROR, after), start);
         const mirrored = TWIN.map((j) => next[j] ?? ORIGIN);
         assert.isBelow(farthest(points(before, end), mirrored), 2e-3, `${drill} ${name}`);
-        assert.isBelow(farthest(points(before, end), mirrored, true), FEET_GAP, `${drill} ${name} feet`);
       }
     }
   });
