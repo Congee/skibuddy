@@ -1,5 +1,5 @@
 import { Intensity } from '../../content/schema';
-import { arcLoad, phaseForces, turnForcesAt } from '../../physics/turn';
+import { PHASE_T, arcLoad, phaseForces, turnForcesAt } from '../../physics/turn';
 import type { TurnScenarios } from '../../physics/turn';
 import { keyValuesAt } from '../pose-definition';
 import { HeadAim } from '../pose-definition';
@@ -65,6 +65,8 @@ export interface TurnStyle {
   readonly comAheadGain?: number;
   /** Share of the peak angulation already in at the initiation key: feet and knees tip the new edges early. */
   readonly early: number;
+  /** Share of the peak angulation at each phase key; absent, the shared turn shape with `early` at the initiation key. */
+  readonly edgeCurve?: PhaseValues;
   /** Share of a cross-under transition at gentle, moderate and dynamic; the rest is a cross-over. */
   readonly crossUnder: readonly [number, number, number];
   /** A pole plant at the transition. */
@@ -476,6 +478,9 @@ export const ROUND_CORRIDOR = 2.8;
  * flat skis of the switch (jds-bumps-style 1:56-2:01, measured 0.3-0.4).
  */
 export const ROUND_PHASE = 0.35;
+export const ROUND_SET = 1 - ROUND_PHASE;
+/** The braking load runs ahead of the keys, so it peaks on the edge set, a hockey stop against the face (jds-bumps-style 2:12-2:37). */
+export const ROUND_FORCES = PHASE_T.finish - ROUND_SET;
 const roundHeading = (t: number): number => heading(t + ROUND_PHASE);
 // Hands wide and forward (jds-bumps-style frames): the figure's default, not the zipper's hands in.
 const { armAbduction: _handsIn, ...MOGUL_HANDS_WIDE } = TURN_STYLES[RegularTurn.Moguls];
@@ -495,7 +500,7 @@ export const ROUND: TurnStyle = {
   // The chest faces downhill (jds-bumps-style frames), so the pelvis turns back by the skis' heading, phased as the path.
   counter: fallLineHeading(3, ROUND_CORRIDOR),
   counterGain: 0,
-  counterCurve: [roundHeading(0), roundHeading(1 / 6), roundHeading(1 / 2), roundHeading(0.65), roundHeading(5 / 6)],
+  counterCurve: [roundHeading(0), roundHeading(1 / 6), roundHeading(1 / 2), roundHeading(ROUND_SET), roundHeading(5 / 6)],
   // Trunk parallel to the shin at the crest (gellie-2019-moguls-forward).
   trunkOverShin: 0,
   trunkOverShinGain: 0,
@@ -503,6 +508,10 @@ export const ROUND: TurnStyle = {
   early: 0.6,
   // The plant downhill at the release, on the bump's top or shoulder (jds-bumps-style 3:24, 4:25).
   poleTouchAt: 0.78,
+  // Edges build to the set and hold to the release; the hips tip the long legs on the wall, where the knees cannot (inferred).
+  edgeCurve: [0, 0.3, 1.2, 1, 0.7],
+  angulation: 15,
+  kneeAngulation: 25,
   head: { ...DOWNHILL, corridor: ROUND_CORRIDOR },
 };
 
@@ -618,7 +627,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
     };
   };
   const keys = PHASES.map((p, i): PoseKey => {
-    const share = p.share ?? style.early;
+    const share = style.edgeCurve?.[i] ?? p.share ?? style.early;
     return {
       t: p.t,
       angulation: share,

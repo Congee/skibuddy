@@ -1,5 +1,5 @@
 import type { Intensity } from '../content/schema';
-import { CLOSED_STANCE, CORRIDOR_SHARE, ROUND, ROUND_CORRIDOR, ROUND_PHASE, RegularTurn, TOPS, TURN_STYLES, ZIPPER_CORRIDOR } from './poses/regular-turn';
+import { CLOSED_STANCE, CORRIDOR_SHARE, ROUND, ROUND_CORRIDOR, ROUND_FORCES, ROUND_PHASE, RegularTurn, TOPS, TURN_STYLES, ZIPPER_CORRIDOR } from './poses/regular-turn';
 import type { TurnStyle } from './poses/regular-turn';
 
 export { CORRIDOR_SHARE };
@@ -10,6 +10,8 @@ export interface TurnPath {
   readonly corridor: number;
   /** Turn time the path runs ahead of the edges: the round line crosses its centre line at the edge set, before the switch; absent, 0. */
   readonly phase?: number;
+  /** Turn time the braking load runs ahead of the keys; absent, 0. */
+  readonly forces?: number;
 }
 
 /**
@@ -42,7 +44,7 @@ const TOPS_POSES: ReadonlySet<string> = new Set([TOPS_POSE, CLOSED_STANCE_POSE])
 /** The path a pose's turn follows at this intensity. */
 export const turnPath = (pose: string, intensity: Intensity): TurnPath => {
   const radius = STYLES[pose]?.scenarios[intensity].radiusM ?? FALLBACK_RADIUS;
-  if (pose === ROUND_POSE) return { radius, corridor: ROUND_CORRIDOR, phase: ROUND_PHASE };
+  if (pose === ROUND_POSE) return { radius, corridor: ROUND_CORRIDOR, phase: ROUND_PHASE, forces: ROUND_FORCES };
   const corridor = pose === MOGUL_POSE ? ZIPPER_CORRIDOR : TOPS_POSES.has(pose) ? TOPS_CORRIDOR : CORRIDOR_SHARE * radius;
   return { radius, corridor };
 };

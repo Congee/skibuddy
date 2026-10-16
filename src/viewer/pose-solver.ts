@@ -1,6 +1,6 @@
 // Build time only: scripts/anatomy/pose-tables.ts solves every definition into src/viewer/poses/tables.json.
 import { arcLoad, brakingTilt, comRadius, isTurn, turnForcesAt } from '../physics/turn';
-import type { DrillScenario, TurnScenario } from '../physics/turn';
+import type { DrillScenario, TurnForces, TurnScenario } from '../physics/turn';
 import { EQUIPMENT, minShinAngle, shinAngle } from './equipment';
 import { BodySide, SEGMENTS, SegmentKind } from './figure';
 import { compose, identity, inverseRotation, rotationX, rotationY, rotationZ, transformPoint } from './mat4';
@@ -188,7 +188,14 @@ export const brakingTiltAt = (scenario: DrillScenario | null, surface: Surface |
   if (scenario === null || !isTurn(scenario) || (scenario.brakingShare ?? 0) === 0) return 0;
   const path = surface?.path ?? { radius: scenario.radiusM, corridor: CORRIDOR_SHARE * scenario.radiusM };
   const ski = headingAt(t, path);
-  return brakingTilt(scenario, ski, (ski * scenario.radiusM) / comRadius(scenario), turnForcesAt(scenario, t).load);
+  return brakingTilt(scenario, ski, (ski * scenario.radiusM) / comRadius(scenario), pathForcesAt(scenario, surface, t).load);
+};
+
+/** Forces at turn time t, run ahead by the path's `forces`, for the braking load; past the switch, the mirrored next turn's. */
+const pathForcesAt = (scenario: TurnScenario, surface: Surface | null, t: number): TurnForces => {
+  const u = wrapTime(t) + (surface?.path.forces ?? 0);
+  const f = turnForcesAt(scenario, u);
+  return u < 1 ? f : { load: f.load, tilt: -f.tilt };
 };
 
 /** Half-width of the window the body balances the snow's force over, seconds: about a postural correction's latency; inferred. */

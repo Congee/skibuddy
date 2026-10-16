@@ -70,9 +70,9 @@ const ZIPPER = {
 /**
  * The round line's natural field: raised-cosine bumps `reach` wide, one per turn on alternate sides of the line,
  * `side` off it and `at` spacings down, in rows `pitch` apart, so the edge set lands on a face just below a crest and
- * the path keeps to the walls, never the troughs (jds-bumps-style 1:20-2:00, dipiro-2005 pp60-61); placement inferred.
+ * the path keeps to the walls, never the troughs (jds-bumps-style 1:20-2:00, dipiro-2005 pp60-61); placement and sizes inferred.
  */
-const ROUND_FIELD = { pitch: 3.3, reach: 3, side: 1.4, at: 0.8, rows: 3 } as const;
+export const ROUND_FIELD = { pitch: 5.4, reach: 3.4, side: 0.75, at: 0.85, rows: 3 } as const;
 const POWDER_DEPTH: Readonly<Record<Intensity, number>> = { gentle: 0.15, moderate: 0.2, dynamic: 0.25 };
 /** Soft swells on loose snow, so its top reads as a surface; height and length inferred. */
 const SWELL = 0.03;
