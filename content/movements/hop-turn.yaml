@@ -824,8 +824,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Pull the feet up with tibialis anterior in the air
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Anatomy and the book's pull-the-toes-up cue for moving forward; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: soleus
     side: outside
     serves: [ankle.flexion]
@@ -845,8 +845,8 @@ activations:
     contraction: { initiation: concentric, shaping: eccentric, finish: eccentric }
     role: Helps the small ankle opening in the push, stiffens the ankle in the landing, and helps tuck the knee in the air
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Medial gastrocnemius averaged above half of maximum in GS turns; the ankle stays flexed in the boot, so the push is small and the calf mostly stiffens it for the landing. Inferred for this drill
+    sources: [hintermeister-1997, { source: patterson-2023, pages: 89 }]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -863,8 +863,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Holds the arch up under the push and landing
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; the ankle muscles help the boot resist the edge's flattening torque, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "123-124, 139" }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -872,8 +872,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the pressure over the sole
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the outside foot's arch is built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 139 }]
   - muscle: iliopsoas
     side: outside
     serves: [hip.flexion]
@@ -999,8 +999,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Rolls the inside ski onto its little-toe edge in the air and holds it on landing
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   - muscle: foot-intrinsics
     side: inside
     serves: [foot.arch]
@@ -1008,8 +1008,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the pressure over the inside sole
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the inside foot carries a small share of the load and is not built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "137-139" }]
   # Pelvis and trunk: quiet through the jump, braced for the landing, and held facing down the hill.
   - muscle: erector-spinae
     side: both

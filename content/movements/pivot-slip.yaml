@@ -633,8 +633,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Help keep the ankle closed
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Anatomy and the book's pull-the-toes-up cue for moving forward; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: soleus
     side: outside
     serves: [ankle.flexion]
@@ -642,8 +642,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Steadies the ankle against the boot
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from ankle moments modelled in carving, which the boot shaft shares; light here and not measured in this drill
+    sources: [heinrich-2022, { source: lemaster-2010, pages: 81 }]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -660,8 +660,8 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
     role: Lets the old little-toe edge go, then holds the arch
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the foot rolls inside the boot to let the old edge go, then the outside arch takes the sideways load; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: 139 }]
   # Inside leg (the new uphill leg): turns out through the pivot.
   - muscle: deep-hip-rotators
     side: inside
@@ -721,8 +721,8 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
     role: Let the old big-toe edge go and keep the flat ski from catching
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; eversion inside the boot fine-tunes the edge; not measured on the inside leg
+    sources: [{ source: lemaster-2010, pages: 127 }, { source: lind-sanders-2004, pages: 95 }]
   - muscle: tibialis-posterior
     side: inside
     serves: [ankle.inversion]
@@ -730,8 +730,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: concentric }
     role: Helps tip the new uphill ski onto its little-toe edge
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   - muscle: gluteus-medius
     side: inside
     serves: [hip.abduction, pelvis.list]

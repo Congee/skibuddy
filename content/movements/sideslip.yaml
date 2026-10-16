@@ -820,8 +820,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Holds the arch and co-contracts with the peroneals for fine edge control
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; the ankle muscles help the boot resist the edge's flattening torque, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "123-124, 139" }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -829,8 +829,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the pressure over the sole of the downhill foot
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the outside foot's arch is built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 139 }]
   # Uphill (inside) leg: more bent, lightly loaded.
   - muscle: vasti
     side: inside
@@ -905,8 +905,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Co-contract with tibialis posterior for fine edge control on the uphill ski
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; eversion inside the boot fine-tunes the edge; not measured on the inside leg
+    sources: [{ source: lemaster-2010, pages: 127 }, { source: lind-sanders-2004, pages: 95 }]
   - muscle: soleus
     side: inside
     serves: [ankle.flexion]
@@ -914,8 +914,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Steadies the uphill ankle against the boot
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from ankle moments modelled in carving, which the boot shaft shares; light here and not measured in this drill
+    sources: [heinrich-2022, { source: lemaster-2010, pages: 81 }]
   # Pelvis and trunk. The spine bends toward the downhill ski, so the uphill side controls it lengthening.
   - muscle: quadratus-lumborum
     side: inside

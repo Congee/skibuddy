@@ -629,8 +629,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Holds the arch and co-contracts with the peroneals
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; the ankle muscles help the boot resist the edge's flattening torque, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "123-124, 139" }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -638,8 +638,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the pressure as it moves from the balls of the feet to the heels
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; plantar pressure shifts fore-aft with the turn phase in measured GS, and the book's fore-aft range runs from the ball of the foot to the back of the arch; not measured in this drill
+    sources: [falda-buscaiot-2017, { source: lemaster-2010, pages: "85, 139" }]
   # Uphill (inside) leg: more bent, lightly loaded, steering with the downhill leg.
   - muscle: vasti
     side: inside
@@ -702,8 +702,8 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: concentric }
     role: Opens the uphill ankle with the downhill one for the backward segment
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: In the book, opening the ankles pushes the feet forward and moves the body back; the muscle's share is anatomy, not measured on snow
+    sources: [{ source: lemaster-2010, pages: "81, 182-183" }]
   - muscle: tibialis-posterior
     side: inside
     serves: [ankle.inversion]
@@ -711,8 +711,8 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
     role: Hold the uphill ski on its little-toe edge at the downhill ski's angle
     confidence: low
-    basis: Anatomy and the edge mechanics; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   # Pelvis and trunk.
   - muscle: quadratus-lumborum
     side: inside

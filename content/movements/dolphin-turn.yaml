@@ -919,8 +919,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Helps flex the knee in the retraction; adds a little ankle stiffness, slack with the knee bent
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Medial gastrocnemius averaged above half of maximum in GS turns; the ankle stays flexed in the boot, so it mostly stiffens it. Its knee-flexing share in the retraction is anatomy, not measured
+    sources: [hintermeister-1997, { source: patterson-2023, pages: 89 }]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -937,8 +937,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Holds the arch as the pressure runs from the ball to the heel
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; plantar pressure shifts fore-aft with the turn phase in measured GS, and the outside arch takes the sideways load; not measured in this drill
+    sources: [falda-buscaiot-2017, { source: lemaster-2010, pages: "85, 139" }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -1046,8 +1046,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Pull the toes up with tibialis anterior
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Anatomy and the book's pull-the-toes-up cue for moving forward; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: tibialis-posterior
     side: inside
     serves: [ankle.inversion]
@@ -1055,8 +1055,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Tips the inside ski onto its little-toe edge and holds it
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   - muscle: soleus
     side: inside
     serves: [ankle.flexion]

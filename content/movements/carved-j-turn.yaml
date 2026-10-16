@@ -928,8 +928,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Adds a little ankle stiffness; slack with the knee bent
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Medial gastrocnemius averaged above half of maximum in GS turns; the ankle stays flexed in the boot, and with the knee bent it mostly stiffens it. Lower here, by inference
+    sources: [hintermeister-1997, { source: patterson-2023, pages: 89 }]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -950,8 +950,8 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
     role: Holds the arch up under the load and co-contracts with the peroneals
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; the ankle muscles help the boot resist the edge's flattening torque, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "123-124, 139" }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -1091,8 +1091,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Pull the toes and foot up with tibialis anterior
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Anatomy and the book's pull-the-toes-up cue for moving forward; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: tibialis-posterior
     side: inside
     serves: [ankle.inversion, foot.arch]
@@ -1100,8 +1100,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Tips the uphill ski onto its little-toe edge and holds it there
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   - muscle: soleus
     side: inside
     serves: [ankle.flexion]
@@ -1118,8 +1118,8 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
     role: Co-contract with the inverters to steady the uphill ski's edge
     confidence: low
-    basis: Mechanics of holding an edge from both sides; not measured on the inside leg
-    sources: []
+    basis: Inferred; eversion inside the boot fine-tunes the edge; not measured on the inside leg
+    sources: [{ source: lemaster-2010, pages: 127 }, { source: lind-sanders-2004, pages: 95 }]
   - muscle: foot-intrinsics
     side: inside
     serves: [foot.arch]
@@ -1127,8 +1127,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the lighter load over the uphill sole
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the inside foot carries a small share of the load and is not built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "137-139" }]
   # Pelvis and trunk. The spine bends toward the downhill ski, so the uphill side controls it lengthening.
   - muscle: quadratus-lumborum
     side: inside
