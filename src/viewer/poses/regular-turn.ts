@@ -61,6 +61,8 @@ export interface TurnStyle {
    * or tail by the completion, the range an inch or two in free skiing and more when aggressive (lemaster-2010 p85).
    */
   readonly comAhead: PhaseValues;
+  /** How much a harder turn adds to comAhead, as a share per intensity step; defaults to COM_AHEAD_GAIN. */
+  readonly comAheadGain?: number;
   /** Share of the peak angulation already in at the initiation key: feet and knees tip the new edges early. */
   readonly early: number;
   /** Share of a cross-under transition at gentle, moderate and dynamic; the rest is a cross-over. */
@@ -202,6 +204,8 @@ export const OUTSIDE_KNEE_MAX: Readonly<Record<RegularTurn, Readonly<Record<Inte
 const COUNTER_GAIN = 0.15;
 // A harder turn leans the trunk further over the shin; inferred.
 const TRUNK_OVER_SHIN_GAIN = 0.4;
+// A harder turn balances further forward; inferred.
+const COM_AHEAD_GAIN = 0.4;
 
 /**
  * Per kind. Trunk 20-35 deg forward of vertical: outside hip flexion peaks at 55-65 deg (gao-2024). Outside knee within
@@ -216,7 +220,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
       dynamic: { speedMps: 10, radiusM: 13, slopeDeg: 16 },
     },
     outsideShare: [0.6, 0.75],
-    hip: [32, 38],
+    hip: [36, 42],
     hipStep: 2,
     hipSpread: 0,
     angulation: 5,
@@ -229,8 +233,11 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     narrow: 0,
     kneesIn: 0,
     // Free skiing's small range (lemaster-2010 p85), forward at initiation (debertin-2022); values inferred.
-    comAhead: [0.015, 0.045, 0.02, 0.01, 0],
-    trunkOverShin: 4,
+    // Mass toward the ball of the foot so the chest stays over the outside knee (lemaster-2010 pp57, 182-183); inferred.
+    comAhead: [0.055, 0.085, 0.06, 0.05, 0.04],
+    comAheadGain: 0.2,
+    trunkOverShin: 10,
+    trunkOverShinGain: 0,
     early: 0.4,
     // Cross-over: the mass moves across the skis into the new turn (iasi-2021 p46, lemaster-2010 pp144-148).
     crossUnder: [0, 0, 0],
@@ -242,7 +249,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   [RegularTurn.Carving]: {
     scenarios: LONG,
     outsideShare: [0.65, 0.88],
-    hip: [32, 38],
+    hip: [34, 40],
     hipStep: 2,
     hipSpread: 0,
     angulation: 12,
@@ -255,15 +262,18 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     narrow: 0,
     kneesIn: 0,
     // Tip pressure into the control phase, then the feet slide ahead to the finish (lemaster-2010 pp79-81, 85); inferred.
-    comAhead: [0.015, 0.045, 0.02, 0.005, -0.02],
-    trunkOverShin: 3,
+    // Mass toward the ball of the foot so the chest stays over the outside knee (lemaster-2010 pp57, 182-183); inferred.
+    comAhead: [0.065, 0.095, 0.06, 0.045, 0.039],
+    comAheadGain: 0.2,
+    trunkOverShin: 10,
+    trunkOverShinGain: 0,
     early: 0.65,
     // Cross-over at gentle and moderate; at dynamic the legs flex and retract so the skis stay on the snow
     // (lemaster-2010 p154, komissarov-2022b, seifert-2023).
     crossUnder: [0, 0, 1],
-    // Outside knee about 72 deg and trunk about 41 deg at the switch: toward seifert-2023's 90 deg flexion transition,
+    // Outside knee about 71 deg and trunk about 39 deg at the switch: toward seifert-2023's 90 deg flexion transition,
     // within heinrich-2022's GS knee 56-80 and ankle 18-27 deg.
-    dynamicDeep: 25,
+    dynamicDeep: 16,
     polePlant: false,
     poleTrim: 0,
     head: ALONG_ARC,
@@ -272,7 +282,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   [RegularTurn.ShortTurns]: {
     scenarios: SHORT,
     outsideShare: [0.62, 0.85],
-    hip: [32, 46],
+    hip: [30, 44],
     hipStep: 4,
     hipSpread: 0,
     angulation: 9,
@@ -286,8 +296,11 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     narrow: 0,
     kneesIn: 0,
     // Feet drawn back through the transition, forward into the new turn, centred by the edge set (lemaster-2010 p86); inferred.
-    comAhead: [0.02, 0.055, 0.03, 0.01, -0.01],
-    trunkOverShin: 10,
+    // Mass toward the ball of the foot so the chest stays over the outside knee (lemaster-2010 pp57, 182-183); inferred.
+    comAhead: [0.08, 0.08, 0.035, 0.05, 0.035],
+    comAheadGain: 0,
+    trunkOverShin: 14,
+    trunkOverShinGain: 0.4,
     early: 0.6,
     // Cross-under: the edges release as the legs flex back toward the mass (iasi-2021 p63, lemaster-2010 p152).
     crossUnder: [1, 1, 1],
@@ -366,7 +379,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   [RegularTurn.Powder]: {
     scenarios: POWDER,
     outsideShare: [0.52, 0.6],
-    hip: [28, 46],
+    hip: [26, 44],
     hipStep: 4,
     // Gentle a soft rebound, dynamic a clear pop (iasi-2021 p88); inferred.
     hipSpread: 3,
@@ -381,8 +394,11 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     narrow: 2,
     kneesIn: 0,
     // Never sitting back (lemaster-2010 pp193-199); inferred.
-    comAhead: [0.015, 0.045, 0.03, 0.01, -0.005],
-    trunkOverShin: 6,
+    // Mass toward the ball of the foot so the chest stays over the outside knee (lemaster-2010 pp57, 182-183); inferred.
+    comAhead: [0.055, 0.075, 0.05, 0.045, 0.04],
+    comAheadGain: 0,
+    trunkOverShin: 14,
+    trunkOverShinGain: 0.2,
     early: 0.5,
     crossUnder: [0, 0, 0],
     polePlant: true,
@@ -405,7 +421,7 @@ export const CLOSED_STANCE: TurnStyle = {
   // Both feet share the load more evenly than in an open stance.
   outsideShare: [0.55, 0.65],
   // Little up and down: the trunk stays level.
-  hip: [40, 50],
+  hip: [36, 46],
   hipStep: 3,
   hipSpread: 0,
   angulation: 3,
@@ -420,8 +436,11 @@ export const CLOSED_STANCE: TurnStyle = {
   narrow: 7,
   kneesIn: 10,
   // Centred, little fore-aft in the narrow stance; inferred.
-  comAhead: [0.015, 0.04, 0.02, 0, -0.01],
-  trunkOverShin: 6,
+  // Toward the ball of the foot so the chest stays over the knees (lemaster-2010 pp57, 182-183); inferred.
+  comAhead: [0.06, 0.07, 0.05, 0.03, 0.02],
+  comAheadGain: 0.1,
+  trunkOverShin: 18,
+  trunkOverShinGain: 0.2,
   early: 0.6,
   // Cross-under: the legs swivel under a level trunk.
   crossUnder: [1, 1, 1],
@@ -474,7 +493,7 @@ export const DOLPHIN: TurnStyle = {
   // About 60-75 % on the outside foot through shaping (heinrich-2022).
   outsideShare: [0.6, 0.75],
   // Deepest in the retraction, near 90 deg at hip and knee (seifert-2023); inferred.
-  hip: [50, 85],
+  hip: [40, 75],
   hipStep: 5,
   hipSpread: 0,
   angulation: 8,
@@ -487,8 +506,10 @@ export const DOLPHIN: TurnStyle = {
   narrow: 0,
   kneesIn: 0,
   // Forebody at initiation, centred by shaping, the tails in the finish (lind-sanders-2004 pp69-70); inferred.
-  comAhead: [0.04, 0.06, 0.02, 0, -0.08],
-  trunkOverShin: 6,
+  comAhead: [0.07, 0.075, 0.045, 0.035, -0.045],
+  comAheadGain: 0.1,
+  trunkOverShin: 12,
+  trunkOverShinGain: 0,
   early: 0.6,
   // A flexion transition: the legs retract under the mass (seifert-2023, lemaster-2010 pp152-154).
   crossUnder: [1, 1, 1],
@@ -607,7 +628,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       ...(style.firmSnow === true ? { firmSnow: true } : {}),
       ...(style.absorb === undefined ? {} : { absorb: { open: style.absorb.open * DEG, deep: [style.absorb.deep.gentle * DEG, style.absorb.deep.moderate * DEG, style.absorb.deep.dynamic * DEG] as const } }),
       gains: {
-        comAhead: 0.4,
+        comAhead: style.comAheadGain ?? COM_AHEAD_GAIN,
         lumbarFlex: 0.1,
         angulation: 0.15,
         eversion: 0.15,

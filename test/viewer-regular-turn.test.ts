@@ -7,7 +7,7 @@ import { EQUIPMENT } from '../src/viewer/equipment';
 import { segmentIndex } from '../src/viewer/figure';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
-import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, SKI_TAIL, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
+import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, aheadOnSki, SKI_TAIL, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
 import { forceTiltAt, solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
@@ -200,6 +200,26 @@ describe('regular turn', () => {
           const com = balanceOf(kind, a);
           assert.isAbove(Math.max(com, com - a.lead), -0.04, `${kind} ${i} ${k}/24`);
           assert.isBelow(Math.min(com, com - a.lead), 0.095, `${kind} ${i} ${k}/24`);
+        }
+  });
+
+  it('keeps the chest over the outside knee through the turn, the trunk within 40 deg', () => {
+    // Chest over the knees (lemaster-2010 pp57, 182-183); behind the knee is the slip-and-catch fault
+    // (jordan-sporri-taylor-2023 pp120-121). 2 cm slack and the 40 deg cap inferred.
+    const drills = Object.keys(POSE_DEFINITIONS).filter((d) => d !== RegularTurn.Moguls && d !== TOPS_POSE);
+    // The dolphin sits back over the tails from the pole touch to the landing, the tips off the snow.
+    const airborne = (drill: string, t: number): boolean => drill === DOLPHIN && (t >= 5 / 6 || t <= 1 / 12);
+    for (const drill of drills)
+      for (const i of INTENSITIES)
+        for (let k = 0; k < SAMPLES; k++) {
+          const t = k / SAMPLES;
+          if (airborne(drill, t)) continue;
+          const w = segmentMatrices(samplePose(poseTable(drill, i), t));
+          const at = (segment: string, point: Vec3): Vec3 => transformPoint(w[segmentIndex(segment)] ?? identity(), point);
+          const foot = at('right-boot', MID_FOOT);
+          const gap = aheadOnSki(w, at('trunk', [0, 0.45, 0]), foot) - aheadOnSki(w, at('right-shin', [0, 0, 0]), foot);
+          assert.isAtLeast(gap, -0.02, `${drill} ${i} ${k}/${SAMPLES} chest`);
+          assert.isAtMost(anglesOf(drill, i, t).trunkForward, 40, `${drill} ${i} ${k}/${SAMPLES} trunk`);
         }
   });
 
