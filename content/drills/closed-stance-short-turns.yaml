@@ -1,7 +1,7 @@
 id: closed-stance-short-turns
 name: Closed-stance short turns
 movement: closed-stance-short-turn
-summary: Quick, rhythmic short turns on a groomer with the boots and knees touching, the way mogul skiers rehearse the zipper line before the bumps. The pelvis and chest keep facing down the fall line and stay still, hands forward, while both legs swivel together underneath them. The skis are mostly brushed with a little edge, and every turn ends with a light edge set and a pole plant.
+summary: Quick, rhythmic short turns on a groomer with the boots and knees touching, the way mogul skiers rehearse the zipper line before the bumps. The chest keeps facing down the fall line, the pelvis nearly so, and both stay still, hands forward, while both legs swivel together underneath them. The skis are mostly brushed with a little edge, and every turn ends with a light edge set and a pole plant.
 terrain: Smooth groomed blue in a corridor about two metres wide; dynamic on a steeper blue
 # Mogul-like short turns: tighter and slower than short-radius-turns. Speeds, radii and the corridor are our inference.
 # Loads follow Lind & Sanders eq 4.9, p 103.
@@ -18,13 +18,15 @@ sources:
   - { source: lind-sanders-2004, pages: 103 }
   - { source: lemaster-2010, pages: "65-67, 73-74, 128, 185-192" }
   - berg-1999
+  - { source: fis-freestyle-judging-2025, pages: 29 }
+  - { source: dipiro-2005, pages: 32 }
 primitives:
   - { primitive: stance-leg-edge-hold, modifier: shared almost evenly with the inside leg }
   - { primitive: inside-leg-shortening, modifier: "small, the knees stay together" }
   - { primitive: ankle-flexion, modifier: at every edge change }
   - { primitive: tipping, modifier: "both knees together, as one" }
   - { primitive: leg-rotation, modifier: "large and quick, both legs under a still pelvis" }
-  - { primitive: counter, modifier: "large, the trunk square to the fall line at the finish" }
+  - { primitive: counter, modifier: "large, the chest square to the fall line at the finish" }
   - { primitive: edge-set, modifier: "light, at every finish" }
   - { primitive: pole-touch, modifier: a quick plant at the edge set }
 reviewed_by: []

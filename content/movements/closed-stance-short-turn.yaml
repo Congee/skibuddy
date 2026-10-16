@@ -7,10 +7,11 @@ name: Closed-stance short turns, both legs swivelling together under a still, sq
 #   as one (lemaster-2010 pp 65-67); here that is the point, as mogul skiers tip and turn both legs as a unit
 #   (knee angulation on both legs in bumps, pp 185-192). The adductor load is our inference, low confidence.
 # - Load: shared more evenly between the feet than in an open stance (inference).
-# - Trunk: square to the fall line and still, so counter to the skis tracks their heading off the fall line,
-#   most at the edge set: about 35-40° for 4.5 m arcs in a 2 m corridor (geometry, our inference). Counter is
-#   pelvis on femur in the hip sockets, not the spine (lemaster-2010 p73; sacrum-to-sternum torsion about 5° in
-#   slalom, sporri-2016). The obliques hold it against the legs' turning torque every turn.
+# - Trunk: the head and chest face the fall line and stay still (fis-freestyle-judging-2025 p29; dipiro-2005 p32),
+#   so the chest's counter to the skis tracks their heading, most at the edge set: about 35-40° for 4.5 m arcs in
+#   a 2 m corridor (geometry, our inference). The pelvis counters about 5° less (sacrum-to-sternum torsion in
+#   slalom, sporri-2016; lemaster-2010 p73), so most counter is pelvis on femur in the hip sockets. Low confidence.
+#   The obliques hold it against the legs' turning torque every turn.
 # - Rhythm: quick, mostly brushed turns with a light edge set. Freestyle mogul skiers had the fastest knee
 #   movements of any discipline and, unlike the alpine events, no predominance of eccentric over concentric
 #   knee-extensor work (berg-1999, abstract; in bumps, so on a groomer it is an upper bound).
@@ -375,7 +376,7 @@ dof_matrix:
           - { source: lind-sanders-2004, pages: 117 }
           - { source: lemaster-2010, pages: 108 }
       finish:
-        action: At its most turned in, about 35-40° of counter, held through the edge set; this stretch winds up the next turn
+        action: At its most turned in, about 30-35° of counter, held through the edge set; this stretch winds up the next turn
         contraction: isometric
         cue: Skis across, belly button down the hill
         confidence: low
@@ -459,7 +460,7 @@ dof_matrix:
     side: trunk
     cells:
       initiation:
-        action: Faces down the fall line in space while the skis turn under it, so its counter to the skis unwinds from the last turn's 35-40° through square
+        action: Faces nearly down the fall line, a few degrees behind the chest, while the skis turn under it, so its counter to the skis unwinds from the last turn's 30-35° through square
         contraction: isometric
         cue: Belly button down the hill
         confidence: medium
@@ -468,7 +469,7 @@ dof_matrix:
           - hintermeister-1997
           - { source: lemaster-2010, pages: "74, 109-110" }
       shaping:
-        action: Still facing down the hill; counter to the skis grows to about 30° as they turn across
+        action: Still facing nearly down the hill; counter to the skis grows to about 20-25° as they turn across
         moment: Resisting the reaction torque of the turning legs
         contraction: isometric
         cue: Upper body quiet, legs turning
@@ -478,7 +479,7 @@ dof_matrix:
           - heinrich-2023
           - { source: iasi-2021, pages: 64 }
       finish:
-        action: Counter at its most, about 35-40°, held against the edge set's twist
+        action: Counter at its most, about 30-35°, about 5° less than the chest, held against the edge set's twist
         contraction: isometric
         cue: Stay facing down the hill as you set the edges
         confidence: low
@@ -574,7 +575,7 @@ dof_matrix:
     side: trunk
     cells:
       initiation:
-        action: Chest faces down the fall line with the pelvis while the legs swing under
+        action: Chest faces down the fall line, just ahead of the pelvis, while the legs swing under
         contraction: isometric
         cue: Chest down the hill
         confidence: medium
@@ -591,11 +592,13 @@ dof_matrix:
           - heinrich-2023
           - { source: lemaster-2010, pages: 73 }
       finish:
-        action: Held facing down the hill against the edge set's twist, blocked by the pole plant
+        action: Held facing down the hill against the edge set's twist, blocked by the pole plant; its counter to the skis about equals their heading, 35-40°, about 5° more than the pelvis
         contraction: isometric
         cue: Plant and stay facing down the hill
         confidence: low
         sources:
+          - { source: fis-freestyle-judging-2025, pages: 29 }
+          - { source: dipiro-2005, pages: 32 }
           - { source: lemaster-2010, pages: "110, 112-116" }
   - dof: shoulder-girdle.protraction
     side: both

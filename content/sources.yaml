@@ -334,6 +334,16 @@
   citation: Jordan M, Spörri J, Taylor J. Injury prevention and rehabilitation. In - Pritchard J, Taylor J, eds. The Science of Alpine Ski Racing. Routledge; 2023. p. 113-153.
   url: https://doi.org/10.4324/9781003258773-6
   read: full
+- id: dipiro-2005
+  type: book
+  citation: DiPiro D. Everything the Instructors Never Told You About Mogul Skiing. Bloomington (IN) - AuthorHouse; 2005. ISBN 978-1-4678-3613-5.
+  url: http://www.learnmoguls.com
+  read: full
+- id: fis-freestyle-judging-2025
+  type: book
+  citation: FIS. Freestyle Skiing Judging Handbook, edition July 2025 (pages dated October 2025). Moguls - JH 6204 Judging Criteria, pp 25-30.
+  url: https://assets.fis-ski.com/f/252177/x/5ee5340522/freestyle-skiing-judging-handbook.pdf
+  read: full
 
 # Association task pages
 - id: psia-c-stork-turns
