@@ -91,9 +91,10 @@ describe('segmentMatrices', () => {
     for (const [i, s] of ALL) {
       for (const t of TIMES) {
         // lemaster-2010 p57, p85; fore-aft is across the balance axis, since the lean is about the fore-aft axis.
+        // Ball-of-foot limit as in the regular turns, relaxed from 0.058 for chest over the knees (user requirement).
         const com = poseAngles(poseAt(t, s)).comAhead;
         assert.isAbove(com, -0.02, `${i} at t=${t}`);
-        assert.isBelow(com, 0.058, `${i} at t=${t}`);
+        assert.isBelow(com, 0.095, `${i} at t=${t}`);
       }
     }
   });
@@ -122,9 +123,9 @@ describe('segmentMatrices', () => {
       assert.isBelow(Math.max(...lumbar) - Math.min(...lumbar), 1.5, i);
       for (const t of TIMES) {
         const a = poseAngles(poseAt(t, s));
-        // Never the tall, upright stance; never folded past the turn's needs.
+        // Never the tall, upright stance; never folded past the turn's needs. 40 relaxed from 35 for chest over the knees (user requirement).
         assert.isAtLeast(a.trunkForward, 18, `${i} at t=${t}`);
-        assert.isAtMost(a.trunkForward, 35, `${i} at t=${t}`);
+        assert.isAtMost(a.trunkForward, 40, `${i} at t=${t}`);
       }
     }
   });

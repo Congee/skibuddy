@@ -17,9 +17,10 @@ name: Turn balanced on the outside ski, inside tail held up
 # Outside knee: most flexed in the transition, extending a little through initiation, quasi-isometric and
 # most extended through shaping, flexing again (eccentric, absorbing) through the finish (LeMaster pp 40-42,
 # P&T p 27, IASI pp 65-66); the hip follows. Our inference, solved for balance over the foot: outside hip
-# flexion mid-turn to transition about 48-62° gentle, 55-70° moderate, 63-78° dynamic; the knee that balances
-# it about 60-68°, 65-74° and 71-81°; the chest 20-33° forward of vertical. Race reference: heinrich-2022's
-# GS outside hip 50-81°, knee 56-80°.
+# flexion mid-turn to transition about 54-68° gentle, 61-76° moderate, 69-80° dynamic; the knee that balances
+# it about 60-67°, 65-73° and 70-78°; the mass 3-9 cm ahead of mid-foot, toward the ball, so the chest stays
+# over the outside knee (LeMaster pp 57, 182-183), the chest 27-40° forward of vertical. Race reference:
+# heinrich-2022's GS outside hip 50-81°, knee 56-80°.
 # Per-setting values are inference from these mechanics; a single number means it changes little with intensity.
 # The balance stabilisers (peroneals, tibialis posterior, foot intrinsics) change little: they answer balance,
 # not the turn force. The lifted inside leg carries no snow force, but its effective weight grows with n
@@ -266,7 +267,7 @@ dof_matrix:
         sources:
           - { source: lemaster-2010, pages: "40-42" }
       shaping:
-        action: Held at its most open, folded forward at the hip with the pelvis countered, about 48° gentle, 55° moderate, 63° dynamic (our inference; heinrich-2022 GS 50-81°)
+        action: Held at its most open, folded forward at the hip with the pelvis countered, about 54° gentle, 61° moderate, 69° dynamic (our inference; heinrich-2022 GS 50-81°)
         moment: Extension, about 1.3 Nm/kg in a modelled carved turn, shared by gluteus maximus, the hamstrings and adductor magnus
         contraction: isometric
         cue: Fold at the hips, not the waist; deeper with speed and pitch
@@ -276,7 +277,7 @@ dof_matrix:
           - { source: lemaster-2010, pages: "73-74" }
           - alhammoud-2020
       finish:
-        action: Folds further with the knee, absorbing the late load, into the transition, about 62° gentle, 70° moderate, 78° dynamic (our inference)
+        action: Folds further with the knee, absorbing the late load, into the transition, about 68° gentle, 76° moderate, 80° dynamic (our inference)
         contraction: eccentric
         cue: Fold at the hips as the legs flex to finish
         confidence: low

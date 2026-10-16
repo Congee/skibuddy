@@ -13,7 +13,7 @@ const PROTRACTION = 6 * DEG;
  */
 export const STORK_TURNS: PoseDefinition = {
   keys: [
-    // Transition: skis flat, square, legs at their deepest, mass over mid-foot as the feet are drawn back, ankles closing again (lemaster-2010 p79, pp85-86).
+    // Transition: skis flat, square, legs at their deepest, mass a little ahead of mid-foot as the feet are drawn back, ankles closing again (lemaster-2010 p79, pp85-86).
     {
       t: 0,
       angulation: 0,
@@ -29,7 +29,7 @@ export const STORK_TURNS: PoseDefinition = {
       protraction: PROTRACTION,
       elevation: 0,
       insideTailLift: 0,
-      comAhead: -0.008,
+      comAhead: 0.027,
     },
     // Initiation: the leg lengthens a little, ankles flexed, mass a little ahead (lemaster-2010 pp81-85, p182); edge lowest, building (F10).
     // The outside foot begins to evert in the boot (content: ankle.inversion, cross-raschner-2023 p14).
@@ -48,7 +48,7 @@ export const STORK_TURNS: PoseDefinition = {
       protraction: PROTRACTION,
       elevation: 0,
       insideTailLift: 6 * DEG,
-      comAhead: 0.05,
+      comAhead: 0.084,
     },
     // Shaping: legs most extended and quasi-isometric; DF held to the fall line, in heinrich-2022's 18-27 deg
     // (lemaster-2010 pp79, 85); angulation mostly from the hip (lemaster-2010 p74); pelvis tipped outward of the
@@ -69,7 +69,7 @@ export const STORK_TURNS: PoseDefinition = {
       protraction: PROTRACTION,
       elevation: 0,
       insideTailLift: 6.8 * DEG,
-      comAhead: 0.052,
+      comAhead: 0.086,
     },
     // Late shaping: the edge and the eversion peak (lemaster-2010 p128), then release through the finish; the ankle starts to open.
     {
@@ -87,7 +87,7 @@ export const STORK_TURNS: PoseDefinition = {
       protraction: PROTRACTION,
       elevation: 0,
       insideTailLift: 6.2 * DEG,
-      comAhead: 0.045,
+      comAhead: 0.079,
     },
     // Finish: the leg flexes, absorbing the late load; ankles opening, feet slid forward, pressure toward
     // the heel (lemaster-2010 pp182-183, falda-buscaiot-2017); chest and pelvis square up to the skis as they release.
@@ -108,7 +108,7 @@ export const STORK_TURNS: PoseDefinition = {
       protraction: PROTRACTION,
       elevation: 0,
       insideTailLift: 5 * DEG,
-      comAhead: 0.02,
+      comAhead: 0.054,
     },
   ],
   constraints: {
@@ -119,11 +119,11 @@ export const STORK_TURNS: PoseDefinition = {
     insideFemurShare: 0.3,
     // Its edge minus tilt is read against the unrolled body; on the balance axis it would need retuning.
     balanced: false,
-    // Inference, near the low end of heinrich-2022's GS 50-81 deg; the knee is whatever balances the centre of mass.
+    // Inference within heinrich-2022's GS 50-81 deg, deep enough to keep the chest over the knee; the knee is whatever balances the centre of mass.
     hipByLoad: [
-      [1.06, 48, 62],
-      [1.12, 55, 70],
-      [1.21, 62, 78],
+      [1.06, 54, 68],
+      [1.12, 61, 76],
+      [1.21, 68, 80],
     ],
     // Stork goes past heinrich-2022's weighted 81-114 deg, but a free knee stops about here.
     insideKneeMax: 120 * DEG,
@@ -133,6 +133,8 @@ export const STORK_TURNS: PoseDefinition = {
     // The transition, just before the tail lifts (psia-c-stork-turns, lemaster-2010 p39).
     poleTouch: { t: 1 / 24, hold: 0.02, swing: 0.11 },
     scapularRhythm: 0.3,
+    // Wider than ARM_ABDUCTION: the deeper fold brings the hands in over the skis.
+    armAbduction: 0.7,
     stance: 0,
     kneesIn: 0,
     poleTrim: 0,
