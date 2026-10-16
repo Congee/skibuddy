@@ -1,13 +1,15 @@
 import { assert, describe, it } from '@effect/vitest';
 import { INTENSITIES, Intensity } from '../src/content/schema';
-import { turnForcesAt } from '../src/physics/turn';
+import { PHASE_T, turnForcesAt } from '../src/physics/turn';
+import { gazeHeading } from '../src/viewer/gaze';
 import { segmentIndex } from '../src/viewer/figure';
 import { inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
 import { CAPSULE_ARM, CAPSULE_GRIP, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
+import { solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
-import { headingAt, turnPath } from '../src/viewer/turn-heading';
+import { CORRIDOR_SHARE, headingAt, turnPath } from '../src/viewer/turn-heading';
 import { CLOSED_STANCE, OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
@@ -16,6 +18,12 @@ const KINDS = Object.values(RegularTurn);
 const angles = (kind: RegularTurn, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(kind, i), t));
 const DEG = 180 / Math.PI;
 const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as const;
+// Head turned toward the outside of the turn beyond the skis.
+const headOnSkis = (kind: RegularTurn, i: Intensity, t: number): number => {
+  const p = samplePose(poseTable(kind, i), t);
+  return p.counter + p.spineTwist + p.headYaw;
+};
+const LOOKING_KINDS = KINDS.filter((k) => k !== RegularTurn.Moguls);
 const local = (drill: string, t: number, segment: string, point: Vec3, frame: string): Vec3 => {
   const w = segmentMatrices(samplePose(poseTable(drill, Intensity.Moderate), t));
   const m = w[segmentIndex(frame)];
@@ -273,7 +281,42 @@ describe('regular turn', () => {
           const head = p.counter + p.spineTwist + p.headYaw;
           assert.closeTo(head * DEG, headingAt(k / 24, turnPath(drill, i)) * DEG, 1.5, `${drill} ${i} ${k}/24`);
         }
-    for (const kind of KINDS.filter((k) => k !== RegularTurn.Moguls))
-      for (let k = 0; k < 24; k++) assert.strictEqual(samplePose(poseTable(kind, Intensity.Moderate), k / 24).headYaw, 0, kind);
+  });
+
+  it('keeps the head within 30 deg of the chest', () => {
+    for (const drill of [...KINDS, 'closed-stance-short-turns'])
+      for (const i of INTENSITIES)
+        for (let k = 0; k < 96; k++) assert.isAtMost(Math.abs(samplePose(poseTable(drill, i), k / 96).headYaw) * DEG, 30.01, `${drill} ${i} ${k}/96`);
+  });
+
+  it('looks inside the carving arc at shaping, not at the turn centre', () => {
+    for (const i of INTENSITIES) {
+      const inside = -headOnSkis(RegularTurn.Carving, i, PHASE_T.shaping) * DEG;
+      assert.isAtLeast(inside, 10, i);
+      assert.isAtMost(inside, 30, i);
+    }
+  });
+
+  it('turns the head toward the next turn before the transition', () => {
+    for (const kind of LOOKING_KINDS)
+      for (const i of INTENSITIES) assert.isAbove(headOnSkis(kind, i, 11 / 12) * DEG, 10, `${kind} ${i}`);
+  });
+
+  it('mirrors the head into the next turn', () => {
+    for (const kind of LOOKING_KINDS)
+      for (const i of INTENSITIES) {
+        const rule = TURN_STYLES[kind].head;
+        if (rule === undefined) throw new Error(kind);
+        const s = TURN_STYLES[kind].scenarios[i];
+        const path = { radius: s.radiusM, corridor: CORRIDOR_SHARE * s.radiusM };
+        for (let k = 0; k < 12; k++) assert.closeTo(gazeHeading(rule, path, s.speedMps, k / 12 + 1), -gazeHeading(rule, path, s.speedMps, k / 12), 1e-9, `${kind} ${i} ${k}/12`);
+        const def = POSE_DEFINITIONS[kind];
+        if (def === undefined) throw new Error(kind);
+        const head = (t: number): number => {
+          const p = solvePose(def, t, s);
+          return p.counter + p.spineTwist + p.headYaw;
+        };
+        assert.closeTo(head(1 - 1e-9) * DEG, -head(0) * DEG, 0.5, `${kind} ${i}`);
+      }
   });
 });

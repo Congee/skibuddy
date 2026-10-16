@@ -722,7 +722,7 @@ dof_matrix:
   - dof: neck.flexion
     side: trunk
     cells:
-      initiation: { action: Head held up with the eyes ahead along the path, contraction: isometric, cue: Eyes on the next turn, confidence: low, sources: [{ source: lemaster-2010, pages: 64 }] }
+      initiation: { action: "Head held up with the eyes ahead along the path, a few ski lengths on", contraction: isometric, cue: Eyes on the next turn, confidence: low, sources: [{ source: lemaster-2010, pages: 64 }, collin-psia-nw] }
       shaping: { action: Head held steady against the turn load, contraction: isometric, cue: A steady head, confidence: low, sources: [{ source: lemaster-2010, pages: 64 }] }
       finish: { action: Head held steady, contraction: isometric, cue: A steady head, confidence: low, sources: [] }
   - dof: neck.side-bend
@@ -734,9 +734,9 @@ dof_matrix:
   - dof: neck.rotation
     side: trunk
     cells:
-      initiation: { action: Head turns toward the coming apex so the eyes lead the turn, contraction: concentric, cue: Look where the turn is going, confidence: low, sources: [] }
-      shaping: { action: Held toward the path against the slight counter, contraction: isometric, cue: Look where you are going, confidence: low, sources: [] }
-      finish: { action: Eyes move ahead to the next turn's path, contraction: concentric, cue: Look along the next turn, confidence: low, sources: [] }
+      initiation: { action: Head turns toward the coming apex so the eyes lead the turn, contraction: concentric, cue: Look where the turn is going, confidence: low, sources: [land-tatler-2001, lappi-2025] }
+      shaping: { action: "Held along the arc a little inside the direction of travel, not at the turn's centre, against the slight counter", contraction: isometric, cue: Trace the arc just ahead, confidence: low, sources: [collin-psia-nw] }
+      finish: { action: Head and eyes move on to the next turn's apex before the transition, contraction: concentric, cue: Look to the next turn, confidence: low, sources: [decroix-2017, { source: lemaster-2010, pages: 150 }] }
 
 activations:
   # Outside leg. Load-bearing efforts scale with the load factor, the outside share and knee bend.

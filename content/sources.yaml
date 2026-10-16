@@ -507,3 +507,44 @@
   citation: PSIA-AASI Central. Basic Parallel Garlands (skill-building tasks).
   url: https://psia-c.org/education/alpine/alpine-resources/basic-parallel-garlands/
   read: full
+# Gaze and head
+- id: decroix-2017
+  type: article
+  citation: Decroix M, Wazir MRWN, Zeuwts L, Deconinck FFJA, Lenoir M, Vansteenkiste P. Expert - non-expert differences in visual behaviour during alpine slalom skiing. Hum Mov Sci. 2017;55:229-39.
+  url: https://doi.org/10.1016/j.humov.2017.08.012
+  read: abstract
+- id: land-tatler-2001
+  type: article
+  citation: Land MF, Tatler BW. Steering with the head - the visual strategy of a racing driver. Curr Biol. 2001;11(15):1215-20.
+  url: https://doi.org/10.1016/s0960-9822(01)00351-7
+  read: abstract
+- id: lappi-2025
+  type: article
+  citation: Lappi O, Pekkanen J, Krajnc A, Iacono L et al. The racer's gaze - visual strategy in high-speed sports expertise. J Vis. 2025;25(8):16.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12302049/
+  read: full
+- id: imai-2001
+  type: article
+  citation: Imai T, Moore ST, Raphan T, Cohen B. Interaction of the body, head, and eyes during walking and turning. Exp Brain Res. 2001;136(1):1-18.
+  url: https://doi.org/10.1007/s002210000533
+  read: abstract
+- id: hicheur-2005
+  type: article
+  citation: Hicheur H, Vieilledent S, Berthoz A. Head motion in humans alternating between straight and curved walking path. Neurosci Lett. 2005;383(1-2):87-92.
+  url: https://doi.org/10.1016/j.neulet.2005.03.046
+  read: abstract
+- id: collin-psia-nw
+  type: web
+  citation: Collin A. The Eyes Have It. PSIA-AASI Northwest newsletter (undated).
+  url: https://www.psia-nw.org/newsletter-articles/contributions/the-eyes-have-it/
+  read: full
+- id: zalohar-fall-line
+  type: web
+  citation: Zalohar B. Clear vision. Fall-Line Skiing magazine.
+  url: https://www.fall-line.co.uk/?p=1103803
+  read: full
+- id: skimag-steeps-2018
+  type: web
+  citation: SKI Magazine. How to ski the steeps (clinic). 9 Nov 2018.
+  url: https://www.skimag.com/performance/clinic-how-to-ski-the-steeps
+  read: full

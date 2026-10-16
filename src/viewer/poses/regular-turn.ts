@@ -91,6 +91,13 @@ const SHORT_COUNTER = 35;
 const CORRIDOR = 2;
 // The head stays still, facing downhill (fis-freestyle-judging-2025 p29).
 const DOWNHILL: HeadRule = { aim: HeadAim.FallLine, corridor: CORRIDOR };
+// The head leads the path by about 1 s (land-tatler-2001, lappi-2025) and the gaze moves to the next gate about 0.5 s
+// before passing one (decroix-2017); along the arc a little inside it (collin-psia-nw).
+const ALONG_ARC: HeadRule = { aim: HeadAim.Arc, lead: 1, early: 0.5 };
+// Cruising picks the next turn's spot before the transition (lemaster-2010 p150), earlier than a racer; 1 s inferred.
+const NEXT_APEX: HeadRule = { aim: HeadAim.Arc, lead: 1, early: 1 };
+// At least two turns ahead (zalohar-fall-line), down the fall line on steeps (skimag-steeps-2018); its centre line inferred.
+const DOWN_THE_LINE: HeadRule = { aim: HeadAim.Line, turns: 2 };
 // Hands in front of the body (fis-freestyle-judging-2025 p29), not out wide; amount inferred.
 const HANDS_IN = 10;
 // An arc of radius r from the fall line across half a corridor w heads acos(1 - w/2r) off it, up to the hips' rotation range.
@@ -157,6 +164,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     crossUnder: [0, 0, 0],
     polePlant: false,
     poleTrim: 0,
+    head: NEXT_APEX,
   },
   // High edge, long outside leg, angulation from the hip.
   [RegularTurn.Carving]: {
@@ -189,6 +197,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     underAnkle: 6,
     polePlant: false,
     poleTrim: 0,
+    head: ALONG_ARC,
   },
   // Legs flex and extend under a quiet trunk square to the fall line.
   [RegularTurn.ShortTurns]: {
@@ -214,6 +223,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     crossUnder: [1, 1, 1],
     polePlant: true,
     poleTrim: 0,
+    head: DOWN_THE_LINE,
   },
   // Compact; the legs fold deep over each bump at the transition.
   [RegularTurn.Moguls]: {
@@ -282,6 +292,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     crossUnder: [1, 1, 1],
     polePlant: true,
     poleTrim: 0,
+    head: DOWN_THE_LINE,
   },
   // Near even weighting, a narrow stance and more up and down.
   [RegularTurn.Powder]: {
@@ -313,6 +324,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     crossUnder: [0, 0, 0],
     polePlant: true,
     poleTrim: 0,
+    head: DOWN_THE_LINE,
   },
 };
 

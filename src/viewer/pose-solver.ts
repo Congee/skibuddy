@@ -7,7 +7,8 @@ import { identity, transformPoint } from './mat4';
 import type { Mat4, Vec3 } from './mat4';
 import { HeadAim, keyValuesAt, touchShare, windowShare, wrapTime } from './pose-definition';
 import type { HeadRule, KeyField, PoseDefinition } from './pose-definition';
-import { headingAt } from './turn-heading';
+import { HEAD_LIMIT, gazeHeading } from './gaze';
+import { CORRIDOR_SHARE, headingAt } from './turn-heading';
 
 const DEG = Math.PI / 180;
 import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, centreOfMass, outsideWeight, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
@@ -55,8 +56,11 @@ export const effortOf = (def: PoseDefinition, scenario: DrillScenario | null): E
 /** Head yaw beyond the chest, toward the outside, that `rule` asks for at turn time `t` given the chest's heading on the skis. */
 export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | null, t: number, chest: number): number => {
   if (rule === undefined || rule.aim === HeadAim.Chest || scenario === null || !isTurn(scenario)) return 0;
-  // The fall line lies the skis' heading off it toward the outside.
-  return headingAt(t, { radius: scenario.radiusM, corridor: rule.corridor }) - chest;
+  const corridor = rule.aim === HeadAim.FallLine ? rule.corridor : CORRIDOR_SHARE * scenario.radiusM;
+  const path = { radius: scenario.radiusM, corridor };
+  // The gaze lies the skis' heading, less its own, off the fall line toward the outside.
+  const yaw = headingAt(t, path) - gazeHeading(rule, path, scenario.speedMps, t) - chest;
+  return Math.min(HEAD_LIMIT, Math.max(-HEAD_LIMIT, yaw));
 };
 
 const insideTipHeight = (pose: Pose): number => transformPoint(segmentMatrices(pose)[skiIndex(BodySide.Left)] ?? identity(), SKI_TIP)[1];
@@ -114,6 +118,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const insideAnkle = (tailLift: number): number => shinAngle(dorsiflexion + (k.insideDorsiflexion - dorsiflexion) * lifted, EQUIPMENT) + tailLift;
   // Near the switch the legs share the difference in length, so neither kinks as outside and inside swap.
   const split = 1 - outsideWeight(lean);
+  const headYaw = headYawOf(c.head, scenario, t, mild('counter') + mild('spineTwist'));
   const base = (knee: number, extra: number, tailLift = fullLift): Pose => {
     const hipFlex = knee - ankleFlex;
     return {
@@ -126,7 +131,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       spineFlex: mild('lumbarFlex'),
       spineBend: mild('spineBend'),
       spineTwist: mild('spineTwist'),
-      headYaw: headYawOf(c.head, scenario, t, mild('counter') + mild('spineTwist')),
+      headYaw,
       armAbduction: c.armAbduction ?? ARM_ABDUCTION,
       poleTouch,
       reach: 0,

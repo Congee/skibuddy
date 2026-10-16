@@ -706,7 +706,7 @@ dof_matrix:
   - dof: neck.flexion
     side: trunk
     cells:
-      initiation: { action: Head held up with the eyes down the corridor, contraction: isometric, cue: Eyes down the hill, confidence: low, sources: [{ source: lemaster-2010, pages: 64 }] }
+      initiation: { action: "Head held up with the eyes down the corridor, two turns ahead or more", contraction: isometric, cue: Eyes down the hill, confidence: low, sources: [{ source: lemaster-2010, pages: 64 }, zalohar-fall-line] }
       shaping: { action: Head held steady, contraction: isometric, cue: A steady head, confidence: low, sources: [{ source: lemaster-2010, pages: 64 }] }
       finish: { action: Head held steady through the edge set, contraction: isometric, cue: A steady head, confidence: low, sources: [] }
   - dof: neck.side-bend
@@ -719,8 +719,8 @@ dof_matrix:
     side: trunk
     cells:
       initiation: { neutral: true, contraction: isometric, cue: Head faces down the hill with the chest, confidence: low, sources: [] }
-      shaping: { neutral: true, contraction: isometric, cue: Head faces down the hill with the chest, confidence: low, sources: [] }
-      finish: { neutral: true, contraction: isometric, cue: Head faces down the hill with the chest, confidence: low, sources: [] }
+      shaping: { neutral: true, contraction: isometric, cue: "Head faces down the fall line, the chest with it", confidence: low, sources: [skimag-steeps-2018] }
+      finish: { neutral: true, contraction: isometric, cue: "Head faces down the fall line, the chest with it", confidence: low, sources: [skimag-steeps-2018] }
 
 activations:
   # Outside leg. Load-bearing efforts follow the load and the edge set; balance efforts change little.

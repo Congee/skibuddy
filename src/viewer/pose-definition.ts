@@ -55,11 +55,19 @@ export interface PoleTouch {
 }
 
 /** Where the head looks through the turn, beyond the chest's own heading. */
-export const HeadAim = { Chest: 'chest', FallLine: 'fall-line' } as const;
+export const HeadAim = { Chest: 'chest', FallLine: 'fall-line', Arc: 'arc', Line: 'line' } as const;
 export type HeadAim = (typeof HeadAim)[keyof typeof HeadAim];
 
-/** The head's rule: with the chest, or down the fall line of a turn swinging across a `corridor` metres wide. */
-export type HeadRule = { readonly aim: typeof HeadAim.Chest } | { readonly aim: typeof HeadAim.FallLine; readonly corridor: number };
+/**
+ * The head's rule: with the chest; down the fall line of a turn swinging across a `corridor` metres wide; along the
+ * arc `lead` seconds ahead, or at the next apex while it is farther, moving on `early` seconds before passing it; or
+ * at the corridor's centre line `turns` turns downhill.
+ */
+export type HeadRule =
+  | { readonly aim: typeof HeadAim.Chest }
+  | { readonly aim: typeof HeadAim.FallLine; readonly corridor: number }
+  | { readonly aim: typeof HeadAim.Arc; readonly lead: number; readonly early: number }
+  | { readonly aim: typeof HeadAim.Line; readonly turns: number };
 
 export interface PoseConstraints {
   /** Peak hip angulation and outside femur rotation at moderate intensity. */

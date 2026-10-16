@@ -22,7 +22,7 @@ export const transitionHeading = ({ radius, corridor }: TurnPath): number => Mat
 export const headingAt = (t: number, path: TurnPath): number => -transitionHeading(path) * Math.cos(Math.PI * (((t % 1) + 1) % 1));
 
 /** Corridor as a share of the radius where none is known: a round turn, 60° off the fall line at the transition. */
-const CORRIDOR_SHARE = 1;
+export const CORRIDOR_SHARE = 1;
 /** Mogul lines run in a corridor about 2 m wide, as regular-turn.ts sets their counter. */
 const MOGUL_CORRIDOR = 2;
 /** For a motion with no turn of its own, such as a drill's: a short turn. */
