@@ -55,13 +55,15 @@ dof_matrix:
         contraction: isometric
         cue: Shins on the tongues into the new slip
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
   - dof: ankle.flexion
     side: inside
     cells:
       initiation: { action: "Shin held on the tongue, centred", contraction: isometric, cue: Both shins forward, confidence: low, sources: [{ source: lemaster-2010, pages: 83 }] }
-      shaping: { action: Held centred, contraction: isometric, cue: Both shins forward, confidence: low, sources: [] }
-      finish: { action: Held centred, contraction: isometric, cue: Both shins forward, confidence: low, sources: [] }
+      shaping: { action: Held centred, contraction: isometric, cue: Both shins forward, confidence: low, sources: [{ source: lemaster-2010, pages: 81 }, { source: patterson-2023, pages: 89 }] }
+      finish: { action: Held centred, contraction: isometric, cue: Both shins forward, confidence: low, sources: [{ source: lemaster-2010, pages: 81 }, { source: patterson-2023, pages: 89 }] }
   - dof: ankle.inversion
     side: outside
     cells:
@@ -104,26 +106,30 @@ dof_matrix:
         contraction: isometric
         cue: Flat skis
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
       finish:
         action: Rolls gently onto its little-toe edge as the new uphill ski
         moment: Inversion, rising
         contraction: concentric
         cue: Both edges engage together
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
       initiation: { action: "Arch held under load, pressure spread", contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [{ source: lemaster-2010, pages: "161-162" }] }
-      shaping: { action: Arch held, contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [] }
-      finish: { action: Arch held as the new edge loads its inner border, contraction: isometric, cue: Keep the arch up as the edge engages, confidence: low, sources: [] }
+      shaping: { action: Arch held, contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
+      finish: { action: Arch held as the new edge loads its inner border, contraction: isometric, cue: Keep the arch up as the edge engages, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: "Arch held under load, pressure spread", contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [] }
-      shaping: { action: Arch held, contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [] }
-      finish: { action: Arch held under a lighter load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [] }
+      initiation: { action: "Arch held under load, pressure spread", contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      shaping: { action: Arch held, contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held under a lighter load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:

@@ -74,7 +74,9 @@ dof_matrix:
         contraction: isometric
         cue: Uphill shin on the tongue too
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
       finish:
         action: Held closed through the uphill arc, the uphill foot a little ahead
         contraction: isometric
@@ -136,14 +138,14 @@ dof_matrix:
     side: outside
     cells:
       initiation: { action: Arch held as the foot rolls, contraction: isometric, cue: Stand on heel and both balls of the foot, confidence: low, sources: [{ source: iasi-2021, pages: 190 }] }
-      shaping: { action: Arch held as the edge bites, contraction: isometric, cue: Keep the arch from collapsing, confidence: low, sources: [] }
+      shaping: { action: Arch held as the edge bites, contraction: isometric, cue: Keep the arch from collapsing, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
       finish: { action: Arch held under the uphill arc's load, contraction: isometric, cue: Spread the pressure as it moves to the heel, confidence: low, sources: [{ source: lemaster-2010, pages: 139 }] }
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: Arch held under a light load, contraction: isometric, cue: Whole foot on the boot sole, confidence: low, sources: [] }
-      shaping: { action: Arch held under a light load, contraction: isometric, cue: Whole foot on the boot sole, confidence: low, sources: [] }
-      finish: { action: Arch held on the outer border of the foot, contraction: isometric, cue: Feel the little-toe side of the uphill foot, confidence: low, sources: [] }
+      initiation: { action: Arch held under a light load, contraction: isometric, cue: Whole foot on the boot sole, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      shaping: { action: Arch held under a light load, contraction: isometric, cue: Whole foot on the boot sole, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held on the outer border of the foot, contraction: isometric, cue: Feel the little-toe side of the uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:
@@ -672,8 +674,8 @@ activations:
     contraction: { initiation: isometric, shaping: eccentric, finish: isometric }
     role: Steadies the downhill foot as the peroneals let its big-toe edge go, and holds the arch
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the foot can still roll inside the boot to let an edge go, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: 139 }]
   - muscle: toe-extensors
     side: both
     serves: [ankle.flexion]
@@ -681,8 +683,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Pull the toes up with tibialis anterior
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from their dorsiflexor moment arm, working with tibialis anterior on the book's pull-the-toes-up cue; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: soleus
     side: outside
     serves: [ankle.flexion]
@@ -702,8 +704,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the pressure over the sole as it moves from ball to heel
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the outside foot's arch is built for sideways load, and in GS turns the pressure under it moved from forefoot toward heel; not measured in this drill
+    sources: [{ source: lemaster-2010, pages: 139 }, falda-buscaiot-2017]
   # Uphill (inside) leg: about a quarter to two-fifths of the load, more flexed.
   - muscle: vasti
     side: inside
@@ -766,8 +768,8 @@ activations:
     contraction: { initiation: isometric, shaping: eccentric, finish: isometric }
     role: Steady the uphill foot as its little-toe edge is let go under control
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; eversion inside the boot fine-tunes the edge; not measured on the inside leg
+    sources: [{ source: lemaster-2010, pages: 127 }, { source: lind-sanders-2004, pages: 95 }]
   - muscle: tibialis-anterior
     side: inside
     serves: [ankle.flexion, ankle.inversion]
@@ -784,8 +786,8 @@ activations:
     contraction: { initiation: eccentric, shaping: concentric, finish: isometric }
     role: Rolls the uphill foot back onto its little-toe edge with tibialis anterior
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   - muscle: soleus
     side: inside
     serves: [ankle.flexion]

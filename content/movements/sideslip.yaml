@@ -77,13 +77,17 @@ dof_matrix:
         contraction: isometric
         cue: Both shins forward
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
       finish:
         action: Held closed through the edge set
         contraction: isometric
         cue: Both shins forward through the stop
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
   - dof: ankle.inversion
     side: outside
     cells:
@@ -132,7 +136,9 @@ dof_matrix:
         contraction: isometric
         cue: Keep both skis at the same edge angle
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
       finish:
         action: Rolls back onto its little-toe edge with the downhill ski
         moment: Inversion, rising
@@ -156,7 +162,8 @@ dof_matrix:
         contraction: isometric
         cue: Feel the whole foot
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: "139, 161-162" }
       finish:
         action: Arch held up as the edge set loads the inner border of the foot
         contraction: isometric
@@ -167,9 +174,9 @@ dof_matrix:
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [] }
-      shaping: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [] }
-      finish: { action: Arch held as the edge set loads it, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [] }
+      initiation: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      shaping: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held as the edge set loads it, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:

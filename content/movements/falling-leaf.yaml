@@ -72,13 +72,17 @@ dof_matrix:
         contraction: isometric
         cue: Centred
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
       finish:
         action: Opens a little with the downhill ankle as the pressure moves back
         contraction: concentric
         cue: Both shins ease back together
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
   - dof: ankle.inversion
     side: outside
     cells:
@@ -106,7 +110,9 @@ dof_matrix:
         contraction: isometric
         cue: Same edge going backward
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 127 }
+          - { source: lind-sanders-2004, pages: 95 }
   - dof: ankle.inversion
     side: inside
     cells:
@@ -115,19 +121,25 @@ dof_matrix:
         contraction: eccentric
         cue: Both skis at the same edge angle
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
       shaping:
         action: Held at the downhill ski's edge angle
         contraction: isometric
         cue: Both skis at the same edge angle
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
       finish:
         action: Held at the downhill ski's edge angle
         contraction: isometric
         cue: Both skis at the same edge angle
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -143,7 +155,8 @@ dof_matrix:
         contraction: isometric
         cue: Whole foot
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: "139, 161-162" }
       finish:
         action: Arch held as the pressure moves toward the heel
         contraction: isometric
@@ -154,9 +167,9 @@ dof_matrix:
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [] }
-      shaping: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [] }
-      finish: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [] }
+      initiation: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      shaping: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held under a light load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:

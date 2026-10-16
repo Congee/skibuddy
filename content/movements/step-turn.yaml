@@ -82,7 +82,9 @@ dof_matrix:
         contraction: isometric
         cue: Both shins forward to the stop
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
   - dof: ankle.inversion
     side: outside
     cells:
@@ -132,19 +134,21 @@ dof_matrix:
         contraction: isometric
         cue: Both skis on matching edges
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
       initiation: { action: Arch held up under each step's full load, contraction: isometric, cue: "Stand on heel, big-toe ball and little-toe ball", confidence: low, sources: [{ source: lemaster-2010, pages: 139 }] }
-      shaping: { action: Arch held under load, contraction: isometric, cue: Keep the arch from collapsing, confidence: low, sources: [] }
-      finish: { action: Arch held under the braking load, contraction: isometric, cue: Spread the pressure over the sole, confidence: low, sources: [] }
+      shaping: { action: Arch held under load, contraction: isometric, cue: Keep the arch from collapsing, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
+      finish: { action: Arch held under the braking load, contraction: isometric, cue: Spread the pressure over the sole, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: Arch held up under each step's full load, contraction: isometric, cue: Spread the pressure over the sole, confidence: low, sources: [] }
-      shaping: { action: Arch held under a lighter load, contraction: isometric, cue: Spread the pressure over the sole, confidence: low, sources: [] }
-      finish: { action: Arch held under a lighter load, contraction: isometric, cue: Spread the pressure over the sole, confidence: low, sources: [] }
+      initiation: { action: Arch held up under each step's full load, contraction: isometric, cue: Spread the pressure over the sole, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      shaping: { action: Arch held under a lighter load, contraction: isometric, cue: Spread the pressure over the sole, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held under a lighter load, contraction: isometric, cue: Spread the pressure over the sole, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:
@@ -722,8 +726,8 @@ activations:
     contraction: { initiation: eccentric, shaping: eccentric, finish: isometric }
     role: Lets the uphill ski off its little-toe edge, and holds the arch under each step
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the foot can still roll inside the boot to let an edge go, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: 139 }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -849,8 +853,8 @@ activations:
     contraction: { initiation: concentric, shaping: concentric, finish: isometric }
     role: Rolls the inside ski off its big-toe edge and onto its little-toe edge for the new turn
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   # Trunk: a stable upper body, facing down the hill, while the legs step and turn under it.
   - muscle: transversus-abdominis
     side: both

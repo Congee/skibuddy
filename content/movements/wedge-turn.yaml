@@ -160,7 +160,9 @@ dof_matrix:
         contraction: isometric
         cue: Keep the inside ski quiet and flat-ish
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -184,13 +186,14 @@ dof_matrix:
         contraction: isometric
         cue: Spread the pressure over the whole foot
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: "139, 161-162" }
   - dof: foot.arch
     side: inside
     cells:
       initiation: { action: Arch held under a lighter load as weight leaves this foot, contraction: isometric, cue: Keep some weight on the inside foot too, confidence: low, sources: [{ source: iasi-2021, pages: 190 }] }
-      shaping: { action: Arch held under a light load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [] }
-      finish: { action: Arch held as the foot readies to take the weight, contraction: isometric, cue: Feel the whole inside foot, confidence: low, sources: [] }
+      shaping: { action: Arch held under a light load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held as the foot readies to take the weight, contraction: isometric, cue: Feel the whole inside foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:
@@ -823,8 +826,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Adds a little ankle stiffness; the knee is less bent than in a carved turn, so it is not slack
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the abstract reports medial gastrocnemius above half of maximum in GS turns; the wedge is slower and the boot shaft shares the ankle moment, so its share here is small
+    sources: [hintermeister-1997, heinrich-2022]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -846,8 +849,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Holds the arch up under the edged foot
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; the ankle muscles help the boot resist the edge's flattening torque, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "123-124, 139" }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]

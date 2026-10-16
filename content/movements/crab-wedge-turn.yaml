@@ -151,7 +151,9 @@ dof_matrix:
         contraction: concentric
         cue: Start tipping the inside ski up as the outside one softens
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -175,12 +177,13 @@ dof_matrix:
         contraction: isometric
         cue: Spread the pressure over the whole foot
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: "139, 161-162" }
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: Arch held under a falling load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [] }
-      shaping: { action: Arch held under a light load while the ski brushes, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [] }
+      initiation: { action: Arch held under a falling load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      shaping: { action: Arch held under a light load while the ski brushes, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
       finish: { action: Arch held up as the foot takes the load again, contraction: isometric, cue: Stand on the whole foot as it takes over, confidence: low, sources: [{ source: lemaster-2010, pages: 139 }] }
   - dof: knee.flexion
     side: outside
@@ -847,8 +850,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the pressure over the sole on the big-toe edge
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the outside foot's arch is built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 139 }]
   # Inside leg: still on the snow on its big-toe edge, carrying about 15-30 % and brushing.
   - muscle: vasti
     side: inside
@@ -912,8 +915,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Co-contracts with the peroneals so the brushing ski stays steady and doesn't catch
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the foot can still roll inside the boot to fine-tune edge hold, and pairing with the peroneals keeps the brushing ski from catching; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   - muscle: tibialis-anterior
     side: inside
     serves: [ankle.flexion]

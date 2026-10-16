@@ -56,13 +56,15 @@ dof_matrix:
         contraction: isometric
         cue: Shins on the tongues as you stop
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
   - dof: ankle.flexion
     side: inside
     cells:
       initiation: { action: "Closes with the downhill ankle, shin into the tongue", contraction: concentric, cue: Both shins forward, confidence: low, sources: [{ source: lemaster-2010, pages: 81 }] }
-      shaping: { action: Held closed under a lighter load, contraction: isometric, cue: Both shins forward, confidence: low, sources: [] }
-      finish: { action: Held closed, contraction: isometric, cue: Both shins forward, confidence: low, sources: [] }
+      shaping: { action: Held closed under a lighter load, contraction: isometric, cue: Both shins forward, confidence: low, sources: [{ source: lemaster-2010, pages: 81 }, { source: patterson-2023, pages: 89 }] }
+      finish: { action: Held closed, contraction: isometric, cue: Both shins forward, confidence: low, sources: [{ source: lemaster-2010, pages: 81 }, { source: patterson-2023, pages: 89 }] }
   - dof: ankle.inversion
     side: outside
     cells:
@@ -89,25 +91,27 @@ dof_matrix:
         contraction: isometric
         cue: Hold the edge until you stop
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 127 }
+          - { source: lind-sanders-2004, pages: 95 }
   - dof: ankle.inversion
     side: inside
     cells:
-      initiation: { action: Held flat, contraction: isometric, cue: Flat skis to turn them, confidence: low, sources: [] }
+      initiation: { action: Held flat, contraction: isometric, cue: Flat skis to turn them, confidence: low, sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }] }
       shaping: { action: Rolls onto its little-toe edge with the downhill ski, moment: "Inversion, rising", contraction: concentric, cue: Both edges together, confidence: low, sources: [psia-c-hockey-stops] }
-      finish: { action: Edge held, contraction: isometric, cue: Both edges until you stop, confidence: low, sources: [] }
+      finish: { action: Edge held, contraction: isometric, cue: Both edges until you stop, confidence: low, sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }] }
   - dof: foot.arch
     side: outside
     cells:
-      initiation: { action: Arch held as the feet press into the boots, contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [] }
+      initiation: { action: Arch held as the feet press into the boots, contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
       shaping: { action: Arch held up under the braking load on the inner border of the foot, contraction: isometric, cue: Keep the arch from collapsing as the edge bites, confidence: low, sources: [{ source: lemaster-2010, pages: "161-162" }] }
-      finish: { action: Arch held, contraction: isometric, cue: Keep the arch up, confidence: low, sources: [] }
+      finish: { action: Arch held, contraction: isometric, cue: Keep the arch up, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: Arch held, contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [] }
-      shaping: { action: Arch held under a lighter load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [] }
-      finish: { action: Arch held, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [] }
+      initiation: { action: Arch held, contraction: isometric, cue: Whole foot on the ski, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      shaping: { action: Arch held under a lighter load, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held, contraction: isometric, cue: A quiet uphill foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:
@@ -627,8 +631,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Holds the arch under the edge set and co-contracts with the peroneals
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; the ankle muscles help the boot resist the edge's flattening torque, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "123-124, 139" }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -636,8 +640,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the pressure over the sole of the downhill foot
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the outside foot's arch is built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 139 }]
   # Inside (uphill) leg: a fast outward turn, then a smaller share of the braking.
   - muscle: deep-hip-rotators
     side: inside
@@ -718,8 +722,8 @@ activations:
     contraction: { initiation: isometric, shaping: concentric, finish: isometric }
     role: Tips the uphill ski onto its little-toe edge and holds it
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   - muscle: soleus
     side: inside
     serves: [ankle.flexion]
@@ -727,8 +731,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Steadies the uphill ankle against the boot
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from ankle moments modelled in carving, which the boot shaft shares; light here and not measured in this drill
+    sources: [heinrich-2022, { source: lemaster-2010, pages: 81 }]
   # Pelvis and trunk.
   - muscle: internal-oblique
     side: outside
