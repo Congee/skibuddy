@@ -12,6 +12,16 @@ export const G = 9.81;
 /** A drill's scenario per setting; the drill's content is the only source. */
 export type TurnScenarios = Readonly<Record<Intensity, TurnScenario>>;
 
+/** Any drill's scenario: no radius means it is not a round turn (steps, stops, straight runs). */
+export interface DrillScenario {
+  readonly speedMps: number;
+  readonly slopeDeg: number;
+  readonly radiusM?: number;
+}
+
+/** Structural twin of content's `isTurnScenario`, so the physics needs nothing from the content schema. */
+export const isTurn = (s: DrillScenario): s is TurnScenario => typeof s.radiusM === 'number' && s.radiusM > 0;
+
 export interface TurnForces {
   /** Snow force over body weight. */
   readonly load: number;

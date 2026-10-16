@@ -9,6 +9,7 @@
     "build": "bun run content && vite build",
     "preview": "vite preview",
     "content": "bun scripts/build-content.ts",
+    "poses": "bun scripts/anatomy/pose-tables.ts",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "oxlint",
     "test": "vitest run",

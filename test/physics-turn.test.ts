@@ -1,10 +1,10 @@
 import { assert, describe, it } from '@effect/vitest';
 import { INTENSITIES } from '../src/content/schema';
-import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
+import { turnScenarios } from '../scripts/anatomy/drill-scenarios';
 import { PHASE_T, STORK_DRILL, forcesAt, headingAt, outsideLoadAt, outsideShare, phaseForces, turnForcesAt } from '../src/physics/turn';
 
 const DEG = Math.PI / 180;
-const SCENARIOS = drillScenarios();
+const SCENARIOS = turnScenarios();
 const moderate = SCENARIOS.moderate;
 
 describe('Lind & Sanders eq 4.9', () => {

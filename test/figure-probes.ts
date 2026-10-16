@@ -1,9 +1,9 @@
-import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
 import type { ProbeFrame } from '../scripts/anatomy/probe-fixture';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
-import { CAPSULE_GRIP, SKI_TIP, poseAt, segmentMatrices } from '../src/viewer/pose';
+import { CAPSULE_GRIP, SKI_TIP, segmentMatrices } from '../src/viewer/pose';
+import { poseAt } from './stork-poses';
 import fixture from './anatomy-probe.json';
 
 export type LegSide = typeof BodySide.Left | typeof BodySide.Right;
@@ -25,12 +25,10 @@ const segment = (world: ReadonlyArray<Mat4>, kind: SegmentKind, side: LegSide): 
   return m;
 };
 
-const MODERATE = drillScenarios().moderate;
-
 export const capsuleProbe: FigureProbe = {
   name: 'capsule',
   at: (t) => {
-    const world = segmentMatrices(poseAt(t, MODERATE));
+    const world = segmentMatrices(poseAt(t));
     return {
       grip: (side) => transformPoint(segment(world, SegmentKind.Forearm, side), CAPSULE_GRIP),
       ankle: (side) => transformPoint(segment(world, SegmentKind.Boot, side), [0, 0, 0]),

@@ -2,7 +2,7 @@ import { clamp, float, mix, sRGBTransferEOTF, vec3 } from 'three/tsl';
 import type { Node } from 'three/webgpu';
 
 /** The board's level colours: l1, l2, l3. */
-export const LEVEL_COLOURS = [0xf2b33d, 0xe0602a, 0x9e1f63] as const;
+export const LEVEL_COLOURS = [0x8ecbff, 0x2f6bff, 0x3a10a8] as const;
 
 type Level = Node<'float'>;
 

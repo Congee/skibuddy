@@ -1,9 +1,13 @@
 import type { Object3D } from 'three';
-import { Intensity, Side } from '../content/schema';
+import { Side } from '../content/schema';
+import type { Intensity } from '../content/schema';
 import type { TurnSide } from './slots';
 
-/** The baked turn clip per intensity; moderate keeps the original name. */
-export const turnClipName = (intensity: Intensity): string => (intensity === Intensity.Moderate ? 'stork-turn' : `stork-turn-${intensity}`);
+/** The still stance a drill without its own pose shows. */
+export const NEUTRAL_CLIP = 'neutral';
+
+/** The baked clip for a drill's motion at one intensity; null is the neutral stance. */
+export const motionClipName = (drill: string | null, intensity: Intensity): string => (drill === null ? NEUTRAL_CLIP : `${drill}/${intensity}`);
 
 export const NodeKind = { Muscle: 'muscle', RestingMuscle: 'resting-muscle', Bones: 'bones', Gear: 'gear' } as const;
 export type NodeKind = (typeof NodeKind)[keyof typeof NodeKind];

@@ -4,17 +4,21 @@ import type { JSX } from 'solid-js';
 import type { MuscleLevel } from '../content/activation';
 import { MAX_EFFORT, effortAt } from '../content/effort';
 import { Intensity } from '../content/schema';
-import type { Movement, Scenarios } from '../content/schema';
+import type { Movement } from '../content/schema';
 import { playingAtom, turnTimeAtom } from '../state/playback';
 import type { AnchorsListener } from './anchors';
 import { GearMode } from './gear-mode';
 import type { FigureHighlight } from './highlight';
+import type { MusclePick } from './pick';
+import { hasPose } from './poses';
 import type { FigureKind, Viewer as SceneViewer } from './scene';
 
 const params = new URLSearchParams(window.location.search);
 // The capsule is the fallback when the anatomy model fails to load; ?figure=capsule forces it.
 const FIGURE: FigureKind = params.get('figure') === 'capsule' ? 'capsule' : 'anatomy';
 const FORCE_WEBGL = params.get('renderer') === 'webgl';
+
+export type { MusclePick } from './pick';
 
 /** Default error state: fills the figure area so the layout does not jump. */
 export const ViewerError = (props: { readonly message: string }): JSX.Element => (
@@ -50,14 +54,22 @@ export const Viewer = (props: {
   readonly gear?: GearMode;
   /** How hard the turn is skied; moderate by default. */
   readonly intensity?: Intensity;
-  /** The drill's scenario per setting, which the capsule figure poses for. */
-  readonly scenarios: Scenarios;
+  /** The drill shown; one without a pose stands in a neutral stance. */
+  readonly drill: string;
   /** CSS colour of the ground under the figure. */
   readonly ground?: string;
   /** The muscle the board singles out, if any. */
   readonly highlight?: FigureHighlight | null;
   /** Caption under the figure; the default names the outside ski. */
   readonly caption?: JSX.Element;
+  /** A tap on the figure: the content muscle and side under it, or null off any muscle. */
+  readonly onPick?: (pick: MusclePick | null) => void;
+  /** Pinch, wheel and two-finger pan zoom; on by default. */
+  readonly zoom?: boolean;
+  /** CSS px of the figure's bottom covered by a panel; the figure is framed in the rest. */
+  readonly inset?: { readonly bottom: number };
+  /** Each change eases the camera back to the whole figure. */
+  readonly resetView?: number;
   readonly onReady?: () => void;
   readonly onError?: (message: string) => void;
   /** Replaces the built-in error state when the 3D view cannot start. */
@@ -106,7 +118,9 @@ export const Viewer = (props: {
           figure: FIGURE,
           forceWebGL: FORCE_WEBGL,
           levels: levels(),
-          scenarios: props.scenarios,
+          drill: props.drill,
+          zoom: props.zoom ?? true,
+          onPick: (pick) => props.onPick?.(pick),
           ...(onAnchors === undefined ? {} : { onAnchors }),
         }),
       )
@@ -169,13 +183,31 @@ export const Viewer = (props: {
 
   createEffect(() => {
     const i = props.intensity ?? Intensity.Moderate;
-    const scenarios = props.scenarios;
-    if (shown() !== null) viewer?.setIntensity(i, scenarios);
+    const drill = props.drill;
+    if (shown() !== null) viewer?.setMotion(drill, i);
   });
 
   createEffect(() => {
     const h = props.highlight ?? null;
     if (shown() !== null) viewer?.setHighlight(h);
+  });
+
+  createEffect(() => {
+    const on = props.zoom ?? true;
+    if (shown() !== null) viewer?.setZoom(on);
+  });
+
+  createEffect(() => {
+    const bottom = props.inset?.bottom ?? 0;
+    if (shown() !== null) viewer?.setInset(bottom);
+  });
+
+  let resetAt = props.resetView;
+  createEffect(() => {
+    const next = props.resetView;
+    if (next === resetAt || shown() === null) return;
+    resetAt = next;
+    viewer?.resetView();
   });
 
   createEffect(() => {
@@ -185,11 +217,18 @@ export const Viewer = (props: {
 
   return (
     <figure class="viewer" ref={(el) => (root = el)} style={{ position: 'relative' }}>
-      <canvas ref={(el) => (canvas = el)} aria-label="Skier figure with working muscles highlighted; drag to rotate" />
+      <canvas
+        ref={(el) => (canvas = el)}
+        style={{ 'touch-action': 'none' }}
+        aria-label={`Skier figure with working muscles highlighted; drag to rotate, tap a muscle to select it${(props.zoom ?? true) ? ', pinch or scroll to zoom, double-tap away from the muscles to reset' : ''}`}
+      />
       <Show when={error()}>{(message) => props.fallback?.(message()) ?? <ViewerError message={message()} />}</Show>
       <figcaption class="muted">
         {shown() === 'capsule' ? 'Placeholder figure. ' : ''}
         {props.caption ?? "Outside ski = skier's right."}
+        <Show when={!hasPose(props.drill)}>
+          <span class="viewer-note"> This drill's motion isn't modelled yet; the figure holds a neutral stance.</span>
+        </Show>
       </figcaption>
     </figure>
   );

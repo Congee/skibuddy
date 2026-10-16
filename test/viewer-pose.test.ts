@@ -1,5 +1,4 @@
 import { assert, describe, it } from '@effect/vitest';
-import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
 import { INTENSITIES, Intensity } from '../src/content/schema';
 import { PHASE_T, turnForcesAt } from '../src/physics/turn';
 import type { TurnScenario } from '../src/physics/turn';
@@ -9,11 +8,15 @@ import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { CAPSULE_BOOT } from '../src/viewer/gear-fit';
 import { compose, transformPoint, translation } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
-import { FOREARM_FLEXION, POSE_SAMPLES, SKI_TIP as TIP, poleTouchAt, poseAt, segmentMatrices, solvePose, tailLiftShare, turnDepth, turnEffort } from '../src/viewer/pose';
+import { touchShare, windowShare } from '../src/viewer/pose-definition';
+import { FOREARM_FLEXION, SKI_TIP as TIP, segmentMatrices, turnDepth } from '../src/viewer/pose';
+import { POSE_SAMPLES, effortOf } from '../src/viewer/pose-solver';
+import { STORK_TURNS } from '../src/viewer/poses/stork-turns';
+import { MODERATE, SCENARIOS, poseAt, solvedPose } from './stork-poses';
 import { poseAngles } from './pose-angles';
 
-const SCENARIOS = drillScenarios();
-const MODERATE = SCENARIOS.moderate;
+const tailLiftShare = (t: number): number => windowShare(STORK_TURNS.constraints.tailLift, t);
+const poleTouchAt = (t: number): number => touchShare(STORK_TURNS.constraints.poleTouch, t);
 const indexOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 const matrixAt = (t: number, kind: SegmentKind, side: BodySide, s: TurnScenario = MODERATE): Mat4 => {
   const m = segmentMatrices(poseAt(t, s))[indexOf(kind, side)];
@@ -184,11 +187,14 @@ describe('segmentMatrices', () => {
 });
 
 describe('poseAt', () => {
-  it('returns the solved pose at each table sample', () => {
+  it('returns the solved pose at each table sample, to the table precision', () => {
     for (const [, s] of ALL) {
-      for (const i of [0, 4, 16, 48, 80]) assert.deepStrictEqual(poseAt(i / POSE_SAMPLES, s), solvePose(i / POSE_SAMPLES, s));
+      for (const i of [0, 4, 16, 48, 80]) {
+        const stored = segmentMatrices(poseAt(i / POSE_SAMPLES, s));
+        const solved = segmentMatrices(solvedPose(i / POSE_SAMPLES, s));
+        stored.forEach((m, k) => m.forEach((x, j) => assert.closeTo(x, solved[k]?.[j] ?? Number.NaN, 2e-4, `sample ${i}, segment ${k}`)));
+      }
     }
-    assert.deepStrictEqual(poseAt(0.25, MODERATE), solvePose(0.25, MODERATE));
   });
 
   it('stays within a few millimetres of the solved pose between samples', () => {
@@ -197,7 +203,7 @@ describe('poseAt', () => {
       for (let i = 0; i < POSE_SAMPLES; i++) {
         const t = (i + 0.5) / POSE_SAMPLES;
         const table = segmentMatrices(poseAt(t, s));
-        const solved = segmentMatrices(solvePose(t, s));
+        const solved = segmentMatrices(solvedPose(t, s));
         table.forEach((m, k) => {
           const p = transformPoint(m, [0, 0.3, 0]);
           const q = transformPoint(solved[k] ?? m, [0, 0.3, 0]);
@@ -214,11 +220,6 @@ describe('poseAt', () => {
   it('wraps like the turn', () => {
     assert.deepStrictEqual(poseAt(1.25, MODERATE), poseAt(0.25, MODERATE));
     assert.deepStrictEqual(poseAt(-0.75, MODERATE), poseAt(0.25, MODERATE));
-  });
-
-  it('solves a table per scenario and reuses it', () => {
-    const fresh = { speedMps: 9, radiusM: 13, slopeDeg: 14 };
-    assert.deepStrictEqual(poseAt(0.3, fresh), poseAt(0.3, { ...fresh }));
   });
 });
 
@@ -489,7 +490,7 @@ describe('intensity', () => {
   });
 
   it('scales the knee depth with the fall-line load', () => {
-    const scales = INTENSITIES.map((i) => turnEffort(SCENARIOS[i]).scale);
+    const scales = INTENSITIES.map((i) => effortOf(STORK_TURNS, SCENARIOS[i]).scale);
     const [gentle, moderate, dynamic] = scales;
     assert.isBelow(gentle ?? 0, -0.5);
     assert.closeTo(moderate ?? 1, 0, 0.05);

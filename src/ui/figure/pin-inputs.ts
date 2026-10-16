@@ -1,10 +1,23 @@
 import { Intensity, PHASES, Side, levelAt } from '../../content/schema';
 import type { Activation } from '../../content/schema';
 import type { MuscleAnchor } from '../../viewer/anchors';
+import { familyOf } from '../../viewer/muscle-groups';
+import type { MusclePick } from '../../viewer/pick';
 import type { PinInput } from './pin-layout';
 
 /** Key shared by a slat and its pin. */
 export const pinKey = (a: Activation): string => `${a.muscle}:${a.side}`;
+
+/**
+ * The slat a tap on the figure opens: the activation naming the tapped muscle, or a parent of it,
+ * on that side or both; an exact name wins over a parent, a side over both.
+ */
+export const pickedKey = (order: ReadonlyArray<Activation>, pick: MusclePick): string | null => {
+  const covers = order.filter((a) => (a.side === pick.side || a.side === Side.Both) && familyOf(a.muscle).includes(pick.muscle));
+  const rank = (a: Activation): number => (a.muscle === pick.muscle ? 0 : 2) + (a.side === pick.side ? 0 : 1);
+  const best = covers.reduce<Activation | undefined>((b, a) => (b === undefined || rank(a) < rank(b) ? a : b), undefined);
+  return best === undefined ? null : pinKey(best);
+};
 
 const anchorFor = (a: Activation, anchors: ReadonlyArray<MuscleAnchor>): MuscleAnchor | undefined => {
   const visible = anchors.filter((x) => x.visible && x.muscle === a.muscle);

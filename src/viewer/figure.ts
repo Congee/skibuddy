@@ -11,6 +11,8 @@ export const SegmentKind = {
   Pelvis: 'pelvis',
   Trunk: 'trunk',
   Head: 'head',
+  /** Shoulder blade and collarbone, from the sternoclavicular joint to the shoulder. */
+  Girdle: 'girdle',
   UpperArm: 'upper-arm',
   Forearm: 'forearm',
   Thigh: 'thigh',
@@ -41,9 +43,14 @@ const box = (size: Vec3, center: Vec3): Shape => ({ type: 'box', size, center })
 
 const sideX = (side: BodySide, x: number): number => (side === BodySide.Right ? -x : x);
 
-const arm = (side: BodySide, trunk: number): ReadonlyArray<Segment> => [
-  { name: `${side}-upper-arm`, kind: SegmentKind.UpperArm, side, parent: trunk, joint: [sideX(side, 0.2), 0.48, 0], shape: capsule(0.045, 0.22, [0, -0.15, 0]) },
-  { name: `${side}-forearm`, kind: SegmentKind.Forearm, side, parent: trunk + (side === BodySide.Right ? 2 : 4), joint: [0, -0.3, 0], shape: capsule(0.04, 0.2, [0, -0.14, 0]) },
+/** The sternoclavicular joint in the trunk's frame, and the shoulder in the girdle's. */
+const STERNOCLAVICULAR = 0.03;
+const CLAVICLE = 0.17;
+
+const arm = (side: BodySide, trunk: number, first: number): ReadonlyArray<Segment> => [
+  { name: `${side}-girdle`, kind: SegmentKind.Girdle, side, parent: trunk, joint: [sideX(side, STERNOCLAVICULAR), 0.44, 0], shape: capsule(0.05, 0, [sideX(side, CLAVICLE), 0.04, 0]) },
+  { name: `${side}-upper-arm`, kind: SegmentKind.UpperArm, side, parent: first, joint: [sideX(side, CLAVICLE), 0.04, 0], shape: capsule(0.045, 0.22, [0, -0.15, 0]) },
+  { name: `${side}-forearm`, kind: SegmentKind.Forearm, side, parent: first + 1, joint: [0, -0.3, 0], shape: capsule(0.04, 0.2, [0, -0.14, 0]) },
 ];
 
 /** The capsule boot's binding frame in its foot's, as `bindingInFoot`. */
@@ -62,10 +69,10 @@ export const SEGMENTS: ReadonlyArray<Segment> = [
   { name: 'pelvis', kind: SegmentKind.Pelvis, side: BodySide.Center, parent: null, joint: [0, 1, 0], shape: box([0.32, 0.2, 0.2], [0, 0, 0]) },
   { name: 'trunk', kind: SegmentKind.Trunk, side: BodySide.Center, parent: 0, joint: [0, 0.08, 0], shape: capsule(0.14, 0.3, [0, 0.3, 0]) },
   { name: 'head', kind: SegmentKind.Head, side: BodySide.Center, parent: 1, joint: [0, 0.6, 0], shape: capsule(0.1, 0.04, [0, 0.12, 0]) },
-  ...arm(BodySide.Right, 1),
-  ...arm(BodySide.Left, 1),
-  ...leg(BodySide.Right, 7),
-  ...leg(BodySide.Left, 11),
+  ...arm(BodySide.Right, 1, 3),
+  ...arm(BodySide.Left, 1, 6),
+  ...leg(BodySide.Right, 9),
+  ...leg(BodySide.Left, 13),
 ];
 
 export const segmentIndex = (name: string): number => SEGMENTS.findIndex((s) => s.name === name);

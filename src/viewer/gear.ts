@@ -1,5 +1,5 @@
 import { BoxGeometry, BufferAttribute, BufferGeometry, Color, CylinderGeometry, FrontSide, Mesh, MeshStandardNodeMaterial, Vector3 } from 'three/webgpu';
-import { color, dot, float, mix, normalView, positionViewDirection, pow, saturate, uniform } from 'three/tsl';
+import { color, dot, float, mix, normalView, positionLocal, positionViewDirection, pow, saturate, smoothstep, uniform } from 'three/tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { EQUIPMENT, soleHeight } from './equipment';
 import type { Equipment } from './equipment';
@@ -11,11 +11,11 @@ import { POLE } from './pose';
 
 export type LegSide = typeof BodySide.Left | typeof BodySide.Right;
 
-const SHELL = 0x2f4d7a;
-const TRIM = 0x17212b;
-const METAL = 0x9aa4ae;
+const SHELL = 0x34373c;
+const TRIM = 0xa9adb2;
+const METAL = 0x9a9da1;
 /** Fresnel edge on the snow, and brighter on the dark field. */
-const EDGE = { light: 0x9dbde6, dark: 0xe8f2ff } as const;
+const EDGE = { light: 0x9a9ea3, dark: 0xeceef0 } as const;
 /** Above the ground (0) and contact shadow (1), in a fixed order so the sort never flips. */
 const ORDER = { pole: 2, cuff: 4, shell: 5 } as const;
 
@@ -90,8 +90,13 @@ const band = (fit: BootFit, from: (a: number) => number, to: (a: number) => numb
     ),
   );
 
+/** The cuff's lower edge, below the ankle, inside the shell. */
+export const CUFF_BOTTOM = -0.035;
+/** Height above the ankle where the translucent cuff is fully drawn; below it the shell stands in, so the overlap never doubles up. */
+export const CUFF_FADE_TOP = 0.06;
+
 /** Upper cuff from just below the ankle to the top, overlapping the shell. */
-export const cuffGeometry = (fit: BootFit): BufferGeometry => band(fit, () => -0.035, (a) => cuffTopAt(fit, a), 0, 10);
+export const cuffGeometry = (fit: BootFit): BufferGeometry => band(fit, () => CUFF_BOTTOM, (a) => cuffTopAt(fit, a), 0, 10);
 
 const plain = (g: BufferGeometry): BufferGeometry => {
   g.deleteAttribute('uv');
@@ -186,12 +191,16 @@ interface Backdrop {
   readonly gain: ReturnType<typeof uniform<'float'>>;
 }
 
-/** Translucent plastic: nearly clear face-on, edged where the surface turns away. */
-const translucent = (hex: number, face: number, backdrop: Backdrop): MeshStandardNodeMaterial => {
+/**
+ * Translucent plastic: nearly clear face-on, edged where the surface turns away. `fadeBelow`
+ * clears it toward its lower edge, where another translucent part covers the same ground.
+ */
+const translucent = (hex: number, face: number, backdrop: Backdrop, fadeBelow = false): MeshStandardNodeMaterial => {
   const m = new MeshStandardNodeMaterial({ transparent: true, depthWrite: false, side: FrontSide, roughness: 0.35 });
   const edge = pow(float(1).sub(saturate(dot(normalView, positionViewDirection))), 2.2);
   m.colorNode = mix(color(hex), backdrop.edge, edge.mul(backdrop.gain));
-  m.opacityNode = edge.mul(backdrop.gain.add(0.1)).add(face);
+  const opacity = edge.mul(backdrop.gain.add(0.1)).add(face);
+  m.opacityNode = fadeBelow ? opacity.mul(smoothstep(CUFF_BOTTOM, CUFF_FADE_TOP, positionLocal.y)) : opacity;
   return m;
 };
 
@@ -229,16 +238,20 @@ const slot = (g: BufferGeometry, material: number): BufferGeometry => {
 export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, eq: Equipment = EQUIPMENT): Gear => {
   const backdrop: Backdrop = { edge: uniform(new Color(EDGE.light)), gain: uniform(0.65) };
   const glass = [translucent(SHELL, 0.16, backdrop), translucent(TRIM, 0.45, backdrop), translucent(METAL, 0.45, backdrop)] as const;
+  // The cuff's lower band lies over the shell; fading it keeps one layer of plastic there, not a dark double band.
+  const cuffGlass = [translucent(SHELL, 0.16, backdrop, true), translucent(TRIM, 0.45, backdrop, true), glass[2]] as const;
   const opaque = [solid(SHELL), solid(TRIM), solid(METAL)] as const;
-  const make = (geometry: BufferGeometry, side: LegSide, order: number): GearPart => {
-    const mesh = new Mesh(geometry, [...glass]);
+  const glassOf = new Map<Mesh, ReadonlyArray<MeshStandardNodeMaterial>>();
+  const make = (geometry: BufferGeometry, side: LegSide, order: number, see: ReadonlyArray<MeshStandardNodeMaterial> = glass): GearPart => {
+    const mesh = new Mesh(geometry, [...see]);
     mesh.renderOrder = order;
+    glassOf.set(mesh, see);
     return { mesh, side };
   };
   const trims = SIDES.map((side) => ({ side, trim: trimGeometry(boots[side], side) }));
   // mergeOrThrow frees each trim half once it is merged.
   const shells = trims.map(({ side, trim }) => make(mergeOrThrow([shellGeometry(boots[side]), trim.shell], true), side, ORDER.shell));
-  const cuffs = trims.map(({ side, trim }) => make(mergeOrThrow([cuffGeometry(boots[side]), trim.cuff], true), side, ORDER.cuff));
+  const cuffs = trims.map(({ side, trim }) => make(mergeOrThrow([cuffGeometry(boots[side]), trim.cuff], true), side, ORDER.cuff, cuffGlass));
   // Trim colour only: the second material slot.
   const soles = SIDES.map((side) => make(slot(soleGeometry(boots[side]), 1), side, ORDER.shell));
   const mounts = SIDES.map((side) => ({ side, parts: bindingGeometry(boots[side], eq) }));
@@ -258,7 +271,7 @@ export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, eq: Equipm
     setMode: (mode) => {
       for (const { mesh } of all) {
         mesh.visible = mode !== GearMode.Off;
-        mesh.material = mode === GearMode.Solid ? [...opaque] : [...glass];
+        mesh.material = mode === GearMode.Solid ? [...opaque] : [...(glassOf.get(mesh) ?? glass)];
       }
       // With the gear off the sole and plate stay, so the foot still stands on the binding.
       for (const { mesh } of kept) {
@@ -275,7 +288,7 @@ export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, eq: Equipm
         mesh.removeFromParent();
         mesh.geometry.dispose();
       }
-      for (const m of [...glass, ...opaque]) m.dispose();
+      for (const m of new Set([...glass, ...cuffGlass, ...opaque])) m.dispose();
     },
   };
 };

@@ -1,7 +1,8 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Side } from '../src/content/schema';
 import type { AnchorPoint } from '../src/viewer/anchor-projection';
-import { highlightSlots, markChanges, pointsFor, revealsDeep, turnAzimuth } from '../src/viewer/highlight';
+import { chooseView, highlightSlots, markChanges, pointsFor, revealsDeep, segmentDistance, turnAzimuth, visibleShare } from '../src/viewer/highlight';
+import type { Occluder } from '../src/viewer/highlight';
 import { makeSlotTable } from '../src/viewer/slots';
 
 const point = (normal: readonly [number, number, number], position: readonly [number, number, number] = [0, 1, 0]): AnchorPoint => ({
@@ -81,5 +82,48 @@ describe('figure highlight', () => {
   it('gives no heading for a muscle facing straight up or down', () => {
     assert.isNull(turnAzimuth([point([0, -1, 0])], [0, 5, 0.1], 0));
     assert.isNull(turnAzimuth([], [0, 1, 5], 0));
+  });
+});
+
+const eyeAt = (azimuth: number): readonly [number, number, number] => [4 * Math.sin(azimuth), 0.25, 4 * Math.cos(azimuth)];
+
+describe('view of a focused muscle', () => {
+  // Two shins along y at x = ±0.1; the inner face of the left one looks at the right one.
+  const legs: ReadonlyArray<Occluder> = [
+    { a: [-0.1, 0, 0], b: [-0.1, 0.5, 0], radius: 0.055 },
+    { a: [0.1, 0, 0], b: [0.1, 0.5, 0], radius: 0.055 },
+  ];
+  const inner = point([-1, 0, 0], [0.045, 0.25, 0]);
+
+  it('measures the gap between segments', () => {
+    assert.closeTo(segmentDistance([0, 0, 0], [1, 0, 0], [0.5, 1, 0], [0.5, 2, 0]), 1, 1e-9);
+    assert.closeTo(segmentDistance([0, 0, 0], [0, 0, 0], [-1, 0.3, 0], [1, 0.3, 0]), 0.3, 1e-9);
+  });
+
+  it('counts a point behind the other leg as hidden, and its own leg never hides it', () => {
+    assert.strictEqual(visibleShare([inner], [-4, 0.25, 0], legs), 0);
+    assert.strictEqual(visibleShare([inner], [-4, 0.25, 4], legs), 1);
+    assert.strictEqual(visibleShare([inner], [4, 0.25, 0], legs), 0);
+  });
+
+  it('turns past the facing view to one the other leg does not block', () => {
+    // Facing the normal straight on (azimuth -π/2) looks through the right leg.
+    const view = chooseView([inner], eyeAt, legs, 0.4);
+    assert.isTrue(view.seen);
+    assert.isNotNull(view.azimuth);
+    assert.isAbove(visibleShare([inner], eyeAt(view.azimuth ?? 0), legs), 0.5);
+    assert.isAbove(Math.abs(Math.sin(view.azimuth ?? 0) + 1), 0.05);
+  });
+
+  it('keeps a view that already shows the muscle', () => {
+    assert.deepStrictEqual(chooseView([point([0, 0, 1], [0, 0.25, 0.2])], eyeAt, legs, 0), { azimuth: null, seen: true });
+  });
+
+  it('asks for the reveal fade when no view shows the muscle', () => {
+    const walled: ReadonlyArray<Occluder> = Array.from({ length: 12 }, (_, k) => {
+      const a = (2 * Math.PI * k) / 12;
+      return { a: [Math.sin(a) * 0.3, 0, Math.cos(a) * 0.3], b: [Math.sin(a) * 0.3, 0.5, Math.cos(a) * 0.3], radius: 0.12 };
+    });
+    assert.isFalse(chooseView([point([0, 0, 1], [0, 0.25, 0])], eyeAt, walled, 0).seen);
   });
 });

@@ -31,9 +31,7 @@ import {
 } from 'three/tsl';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { MuscleLevel } from '../content/activation';
-import { Side } from '../content/schema';
-import type { Intensity } from '../content/schema';
-import type { TurnScenario } from '../physics/turn';
+import { Intensity, Side } from '../content/schema';
 import { spreadCandidates } from './anchor-projection';
 import type { AnchorPoint } from './anchor-projection';
 import { levelColour, levelOn } from './level-colour';
@@ -44,17 +42,19 @@ import type { Segment } from './figure';
 import { createGear, placePole } from './gear';
 import type { LegSide } from './gear';
 import { CAPSULE_BOOT, coveredByBoot } from './gear-fit';
-import type { GearMode } from './gear-mode';
+import { GearMode } from './gear-mode';
 import { compose, transformPoint, translation } from './mat4';
-import { CAPSULE_GRIP, poleDirection, poseAt, segmentMatrices } from './pose';
+import { CAPSULE_GRIP, poleDirection, segmentMatrices } from './pose';
+import { poseTable, samplePose } from './pose-table';
 import { markChanges } from './highlight';
 import { fillSlotLevels, musclePartAt } from './slots';
 import type { SlotTable } from './slots';
+import type { Occluder } from './highlight';
 import type { Figure } from './scene';
 
 const SKIN = new Color(0xb9bec6);
 const MUSCLE = new Color(0xc7b2a6);
-const GEAR = new Color(0x2f4d7a);
+const GEAR = new Color(0x34373c);
 
 const shapeGeometry = (segment: Segment): BufferGeometry => {
   const { shape } = segment;
@@ -99,6 +99,9 @@ const pickAnchors = (points: Map<number, Array<SlotPoint>>): ReadonlyArray<Local
 const ANKLE: Vec3 = SEGMENTS.find((s) => s.kind === SegmentKind.Boot)?.joint ?? [0, 0, 0];
 
 const SHELL = shellInFoot(CAPSULE_BOOT, EQUIPMENT);
+
+const FEET = new Set(SEGMENTS.flatMap((s, i) => (s.kind === SegmentKind.Boot ? [i] : [])));
+const HIDDEN = new Vector3(0, 0, 0);
 
 const segmentOf = (kind: SegmentKind, side: LegSide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 
@@ -174,7 +177,7 @@ class FigureMaterial extends MeshStandardNodeMaterial {
     const on = levelOn(level);
     const outline = pow(float(1).sub(saturate(dot(normalView, positionViewDirection))), 2.4).mul(marked.mul(this.strength).mul(1.5));
     this.colorNode = mix(attribute('color', 'vec3'), highlight, on);
-    this.emissiveNode = highlight.mul(level.mul(0.35)).add(color(0xf3f5f1).mul(outline));
+    this.emissiveNode = highlight.mul(on.mul(0.15)).add(color(0xf3f5f1).mul(outline));
   }
 
   override setupPosition(builder: NodeBuilder): ReturnType<MeshStandardNodeMaterial['setupPosition']> {
@@ -206,7 +209,7 @@ const ahead = new Vector3();
 const across = new Vector3();
 
 /** The placeholder capsule skier. */
-export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: ReadonlyArray<string>, initial: TurnScenario): Figure => {
+export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: ReadonlyArray<string>): Figure => {
   const { geometry, anchors } = buildFigureGeometry(table);
   const material = new FigureMaterial(table.size);
   const figure = new Mesh(geometry, material);
@@ -233,16 +236,23 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
   const p = new Vector3();
   const n = new Vector3();
   let marked: ReadonlyArray<number> = [];
-  let scenario = initial;
+  let poses = poseTable(null, Intensity.Moderate);
+  // The box foot reads as a block through the translucent shell, so the boot stands in for it.
+  let footShown = false;
 
   return {
-    setIntensity: (_: Intensity, next: TurnScenario) => {
-      scenario = next;
+    setMotion: (drill: string | null, intensity: Intensity) => {
+      poses = poseTable(drill, intensity);
     },
     update: (t: number, levels: ReadonlyArray<MuscleLevel>) => {
-      const pose = poseAt(t, scenario);
+      const pose = samplePose(poses, t);
       const world = segmentMatrices(pose);
-      world.forEach((m, k) => material.matrices[k]?.fromArray(m));
+      world.forEach((m, k) => {
+        const target = material.matrices[k];
+        if (target === undefined) return;
+        target.fromArray(m);
+        if (!footShown && FEET.has(k)) target.scale(HIDDEN);
+      });
       for (const [parts, local] of [[[...gear.shells, ...gear.soles], SHELL], [[...gear.plates, ...gear.bindings], CAPSULE_BINDING]] as const) {
         for (const { mesh, side } of parts) {
           const foot = world[segmentOf(SegmentKind.Boot, side)];
@@ -282,7 +292,21 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         n.copy(a.normal).transformDirection(m);
         return [{ ...owner, position: [p.x, p.y, p.z] as const, normal: [n.x, n.y, n.z] as const }];
       }),
-    setGear: (mode: GearMode) => gear.setMode(mode),
+    occluders: (): ReadonlyArray<Occluder> =>
+      SEGMENTS.flatMap((segment, k): ReadonlyArray<Occluder> => {
+        const m = material.matrices[k];
+        const { shape } = segment;
+        if (m === undefined || shape.type !== 'capsule' || shape.length === 0) return [];
+        const end = (dy: number): Vec3 => {
+          p.set(shape.center[0], shape.center[1] + dy, shape.center[2]).applyMatrix4(m);
+          return [p.x, p.y, p.z];
+        };
+        return [{ a: end(-shape.length / 2), b: end(shape.length / 2), radius: shape.radius }];
+      }),
+    setGear: (mode: GearMode) => {
+      footShown = mode === GearMode.Off;
+      gear.setMode(mode);
+    },
     setDark: (dark: boolean) => gear.setDark(dark),
     setHighlight: (slots: ReadonlyArray<number>, strength: number) => {
       for (const [slot, value] of markChanges(marked, slots)) material.marks[slot] = value;

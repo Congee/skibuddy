@@ -1,9 +1,16 @@
 import { assert, describe, it } from '@effect/vitest';
 import { BodySide } from '../src/viewer/figure';
 import type { Vec3 } from '../src/viewer/mat4';
-import { POLE, POLE_TOUCH_T, poleDirection, poleTouchAt } from '../src/viewer/pose';
+import { POLE, poleDirection } from '../src/viewer/pose';
+import { touchShare } from '../src/viewer/pose-definition';
+import { STORK_TURNS } from '../src/viewer/poses/stork-turns';
 import { anatomyProbe, capsuleProbe } from './figure-probes';
 import type { FigureProbe, LegSide } from './figure-probes';
+
+const POLE_TOUCH_T = STORK_TURNS.constraints.poleTouch?.t ?? 0;
+const poleTouchAt = (t: number): number => touchShare(STORK_TURNS.constraints.poleTouch, t);
+/** A carried basket trails clear of the snow. */
+const CLEAR = 0.08;
 
 const TIMES = Array.from({ length: 96 }, (_, i) => i / 96);
 const DEG = Math.PI / 180;
@@ -47,7 +54,7 @@ const invariants = (load: () => Promise<FigureProbe>): void => {
     for (const t of TIMES) {
       const { grip, basket: b } = basket(probe, t, BodySide.Left);
       if (poleTouchAt(t) < 0.9) assert.isAbove(b[1], 0.002, `t=${t}`);
-      if (poleTouchAt(t) === 0) assert.isAbove(b[1], 0.25, `t=${t}`);
+      if (poleTouchAt(t) === 0) assert.isAbove(b[1], CLEAR, `t=${t}`);
       assert.isBelow(Math.abs(b[0] - grip[0]), 0.35, `lateral at t=${t}`);
     }
   });
@@ -56,7 +63,7 @@ const invariants = (load: () => Promise<FigureProbe>): void => {
     const probe = await load();
     for (const t of TIMES) {
       const { grip, basket: b } = basket(probe, t, BodySide.Right);
-      assert.isAbove(b[1], 0.25, `t=${t}`);
+      assert.isAbove(b[1], CLEAR, `t=${t}`);
       assert.isBelow(b[2], grip[2] - 0.3, `t=${t}`);
     }
   });

@@ -1,5 +1,5 @@
 import { AnimationMixer, DoubleSide, Matrix4, MeshStandardNodeMaterial, PropertyBinding, SkinnedMesh, Uint32BufferAttribute, Vector3, Vector4 } from 'three/webgpu';
-import type { AnimationAction, AnimationClip, Object3D, Scene, Skeleton } from 'three/webgpu';
+import type { AnimationAction, AnimationClip, Intersection, Mesh, Object3D, Raycaster, Scene, Skeleton } from 'three/webgpu';
 import {
   attribute,
   color,
@@ -21,7 +21,7 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import type { MuscleLevel } from '../content/activation';
-import { INTENSITIES, Intensity } from '../content/schema';
+import { Intensity } from '../content/schema';
 import type { AnchorPoint } from './anchor-projection';
 import { EQUIPMENT, bindingInFoot, shellInFoot } from './equipment';
 import type { Mat4, Vec3 } from './mat4';
@@ -31,12 +31,17 @@ import type { Gear, LegSide } from './gear';
 import { bootFitFrom, parseGearFit } from './gear-fit';
 import type { BootFit, RawFit } from './gear-fit';
 import type { GearMode } from './gear-mode';
-import { poleDirection, poleTouchAt } from './pose';
-import { NodeKind, nodeOf, turnClipName } from './anatomy-names';
+import { poleDirection } from './pose';
+import { poseTable, samplePose } from './pose-table';
+import type { PoseTable } from './pose-table';
+import { NEUTRAL_CLIP, NodeKind, motionClipName, nodeOf } from './anatomy-names';
+import type { AnatomyNode } from './anatomy-names';
 import { markChanges } from './highlight';
+import type { Occluder } from './highlight';
 import { ancestorsOf } from './muscle-groups';
+import { PickRole, pickRole } from './pick';
 import { fillSlotLevels } from './slots';
-import type { SlotTable, TurnSide } from './slots';
+import type { MusclePart, SlotTable, TurnSide } from './slots';
 import { levelColour, levelOn } from './level-colour';
 import type { Figure } from './scene';
 
@@ -46,10 +51,9 @@ const MUSCLE_RED = 0xb4483e;
 const TENDON = 0xe6dccb;
 const BONE = 0xe8dcc2;
 const CARTILAGE = 0xc6d9de;
-const GEAR = 0x2f4d7a;
+const GEAR = 0x34373c;
 const RIM_COOL = 0x9fc6ff;
 const GHOST = 0x2a3440;
-const WARM_WHITE = 0xfff0dc;
 /** The focus outline: the pins' leader colour, so a focused muscle and its pin match. */
 const FOCUS_RIM = 0xf3f5f1;
 /** Fibre stripe spacing in metres; the UVs are metres around and along each muscle. */
@@ -68,8 +72,8 @@ interface HighlightInputs {
 
 /**
  * Natural fibred red muscle at rest. Working muscles take the board's level
- * colour and glow: emissive lift and a fresnel rim both grow with level, so the
- * level reads from brightness and halo width, not hue alone. `skeleton` fades
+ * colour as albedo, darker with effort, plus a faint same-hue glow and a rim
+ * that widens with level, so the level reads from lightness and halo width, not hue alone. `skeleton` fades
  * muscles to a dark translucent ghost, leaving working muscles partly visible.
  * A highlighted muscle keeps its effort and gains a pale outline; the rest dim toward resting red,
  * or, for a deep muscle, fade to a faint ghost over it.
@@ -93,19 +97,15 @@ const muscleMaterial = (levels: Array<number>, highlight: HighlightInputs, skele
   const base = color(tendon ? TENDON : MUSCLE_RED);
   const hot = levelColour(level);
   const on = levelOn(level);
-  const lit = mix(base, hot, on.mul(tendon ? 0.3 : 0.9));
+  const lit = mix(base, hot, on.mul(tendon ? 0.3 : 1));
   const shaded = lit.mul(float(1).sub(fibre.mul(tendon ? 0.06 : 0.22))).mul(float(1).sub(others.mul(0.3)));
   m.colorNode = mix(mix(shaded, color(GHOST), skeleton.mul(float(1).sub(on))), color(GHOST), veil.mul(0.6));
-  // level is 0..1: level 1 is a subtle lift, level 3 a strong glow. With no bloom pass,
-  // hard muscles also burn toward warm white.
-  const lift = pow(level, 1.2).mul(tendon ? 0.3 : 2.6);
-  const glow = hot.mul(lift).mul(float(0.75).add(fibre.mul(0.25)));
-  const burn = color(WARM_WHITE).mul(pow(level, 2).mul(tendon ? 0 : 0.2));
-  const rimGain = on.mul(float(0.6).add(pow(level, 1.5).mul(tendon ? 0.8 : 4.5)));
-  const rimColour = mix(hot, color(WARM_WHITE), 0.5);
+  // Albedo carries the level; a small same-hue glow and rim keep it legible, never paler, so darker reads as harder.
+  const glow = hot.mul(on.mul(tendon ? 0.06 : 0.18)).mul(float(0.75).add(fibre.mul(0.25)));
+  const rimGain = on.mul(float(0.4).add(level.mul(tendon ? 0.3 : 0.8)));
   const outline = color(FOCUS_RIM).mul(pow(float(1).sub(facing), 2.4).mul(mark.mul(tendon ? 1 : 2.6)));
   const lifted = base.mul(mark.mul(0.18));
-  const emissive = glow.add(burn).add(rimColour.mul(rim.mul(rimGain))).add(color(RIM_COOL).mul(rim.mul(0.06))).add(outline).add(lifted);
+  const emissive = glow.add(hot.mul(rim.mul(rimGain))).add(color(RIM_COOL).mul(rim.mul(0.06))).add(outline).add(lifted);
   m.emissiveNode = emissive.mul(float(1).sub(veil.mul(0.8)));
   const ghost = mix(float(1), saturate(rim.mul(0.35).add(0.12).add(level.mul(0.55)).add(mark.mul(0.5))), skeleton);
   m.opacityNode = ghost.mul(mix(float(1), saturate(rim.mul(0.4).add(0.05)), veil));
@@ -161,11 +161,23 @@ const anchorVertices = (value: unknown, count: number): ReadonlyArray<number> =>
 
 const isSkinned = (o: Object3D): o is SkinnedMesh => o instanceof SkinnedMesh;
 
+/** Bone pairs along each limb and the trunk, and the rough radius of the body round them. */
+const LIMBS: ReadonlyArray<readonly [string, string, number]> = [
+  ['pelvis', 'neck', 0.13],
+  ['neck', 'head', 0.06],
+  ...['R', 'L'].flatMap((s): ReadonlyArray<readonly [string, string, number]> => [
+    [`thigh.${s}`, `shin.${s}`, 0.075],
+    [`shin.${s}`, `foot.${s}`, 0.055],
+    [`upper_arm.${s}`, `forearm.${s}`, 0.045],
+    [`forearm.${s}`, `hand.${s}`, 0.04],
+  ]),
+];
+
 export interface AnatomyFigure extends Figure {
   readonly setSkeleton: (on: boolean) => void;
 }
 
-/** The Z-Anatomy figure from scripts/anatomy; poses come from the baked `stork-turn` clip per intensity. */
+/** The Z-Anatomy figure from scripts/anatomy; poses come from its baked clip per posed drill and intensity. */
 export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: string = ANATOMY_URL): Promise<AnatomyFigure> => {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
@@ -205,6 +217,8 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
   };
 
   const anchors: Array<Anchor> = [];
+  // Skinned meshes a tap may hit; `posed` is the pose their bounding sphere was taken in.
+  const pickables = new Map<Object3D, { readonly mesh: SkinnedMesh; readonly node: AnatomyNode; readonly slot: number; posed: number }>();
   const skeletons = new Set<Skeleton>();
   const seen = new Set<Object3D>();
   const dress = (o: Object3D): void => {
@@ -219,9 +233,10 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
     skeletons.add(o.skeleton);
     if (node.kind === NodeKind.Bones) o.material = name === 'cartilage' ? cartilage : bone;
     else if (node.kind === NodeKind.Gear) o.material = gear;
-    else {
+    const slot = node.kind === NodeKind.Muscle ? table.slotOf(node.muscle, node.side) : 0;
+    pickables.set(o, { mesh: o, node, slot, posed: -1 });
+    if (node.kind !== NodeKind.Bones && node.kind !== NodeKind.Gear) {
       o.material = name === 'tendon' ? tendon : muscle;
-      const slot = node.kind === NodeKind.Muscle ? table.slotOf(node.muscle, node.side) : 0;
       const count = o.geometry.getAttribute('position').count;
       o.geometry.setAttribute('muscleSlot', new Uint32BufferAttribute(new Uint32Array(count).fill(slot), 1));
       if (node.kind === NodeKind.Muscle && !seen.has(owner)) {
@@ -269,13 +284,14 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
   const ankle = new Vector3();
   const placePoles = (t: number): void => {
     if (kit === null) return;
+    const touch = samplePose(poses, t).poleTouch;
     for (const { side, hand, foot, local } of fists) {
       const pole = kit.poles.find((p) => p.side === side);
       if (pole === undefined) continue;
       fist.copy(local).applyMatrix4(hand.matrixWorld);
       foot.getWorldPosition(ankle);
       const grip: Vec3 = [fist.x, fist.y, fist.z];
-      placePole(pole.mesh, grip, poleDirection(grip, side, side === BodySide.Left ? poleTouchAt(t) : 0, [ankle.x, ankle.y, ankle.z]));
+      placePole(pole.mesh, grip, poleDirection(grip, side, side === BodySide.Left ? touch : 0, [ankle.x, ankle.y, ankle.z]));
     }
   };
 
@@ -287,8 +303,8 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
       kit = createGear({ [BodySide.Right]: fitted.right.fit, [BodySide.Left]: fitted.left.fit });
       fitGear(kit, fitted);
     }
-    clip = gltf.animations.find((a) => a.name === turnClipName(Intensity.Moderate)) ?? gltf.animations[0];
-    if (clip === undefined) throw new Error('anatomy model has no stork-turn animation');
+    clip = gltf.animations.find((a) => a.name === NEUTRAL_CLIP) ?? gltf.animations[0];
+    if (clip === undefined) throw new Error('anatomy model has no animation');
   } catch (e: unknown) {
     release();
     throw e;
@@ -296,18 +312,36 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
   // Nothing joins the scene until the figure is whole, so a failed build leaves no trace.
   scene.add(root);
   for (const p of kit?.poles ?? []) scene.add(p.mesh);
-  const turn = clip;
+  const still = clip;
   const mixer = new AnimationMixer(root);
-  // Each intensity has its own baked clip; older models carry only the moderate one.
-  const actions = new Map<Intensity, { readonly clip: AnimationClip; readonly action: AnimationAction }>();
-  for (const i of INTENSITIES) {
-    const found = gltf.animations.find((a) => a.name === turnClipName(i)) ?? turn;
-    actions.set(i, { clip: found, action: mixer.clipAction(found) });
-  }
-  let playing = actions.get(Intensity.Moderate);
-  playing?.action.play();
+  // One baked clip per posed drill and intensity, from the same tables as `poses`; others stand still.
+  const actions = new Map<string, { readonly clip: AnimationClip; readonly action: AnimationAction }>();
+  const actionFor = (name: string): { readonly clip: AnimationClip; readonly action: AnimationAction } => {
+    let found = actions.get(name);
+    if (found === undefined) {
+      const c = gltf.animations.find((a) => a.name === name) ?? still;
+      found = { clip: c, action: mixer.clipAction(c) };
+      actions.set(name, found);
+    }
+    return found;
+  };
+  let playing = actionFor(NEUTRAL_CLIP);
+  playing.action.play();
+  let poses: PoseTable = poseTable(null, Intensity.Moderate);
+
+  const limbs = LIMBS.flatMap(([from, to, radius]) => {
+    const a = root.getObjectByName(PropertyBinding.sanitizeNodeName(from));
+    const b = root.getObjectByName(PropertyBinding.sanitizeNodeName(to));
+    return a === undefined || b === undefined ? [] : [{ a, b, radius }];
+  });
+  const ends = new Vector3();
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  // Bumped by each update, so a tap re-measures only meshes posed since the last one.
+  let pose = 0;
+  const hits: Array<Intersection> = [];
+  const kitMeshes = (): ReadonlyArray<Mesh> =>
+    kit === null ? [] : [...kit.shells, ...kit.soles, ...kit.cuffs, ...kit.plates, ...kit.bindings, ...kit.poles].map((g) => g.mesh);
   let target = 0;
   let revealTarget = 0;
   let last = 0;
@@ -325,13 +359,37 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
 
   return {
     update: (t: number, current: ReadonlyArray<MuscleLevel>) => {
-      if (playing !== undefined) playing.action.time = (((t % 1) + 1) % 1) * playing.clip.duration;
+      playing.action.time = (((t % 1) + 1) % 1) * playing.clip.duration;
       mixer.update(0);
       root.updateMatrixWorld(true);
       // Otherwise the bone matrices upload a draw late and the hands trail their poles.
       for (const s of skeletons) s.update();
       placePoles(t);
       fillSlotLevels(table, current, levels);
+      pose++;
+    },
+    pick: (raycaster: Raycaster): MusclePart | null => {
+      const state = { skeleton: target > 0, reveal: revealTarget > 0 };
+      hits.length = 0;
+      for (const p of pickables.values()) {
+        if (pickRole(p.node, state, { level: levels[p.slot] ?? 0, marked: (highlight.marks[p.slot] ?? 0) > 0 }) === PickRole.Skip) continue;
+        // three's skinned raycast tests this posed sphere, then the posed triangles; nothing computes a box.
+        if (p.posed !== pose) {
+          p.mesh.computeBoundingSphere();
+          p.posed = pose;
+        }
+        p.mesh.raycast(raycaster, hits);
+      }
+      // Translucent gear lets taps through to the muscle under it.
+      for (const mesh of kitMeshes()) {
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        if (mesh.visible && materials.every((m) => !m.transparent)) mesh.raycast(raycaster, hits);
+      }
+      let nearest: Intersection | undefined;
+      for (const h of hits) if (nearest === undefined || h.distance < nearest.distance) nearest = h;
+      hits.length = 0;
+      const node = nearest === undefined ? undefined : pickables.get(nearest.object)?.node;
+      return node?.kind === NodeKind.Muscle ? { muscle: node.muscle, side: node.side } : null;
     },
     animate: (now: number): boolean => {
       if (skeleton.value === target && highlight.reveal.value === revealTarget) return false;
@@ -355,14 +413,24 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
         const normal = [n.x, n.y, n.z] as const;
         return a.muscles.map((name) => ({ muscle: name, side: a.side, position, normal }));
       }),
+    occluders: (): ReadonlyArray<Occluder> =>
+      limbs.map(({ a, b, radius }) => {
+        a.getWorldPosition(ends);
+        const from: Vec3 = [ends.x, ends.y, ends.z];
+        b.getWorldPosition(ends);
+        return { a: from, b: [ends.x, ends.y, ends.z], radius };
+      }),
     setSkeleton: (on: boolean) => {
       target = on ? 1 : 0;
       last = performance.now();
     },
-    setIntensity: (i: Intensity) => {
-      const next = actions.get(i);
-      if (next === undefined || next === playing) return;
-      playing?.action.stop();
+    setMotion: (drill: string | null, i: Intensity) => {
+      const named = motionClipName(drill, i);
+      const next = actionFor(gltf.animations.some((a) => a.name === named) ? named : NEUTRAL_CLIP);
+      // The poles' touch must match the clip, so a drill the model has no clip for stands still.
+      poses = next.clip.name === named ? poseTable(drill, i) : poseTable(null, i);
+      if (next === playing) return;
+      playing.action.stop();
       next.action.play();
       playing = next;
     },

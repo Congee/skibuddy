@@ -1,19 +1,26 @@
 // Checks against the real baked model; run with `bun run test:model` after scripts/anatomy/build.sh.
 import { assert, describe, it } from '@effect/vitest';
-import { SkinnedMesh, Vector3, Vector4 } from 'three';
+import { Quaternion, Raycaster, SkinnedMesh, Vector3, Vector4 } from 'three';
 import { drillScenarios } from '../../scripts/anatomy/drill-scenarios';
+import { POSE_DEFINITIONS } from '../../src/viewer/poses';
 import { loadAnatomy } from '../../scripts/anatomy/model';
 import { probeFixture } from '../../scripts/anatomy/probe-fixture';
 import { anchorCandidates } from '../../scripts/anatomy/stamp-anchors';
 import { INTENSITIES } from '../../src/content/schema';
-import { turnClipName } from '../../src/viewer/anatomy-names';
+import { NEUTRAL_CLIP, motionClipName, nodeOf } from '../../src/viewer/anatomy-names';
+import { pickOfName } from '../../src/viewer/pick';
 import { EQUIPMENT, bindingInFoot, shellInFoot, totalRamp } from '../../src/viewer/equipment';
 import { BodySide } from '../../src/viewer/figure';
 import { bootFitFrom, parseGearFit } from '../../src/viewer/gear-fit';
 import { transformPoint } from '../../src/viewer/mat4';
 import type { Vec3 } from '../../src/viewer/mat4';
-import { POLE_TOUCH_T, poleDirection, poleTouchAt } from '../../src/viewer/pose';
+import { poleDirection } from '../../src/viewer/pose';
+import { touchShare } from '../../src/viewer/pose-definition';
+import { STORK_TURNS } from '../../src/viewer/poses/stork-turns';
 import fixture from '../anatomy-probe.json';
+
+const POLE_TOUCH_T = STORK_TURNS.constraints.poleTouch?.t ?? 0;
+const poleTouchAt = (t: number): number => touchShare(STORK_TURNS.constraints.poleTouch, t);
 
 const flat = (v: unknown): ReadonlyArray<number> => (typeof v === 'number' ? [v] : typeof v === 'object' && v !== null ? Object.values(v).flatMap(flat) : []);
 
@@ -21,7 +28,7 @@ describe('anatomy model build outputs', () => {
   it('matches the probe fixture the unit tests read', async () => {
     const fresh = probeFixture(await loadAnatomy());
     assert.deepStrictEqual(fresh.scenarios, fixture.scenarios);
-    assert.deepStrictEqual(fresh.scenarios, drillScenarios());
+    assert.deepStrictEqual(fresh.scenarios, Object.fromEntries(Object.keys(POSE_DEFINITIONS).map((d) => [d, drillScenarios(d)])));
     assert.strictEqual(fresh.frames.length, fixture.frames.length);
     // Rounded to micrometres by another JS engine, so the last digit may differ.
     const a = flat(fresh.frames);
@@ -30,9 +37,10 @@ describe('anatomy model build outputs', () => {
     a.forEach((x, i) => assert.closeTo(x, b[i] ?? Number.NaN, 2e-6, `value ${i}`));
   });
 
-  it('carries a turn clip per intensity', async () => {
+  it('carries a clip per posed drill and intensity, and the neutral stance', async () => {
     const names = (await loadAnatomy()).gltf.animations.map((a) => a.name);
-    for (const i of INTENSITIES) assert.include(names, turnClipName(i), i);
+    assert.include(names, NEUTRAL_CLIP);
+    for (const d of Object.keys(POSE_DEFINITIONS)) for (const i of INTENSITIES) assert.include(names, motionClipName(d, i), `${d} ${i}`);
   });
 
   it('carries the anchor candidates the viewer reads', async () => {
@@ -151,6 +159,73 @@ describe('anatomy hands on the grips', () => {
         assert.isAbove(Math.min(...lay.map((w) => w.r)), 0.015, `thumb clear of the grip, ${at}`);
         assert.isBelow(lay.reduce((sum, w) => sum + w.r, 0) / lay.length, 0.04, `thumb on the grip, ${at}`);
       }
+    }
+  });
+});
+
+describe('anatomy wrists on the grips', () => {
+  it('keeps each wrist within 40 deg of straight, hand axis to forearm axis, in every clip', async () => {
+    // The model's own rest hand sits 18 deg off the forearm; a grip that looked broken reached 63.
+    const clips = [NEUTRAL_CLIP, ...Object.keys(POSE_DEFINITIONS).flatMap((d) => INTENSITIES.map((i) => motionClipName(d, i)))];
+    const models = await Promise.all(clips.map(async (clip) => ({ clip, model: await loadAnatomy(undefined, clip) })));
+    for (const { clip, model } of models) {
+      const at = (name: string): Vector3 => model.bone(name).getWorldPosition(new Vector3());
+      for (let i = 0; i < 24; i++) {
+        model.pose(i / 24);
+        for (const letter of ['R', 'L']) {
+          const fore = at(`hand.${letter}`).sub(at(`forearm.${letter}`)).normalize();
+          const hand = at(`fingers.${letter}`).sub(at(`hand.${letter}`)).normalize();
+          assert.isBelow((fore.angleTo(hand) * 180) / Math.PI, 40, `${clip}: ${letter} at frame ${i}`);
+        }
+      }
+    }
+  });
+});
+
+describe('anatomy subtalar and shoulder-blade joints', () => {
+  it('rolls the foot under the talus and keeps the talus square in the ankle mortise', async () => {
+    const model = await loadAnatomy();
+    const names = ['R', 'L'].flatMap((l) => [`shin.${l}`, `talus.${l}`, `foot.${l}`]);
+    const rest = new Map(names.map((n) => [n, model.bone(n).getWorldQuaternion(new Quaternion())]));
+    // The rotation the pose gives a bone, in rest-pose world axes.
+    const moved = (n: string): Quaternion => model.bone(n).getWorldQuaternion(new Quaternion()).multiply((rest.get(n) ?? new Quaternion()).clone().invert());
+    // Twist of b relative to a about the rest foot's long axis (+z), degrees.
+    const roll = (a: string, b: string): number => {
+      const q = moved(a).invert().multiply(moved(b));
+      return (2 * Math.atan2(q.z, q.w) * 180) / Math.PI;
+    };
+    model.pose(0.65);
+    for (const l of ['R', 'L']) {
+      assert.isAbove(Math.abs(roll(`shin.${l}`, `foot.${l}`)), 1, `${l} foot rolls on the shin`);
+      assert.isBelow(Math.abs(roll(`shin.${l}`, `talus.${l}`)), 0.3, `${l} talus stays with the shin`);
+    }
+  });
+
+  it('hangs each arm from a shoulder blade on the chest', async () => {
+    const model = await loadAnatomy();
+    for (const l of ['R', 'L']) {
+      assert.strictEqual(model.bone(`upper_arm.${l}`).parent?.name, `scapula${l}`);
+      assert.strictEqual(model.bone(`scapula.${l}`).parent?.name, 'chest');
+    }
+  });
+});
+
+describe('anatomy tap picking', () => {
+  it('hits the posed front of each thigh as that side quadriceps', async () => {
+    const model = await loadAnatomy();
+    model.pose(0.3);
+    const meshes: Array<SkinnedMesh> = [];
+    model.root.traverse((o) => {
+      if (o instanceof SkinnedMesh) meshes.push(o);
+    });
+    for (const s of new Set(meshes.map((m) => m.skeleton))) s.update();
+    const muscles = new Set(['quadriceps']);
+    for (const [letter, side] of [['R', 'outside'], ['L', 'inside']] as const) {
+      const mid = model.bone(`thigh.${letter}`).getWorldPosition(new Vector3()).lerp(model.bone(`shin.${letter}`).getWorldPosition(new Vector3()), 0.5);
+      const raycaster = new Raycaster(new Vector3(mid.x, mid.y, mid.z + 3), new Vector3(0, 0, -1));
+      const hits = meshes.flatMap((m) => raycaster.intersectObject(m, false)).sort((a, b) => a.distance - b.distance);
+      const first = hits[0] === undefined ? null : nodeOf(hits[0].object);
+      assert.deepStrictEqual(first === null ? null : pickOfName(first.owner.name, muscles), { muscle: 'quadriceps', side }, letter);
     }
   });
 });

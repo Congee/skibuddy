@@ -1,0 +1,1153 @@
+/* Neutral paper and ink, grey marks, teal for anything you can press. */
+:root {
+  --snow: #ffffff;
+  --paper: #ffffff;
+  --bed: #eef0f3;
+  --ink: #16181b;
+  --ink-2: #4a4f57;
+  --ink-3: #5e636b;
+  --line: rgb(20 24 30 / 0.16);
+  --contour: #6b7079;
+  --course: #00857a;
+  --course-ink: #ffffff;
+  --course-tint: rgb(0 133 122 / 0.1);
+  --shadow: 10 14 20;
+  --text: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --num: 'Barlow Condensed', 'Atkinson Hyperlegible Next', sans-serif;
+  --dock-h: 140px;
+  --peek: 236px;
+  --top-h: 64px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --snow: #0f1012;
+    --paper: #15161a;
+    --bed: #1f2126;
+    --ink: #f2f3f5;
+    --ink-2: #b8bcc4;
+    --ink-3: #9a9fa8;
+    --line: rgb(255 255 255 / 0.14);
+    --contour: #8a9099;
+    --course: #2fd4c2;
+    --course-ink: #0f1012;
+    --course-tint: rgb(47 212 194 / 0.14);
+    --shadow: 0 0 0;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --snow: #0f1012;
+  --paper: #15161a;
+  --bed: #1f2126;
+  --ink: #f2f3f5;
+  --ink-2: #b8bcc4;
+  --ink-3: #9a9fa8;
+  --line: rgb(255 255 255 / 0.14);
+  --contour: #8a9099;
+  --course: #2fd4c2;
+  --course-ink: #0f1012;
+  --course-tint: rgb(47 212 194 / 0.14);
+  --shadow: 0 0 0;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--snow);
+  color: var(--ink);
+  font: 400 16px/1.5 var(--text);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--course);
+  color: var(--course-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--course);
+  outline-offset: 2px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+a {
+  color: var(--course);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+  font-weight: 400;
+}
+
+.muted {
+  color: var(--ink-3);
+}
+
+.small {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.icon {
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-fill {
+  fill: currentColor;
+}
+
+.boot {
+  display: grid;
+  place-content: center;
+  gap: 16px;
+  min-height: 100dvh;
+  padding: 16px;
+  text-align: center;
+  color: var(--ink-2);
+}
+
+/* App frame: the figure fills the phone; the dock sits at the thumb edge. */
+.app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.top {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 6;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px 0;
+  pointer-events: none;
+}
+
+.top > * {
+  pointer-events: auto;
+}
+
+.wordmark {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--contour);
+}
+
+.top-meta {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+/* One line, so the meta never wraps into the pose note under the bar. */
+.top-source {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-id {
+  min-width: 0;
+}
+
+.top-actions {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+
+.tag {
+  display: inline-block;
+  flex: none;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border: 1px solid var(--contour);
+  border-radius: 4px;
+  color: var(--contour);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+
+.tag[data-tone='placeholder'] {
+  border-style: dashed;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--course);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--snow) 88%, transparent);
+  color: var(--course);
+  transition: background 160ms var(--ease);
+}
+
+.icon-button:has(.sr),
+.icon-button:not(:has(.label)) {
+  padding: 0;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--course-tint);
+}
+
+.icon-button[aria-pressed='true'],
+.icon-button[aria-expanded='true'] {
+  background: var(--course);
+  color: var(--course-ink);
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.settings {
+  position: absolute;
+  top: 60px;
+  right: 16px;
+  width: min(340px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 12px 40px rgb(var(--shadow) / 0.28);
+  display: grid;
+  gap: 14px;
+}
+
+.segmented {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.segmented legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.segmented div {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.segmented button {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  font-size: 15px;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--line);
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--course);
+  color: var(--course-ink);
+  font-weight: 500;
+}
+
+/* Stage: plain map paper. */
+.stage {
+  position: absolute;
+  inset: 0;
+  background: var(--snow);
+}
+
+.figure {
+  position: absolute;
+  inset: var(--top-h) 0 var(--dock-h);
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+/* Viewer sets inline position: relative, so a one-cell grid stretches it instead of inset. */
+.figure figure.viewer {
+  grid-area: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+}
+
+.figure canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.figure figcaption {
+  position: absolute;
+  left: 16px;
+  bottom: 6px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.figure-wait {
+  position: absolute;
+  inset: 0;
+}
+
+.figure-status {
+  position: absolute;
+  inset: 40% 16px auto;
+  text-align: center;
+  color: var(--ink-2);
+}
+
+.pose-note {
+  position: absolute;
+  top: calc(var(--top-h) + 2px);
+  left: 16px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.pins,
+.leaders {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.leaders {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.leaders line {
+  stroke: color-mix(in srgb, var(--ink) 28%, transparent);
+  stroke-width: 1;
+}
+
+.pin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+}
+
+.pin-name {
+  position: absolute;
+  left: 38px;
+  top: 50%;
+  translate: 0 -50%;
+  padding: 3px 10px;
+  border: 1px solid var(--course);
+  border-radius: 8px;
+  background: var(--snow);
+  color: var(--course);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgb(var(--shadow) / 0.2);
+}
+
+/* First-run hint and the way one level down to training. */
+.hint {
+  position: absolute;
+  top: calc(var(--top-h) + 26px);
+  left: 16px;
+  right: 16px;
+  z-index: 2;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  padding: 4px 12px;
+  border: 1px solid var(--course);
+  border-radius: 8px;
+  background: var(--snow);
+  color: var(--course);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.train-open {
+  position: absolute;
+  right: 16px;
+  bottom: calc(var(--dock-h) + 10px);
+  z-index: 2;
+}
+
+.figure figcaption {
+  bottom: 62px;
+}
+
+.kind-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 10px;
+  border-color: var(--course);
+  color: var(--course);
+}
+
+.glance-glyph {
+  flex: none;
+  width: 28px;
+  height: 28px;
+}
+
+.train section + section {
+  margin-top: 28px;
+}
+
+.train h3 {
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.train-list {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.train-list button {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 60px;
+  padding: 6px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  text-align: left;
+}
+
+.train-list button:hover {
+  background: var(--course-tint);
+}
+
+.train-glyph {
+  width: 44px;
+  height: 44px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.train-ex {
+  display: block;
+  font-size: 14px;
+  color: var(--course);
+}
+
+.train .chips + p {
+  margin-top: 10px;
+}
+
+/* Exercise tags: the few muscles to train, a pictogram over a bar of the effort now. */
+.tag-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--snow);
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgb(var(--shadow) / 0.16);
+  transition:
+    background 200ms var(--ease),
+    color 200ms var(--ease);
+}
+
+.tag-glyph {
+  width: 30px;
+  height: 30px;
+  margin-top: -4px;
+}
+
+.tag-level {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  transition: width 200ms var(--ease);
+}
+
+.pin-tag:hover .tag-face {
+  border-color: var(--course);
+}
+
+.pin-tag[data-behind] .tag-face {
+  opacity: 0.7;
+}
+
+.pin-tag[aria-pressed='true'] .tag-face {
+  border-color: var(--course);
+  background: var(--course);
+  color: var(--course-ink);
+}
+
+.pin-tag .pin-name {
+  left: 50px;
+}
+
+/* Dock: turn rail over the kinds of skiing. */
+.dock {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 4;
+  height: var(--dock-h);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: color-mix(in srgb, var(--snow) 94%, transparent);
+  border-top: 1px solid var(--line);
+}
+
+.rail {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px 0;
+}
+
+.play {
+  border-width: 2px;
+}
+
+.rail-track input {
+  display: block;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  appearance: none;
+  background:
+    linear-gradient(var(--contour), var(--contour)) calc(100% / 3) 50% / 2px 12px no-repeat,
+    linear-gradient(var(--contour), var(--contour)) calc(200% / 3) 50% / 2px 12px no-repeat,
+    linear-gradient(var(--contour), var(--contour)) 0 50% / 100% 2px no-repeat;
+  cursor: ew-resize;
+}
+
+.rail-track input::-webkit-slider-thumb {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--course);
+  border-radius: 50%;
+  background: var(--snow);
+}
+
+.rail-track input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--course);
+  border-radius: 50%;
+  background: var(--snow);
+}
+
+.rail-phases {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.rail-phases [data-on] {
+  color: var(--ink);
+}
+
+.kinds {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.kinds::-webkit-scrollbar {
+  display: none;
+}
+
+.kind,
+.chip {
+  flex: none;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--snow);
+  font-size: 15px;
+  white-space: nowrap;
+  transition:
+    background 200ms var(--ease),
+    color 200ms var(--ease);
+}
+
+.kind:hover,
+.chip:hover {
+  border-color: var(--course);
+  background: var(--course-tint);
+}
+
+.kind[aria-pressed='true'],
+.chip[aria-pressed='true'] {
+  background: var(--course);
+  border-color: var(--course);
+  color: var(--course-ink);
+  font-weight: 500;
+}
+
+.chip-tag {
+  margin-left: 6px;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* Sheet: glance card on the phone, drag up for everything. */
+.sheet {
+  position: absolute;
+  inset: var(--top-h) 0 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px 14px 0 0;
+  background: var(--paper);
+  box-shadow: 0 -6px 30px rgb(var(--shadow) / 0.16);
+  transform: translateY(calc(var(--at) + var(--drag, 0px)));
+  transition: transform 420ms var(--ease);
+  --at: 100%;
+}
+
+.app[data-sheet='glance'] .sheet {
+  --at: calc(100% - var(--dock-h) - var(--peek));
+}
+
+.app[data-sheet='half'] .sheet {
+  --at: 42%;
+}
+
+/* Full covers the dock and scrolls to its own end. */
+.app[data-sheet='full'] .sheet {
+  --at: 0px;
+  z-index: 5;
+}
+
+.app[data-sheet='full'] .sheet-body {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 32px);
+}
+
+.app[data-sheet='closed'] .sheet {
+  visibility: hidden;
+  transition:
+    transform 420ms var(--ease),
+    visibility 0s 420ms;
+}
+
+.app[data-dragging] .sheet {
+  transition: none;
+}
+
+.sheet-handle {
+  position: relative;
+  padding: 8px 16px 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.grip {
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.sheet-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.sheet-bar .close {
+  margin-left: auto;
+}
+
+.app[data-mode='muscle']:not([data-sheet='full']) .sheet-bar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.sheet-title {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 4px 16px calc(var(--dock-h) + 24px);
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.app[data-sheet='full'] .sheet-body,
+.app[data-sheet='half'] .sheet-body {
+  overflow-y: auto;
+}
+
+.glance {
+  display: grid;
+  gap: 8px;
+}
+
+.glance-name {
+  padding-right: 52px;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.glance-side {
+  margin-left: 8px;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.strip {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.strip-phase {
+  stroke: var(--paper);
+  stroke-width: 1.5;
+}
+
+.strip-base {
+  stroke: var(--line);
+}
+
+.playhead {
+  stroke: var(--course);
+  stroke-width: 2;
+}
+
+.phase-scale {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: -4px;
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.glance-train {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 16px;
+}
+
+.more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  border: 1px solid var(--course);
+  border-radius: 10px;
+  background: none;
+  color: var(--course);
+  font-size: 15px;
+}
+
+.more:hover {
+  background: var(--course-tint);
+}
+
+/* Detail: complete, plainly worded. */
+.detail {
+  max-width: 65ch;
+  margin-top: 18px;
+}
+
+.detail-full {
+  color: var(--ink-2);
+  font-size: 15px;
+}
+
+.detail-role {
+  margin-top: 6px;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.detail section,
+.drills section {
+  margin-top: 28px;
+}
+
+.detail h3,
+.drills h3 {
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.detail p + p {
+  margin-top: 8px;
+}
+
+.phases {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.phases th,
+.phases td {
+  padding: 9px 8px 9px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.phases th {
+  font-weight: 400;
+  color: var(--ink-2);
+  width: 6.5rem;
+}
+
+.phases td:nth-child(2) {
+  width: 5.5rem;
+}
+
+.plain {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plain li + li {
+  margin-top: 4px;
+}
+
+.confidence {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.stamp {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--contour);
+}
+
+.confidence[data-confidence='high'] .stamp {
+  background: var(--contour);
+}
+
+.confidence[data-confidence='low'] .stamp {
+  border-style: dashed;
+}
+
+.note {
+  padding: 8px 12px;
+  border: 1px dashed var(--contour);
+  border-radius: 4px;
+  font-size: 15px;
+}
+
+.sources {
+  margin: 10px 0 8px;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.sources li + li {
+  margin-top: 6px;
+}
+
+.exercises,
+.structures {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exercises li,
+.structures li {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.exercises li:first-child,
+.structures li:first-child {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.ex-name {
+  font-weight: 500;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* List: steady order, linked to the pins. */
+.muscles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.muscles li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  scroll-margin: 12px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  text-align: left;
+}
+
+.row:hover {
+  background: var(--course-tint);
+}
+
+.row[aria-pressed='true'] {
+  background: var(--course-tint);
+  box-shadow: inset 0 0 0 1.5px var(--course);
+}
+
+.row-name {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.row-side {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.row-open {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--course);
+  border-radius: 22px;
+  background: none;
+  color: var(--course);
+}
+
+.empty {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  font-size: 17px;
+}
+
+.legal {
+  margin-top: 36px;
+}
+
+.app[data-sheet='glance'] .legal {
+  display: none;
+}
+
+/* Narrow phones: labels alone keep the top bar to one line. */
+@media (max-width: 420px) {
+  .icon-button:has(.label) .icon {
+    display: none;
+  }
+}
+
+/* Desktop: the figure stays the hero; the card becomes a side panel. */
+@media (min-width: 900px) {
+  .figure figcaption {
+    bottom: 6px;
+  }
+
+  .empty + .train {
+    margin-top: 24px;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    /* A tall detail must scroll in its column, not stretch the figure. */
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .top {
+    right: 420px;
+    padding: 16px 24px 0;
+  }
+
+  .stage {
+    position: relative;
+    inset: auto;
+  }
+
+  .kinds {
+    justify-content: center;
+    padding-inline: 24px;
+  }
+
+  .rail {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-inline: 24px;
+  }
+
+  .sheet,
+  .app[data-sheet] .sheet {
+    position: relative;
+    inset: auto;
+    visibility: visible;
+    transform: none;
+    border-radius: 0;
+    border-left: 1px solid var(--line);
+    box-shadow: none;
+    min-height: 0;
+  }
+
+  .grip {
+    display: none;
+  }
+
+  .sheet-handle {
+    padding: 16px 24px 0;
+    cursor: default;
+  }
+
+  .app[data-mode='muscle'] .sheet-bar {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+
+  .sheet-body,
+  .app[data-sheet] .sheet-body {
+    overflow-y: auto;
+    padding: 8px 24px 24px;
+  }
+
+  .app[data-sheet='glance'] .legal {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+  }
+}

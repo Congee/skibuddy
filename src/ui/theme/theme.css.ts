@@ -35,11 +35,11 @@ export const vars = createThemeContract({
 });
 
 const level = {
-  l1: '#F2B33D',
-  l1Ink: '#1B140A',
-  l2: '#E0602A',
-  l2Ink: '#1A0C05',
-  l3: '#9E1F63',
+  l1: '#8ECBFF',
+  l1Ink: '#0A1A2B',
+  l2: '#2F6BFF',
+  l2Ink: '#FFFFFF',
+  l3: '#3A10A8',
   l3Ink: '#FFFFFF',
 };
 
@@ -62,8 +62,8 @@ const light = {
     field: '#1E3A32',
     snow: '#E4EBE7',
     snowLine: '#C3CFC9',
-    focus: '#9E1F63',
-    selection: '#F2B33D',
+    focus: '#3A10A8',
+    selection: '#8ECBFF',
     pinBg: '#FFFFFF',
     pinInk: '#12231E',
     leader: '#F3F5F1',
@@ -93,8 +93,8 @@ const dark = {
     field: '#142A23',
     snow: '#1B352D',
     snowLine: '#21403A',
-    focus: '#F2B33D',
-    selection: '#9E1F63',
+    focus: '#8ECBFF',
+    selection: '#3A10A8',
     pinBg: '#E4EBE7',
     pinInk: '#12231E',
     leader: '#F3F5F1',

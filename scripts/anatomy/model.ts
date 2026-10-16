@@ -4,6 +4,10 @@ import type { Object3D, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { GLTF } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { motionClipName } from '../../src/viewer/anatomy-names';
+
+/** The clip the probes and tests pose by: stork turns at moderate intensity. */
+export const PROBE_CLIP = motionClipName('stork-turns', 'moderate');
 
 export const MODEL_PATH = new URL('../../public/models/anatomy.glb', import.meta.url);
 
@@ -17,7 +21,7 @@ export interface AnatomyModel {
   readonly carried: (bone: string, rest: Vector3) => () => Vector3;
 }
 
-export const loadAnatomy = async (path: string | URL = MODEL_PATH): Promise<AnatomyModel> => {
+export const loadAnatomy = async (path: string | URL = MODEL_PATH, clipName: string = PROBE_CLIP): Promise<AnatomyModel> => {
   await MeshoptDecoder.ready;
   const file = readFileSync(path);
   const data = file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
@@ -26,8 +30,8 @@ export const loadAnatomy = async (path: string | URL = MODEL_PATH): Promise<Anat
   const gltf = await loader.parseAsync(data, '');
   const root = gltf.scene;
   root.updateMatrixWorld(true);
-  const clip = gltf.animations.find((a) => a.name === 'stork-turn');
-  if (clip === undefined) throw new Error('no stork-turn clip');
+  const clip = gltf.animations.find((a) => a.name === clipName);
+  if (clip === undefined) throw new Error(`no ${clipName} clip`);
   const mixer = new AnimationMixer(root);
   const action = mixer.clipAction(clip);
   action.play();

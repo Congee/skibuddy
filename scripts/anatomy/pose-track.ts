@@ -1,12 +1,14 @@
-// Prints the stork-turn pose tracks, one per intensity, and the binding geometry as JSON for
-// build_anatomy.py, so both figures share src/viewer/pose.ts and src/viewer/equipment.ts.
-import { INTENSITIES, Intensity } from '../../src/content/schema';
+// Prints the pose tracks build_anatomy.py bakes, one clip per posed drill and intensity plus the neutral
+// stance, and the binding geometry, as JSON; both figures read the same tables (src/viewer/poses/tables.json).
+import { INTENSITIES } from '../../src/content/schema';
+import { NEUTRAL_CLIP, motionClipName } from '../../src/viewer/anatomy-names';
 import { EQUIPMENT, deltaAngle, stackHeight } from '../../src/viewer/equipment';
 import { HEEL_ROOM, TOE_ROOM } from '../../src/viewer/gear-fit';
-import { ARM_ABDUCTION, ARM_FLEXION, FOREARM_FLEXION, solvePose } from '../../src/viewer/pose';
+import { ARM_ABDUCTION, ARM_FLEXION, CARRY_HEADING, FOREARM_FLEXION, PLANT_AHEAD, PLANT_SIDE, POLE } from '../../src/viewer/pose';
+import type { Pose } from '../../src/viewer/pose';
+import { hasTable, poseTable, samplePose } from '../../src/viewer/pose-table';
+import { POSE_DEFINITIONS } from '../../src/viewer/poses';
 import { drillScenarios } from './drill-scenarios';
-
-const scenarios = drillScenarios();
 
 const frames = Number(process.argv[2] ?? 24);
 const binding = {
@@ -18,7 +20,15 @@ const binding = {
   toeRoom: TOE_ROOM,
 };
 const arms = { abduction: ARM_ABDUCTION, flexion: ARM_FLEXION, forearmFlexion: FOREARM_FLEXION };
-const track = (i: Intensity): ReadonlyArray<unknown> => Array.from({ length: frames + 1 }, (_, f) => solvePose(f / frames, scenarios[i]));
-const tracks = Object.fromEntries(INTENSITIES.map((i) => [i, track(i)]));
+const pole = { basket: POLE.basket, carry: POLE.carry, carryHeading: CARRY_HEADING, plantSide: PLANT_SIDE, plantAhead: PLANT_AHEAD };
+const track = (drill: string | null, i: (typeof INTENSITIES)[number]): ReadonlyArray<Pose> => {
+  const table = poseTable(drill, i);
+  return Array.from({ length: frames + 1 }, (_, f) => samplePose(table, f / frames));
+};
+const drills = Object.keys(POSE_DEFINITIONS);
+for (const d of drills) if (!hasTable(d)) throw new Error(`${d} has no pose table; run \`bun run poses\``);
+const tracks: Record<string, ReadonlyArray<Pose>> = { [NEUTRAL_CLIP]: track(null, 'moderate') };
+for (const d of drills) for (const i of INTENSITIES) tracks[motionClipName(d, i)] = track(d, i);
 // The scenarios ride into the model, so tests can tie the bake to the content.
-process.stdout.write(JSON.stringify({ binding, arms, scenarios, frames: tracks[Intensity.Moderate], tracks }));
+const scenarios = Object.fromEntries(drills.map((d) => [d, drillScenarios(d)]));
+process.stdout.write(JSON.stringify({ binding, arms, pole, scenarios, tracks }));

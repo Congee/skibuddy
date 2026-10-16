@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import { BufferGeometry, Vector3 } from 'three/webgpu';
 import { BodySide } from '../src/viewer/figure';
 import { EQUIPMENT, soleHeight } from '../src/viewer/equipment';
-import { bindingGeometry, createGear, cuffGeometry, poleGeometry, shellGeometry } from '../src/viewer/gear';
+import { CUFF_BOTTOM, CUFF_FADE_TOP, bindingGeometry, createGear, cuffGeometry, poleGeometry, shellGeometry } from '../src/viewer/gear';
 import { CAPSULE_BOOT, bootFitFrom, coveredByBoot, parseGearFit } from '../src/viewer/gear-fit';
 import type { RawFit } from '../src/viewer/gear-fit';
 import { GearMode, isGearMode } from '../src/viewer/gear-mode';
@@ -153,5 +153,22 @@ describe('gear mode', () => {
     assert.isTrue(isGearMode(GearMode.Off));
     assert.isFalse(isGearMode('glass'));
     assert.isFalse(isGearMode(null));
+  });
+});
+
+describe('boot cuff over the shell', () => {
+  it('fades the translucent cuff over the whole band where it overlaps the shell, and nowhere above', () => {
+    for (const fit of [CAPSULE_BOOT, bootFitFrom(RAW)]) {
+      const pos = shellGeometry(fit).getAttribute('position');
+      let top = Number.NEGATIVE_INFINITY;
+      for (let i = 0; i < pos.count; i++) top = Math.max(top, pos.getY(i));
+      const cuff = cuffGeometry(fit).getAttribute('position');
+      let low = Number.POSITIVE_INFINITY;
+      for (let i = 0; i < cuff.count; i++) low = Math.min(low, cuff.getY(i));
+      assert.closeTo(low, CUFF_BOTTOM, 1e-6);
+      // The shell's ramp tips it a few millimetres either way in the cuff's frame.
+      assert.isAtMost(top, CUFF_FADE_TOP - 0.002);
+      assert.isAbove(CUFF_FADE_TOP, top - 0.02);
+    }
   });
 });

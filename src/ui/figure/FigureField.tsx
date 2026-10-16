@@ -1,7 +1,7 @@
 import { useAtomValue } from '@effect/atom-solid';
 import { Show, Suspense, createMemo, createSignal, lazy, onCleanup, onMount } from 'solid-js';
 import type { JSX } from 'solid-js';
-import type { Activation, Intensity, Movement, Scenarios } from '../../content/schema';
+import type { Activation, Intensity, Movement } from '../../content/schema';
 import { Emphasis, focusAtom, highlight, sameHighlight } from '../../state/focus';
 import type { MuscleAnchor } from '../../viewer/anchors';
 import type { FigureHighlight } from '../../viewer/highlight';
@@ -11,7 +11,7 @@ import { useActiveTheme } from '../theme/active-theme';
 import { vars } from '../theme/theme.css';
 import { readEffortRamp } from '../effort-ramp';
 import * as s from './figure.css';
-import { pinKey } from './pin-inputs';
+import { pickedKey, pinKey } from './pin-inputs';
 import { Pins } from './Pins';
 
 // The board paints before the 3D code arrives.
@@ -39,8 +39,8 @@ export const FigureField = (props: {
   readonly gear: GearMode;
   /** How hard the drill is skied: the figure's pose and glow, and the pins. */
   readonly intensity: Intensity;
-  /** The drill's scenarios, which pose the capsule figure. */
-  readonly scenarios: Scenarios;
+  /** The drill shown, whose poses the figure plays. */
+  readonly drill: string;
   readonly muscleName: (id: string) => string;
   /** A pin was clicked or tapped. */
   readonly onPick: (key: string) => void;
@@ -112,11 +112,15 @@ export const FigureField = (props: {
           skeleton={props.skeleton}
           gear={props.gear}
           intensity={props.intensity}
-          scenarios={props.scenarios}
+          drill={props.drill}
           ground={ground()}
           highlight={figureHighlight()}
           caption={<Caption />}
           onAnchors={setAnchors}
+          onPick={(pick) => {
+            const key = pick === null ? null : pickedKey(props.order, pick);
+            if (key !== null) props.onPick(key);
+          }}
           pins={props.pins}
           onReady={onReady}
           onError={() => setFailed(true)}

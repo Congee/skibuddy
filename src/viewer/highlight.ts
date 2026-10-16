@@ -70,3 +70,84 @@ export const turnAzimuth = (points: ReadonlyArray<AnchorPoint>, eye: Vec3, azimu
   if (facing >= FACING_OK || Math.hypot(nx, nz) < MIN_LEVEL * size) return null;
   return azimuth + wrapAngle(Math.atan2(nx, nz) - azimuth);
 };
+
+/** A limb or the trunk as a capsule in world space: axis from `a` to `b`. */
+export interface Occluder {
+  readonly a: Vec3;
+  readonly b: Vec3;
+  readonly radius: number;
+}
+
+const sub = (p: Vec3, q: Vec3): Vec3 => [p[0] - q[0], p[1] - q[1], p[2] - q[2]];
+const dot = (p: Vec3, q: Vec3): number => p[0] * q[0] + p[1] * q[1] + p[2] * q[2];
+const clamp01 = (x: number): number => Math.min(1, Math.max(0, x));
+
+/** Closest distance between segments p0-p1 and q0-q1. */
+export const segmentDistance = (p0: Vec3, p1: Vec3, q0: Vec3, q1: Vec3): number => {
+  const d1 = sub(p1, p0);
+  const d2 = sub(q1, q0);
+  const r = sub(p0, q0);
+  const a = dot(d1, d1);
+  const e = dot(d2, d2);
+  const f = dot(d2, r);
+  const c = dot(d1, r);
+  const b = dot(d1, d2);
+  const denom = a * e - b * b;
+  let s = a < 1e-12 ? 0 : denom > 1e-12 ? clamp01((b * f - c * e) / denom) : 0;
+  let t = e < 1e-12 ? 0 : (b * s + f) / e;
+  if (t < 0 || t > 1) {
+    t = clamp01(t);
+    s = a < 1e-12 ? 0 : clamp01((b * t - c) / a);
+  }
+  const x = sub([p0[0] + d1[0] * s, p0[1] + d1[1] * s, p0[2] + d1[2] * s], [q0[0] + d2[0] * t, q0[1] + d2[1] * t, q0[2] + d2[2] * t]);
+  return Math.hypot(...x);
+};
+
+/** A point this close to a capsule's surface lies on that limb, which never hides it. */
+const OWN_LIMB = 0.03;
+
+/** Share of the points that face `eye` with no other limb between them and it. */
+export const visibleShare = (points: ReadonlyArray<AnchorPoint>, eye: Vec3, occluders: ReadonlyArray<Occluder>): number => {
+  if (points.length === 0) return 0;
+  const seen = points.filter((p) => {
+    if (dot(p.normal, sub(eye, p.position)) <= 0) return false;
+    return occluders.every((o) => segmentDistance(p.position, p.position, o.a, o.b) < o.radius + OWN_LIMB || segmentDistance(p.position, eye, o.a, o.b) >= o.radius);
+  });
+  return seen.length / points.length;
+};
+
+/** Enough of the muscle shows from a view when this share of its pins can be seen. */
+const SEEN_OK = 0.5;
+/** Views tried round the figure. */
+const VIEWS = 24;
+
+export interface View {
+  /** Camera azimuth to turn to; null keeps the current one. */
+  readonly azimuth: number | null;
+  /** The muscle shows from there; false asks for the deep-reveal fade instead. */
+  readonly seen: boolean;
+}
+
+/**
+ * The nearest camera azimuth from which the muscle faces the camera with no other limb in
+ * front of it; `eyeAt` places the eye for an azimuth. When no view shows it, the best one
+ * and `seen: false`, so the figure fades the muscles over it.
+ */
+export const chooseView = (points: ReadonlyArray<AnchorPoint>, eyeAt: (azimuth: number) => Vec3, occluders: ReadonlyArray<Occluder>, azimuth: number): View => {
+  if (points.length === 0) return { azimuth: null, seen: true };
+  const shows = (a: number): number => {
+    const eye = eyeAt(a);
+    return turnAzimuth(points, eye, a) === null ? visibleShare(points, eye, occluders) : 0;
+  };
+  if (shows(azimuth) >= SEEN_OK) return { azimuth: null, seen: true };
+  const facing = turnAzimuth(points, eyeAt(azimuth), azimuth);
+  const candidates = [
+    ...(facing === null ? [] : [facing]),
+    ...Array.from({ length: VIEWS }, (_, k) => azimuth + wrapAngle((2 * Math.PI * k) / VIEWS)),
+  ];
+  const scored = candidates.map((a) => ({ a, share: shows(a), turn: Math.abs(wrapAngle(a - azimuth)) }));
+  const ok = scored.filter((c) => c.share >= SEEN_OK).toSorted((x, y) => x.turn - y.turn)[0];
+  if (ok !== undefined) return { azimuth: ok.a, seen: true };
+  const best = scored.toSorted((x, y) => y.share - x.share || x.turn - y.turn)[0];
+  return { azimuth: best === undefined || best.share === 0 ? facing : best.a, seen: false };
+};

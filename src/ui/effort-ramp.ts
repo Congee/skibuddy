@@ -11,8 +11,8 @@ export const readEffortRamp = (): EffortRamp => {
   };
   return [
     read(vars.color.rest, [185, 197, 191]),
-    read(vars.color.l1, [242, 179, 61]),
-    read(vars.color.l2, [224, 96, 42]),
-    read(vars.color.l3, [158, 31, 99]),
+    read(vars.color.l1, [142, 203, 255]),
+    read(vars.color.l2, [47, 107, 255]),
+    read(vars.color.l3, [58, 16, 168]),
   ];
 };
