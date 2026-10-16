@@ -34,6 +34,11 @@ name: Linked turns with a flexion transition, the legs retracted under a low bod
 # edge angle builds from the top of the turn to a peak in late shaping, then releases with the retraction
 # (LeMaster pp 46-49, 128, 154; IASI pp 31, 62-63).
 #
+# Edge change: the crossover is the instant the centre of mass crosses the feet; the skis pass flat with the
+# legs about equal, and the body rolls through flat into the new turn without pausing there (LeMaster p 39;
+# IASI pp 19-22; biomechanics.md F10).
+# A cross-under: the legs flex and retract so the skis pass under a mass that stays low, and the stance stays
+# wide (LeMaster pp 65-67, 152-154; IASI pp 62-63). Flexing near the switch keeps the skis on the snow (komissarov-2022b).
 # Equipment assumed: recreational carving skis of about 14-17 m sidecut; boots with about 15° cuff lean, about
 # 0.9° binding ramp and about 42 mm stand height. Too little forward lean makes the deep switch a back-seat
 # position (LeMaster pp 58-59, 96, 164-165).

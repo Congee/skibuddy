@@ -37,6 +37,10 @@ name: Short-radius turns, legs turning under a pelvis that faces down the hill
 # angle builds through late shaping into the edge set, then releases right after the set (reid-2020;
 # LeMaster p 128).
 #
+# Edge change: the crossover is the instant the centre of mass crosses the feet; the skis pass flat with the
+# legs about equal, and the body rolls through flat into the new turn without pausing there (LeMaster p 39;
+# IASI pp 19-22; biomechanics.md F10).
+# A cross-under: the edges release as the legs flex back toward the mass (IASI pp 62-63; LeMaster p 152).
 # Equipment assumed: recreational carving skis of about 12-15 m sidecut; boots with about 15° cuff lean, about
 # 0.9° binding ramp and about 42 mm stand height (as stork turns). A shorter sidecut makes a carved short turn
 # possible at lower speed; more lean or ramp deepens the knee (posch-2025, LeMaster pp 164-167).

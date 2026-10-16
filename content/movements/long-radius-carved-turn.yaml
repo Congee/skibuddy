@@ -26,6 +26,11 @@ name: Long-radius carved turn, arc to arc on both skis
 # 60-72° moderate, 65-80° dynamic from shaping to the transition; the hip about 45-58°, 52-68°, 60-78°;
 # heinrich-2022 GS outside knee 56-80°, hip 50-81°, inside knee 81-114°, hip 70-117°.
 #
+# Edge change: the crossover is the instant the centre of mass crosses the feet; the skis pass flat with the
+# legs about equal, and the body rolls through flat into the new turn without pausing there (LeMaster p 39;
+# IASI pp 19-22; biomechanics.md F10).
+# Gentle and moderate carving cross over; dynamic carving crosses under, the legs most flexed at the switch
+# (LeMaster pp 144-154; seifert-2023).
 # Equipment assumed: a long-turn carving ski of about 20 m sidecut radius (an all-mountain or recreational GS
 # ski); boots with about 15° cuff lean, about 0.9° binding ramp (4.7 mm) and about 42 mm stand height. A
 # shorter-radius ski carves these turns only by tightening them; more lean or ramp deepens the knee
