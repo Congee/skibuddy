@@ -22,8 +22,8 @@ import type { MusclePick } from './pick';
 import { pixelRatio } from './pixel-ratio';
 import { makeSlotTable } from './slots';
 import type { MusclePart } from './slots';
-import { FOLLOW_ORBIT, HOME_FRAME, HOME_ORBIT, SLOPE_ORBIT, dampFrame, panBy, surfaceDepth, turnAim, zoomAbout } from './view';
-import type { CameraFrame, Lens } from './view';
+import { FOLLOW_ORBIT, HOME_FRAME, HOME_ORBIT, SLOPE_ORBIT, clearSnow, dampFrame, panBy, surfaceDepth, turnAim, zoomAbout } from './view';
+import type { CameraFrame, GearStops, Lens } from './view';
 
 export const FigureKind = { Capsule: 'capsule', Anatomy: 'anatomy' } as const;
 export type FigureKind = (typeof FigureKind)[keyof typeof FigureKind];
@@ -37,6 +37,8 @@ export interface Figure {
   readonly anchors: () => ReadonlyArray<AnchorPoint>;
   /** Limbs and trunk as capsules in the current pose, for whether a muscle is in view. */
   readonly occluders?: () => ReadonlyArray<Occluder>;
+  /** Skis, boots and poles as posed, for where a zoom stops; computed on demand. */
+  readonly gearStops?: () => GearStops;
   readonly setSkeleton?: (on: boolean) => void;
   /** Steps motion the figure runs on its own, such as the skeleton fade; true while it still moves. */
   readonly animate?: (now: number) => boolean;
@@ -191,8 +193,10 @@ export const createViewer = async (
   let damping = DRAG_DAMPING;
   const placeCamera = (): void => {
     const { distance, target } = frame;
-    const r = distance * Math.cos(orbit.elevation);
-    camera.position.set(target[0] + r * Math.sin(orbit.azimuth), target[1] + distance * Math.sin(orbit.elevation), target[2] + r * Math.cos(orbit.azimuth));
+    // The eased orbit and frame can dip below the snow between two aims that clear it.
+    const { azimuth, elevation } = clearSnow(frame, orbit);
+    const r = distance * Math.cos(elevation);
+    camera.position.set(target[0] + r * Math.sin(azimuth), target[1] + distance * Math.sin(elevation), target[2] + r * Math.cos(azimuth));
     camera.lookAt(target[0], target[1], target[2]);
   };
   placeCamera();
@@ -277,6 +281,7 @@ export const createViewer = async (
       turnPending = false;
       turnToward();
     }
+    aim = clearSnow(frameAim, aim);
     if (orbit !== aim || frame !== frameAim) {
       const step = reducedMotion.matches ? { orbit: aim, settled: true } : dampOrbit(orbit, aim, seconds, damping);
       const zoom = reducedMotion.matches ? { frame: frameAim, settled: true } : dampFrame(frame, frameAim, seconds, damping);
@@ -309,8 +314,9 @@ export const createViewer = async (
   const viewNdc = (p: Point): readonly [number, number] => toNdc(p, width, viewHeight());
   const zoomAt = (p: Point, ratio: number): void => {
     const body = figure.occluders?.() ?? [];
+    const gear: GearStops = figure.gearStops?.() ?? { capsules: [], boxes: [] };
     const at = viewNdc(p);
-    const hit = surfaceDepth(frameAim, aim, at, lens(), body);
+    const hit = surfaceDepth(frameAim, aim, at, lens(), [...body, ...gear.capsules], gear.boxes);
     // Off the body, zooming in stops while most of the figure is still in view, not in empty air.
     const step = hit === null && ratio < 1 ? Math.min(1, Math.max(ratio, OFF_BODY_DISTANCE / frameAim.distance)) : ratio;
     frameAim = zoomAbout(frameAim, aim, at, step, lens(), hit);
@@ -398,10 +404,10 @@ export const createViewer = async (
     }
     if (pointers.size !== 1) return;
     if (gesture !== null) gesture.travel = Math.max(gesture.travel, Math.hypot(p.x - gesture.start.x, p.y - gesture.start.y));
-    aim = {
+    aim = clearSnow(frameAim, {
       azimuth: aim.azimuth - (p.x - before.x) * 0.01,
       elevation: Math.min(1.2, Math.max(-0.1, aim.elevation + (p.y - before.y) * 0.01)),
-    };
+    });
     invalidate();
   };
   const onUp = (e: PointerEvent): void => {

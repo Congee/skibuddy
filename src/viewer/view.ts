@@ -97,30 +97,108 @@ export interface Capsule {
   readonly radius: number;
 }
 
-/** How far ahead of the camera, along its forward axis, the ray through `ndc` meets the first capsule; null for none. */
-export const surfaceDepth = (frame: CameraFrame, orbit: Orbit, ndc: readonly [number, number], lens: Lens, capsules: ReadonlyArray<Capsule>): number | null => {
+/** Gear a zoom stops short of, as the body's capsules. */
+export interface GearStops {
+  readonly capsules: ReadonlyArray<Capsule>;
+  readonly boxes: ReadonlyArray<Box>;
+}
+
+/** A rigid part such as a ski or boot as a box: one corner and its three edges from it, at right angles. */
+export interface Box {
+  readonly corner: Vec3;
+  readonly edges: readonly [Vec3, Vec3, Vec3];
+}
+
+/** The box `size` about `center` in the frame of the column-major 4x4 `m`. */
+export const boxIn = (m: ArrayLike<number>, center: Vec3, size: Vec3): Box => {
+  const at = (p: Vec3): Vec3 => vec((i) => (m[i] ?? 0) * p[0] + (m[4 + i] ?? 0) * p[1] + (m[8 + i] ?? 0) * p[2] + (m[12 + i] ?? 0));
+  const axis = (k: 0 | 1 | 2): Vec3 => vec((i) => (m[4 * k + i] ?? 0) * size[k]);
+  return { corner: at(vec((i) => center[i] - size[i] / 2)), edges: [axis(0), axis(1), axis(2)] };
+};
+
+/** The least box along the unit, perpendicular `axes` round `points`. */
+export const boxRound = (points: ReadonlyArray<Vec3>, axes: readonly [Vec3, Vec3, Vec3]): Box | null => {
+  if (points.length === 0) return null;
+  const lo = [Infinity, Infinity, Infinity];
+  const hi = [-Infinity, -Infinity, -Infinity];
+  for (const p of points)
+    axes.forEach((a, k) => {
+      const d = dot(p, a);
+      lo[k] = Math.min(lo[k] ?? d, d);
+      hi[k] = Math.max(hi[k] ?? d, d);
+    });
+  const span = (k: 0 | 1 | 2): Vec3 => vec((i) => axes[k][i] * ((hi[k] ?? 0) - (lo[k] ?? 0)));
+  return { corner: vec((i) => axes.reduce((s, a, k) => s + a[i] * (lo[k] ?? 0), 0)), edges: [span(0), span(1), span(2)] };
+};
+
+/** Where the ray `eye + ray t` (t >= 0) first meets a capsule; null for a miss. */
+const capsuleDepth = (eye: Vec3, ray: Vec3, { a, b, radius }: Capsule): number | null => {
+  // Closest approach of the ray (t >= 0) and the segment (0..1), then back off by the radius.
+  const rr = dot(ray, ray);
+  const v = vec((i) => b[i] - a[i]);
+  const w = vec((i) => eye[i] - a[i]);
+  const rv = dot(ray, v);
+  const vv = dot(v, v);
+  const rw = dot(ray, w);
+  const vw = dot(v, w);
+  const det = rr * vv - rv * rv;
+  let s = det > 1e-9 ? clamp((rr * vw - rv * rw) / det, 0, 1) : 0;
+  const t = Math.max(0, (s * rv - rw) / rr);
+  s = vv > 1e-9 ? clamp((t * rv + vw) / vv, 0, 1) : 0;
+  const gap = Math.hypot(...vec((i) => w[i] + ray[i] * t - v[i] * s));
+  if (gap > radius) return null;
+  return Math.max(0, t - Math.sqrt((radius * radius - gap * gap) / rr));
+};
+
+/** Where the ray first meets a box, by its slabs; null for a miss. */
+const boxDepth = (eye: Vec3, ray: Vec3, { corner, edges }: Box): number | null => {
+  let near = 0;
+  let far = Infinity;
+  const w = vec((i) => eye[i] - corner[i]);
+  for (const e of edges) {
+    const ee = dot(e, e);
+    if (ee < 1e-12) return null;
+    // The eye's and the ray's place across this slab, 0..1 inside.
+    const at = dot(w, e) / ee;
+    const step = dot(ray, e) / ee;
+    if (Math.abs(step) < 1e-12) {
+      if (at < 0 || at > 1) return null;
+      continue;
+    }
+    const t0 = -at / step;
+    const t1 = (1 - at) / step;
+    near = Math.max(near, Math.min(t0, t1));
+    far = Math.min(far, Math.max(t0, t1));
+    if (near > far) return null;
+  }
+  return near;
+};
+
+/** How far ahead of the camera, along its forward axis, the ray through `ndc` meets the first capsule or box; null for none. */
+export const surfaceDepth = (
+  frame: CameraFrame,
+  orbit: Orbit,
+  ndc: readonly [number, number],
+  lens: Lens,
+  capsules: ReadonlyArray<Capsule>,
+  boxes: ReadonlyArray<Box> = [],
+): number | null => {
   const eye = eyeOf(frame, orbit);
   const ray = rayOf(orbit, ndc, lens);
-  const rr = dot(ray, ray);
   let best: number | null = null;
-  for (const { a, b, radius } of capsules) {
-    // Closest approach of the ray (t >= 0) and the segment (0..1), then back off by the radius.
-    const v = vec((i) => b[i] - a[i]);
-    const w = vec((i) => eye[i] - a[i]);
-    const rv = dot(ray, v);
-    const vv = dot(v, v);
-    const rw = dot(ray, w);
-    const vw = dot(v, w);
-    const det = rr * vv - rv * rv;
-    let s = det > 1e-9 ? clamp((rr * vw - rv * rw) / det, 0, 1) : 0;
-    const t = Math.max(0, (s * rv - rw) / rr);
-    s = vv > 1e-9 ? clamp((t * rv + vw) / vv, 0, 1) : 0;
-    const gap = Math.hypot(...vec((i) => w[i] + ray[i] * t - v[i] * s));
-    if (gap > radius) continue;
-    const depth = Math.max(0, t - Math.sqrt((radius * radius - gap * gap) / rr));
-    if (best === null || depth < best) best = depth;
-  }
+  for (const depth of [...capsules.map((c) => capsuleDepth(eye, ray, c)), ...boxes.map((b) => boxDepth(eye, ray, b))])
+    if (depth !== null && (best === null || depth < best)) best = depth;
   return best;
+};
+
+/** Metres the camera keeps above the snow at y = 0, well past the near plane. */
+export const SNOW_CLEARANCE = 0.08;
+
+/** The orbit raised just enough that the camera stays SNOW_CLEARANCE above the snow; `orbit` itself when it already does. */
+export const clearSnow = (frame: CameraFrame, orbit: Orbit): Orbit => {
+  const { distance, target } = frame;
+  if (target[1] + distance * Math.sin(orbit.elevation) >= SNOW_CLEARANCE - 1e-9) return orbit;
+  return { azimuth: orbit.azimuth, elevation: Math.asin(clamp((SNOW_CLEARANCE - target[1]) / distance, -1, 1)) };
 };
 
 /**

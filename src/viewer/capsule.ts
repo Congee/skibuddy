@@ -39,7 +39,7 @@ import type { Vec3 } from './mat4';
 import { EQUIPMENT, shellInFoot } from './equipment';
 import { BodySide, CAPSULE_BINDING, SEGMENTS, SegmentKind } from './figure';
 import type { Segment } from './figure';
-import { createGear, placePole } from './gear';
+import { createGear, gearStops, placePole } from './gear';
 import type { LegSide } from './gear';
 import { CAPSULE_BOOT, coveredByBoot } from './gear-fit';
 import { GearMode } from './gear-mode';
@@ -52,6 +52,8 @@ import { fillSlotLevels, musclePartAt } from './slots';
 import type { SlotTable } from './slots';
 import type { Occluder } from './highlight';
 import type { Figure } from './scene';
+import { boxIn } from './view';
+import type { Box, GearStops } from './view';
 
 const SKIN = new Color(0xb9bec6);
 const MUSCLE = new Color(0xc7b2a6);
@@ -236,6 +238,7 @@ export const createCapsuleFigure = (parent: Object3D, table: SlotTable, muscles:
   for (const muscle of muscles) for (const side of [Side.Outside, Side.Inside]) owners.set(table.slotOf(muscle, side), { muscle, side });
   const p = new Vector3();
   const n = new Vector3();
+  const toWorld = new Matrix4();
   let marked: ReadonlyArray<number> = [];
   let poses = poseTable(null, Intensity.Moderate);
   let size = poleSize(CAPSULE_ARM);
@@ -311,6 +314,17 @@ export const createCapsuleFigure = (parent: Object3D, table: SlotTable, muscles:
         };
         return [{ a: end(-shape.length / 2), b: end(shape.length / 2), radius: shape.radius }];
       }),
+    gearStops: (): GearStops => {
+      const worn = gearStops(gear);
+      const skis = SEGMENTS.flatMap((segment, k): ReadonlyArray<Box> => {
+        const m = material.matrices[k];
+        const { shape } = segment;
+        if (m === undefined || segment.kind !== SegmentKind.Ski || shape.type !== 'box') return [];
+        figure.updateWorldMatrix(true, false);
+        return [boxIn(toWorld.copy(figure.matrixWorld).multiply(m).elements, shape.center, shape.size)];
+      });
+      return { capsules: worn.capsules, boxes: [...worn.boxes, ...skis] };
+    },
     setGear: (mode: GearMode) => {
       footShown = mode === GearMode.Off;
       gear.setMode(mode);

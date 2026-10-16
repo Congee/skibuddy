@@ -9,6 +9,8 @@ import { GearMode } from './gear-mode';
 import type { Vec3 } from './mat4';
 import { CAPSULE_ARM, poleSize } from './pose';
 import type { PoleSize } from './pose';
+import { boxIn } from './view';
+import type { Box, Capsule, GearStops } from './view';
 
 export type LegSide = typeof BodySide.Left | typeof BodySide.Right;
 
@@ -303,6 +305,40 @@ export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, size: Pole
       for (const m of new Set([...glass, ...cuffGlass, ...opaque])) m.dispose();
     },
   };
+};
+
+/** About the basket's radius, so a zoom stops short of it. */
+const POLE_STOP_RADIUS = 0.04;
+const end = new Vector3();
+
+/** The shown meshes, placed and bounded. */
+const shown = (parts: ReadonlyArray<GearPart>): ReadonlyArray<Mesh> =>
+  parts.flatMap(({ mesh }) => {
+    if (!mesh.visible) return [];
+    mesh.updateWorldMatrix(true, false);
+    if (mesh.geometry.boundingBox === null) mesh.geometry.computeBoundingBox();
+    return [mesh];
+  });
+
+/** Shown boots, bindings and poles where they were last placed, for zoom stops; called only on a zoom. */
+export const gearStops = (gear: Gear): GearStops => {
+  const boxes = shown([...gear.shells, ...gear.soles, ...gear.cuffs, ...gear.plates, ...gear.bindings]).flatMap((mesh): ReadonlyArray<Box> => {
+    const b = mesh.geometry.boundingBox;
+    if (b === null) return [];
+    const center = b.getCenter(end);
+    const c: Vec3 = [center.x, center.y, center.z];
+    return [boxIn(mesh.matrixWorld.elements, c, [b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z])];
+  });
+  const capsules = shown(gear.poles).flatMap((mesh): ReadonlyArray<Capsule> => {
+    const b = mesh.geometry.boundingBox;
+    if (b === null) return [];
+    const at = (y: number): Vec3 => {
+      end.set(0, y, 0).applyMatrix4(mesh.matrixWorld);
+      return [end.x, end.y, end.z];
+    };
+    return [{ a: at(b.max.y), b: at(b.min.y), radius: POLE_STOP_RADIUS }];
+  });
+  return { capsules, boxes };
 };
 
 const DOWN = new Vector3(0, -1, 0);

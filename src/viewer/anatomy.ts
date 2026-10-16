@@ -26,7 +26,7 @@ import type { AnchorPoint } from './anchor-projection';
 import { EQUIPMENT, bindingInFoot, shellInFoot } from './equipment';
 import type { Mat4, Vec3 } from './mat4';
 import { BodySide } from './figure';
-import { createGear, placePole } from './gear';
+import { createGear, gearStops, placePole } from './gear';
 import type { Gear, LegSide } from './gear';
 import { bootFitFrom, parseGearFit, standingArm } from './gear-fit';
 import type { BootFit, RawFit } from './gear-fit';
@@ -40,6 +40,8 @@ import { NEUTRAL_CLIP, NodeKind, motionClipName, nodeOf } from './anatomy-names'
 import type { AnatomyNode } from './anatomy-names';
 import { markChanges } from './highlight';
 import type { Occluder } from './highlight';
+import { boxRound } from './view';
+import type { Box, GearStops } from './view';
 import { ancestorsOf } from './muscle-groups';
 import { PickRole, pickRole } from './pick';
 import { fillSlotLevels } from './slots';
@@ -347,6 +349,14 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
     return a === undefined || b === undefined ? [] : [{ a, b, radius }];
   });
   const ends = new Vector3();
+  // Each ski with the binding plate whose frame runs along it.
+  const skis = [BodySide.Right, BodySide.Left].flatMap((side) => {
+    const meshes: Array<SkinnedMesh> = [];
+    root.getObjectByName(`gear_ski_${side === BodySide.Right ? 'R' : 'L'}`)?.traverse((o) => {
+      if (isSkinned(o)) meshes.push(o);
+    });
+    return meshes.map((mesh) => ({ mesh, side }));
+  });
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   // Bumped by each update, so a tap re-measures only meshes posed since the last one.
@@ -433,6 +443,27 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
         b.getWorldPosition(ends);
         return { a: from, b: [ends.x, ends.y, ends.z], radius };
       }),
+    gearStops: (): GearStops => {
+      if (kit === null) return { capsules: [], boxes: [] };
+      const worn = gearStops(kit);
+      const boxes = skis.flatMap(({ mesh, side }): ReadonlyArray<Box> => {
+        const plate = own(kit?.plates ?? [], side);
+        if (plate === undefined) return [];
+        const m = plate.matrixWorld.elements;
+        const axis = (k: number): Vec3 => {
+          const l = Math.hypot(m[4 * k] ?? 0, m[4 * k + 1] ?? 0, m[4 * k + 2] ?? 0) || 1;
+          return [(m[4 * k] ?? 0) / l, (m[4 * k + 1] ?? 0) / l, (m[4 * k + 2] ?? 0) / l];
+        };
+        const count = mesh.geometry.getAttribute('position').count;
+        const corners = Array.from({ length: count }, (_, i): Vec3 => {
+          const p = skinned(mesh, i, vertexIn(mesh, 'position', i, 1, v4), ends);
+          return [p.x, p.y, p.z];
+        });
+        const box = boxRound(corners, [axis(0), axis(1), axis(2)]);
+        return box === null ? [] : [box];
+      });
+      return { capsules: worn.capsules, boxes: [...worn.boxes, ...boxes] };
+    },
     setSkeleton: (on: boolean) => {
       target = on ? 1 : 0;
       last = performance.now();
