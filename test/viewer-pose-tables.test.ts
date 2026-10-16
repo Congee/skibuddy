@@ -9,6 +9,7 @@ import { TABLE_SCALE, decodeTable, encodeTable, hasTable, poseTable, samplePose 
 import { POSE_DEFINITIONS, hasPose } from '../src/viewer/poses';
 import { NEUTRAL } from '../src/viewer/poses/neutral';
 import { STORK_TURNS } from '../src/viewer/poses/stork-turns';
+import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
 import TABLES from '../src/viewer/poses/tables.json';
 import { poseAngles } from './pose-angles';
 import { MODERATE, poseAt } from './stork-poses';
@@ -28,19 +29,20 @@ describe('pose tables', () => {
     it(`match a fresh solve of ${drill} and its scenarios; run \`bun run poses\` if not`, () => {
       const scenarios = drillScenarios(drill);
       for (const i of INTENSITIES) {
-        const fresh = solveTable(def, scenarios[i]);
+        const fresh = solveTable(def, scenarios[i], surfaceFor(drill, i));
         const stored = poseTable(drill, i);
         assert.strictEqual(stored.length, fresh.length);
         fresh.forEach((p, k) => close(poseToChannels(stored[k] ?? p), poseToChannels(p), `${drill} ${i} sample ${k}`));
       }
-    });
+      // Riding the bumps solves each sample several times over.
+    }, surfaceFor(drill, Intensity.Moderate).kind === SurfaceKind.Moguls ? 60_000 : undefined);
 
   it('match a fresh solve of the neutral stance', () => {
     close(poseToChannels(poseTable(null, Intensity.Moderate)[0] ?? NEUTRAL_POSE), poseToChannels(NEUTRAL_POSE), 'neutral');
   });
 
   it('round-trip a table through its encoding', () => {
-    const table = solveTable(STORK_TURNS, MODERATE, 8);
+    const table = solveTable(STORK_TURNS, MODERATE, null, 8);
     decodeTable(encodeTable(table)).forEach((p, k) => close(poseToChannels(p), poseToChannels(table[k] ?? p), `sample ${k}`));
   });
 

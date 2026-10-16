@@ -161,12 +161,36 @@ export const underFoot = (s: Surface, t: number, local: readonly [number, number
   return { x, z, height: heightAt(s, x, z), support: supportAt(s, x, z), normal: normalAt(s, x, z) };
 };
 
-/** Boot centres either side of the skis' centre, metres; part 2 will place them from the pose. */
-export const BOOT_HALF_GAP = 0.1;
+/** A rigid ski resting on the support: its pitch tip-up and the heights of its base line at the binding and the tip. */
+export interface SkiRest {
+  readonly pitch: number;
+  readonly base: number;
+  readonly tip: number;
+}
 
-/** How far the support sits above the slope's datum under the boots at turn time t: what lowers the field so the figure stands at y = 0. */
-export const liftAt = (s: Surface, t: number): number =>
-  s.kind === SurfaceKind.Groomed ? 0 : (underFoot(s, t, [-BOOT_HALF_GAP, 0]).support + underFoot(s, t, [BOOT_HALF_GAP, 0]).support) / 2;
+const REST_SAMPLES = 32;
+
+/**
+ * Where a rigid ski at `at` = [across, along] from the skis' centre, `ahead` to its tip and `behind` to its tail, rests
+ * at turn time t: pitched on the chord from tail to tip, so both end up equally clear, and lowered until it touches.
+ * Over a crest it touches under the boot and the ends float; in a trough the ends touch and the boot rides above it.
+ */
+export const skiRest = (s: Surface, t: number, at: readonly [number, number], ahead: number, behind: number): SkiRest => {
+  const under = (along: number): number => underFoot(s, t, [at[0], at[1] + along]).support;
+  // The ends' reach over the snow shortens as the ski pitches.
+  let slope = 0;
+  for (let i = 0; i < 3; i++) {
+    const c = Math.cos(Math.atan(slope));
+    slope = (under(ahead * c) - under(-behind * c)) / ((ahead + behind) * c);
+  }
+  const c = Math.cos(Math.atan(slope));
+  let base = -Infinity;
+  for (let i = 0; i <= REST_SAMPLES; i++) {
+    const along = (-behind + ((ahead + behind) * i) / REST_SAMPLES) * c;
+    base = Math.max(base, under(along) - along * slope);
+  }
+  return { pitch: Math.atan(slope), base, tip: base + ahead * c * slope };
+};
 
 /** A grid over the field's square of half side `half`, `step` apart: positions, normals and triangle indices. */
 export const fieldMesh = (

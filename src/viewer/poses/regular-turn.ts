@@ -71,6 +71,8 @@ export interface TurnStyle {
   readonly rebound?: Rebound;
   /** Skis on top of firm snow, lifting off it only by `rebound.clearance`; absent, they pivot at the boots as in powder. */
   readonly firmSnow?: boolean;
+  /** On moguls, the outside knee's range, degrees: open in the troughs, deep per intensity over the crests. */
+  readonly absorb?: { readonly open: number; readonly deep: Readonly<Record<Intensity, number>> };
 }
 
 /** Values at each phase key, then at the switch keys 1/12 and 11/12. */
@@ -298,6 +300,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     early: 0.4,
     // Cross-under: the legs retract over the crest so the mass travels straight (lind-sanders-2004 pp114-115).
     crossUnder: [1, 1, 1],
+    // Absorb up to the top of each bump, extend right after it, pressure on the snow even (fis-freestyle-judging-2025 p28);
+    // the open knee in the troughs inferred.
+    absorb: { open: 45, deep: OUTSIDE_KNEE_MAX[RegularTurn.Moguls] },
     polePlant: true,
     // Shorter for quick plants on the bumps' backs.
     poleTrim: 0.05,
@@ -389,10 +394,13 @@ export const CLOSED_STANCE: TurnStyle = {
   early: 0.6,
   // Cross-under: the legs swivel under a level trunk.
   crossUnder: [1, 1, 1],
+  // Legs absorb the bumps under a level trunk, shallower than moguls so the hips stay over the heels; inferred.
+  absorb: { open: 40, deep: { gentle: 50, moderate: 55, dynamic: 60 } },
   polePlant: true,
   poleTrim: 0,
   head: DOWNHILL,
-  armAbduction: HANDS_IN,
+  // Upright over the shallower knees, the arms reach less far, so they draw in a little more; inferred.
+  armAbduction: HANDS_IN - 2,
 };
 
 /**
@@ -552,6 +560,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       ...(style.head === undefined ? {} : { head: style.head }),
       ...(style.armAbduction === undefined ? {} : { armAbduction: style.armAbduction * DEG }),
       ...(style.firmSnow === true ? { firmSnow: true } : {}),
+      ...(style.absorb === undefined ? {} : { absorb: { open: style.absorb.open * DEG, deep: [style.absorb.deep.gentle * DEG, style.absorb.deep.moderate * DEG, style.absorb.deep.dynamic * DEG] as const } }),
       gains: {
         comAhead: 0.4,
         lumbarFlex: 0.1,

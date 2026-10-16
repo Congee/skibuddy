@@ -114,6 +114,11 @@ export interface PoseConstraints {
   readonly armAbduction?: number;
   /** The skis stay on top of firm snow: a tip-down tip lifts the boots onto it; absent, they pivot at the boots, as in powder. */
   readonly firmSnow?: boolean;
+  /**
+   * On moguls the outside knee, radians, opens to `open` and folds to `deep` at gentle, moderate and dynamic, as the
+   * snow under the skis falls and rises, keeping the mass level; the hip folds with it, so the trunk keeps its lean on the shin.
+   */
+  readonly absorb?: { readonly open: number; readonly deep: readonly [number, number, number] };
   /** Per key field, how much more a dynamic turn takes (and a gentle one less), as a share per step of effort. */
   readonly gains: Readonly<Partial<Record<Exclude<keyof PoseKey, 't'>, number>>>;
 }

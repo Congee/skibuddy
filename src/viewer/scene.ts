@@ -17,7 +17,8 @@ import { DRAG_DAMPING, TURN_DAMPING, dampOrbit, dampStep } from './orbit';
 import type { Orbit } from './orbit';
 import { pickOf } from './pick';
 import type { Pose } from './pose';
-import { SurfaceKind, fieldMesh, heightAt, liftAt, pathAt, surfaceFor } from './surface';
+import { rideOf } from './ride';
+import { SurfaceKind, fieldMesh, heightAt, pathAt, surfaceFor } from './surface';
 import type { Surface } from './surface';
 import { headingAt, turnPath } from './turn-heading';
 import type { MusclePick } from './pick';
@@ -185,8 +186,10 @@ export const createViewer = async (
   const fieldTurn = new Matrix4();
   const fieldShift = new Matrix4();
   const probe = new Vector3();
-  // Metres the field is lowered so the support under the boots is at y = 0, where the figure stands.
+  // Metres the figure rides up so its skis rest on the field, whose datum stays at y = 0.
   let lift = 0;
+  const lifted = new Matrix4();
+  const unlifted = new Matrix4();
 
   // A soft contact shadow along the skis.
   const shadowMaterial = new MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
@@ -289,7 +292,6 @@ export const createViewer = async (
   const placeField = (root: ArrayLike<number>): void => {
     if (field === null) return;
     const p = pathAt(surface, time);
-    lift = liftAt(surface, time);
     field.matrix.fromArray(root).multiply(fieldTurn.makeRotationY(-p.heading)).multiply(fieldShift.makeTranslation(-p.x, -lift, -p.z));
     if (mirrored) field.matrix.premultiply(MIRROR);
     fieldInverse.copy(field.matrix).invert();
@@ -298,7 +300,7 @@ export const createViewer = async (
   const snowAt: Ground = (x, z) => {
     if (field === null) return 0;
     probe.set(x, 0, z).applyMatrix4(fieldInverse);
-    return heightAt(surface, probe.x, probe.z) - lift;
+    return heightAt(surface, probe.x, probe.z);
   };
   placeCamera();
   // Set by a new focus; the turn is worked out once the pose is current.
@@ -340,6 +342,10 @@ export const createViewer = async (
   };
 
   const rootAt = (t: number): ArrayLike<number> => {
+    lift = rideOf(surface, t, figure.pose(t)).lift;
+    return lifted.makeTranslation(0, lift, 0).multiply(unlifted.fromArray(lockedAt(t))).elements;
+  };
+  const lockedAt = (t: number): ArrayLike<number> => {
     switch (lock) {
       case ViewLock.HipsFixed:
         return hipLock(figure.pose(t));

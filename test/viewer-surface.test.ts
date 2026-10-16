@@ -1,12 +1,12 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
 import { RegularTurn } from '../src/viewer/poses/regular-turn';
+import type { Surface } from '../src/viewer/surface';
 import {
-  BOOT_HALF_GAP,
   fieldMesh,
   heightAt,
-  liftAt,
   normalAt,
+  skiRest,
   pathAt,
   supportAt,
   surfaceFor,
@@ -132,8 +132,8 @@ describe('underFoot', () => {
     const e = 1e-6;
     for (const s of [moguls, powder])
       for (const local of [
-        [BOOT_HALF_GAP, 0.3],
-        [-BOOT_HALF_GAP, -0.8],
+        [0.1, 0.3],
+        [-0.1, -0.8],
       ] as const) {
         const before = underFoot(s, 1 - e, local);
         // The same point on the skis in the next turn, a spacing down and drawn mirrored in x.
@@ -155,13 +155,36 @@ describe('underFoot', () => {
   });
 });
 
-describe('liftAt', () => {
-  it('is zero off moguls and follows the bumps under the boots on them', () => {
-    close(liftAt(groomed, 0.3), 0);
-    close(liftAt(powder, 0.3), 0);
-    assert.isAbove(liftAt(moguls, 0), liftAt(moguls, 0.25));
-    assert.isAbove(liftAt(moguls, 0.25), liftAt(moguls, 0.5));
-    close(liftAt(moguls, 0), liftAt(moguls, 1), 1e-9);
+const along = (s: Surface, t: number, at: number): number => underFoot(s, t, [0.1, at]).support;
+
+describe('skiRest', () => {
+
+  it('lies flat on groomed snow and on the base under powder', () => {
+    for (const s of [groomed, powder]) {
+      const r = skiRest(s, 0.3, [0.1, 0], 0.85, 0.75);
+      close(r.pitch, 0);
+      close(r.base, 0);
+    }
+  });
+
+  it('touches the support without cutting it, pitched along the chord from tail to tip', () => {
+    for (let k = 0; k < 24; k++) {
+      const t = k / 24;
+      const r = skiRest(moguls, t, [0.1, 0], 0.85, 0.75);
+      const c = Math.cos(r.pitch);
+      const gaps = Array.from({ length: 33 }, (_, i) => {
+        const x = (-0.75 + (1.6 * i) / 32) * c;
+        return r.base + x * Math.tan(r.pitch) - along(moguls, t, x);
+      });
+      close(Math.min(...gaps), 0, 1e-9);
+      close(Math.tan(r.pitch), (along(moguls, t, 0.85 * c) - along(moguls, t, -0.75 * c)) / (1.6 * c), 1e-3);
+    }
+  });
+
+  it('rests on the boot over the crest at the switch, the ends floating', () => {
+    const r = skiRest(moguls, 0, [0, 0], 0.85, 0.75);
+    close(r.base, along(moguls, 0, 0), 5e-3);
+    assert.isAbove(r.tip, along(moguls, 0, 0.85 * Math.cos(r.pitch)));
   });
 });
 

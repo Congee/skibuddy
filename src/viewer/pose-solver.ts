@@ -9,6 +9,10 @@ import { HeadAim, keyValuesAt, touchShare, windowShare, wrapTime } from './pose-
 import type { HeadRule, KeyField, PoseDefinition } from './pose-definition';
 import { HEAD_LIMIT, gazeHeading } from './gaze';
 import { CORRIDOR_SHARE, headingAt } from './turn-heading';
+import { FLAT_RIDE, rideOf } from './ride';
+import type { Ride } from './ride';
+import { SurfaceKind } from './surface';
+import type { Surface } from './surface';
 
 const DEG = Math.PI / 180;
 /** The shin's forward limit in a shell, inferred. */
@@ -68,7 +72,7 @@ export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | 
   return Math.min(HEAD_LIMIT, Math.max(-HEAD_LIMIT, yaw));
 };
 
-// Above the outside tip, which sits on the snow unless both skis pitch.
+// Above the outside tip, which sits on the snow unless both skis pitch or the snow under the tips differs.
 const insideTipHeight = (pose: Pose): number => {
   const world = segmentMatrices(pose);
   const tip = (side: BodySide): number => transformPoint(world[skiIndex(side)] ?? identity(), SKI_TIP)[1];
@@ -142,7 +146,123 @@ const touchAhead = (pose: Pose, basket: number): number => {
  * pelvis, the knee bends until the centre of mass sits `comAhead` of mid-foot, and the inside hip flexes until
  * its ski tip just touches the snow. `scenario` null, or one without a radius, stands without turning.
  */
-export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenario | null): Pose => {
+export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenario | null, surface: Surface | null = null): Pose =>
+  solveRidden(def, t, scenario, surface, null).pose;
+
+/** Knee flexion over which the absorbing knee eases into its range's ends, radians; inferred. */
+const ABSORB_EASE = 6 * DEG;
+
+/** `x` held in [lo, hi], easing quadratically onto each end from `w` inside it to `w` beyond; hi - lo > 2w. */
+/** Share the thighs' draw grows per radian the absorbing knee folds past SQUEEZE_FROM; inferred. */
+const STANCE_SQUEEZE = 0.75;
+const SQUEEZE_FROM = 60 * DEG;
+
+/** Over this either side of the cuff the shin eases onto it on bumps; inferred. */
+const CUFF_EASE = 3 * DEG;
+
+const softClamp = (x: number, lo: number, hi: number, w: number): number => {
+  const up = x <= lo - w ? lo : x >= lo + w ? x : lo + (x - lo + w) ** 2 / (4 * w);
+  return up >= hi + w ? hi : up <= hi - w ? up : hi - (hi + w - up) ** 2 / (4 * w);
+};
+
+/** On moguls with `absorb`, the unclamped knee a sample absorbs with and its ride: a warm start for the next. */
+interface Warm {
+  readonly hip: number;
+  readonly ride: Ride;
+  readonly slope: number;
+}
+
+/** The pose and, on moguls with `absorb`, its warm start for the next sample. */
+const solveRidden = (
+  def: PoseDefinition,
+  t: number,
+  scenario: DrillScenario | null,
+  surface: Surface | null,
+  warm: Warm | null,
+): { readonly pose: Pose; readonly warm: Warm | null } => {
+  if (surface === null || surface.kind !== SurfaceKind.Moguls) return { pose: solveOn(def, t, scenario, FLAT_RIDE, null, false), warm: null };
+  const c = def.constraints;
+  // The height is read before the knee folds for balance, so the absorbing knee moves smoothly where the cuff stops the shin.
+  const ridden = (hip: number | null, ride: Ride, fold = hip === null): { readonly pose: Pose; readonly ride: Ride } => {
+    const pose = solveOn(def, t, scenario, ride, hip, true, fold);
+    return { pose, ride: rideOf(surface, t, pose) };
+  };
+  const settle = (hip: number | null, ride: Ride): Pose => solveOn(def, t, scenario, ridden(hip, ride, true).ride, hip, true);
+  if (c.absorb === undefined) return { pose: settle(null, ridden(null, ridden(null, FLAT_RIDE).ride).ride), warm: null };
+  const [lo, hi] = absorbRange(def, scenario);
+  const level = levelOf(def, scenario, surface);
+  // The knee folds as the snow rises under the skis, so the mass rides at `level` while the legs reach; past the
+  // range's ends it eases in, so the knee settles on its stops without a kink.
+  const w = ABSORB_EASE;
+  const held = (hip: number): number => softClamp(hip, lo, hi, w);
+  const guess = warm?.hip ?? null;
+  let ride = warm?.ride ?? rideOf(surface, t, solveOn(def, t, scenario, FLAT_RIDE, held(lo), true, false));
+  // The mass's height over the level with the unclamped knee held in range by its ease.
+  const above = (knee: number): number => {
+    const next = ridden(held(knee), ride);
+    ride = next.ride;
+    return ride.lift + centreOfMass(segmentMatrices(next.pose))[1] - level;
+  };
+  // Secant on the unclamped knee, started where the ease still moves it; the height falls near linearly with it.
+  let a = Math.min(hi + w - 2 * DEG, Math.max(lo - w + DEG, guess ?? (lo + hi) / 2));
+  let fa = above(a);
+  const tol = 1e-3;
+  const step = warm === null || Math.abs(fa) <= tol ? DEG : -fa / warm.slope;
+  let b = Math.abs(fa) <= tol ? a : Math.min(hi + w, Math.max(lo - w, a + step));
+  let fb = b === a ? fa : above(b);
+  for (let i = 0; i < 8 && Math.abs(fb) > tol; i++) {
+    if (fb === fa) break;
+    const next = Math.min(hi + w, Math.max(lo - w, b - (fb * (b - a)) / (fb - fa)));
+    // Held at an end, the mass can move no further.
+    if (next === b) break;
+    a = b;
+    fa = fb;
+    b = next;
+    fb = above(b);
+  }
+  const slope = b !== a && fb !== fa ? (fb - fa) / (b - a) : (warm?.slope ?? 0);
+  return { pose: settle(held(b), ride), warm: slope === 0 ? null : { hip: b, ride, slope } };
+};
+
+/** The outside knee from open to its absorbing ceiling, radians, a hair inside, which the knee keeps. */
+const absorbRange = (def: PoseDefinition, scenario: DrillScenario | null): readonly [number, number] => {
+  const effort = effortOf(def, scenario);
+  const absorb = def.constraints.absorb;
+  const [gentle, moderate, dynamic] = absorb?.deep ?? [0, 0, 0];
+  const deep = effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale;
+  return [(absorb?.open ?? 0) + 0.5 * DEG, deep - 0.5 * DEG];
+};
+
+const levels = new WeakMap<PoseDefinition, Map<string, number>>();
+
+/** Midway between the mass folded deepest over the crest at the switch and stretched longest into the trough at mid-turn. */
+const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface): number => {
+  const key = JSON.stringify([scenario, surface]);
+  const cached = levels.get(def)?.get(key);
+  if (cached !== undefined) return cached;
+  const [lo, hi] = absorbRange(def, scenario);
+  const at = (t: number, hip: number): number => {
+    let ride = FLAT_RIDE;
+    for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, ride, hip, true, false));
+    return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, ride, hip, true, false)))[1];
+  };
+  const level = (at(0, hi) + at(0.5, lo)) / 2;
+  const map = levels.get(def) ?? new Map<string, number>();
+  map.set(key, level);
+  levels.set(def, map);
+  return level;
+};
+
+/** The pose on snow that pitches the skis and lifts the inside tip by `ride`; `absorbKnee` replaces the keyed outside knee. */
+const solveOn = (
+  def: PoseDefinition,
+  t: number,
+  scenario: DrillScenario | null,
+  ride: Ride,
+  absorbKnee: number | null,
+  bumps: boolean,
+  fold = true,
+): Pose => {
   const c = def.constraints;
   const k = keyValuesAt(def.keys, t);
   const effort = effortOf(def, scenario);
@@ -156,7 +276,10 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const keyedShin = shinAngle(dorsiflexion, EQUIPMENT);
   // Hip flexion on the pelvis is set; the knee and the pelvis's pitch follow from balance.
   const hipShare = k.hip + (k.hipUnder - k.hip) * under;
-  const hip = (effort.hipMin + hipShare * (effort.hipMax - effort.hipMin)) * DEG;
+  const keyedHip = (effort.hipMin + hipShare * (effort.hipMax - effort.hipMin)) * DEG;
+  // Shin-first, the knee is the hip less the trunk's lean on the shin.
+  const trunkOffset = mild('lumbarFlex') - (c.trunkOverShin ?? 0) * (1 + (c.trunkOverShinGain ?? 0) * effort.scale);
+  const hip = absorbKnee === null ? keyedHip : absorbKnee - trunkOffset;
   const lifted = windowShare(c.tailLift, t);
   const fullLift = Math.max(0, mild('insideTailLift')) * lifted;
   const pitch = mild('skiPitch');
@@ -167,6 +290,8 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   // Shin-first: the inside ankle closes with the outside one and takes a share of the inside leg's extra flexion.
   const shinFirst = c.trunkOverShin !== undefined;
   const firm = c.firmSnow === true;
+  // Pitched by the bumps, the mass balances over the feet along the snow, not along the ski.
+  const alongSnow = firm || bumps;
   const insideShare = shinFirst ? (c.insideAnkleShare ?? 0) : 0;
   const insideAnkle = (tailLift: number, shin: number): number =>
     (shinFirst ? shin : shinAngle(dorsiflexion + (k.insideDorsiflexion - dorsiflexion) * lifted, EQUIPMENT)) + tailLift;
@@ -177,6 +302,8 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
+    // A folding hip turns the thighs' draw forward, so absorbing legs squeeze harder to keep the boots together.
+    const adduction = c.stance * (c.absorb === undefined ? 1 : 1 + STANCE_SQUEEZE * Math.max(0, knee - SQUEEZE_FROM));
     const insideExtra = (1 - split) * extra;
     const trunk = spineTipped(pelvisRotation(mild('counter'), mild('pelvisList'), hip - hipFlex), spine, outward);
     return {
@@ -192,15 +319,15 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       poleTouch,
       reach: 0,
       rise: 0,
-      outside: { hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch, adduction: c.stance },
+      outside: { hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch - ride.outside, adduction },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
       inside: {
         hipFlex: hipFlex + insideExtra * (1 - insideShare),
         ankleFlex: insideAnkle(tailLift, ankleFlex) + insideShare * insideExtra,
         femurRotation: c.insideFemurShare * femurRotation - c.kneesIn,
-        tailLift: tailLift - pitch,
-        adduction: c.stance,
+        tailLift: tailLift - pitch - ride.inside,
+        adduction,
       },
       outsideGirdle: girdle,
       insideGirdle: girdle,
@@ -212,7 +339,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
     let hi = 1.5;
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
-      if (insideTipHeight(base(knee, mid, tailLift, shin)) > 0) hi = mid;
+      if (insideTipHeight(base(knee, mid, tailLift, shin)) > ride.insideTip) hi = mid;
       else lo = mid;
     }
     return (lo + hi) / 2;
@@ -226,7 +353,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
     let hi = fullLift;
     for (let i = 0; i < 20; i++) {
       const mid = (lo + hi) / 2;
-      if (insideTipHeight(base(knee, capped(mid), mid, shin)) > 0) lo = mid;
+      if (insideTipHeight(base(knee, capped(mid), mid, shin)) > ride.insideTip) lo = mid;
       else hi = mid;
     }
     const tailLift = (lo + hi) / 2;
@@ -234,12 +361,12 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   };
   // Bend the knee until the centre of mass sits comAhead of mid-foot; more knee moves it back, as the hips
   // sink behind the foot and the trunk, at a set hip angle, stands up with the thigh (lemaster-2010 p9, p16).
-  const balance = (extra: number, tailLift: number): number => {
+  const balance = (extra: number, tailLift: number, shin = keyedShin, goal = k.comAhead): number => {
     let lo = 30 * DEG;
     let hi = 120 * DEG;
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
-      if (balanceAhead(segmentMatrices(base(mid, extra, tailLift, keyedShin)), t, firm) > k.comAhead) lo = mid;
+      if (balanceAhead(segmentMatrices(base(mid, extra, tailLift, shin)), t, alongSnow) > goal) lo = mid;
       else hi = mid;
     }
     return (lo + hi) / 2;
@@ -247,14 +374,15 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   // Shin-first: the trunk keeps its lean on the shin, so the knee is the hip's depth less that lean; closing the
   // ankle draws the feet back under the mass, opening it slides them ahead (lemaster-2010 p81). The cuff stops it open.
   const target = mild('comAhead');
-  const depthKnee = hip + mild('lumbarFlex') - (c.trunkOverShin ?? 0) * (1 + (c.trunkOverShinGain ?? 0) * effort.scale);
+  const depthKnee = absorbKnee ?? hip + trunkOffset;
+  const cuff = minShinAngle(EQUIPMENT) - pitch - ride.outside;
   const balanceShin = (extra: number, tailLift: number): number => {
     // The cuff stops the shin on the boot, which pitches with the ski.
-    let lo = minShinAngle(EQUIPMENT) - pitch;
+    let lo = bumps ? cuff - CUFF_EASE : cuff;
     let hi = SHIN_MAX;
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
-      if (balanceAhead(segmentMatrices(base(depthKnee, extra, tailLift, mid)), t, firm) < target) lo = mid;
+      if (balanceAhead(segmentMatrices(base(depthKnee, extra, tailLift, mid)), t, alongSnow) < target) lo = mid;
       else hi = mid;
     }
     return (lo + hi) / 2;
@@ -284,8 +412,16 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   let inside = insideLeg(knee, shin);
   for (let round = 0; round < 2; round++) {
     if (turning) tip = squareFold(knee, inside.extra, inside.tailLift, shin);
-    if (shinFirst) shin = balanceShin(inside.extra, inside.tailLift);
-    else knee = balance(inside.extra, inside.tailLift);
+    if (shinFirst) {
+      shin = balanceShin(inside.extra, inside.tailLift);
+      knee = depthKnee;
+      // Down a bump's face the cuff holds the shin forward, easing on; the knee folds under a set hip to bring the mass back.
+      if (bumps && fold && shin < cuff + CUFF_EASE) {
+        shin = softClamp(shin, cuff, SHIN_MAX + CUFF_EASE, CUFF_EASE);
+        if (balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow) > target)
+          knee = balance(inside.extra, inside.tailLift, shin, target);
+      }
+    } else knee = balance(inside.extra, inside.tailLift);
     inside = insideLeg(knee, shin);
   }
   const solved = base(knee, inside.extra, inside.tailLift, shin);
@@ -316,5 +452,11 @@ const solveReach = (pose: Pose, rhythm: number, basket: number): number => {
 export const POSE_SAMPLES = 96;
 
 /** One turn of poses, `samples` evenly spaced from t = 0. */
-export const solveTable = (def: PoseDefinition, scenario: DrillScenario | null, samples = POSE_SAMPLES): ReadonlyArray<Pose> =>
-  Array.from({ length: samples }, (_, i) => solvePose(def, i / samples, scenario));
+export const solveTable = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface | null = null, samples = POSE_SAMPLES): ReadonlyArray<Pose> => {
+  let warm: Warm | null = null;
+  return Array.from({ length: samples }, (_, i) => {
+    const solved = solveRidden(def, i / samples, scenario, surface, warm);
+    warm = solved.warm;
+    return solved.pose;
+  });
+};

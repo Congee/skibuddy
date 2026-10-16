@@ -560,12 +560,13 @@ def bake(rig, ski_pivot, tips, track, rest, name='stork-turn'):
     for pb in rig.pose.bones:
         pb.rotation_mode = 'QUATERNION'
     for f, p in enumerate(track):
-        # Re-solve the inside leg's flex for this body, so its ski tip stays level with the outside one, as insideTipHeight.
+        # Re-solve the inside leg's flex for this body, so its ski tip stands over the outside one by the snow's insideTip.
+        above = p.get('insideTip', 0.0)
         lo, hi = -0.3, 0.6
         for _ in range(20):
             mid = (lo + hi) / 2
             D = world_pose(bones, order, local_rotations(p, rest, mid), ski_pivot, p, rest)
-            if (D['foot.L'] @ Vector(tips['L'])).z > (D['foot.R'] @ Vector(tips['R'])).z:
+            if (D['foot.L'] @ Vector(tips['L'])).z > (D['foot.R'] @ Vector(tips['R'])).z + above:
                 hi = mid
             else:
                 lo = mid

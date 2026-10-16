@@ -8,6 +8,7 @@ import { POSE_SAMPLES, solveTable } from '../../src/viewer/pose-solver';
 import { encodeTable } from '../../src/viewer/pose-table';
 import type { PoseTables } from '../../src/viewer/pose-table';
 import { POSE_DEFINITIONS } from '../../src/viewer/poses';
+import { surfaceFor } from '../../src/viewer/surface';
 import { NEUTRAL } from '../../src/viewer/poses/neutral';
 import { drillScenarios } from './drill-scenarios';
 
@@ -16,11 +17,11 @@ export const TABLES_FILE = new URL('../../src/viewer/poses/tables.json', import.
 export const solveTables = (): PoseTables => ({
   channels: [...POSE_CHANNELS],
   samples: POSE_SAMPLES,
-  neutral: encodeTable(solveTable(NEUTRAL, null, 1)),
+  neutral: encodeTable(solveTable(NEUTRAL, null, null, 1)),
   drills: Object.fromEntries(
     Object.entries(POSE_DEFINITIONS).map(([drill, def]) => {
       const scenarios = drillScenarios(drill);
-      return [drill, Object.fromEntries(INTENSITIES.map((i) => [i, encodeTable(solveTable(def, scenarios[i]))]))];
+      return [drill, Object.fromEntries(INTENSITIES.map((i) => [i, encodeTable(solveTable(def, scenarios[i], surfaceFor(drill, i)))]))];
     }),
   ),
 });

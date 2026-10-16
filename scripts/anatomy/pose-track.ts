@@ -8,6 +8,8 @@ import { ARM_ABDUCTION, ARM_FLEXION, ARM_LEAN, ARM_LEAN_SHOULDER, ARM_REACH_ELBO
 import type { Pose } from '../../src/viewer/pose';
 import { hasTable, poseTable, samplePose } from '../../src/viewer/pose-table';
 import { POSE_DEFINITIONS, poleTrimOf } from '../../src/viewer/poses';
+import { rideOf } from '../../src/viewer/ride';
+import { SurfaceKind, surfaceFor } from '../../src/viewer/surface';
 import { drillScenarios } from './drill-scenarios';
 
 const frames = Number(process.argv[2] ?? 24);
@@ -23,13 +25,20 @@ const arms = { abduction: ARM_ABDUCTION, flexion: ARM_FLEXION, forearmFlexion: F
 const drills = Object.keys(POSE_DEFINITIONS);
 const trim = Object.fromEntries(drills.flatMap((d) => INTENSITIES.map((i) => [motionClipName(d, i), poleTrimOf(d)])));
 const pole = { basketUp: POLE.basketUp, carry: POLE.carry, carryHeading: CARRY_HEADING, carryTrail: CARRY_TRAIL, plantSide: PLANT_SIDE, plantAhead: PLANT_AHEAD, trim };
-const track = (drill: string | null, i: (typeof INTENSITIES)[number]): ReadonlyArray<Pose> => {
+type Frame = Pose & { readonly insideTip?: number };
+const track = (drill: string | null, i: (typeof INTENSITIES)[number]): ReadonlyArray<Frame> => {
   const table = poseTable(drill, i);
+  const surface = drill === null ? null : surfaceFor(drill, i);
+  // On moguls the inside tip stands over the outside one by the snow between them.
+  const ridden = (pose: Pose, t: number, sign: number): Frame =>
+    surface?.kind === SurfaceKind.Moguls ? { ...pose, insideTip: sign * rideOf(surface, t, samplePose(table, t)).insideTip } : pose;
   // The last frame is the next turn's first, mirrored.
-  return Array.from({ length: frames + 1 }, (_, f) => (f === frames ? mirrorPose(samplePose(table, 0)) : samplePose(table, f / frames)));
+  return Array.from({ length: frames + 1 }, (_, f) =>
+    f === frames ? ridden(mirrorPose(samplePose(table, 0)), 0, -1) : ridden(samplePose(table, f / frames), f / frames, 1),
+  );
 };
 for (const d of drills) if (!hasTable(d)) throw new Error(`${d} has no pose table; run \`bun run poses\``);
-const tracks: Record<string, ReadonlyArray<Pose>> = { [NEUTRAL_CLIP]: track(null, 'moderate') };
+const tracks: Record<string, ReadonlyArray<Frame>> = { [NEUTRAL_CLIP]: track(null, 'moderate') };
 for (const d of drills) for (const i of INTENSITIES) tracks[motionClipName(d, i)] = track(d, i);
 // The scenarios ride into the model, so tests can tie the bake to the content.
 const scenarios = Object.fromEntries(drills.map((d) => [d, drillScenarios(d)]));

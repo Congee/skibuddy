@@ -287,6 +287,8 @@ const SKI_BASE = -EQUIPMENT.skiThickness / 2;
 /** Mid-foot in the foot's frame: the binding's centre on the ski's top. */
 export const MID_FOOT: Vec3 = transformPoint(CAPSULE_BINDING, [0, 0, 0]);
 export const SKI_TIP: Vec3 = [0, SKI_BASE, 0.85];
+/** As figure.ts's ski: 1.6 m long, 5 cm more of it ahead of the binding than behind. */
+export const SKI_TAIL: Vec3 = [0, SKI_BASE, -0.75];
 
 const FOOT_KINDS: ReadonlySet<SegmentKind> = new Set([SegmentKind.Boot, SegmentKind.Ski]);
 const SHINS = [BodySide.Right, BodySide.Left].map((side) => SEGMENTS.findIndex((s) => s.kind === SegmentKind.Shin && s.side === side));

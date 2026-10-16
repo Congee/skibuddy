@@ -1,7 +1,7 @@
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
-import { MID_FOOT, SKI_TIP, comAhead, segmentMatrices } from '../src/viewer/pose';
+import { MID_FOOT, SKI_TIP, centreOfMass, comAhead, segmentMatrices } from '../src/viewer/pose';
 import type { Pose } from '../src/viewer/pose';
 
 export type LegSide = typeof BodySide.Right | typeof BodySide.Left;
@@ -56,6 +56,8 @@ export interface PoseAngles {
   readonly hipsAhead: number;
   /** Centre of mass ahead of the outside mid-foot, metres. */
   readonly comAhead: number;
+  /** As comAhead, along the snow's mean rather than the ski, which the bumps pitch. */
+  readonly comOnSnow: number;
   /** Ski tail above its tip: the inside ski's tail lift, degrees. */
   readonly tailLift: number;
 }
@@ -133,6 +135,7 @@ export const poseAngles = (pose: Pose): PoseAngles => {
     lead: ankleAt(BodySide.Left)[2] - ankleAt(BodySide.Right)[2],
     hipsAhead: (hipAt(BodySide.Right)[2] + hipAt(BodySide.Left)[2]) / 2 - transformPoint(boot(BodySide.Right), MID_FOOT)[2],
     comAhead: comAhead(world),
+    comOnSnow: centreOfMass(world)[2] - transformPoint(boot(BodySide.Right), MID_FOOT)[2],
     tailLift: (() => {
       const tail = transformPoint(ski(BodySide.Left), SKI_TAIL);
       const tip = transformPoint(ski(BodySide.Left), SKI_TIP);

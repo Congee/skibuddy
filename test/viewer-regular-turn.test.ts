@@ -9,15 +9,20 @@ import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, SKI_TIP, centreOfMass, mirrorPose,
 import { solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
+import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
 import { CORRIDOR_SHARE, headingAt, turnPath } from '../src/viewer/turn-heading';
 import { CLOSED_STANCE, OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
+import { SIDES, clearance, ridden } from './ride-probes';
 
 const KINDS = Object.values(RegularTurn);
 const angles = (kind: RegularTurn, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(kind, i), t));
 const DEG = 180 / Math.PI;
 const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as const;
+// The bumps pitch the skis, so the fall-line kinds balance along the snow, not along the ski.
+const balanceOf = (kind: string, a: ReturnType<typeof poseAngles>): number =>
+  (FALL_LINE_KINDS as ReadonlyArray<string>).includes(kind) ? a.comOnSnow : a.comAhead;
 // Head turned toward the outside of the turn beyond the skis.
 const headOnSkis = (kind: RegularTurn, i: Intensity, t: number): number => {
   const p = samplePose(poseTable(kind, i), t);
@@ -130,7 +135,7 @@ describe('regular turn', () => {
     const mogul = (t: number): ReturnType<typeof poseAngles> => angles(RegularTurn.Moguls, Intensity.Moderate, t);
     assert.isAbove(mogul(0).dorsiflexion.right, mogul(1 / 2).dorsiflexion.right + 12);
     // At the transition the balance is over both feet, the countered outside one trailing.
-    assert.isAbove(mogul(0).comAhead - mogul(0).lead / 2, mogul(1 / 2).comAhead + 0.05);
+    assert.isAbove(mogul(0).comOnSnow - mogul(0).lead / 2, mogul(1 / 2).comOnSnow + 0.05);
     assert.isAbove(mogul(0).knee.right, mogul(1 / 2).knee.right + 25);
     assert.isAbove(range(RegularTurn.Moguls, (a) => a.dorsiflexion.right), 2 * range(RegularTurn.Carving, (a) => a.dorsiflexion.right));
   });
@@ -141,8 +146,9 @@ describe('regular turn', () => {
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
           const a = poseAngles(samplePose(poseTable(kind, i), k / 24));
-          assert.isAbove(Math.max(a.comAhead, a.comAhead - a.lead), -0.04, `${kind} ${i} ${k}/24`);
-          assert.isBelow(Math.min(a.comAhead, a.comAhead - a.lead), 0.095, `${kind} ${i} ${k}/24`);
+          const com = balanceOf(kind, a);
+          assert.isAbove(Math.max(com, com - a.lead), -0.04, `${kind} ${i} ${k}/24`);
+          assert.isBelow(Math.min(com, com - a.lead), 0.095, `${kind} ${i} ${k}/24`);
         }
   });
 
@@ -151,7 +157,7 @@ describe('regular turn', () => {
     for (const kind of KINDS)
       for (const i of INTENSITIES) {
         // Ahead of the feet's midpoint: counter staggers them, the outside foot leading after the switch.
-        const ahead = (t: number): number => angles(kind, i, t).comAhead - angles(kind, i, t).lead / 2;
+        const ahead = (t: number): number => balanceOf(kind, angles(kind, i, t)) - angles(kind, i, t).lead / 2;
         assert.isAbove(ahead(1 / 12), ahead(5 / 6) + 0.01, `${kind} ${i}`);
       }
   });
@@ -173,14 +179,14 @@ describe('regular turn', () => {
   });
 
   it('carries the fore-aft smoothly through the switch into the mirrored turn', () => {
-    const fore = (p: ReturnType<typeof samplePose>): readonly number[] => {
+    const fore = (kind: string, p: ReturnType<typeof samplePose>): readonly number[] => {
       const a = poseAngles(p);
-      return [a.comAhead - a.lead / 2, a.hipsAhead - a.lead / 2, a.trunkForward / 100];
+      return [balanceOf(kind, a) - a.lead / 2, a.hipsAhead - a.lead / 2, a.trunkForward / 100];
     };
     for (const kind of [...KINDS, 'closed-stance-short-turns'])
       for (const i of INTENSITIES) {
         const table = poseTable(kind, i);
-        const seq = [...table, mirrorPose(table[0] ?? samplePose(table, 0))].map(fore);
+        const seq = [...table, mirrorPose(table[0] ?? samplePose(table, 0))].map((p) => fore(kind, p));
         const steps = seq.slice(1).map((v, j) => Math.max(...v.map((x, n) => Math.abs(x - (seq[j]?.[n] ?? x)))));
         const wrap = steps.at(-1) ?? 0;
         assert.isAtMost(wrap, 1.25 * Math.max(...steps.slice(0, -1)), `${kind} ${i}`);
@@ -218,8 +224,14 @@ describe('regular turn', () => {
   it('keeps both skis on the snow, the inside leg more flexed mid-turn but in moguls', () => {
     for (const kind of KINDS) {
       const a = angles(kind, Intensity.Moderate, 1 / 2);
-      assert.closeTo(a.insideTip, 0, 0.01, kind);
-      assert.closeTo(a.insideTail, 0, 0.02, kind);
+      if (kind === RegularTurn.Moguls) {
+        // On the bumps each rigid ski rests on the snow under it, not on the root's plane.
+        const r = ridden(surfaceFor(kind, Intensity.Moderate), 1 / 2, samplePose(poseTable(kind, Intensity.Moderate), 1 / 2));
+        for (const side of SIDES) assert.closeTo(clearance(r, side), 0, 0.01, `${kind} ${side}`);
+      } else {
+        assert.closeTo(a.insideTip, 0, 0.01, kind);
+        assert.closeTo(a.insideTail, 0, 0.02, kind);
+      }
       // Moguls: legs together over a near-upright mass, flexed alike.
       if (kind === RegularTurn.Moguls) assert.closeTo(a.knee.left, a.knee.right, 6, kind);
       else assert.isAbove(a.knee.left, a.knee.right, kind);
@@ -543,9 +555,9 @@ describe('powder pop', () => {
     assert.isAbove(peakPitch(Intensity.Dynamic), peakPitch(Intensity.Gentle) + 2);
   });
 
-  it('keeps every other kind and drill flat, only the stork tail lifting', () => {
+  it('keeps every other kind and drill flat off the bumps, only the stork tail lifting', () => {
     for (const drill of Object.keys(POSE_DEFINITIONS).filter((d) => d !== POWDER && d !== DOLPHIN))
-      for (const i of INTENSITIES)
+      for (const i of INTENSITIES.filter((n) => surfaceFor(drill, n).kind !== SurfaceKind.Moguls))
         for (const p of poseTable(drill, i)) {
           assert.strictEqual(p.outside.tailLift, 0, `${drill} ${i}`);
           assert.isAtLeast(p.inside.tailLift, 0, `${drill} ${i}`);
