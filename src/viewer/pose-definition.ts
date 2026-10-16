@@ -78,6 +78,8 @@ export interface PoseConstraints {
   readonly poleTrim: number;
   /** Share of a cross-under transition (`hipUnder`) at gentle, moderate and dynamic; absent, none. */
   readonly crossUnder?: readonly [number, number, number];
+  /** Radians both ankles close further in a full cross-under, timed by `hipUnder`. */
+  readonly underAnkle?: number;
   /** Per key field, how much more a dynamic turn takes (and a gentle one less), as a share per step of effort. */
   readonly gains: Readonly<Partial<Record<Exclude<keyof PoseKey, 't'>, number>>>;
 }

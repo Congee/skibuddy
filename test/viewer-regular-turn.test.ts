@@ -48,6 +48,15 @@ describe('regular turn', () => {
     assert.isBelow(peak(Intensity.Moderate), peak(Intensity.Dynamic) - 2);
   });
 
+  it('folds deep through the dynamic carving cross-under, toward a measured flexion transition', () => {
+    // seifert-2023 near 90 deg; heinrich-2022 GS 56-80 deg; the cross-overs stay tall at the switch.
+    const knee = (i: Intensity, t: number): number => angles(RegularTurn.Carving, i, t).knee.right;
+    assert.isAtLeast(knee(Intensity.Dynamic, 0), 65);
+    assert.isAbove(knee(Intensity.Dynamic, 0), knee(Intensity.Dynamic, 1 / 2) + 12);
+    assert.isBelow(knee(Intensity.Moderate, 0), knee(Intensity.Dynamic, 0) - 20);
+    assert.isAtLeast(angles(RegularTurn.Carving, Intensity.Dynamic, 0).trunkForward, angles(RegularTurn.Carving, Intensity.Dynamic, 1 / 2).trunkForward);
+  });
+
   it('leans the trunk forward within the measured range', () => {
     // Spine flexion 11-27 deg in racers (sporri-2016) on a pelvis pitched forward; outside hip up to 55-65 deg (gao-2024).
     for (const kind of KINDS)

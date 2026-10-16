@@ -90,12 +90,12 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const mild = (f: KeyField): number => k[f] * (1 + (c.gains[f] ?? 0) * effort.scale);
   const lean = scenario !== null && isTurn(scenario) ? turnForcesAt(scenario, t).tilt : 0;
   const angulation = mild('angulation');
-  const dorsiflexion = mild('dorsiflexion');
+  const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];
+  const under = Math.min(1, Math.max(0, effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale));
+  const dorsiflexion = mild('dorsiflexion') + (c.underAnkle ?? 0) * under * k.hipUnder;
   const ankleFlex = shinAngle(dorsiflexion, EQUIPMENT);
   // Hip flexion on the pelvis is set; the knee and the pelvis's pitch follow from balance.
-  const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];
-  const under = effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale;
-  const hipShare = k.hip + (k.hipUnder - k.hip) * Math.min(1, Math.max(0, under));
+  const hipShare = k.hip + (k.hipUnder - k.hip) * under;
   const hip = (effort.hipMin + hipShare * (effort.hipMax - effort.hipMin)) * DEG;
   const lifted = windowShare(c.tailLift, t);
   const fullLift = Math.max(0, mild('insideTailLift')) * lifted;

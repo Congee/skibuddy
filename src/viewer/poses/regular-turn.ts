@@ -28,6 +28,10 @@ export interface TurnStyle {
   readonly hipStep: number;
   /** Degrees the hip ends move apart per step of intensity: a wider absorption range. */
   readonly hipSpread: number;
+  /** Degrees the deep end deepens further at dynamic only: a lower cross-under. */
+  readonly dynamicDeep?: number;
+  /** Degrees both ankles close further at the deepest cross-under. */
+  readonly underAnkle?: number;
   /** Peak hip angulation and the outside femur's rotation into the turn. */
   readonly angulation: number;
   /** Peak pelvis turn toward the outside of the turn, relative to the skis, and the chest turned further beyond it. */
@@ -162,6 +166,10 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Cross-over at gentle and moderate; at dynamic the legs flex and retract so the skis stay on the snow
     // (lemaster-2010 p154, komissarov-2022b, seifert-2023).
     crossUnder: [0, 0, 1],
+    // Outside knee about 72 deg and trunk about 41 deg at the switch: toward seifert-2023's 90 deg flexion transition,
+    // within heinrich-2022's GS knee 56-80 and ankle 18-27 deg.
+    dynamicDeep: 25,
+    underAnkle: 6,
     polePlant: false,
     poleTrim: 0,
   },
@@ -392,11 +400,12 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       hipByLoad: [
         [load(Intensity.Gentle), open - step + spread, deep - step - spread],
         [load(Intensity.Moderate), open, deep],
-        [load(Intensity.Dynamic), open + step - spread, deep + step + spread],
+        [load(Intensity.Dynamic), open + step - spread, deep + step + spread + (style.dynamicDeep ?? 0)],
       ],
       insideKneeMax: 120 * DEG,
       tailLift: null,
       crossUnder: style.crossUnder,
+      underAnkle: (style.underAnkle ?? 0) * DEG,
       poleTouch: style.polePlant ? { t: 1 / 24, hold: 0.02, swing: 0.11 } : null,
       scapularRhythm: 0.3,
       stance: style.narrow * DEG,
