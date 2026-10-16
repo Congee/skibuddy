@@ -9,13 +9,14 @@ describe('blend URL state', () => {
         const back = readUrlState(writeUrlState({ kind, line }, ''));
         assert.strictEqual(back.kind, kind);
         // Only moguls keeps a line in the link.
-        assert.strictEqual(back.line, kind === KindId.Moguls ? line : MogulLine.Zipper);
+        assert.strictEqual(back.line, kind === KindId.Moguls ? line : MogulLine.Round);
       }
   });
 
   it('leaves defaults out of the link', () => {
     assert.strictEqual(writeUrlState(DEFAULT_URL_STATE, ''), '');
-    assert.strictEqual(writeUrlState({ kind: KindId.Moguls, line: MogulLine.Zipper }, ''), '?kind=moguls');
+    assert.strictEqual(writeUrlState({ kind: KindId.Moguls, line: MogulLine.Round }, ''), '?kind=moguls');
+    assert.strictEqual(writeUrlState({ kind: KindId.Moguls, line: MogulLine.Zipper }, ''), '?kind=moguls&line=zipper');
     assert.strictEqual(writeUrlState({ kind: KindId.Moguls, line: MogulLine.Tops }, ''), '?kind=moguls&line=tops');
   });
 

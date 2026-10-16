@@ -11,7 +11,7 @@ import { ViewLock } from '../../viewer/hip-lock';
 import { motionFor } from '../../viewer/poses';
 import { RegularTurn } from '../../viewer/poses/regular-turn';
 import { realTurnSeconds } from '../../viewer/turn-time';
-import { KINDS, KIND_DRILLS, KindId, MOGUL_LINES, MOGUL_LINE_NAMES, MogulLine, TOPS_DRILL, kindMovement } from './data';
+import { KINDS, KIND_DRILLS, KindId, MOGUL_LINES, MOGUL_LINE_DRILLS, MOGUL_LINE_NAMES, MogulLine, kindMovement } from './data';
 import type { BlendData } from './data';
 import { drillsLike, keyOf, trainThese } from './detail';
 import { Cover, Figure } from './Figure';
@@ -156,7 +156,7 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
     if (search !== window.location.search) history.replaceState(history.state, '', `${window.location.pathname}${search}${window.location.hash}`);
   });
   const homeName = (): string => KINDS.find((k) => k.id === home())?.name ?? '';
-  const homePose = (): string => (home() === KindId.Moguls && line() === MogulLine.Tops ? TOPS_DRILL : (KINDS.find((k) => k.id === home())?.pose ?? ''));
+  const homePose = (): string => ((home() === KindId.Moguls ? MOGUL_LINE_DRILLS[line()] : null) ?? (KINDS.find((k) => k.id === home())?.pose ?? ''));
   const chooseKind = (id: KindId): void => {
     setHome(id);
     setSource({ kind: id });
@@ -172,7 +172,7 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
     return 'kind' in s ? KINDS.find((k) => k.id === s.kind) : undefined;
   });
   // Moguls over the tops shows that drill's turn, field and muscles under the Moguls kind.
-  const lineDrill = (): string | null => (kind()?.id === KindId.Moguls && line() === MogulLine.Tops ? TOPS_DRILL : null);
+  const lineDrill = (): string | null => (kind()?.id === KindId.Moguls ? MOGUL_LINE_DRILLS[line()] : null);
   const drill = createMemo(() => {
     const s = source();
     const id = 'drill' in s ? s.drill : (lineDrill() ?? kind()?.drill);

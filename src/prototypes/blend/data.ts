@@ -100,10 +100,11 @@ export const KINDS: ReadonlyArray<Kind> = [
 ];
 
 export { MogulLine };
-/** Moguls is skied down the zipper line (the kind's own turn) or over the tops (that drill's). */
-export const MOGUL_LINES: ReadonlyArray<MogulLine> = [MogulLine.Zipper, MogulLine.Tops];
-export const MOGUL_LINE_NAMES: Readonly<Record<MogulLine, string>> = { [MogulLine.Zipper]: 'Zipper line', [MogulLine.Tops]: 'On the tops' };
-export const TOPS_DRILL = 'turns-on-the-tops';
+/** Moguls is skied round the bumps (that drill's), down the zipper line (the kind's own turn) or over the tops (that drill's). */
+export const MOGUL_LINES: ReadonlyArray<MogulLine> = [MogulLine.Round, MogulLine.Zipper, MogulLine.Tops];
+export const MOGUL_LINE_NAMES: Readonly<Record<MogulLine, string>> = { [MogulLine.Round]: 'Round line', [MogulLine.Zipper]: 'Zipper line', [MogulLine.Tops]: 'On the tops' };
+/** The drill each line is skied as; the zipper is the kind's own turn. */
+export const MOGUL_LINE_DRILLS: Readonly<Record<MogulLine, string | null>> = { [MogulLine.Round]: 'round-line', [MogulLine.Zipper]: null, [MogulLine.Tops]: 'turns-on-the-tops' };
 
 const clamp = (v: number): EffortLevel => Math.min(3, Math.max(0, Math.round(v)));
 

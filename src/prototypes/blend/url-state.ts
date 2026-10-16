@@ -6,12 +6,12 @@ export interface UrlState {
   readonly line: MogulLine;
 }
 
-export const DEFAULT_URL_STATE: UrlState = { kind: KindId.Carving, line: MogulLine.Zipper };
+export const DEFAULT_URL_STATE: UrlState = { kind: KindId.Carving, line: MogulLine.Round };
 
 export const readUrlState = (search: string): UrlState => {
   const params = new URLSearchParams(search);
   const kind = KINDS.find((k) => k.id === params.get('kind'))?.id ?? DEFAULT_URL_STATE.kind;
-  const line = params.get('line') === MogulLine.Tops ? MogulLine.Tops : MogulLine.Zipper;
+  const line = Object.values(MogulLine).find((l) => l === params.get('line')) ?? DEFAULT_URL_STATE.line;
   return { kind, line };
 };
 
