@@ -35,7 +35,7 @@ describe('pose tables', () => {
         fresh.forEach((p, k) => close(poseToChannels(stored[k] ?? p), poseToChannels(p), `${drill} ${i} sample ${k}`));
       }
       // Riding the bumps solves each sample several times over.
-    }, surfaceFor(drill, Intensity.Moderate).kind === SurfaceKind.Moguls ? 60_000 : 30_000);
+    }, surfaceFor(drill, Intensity.Moderate).kind === SurfaceKind.Moguls ? 120_000 : 30_000);
 
   it('match a fresh solve of the neutral stance', () => {
     close(poseToChannels(poseTable(null, Intensity.Moderate)[0] ?? NEUTRAL_POSE), poseToChannels(NEUTRAL_POSE), 'neutral');

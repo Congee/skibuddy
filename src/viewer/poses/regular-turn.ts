@@ -367,8 +367,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Cross-under: the legs retract over the crest so the mass travels straight (lind-sanders-2004 pp114-115).
     crossUnder: [1, 1, 1],
     // Absorb up to the top of each bump, extend right after it, pressure on the snow even (fis-freestyle-judging-2025 p28);
-    // knees near straight after a mogul (arndt-1992 pp79, 87), short of full extension (p93) and still flexed (fis p26).
-    absorb: { open: 15, deep: OUTSIDE_KNEE_MAX[RegularTurn.Moguls] },
+    // knees long after a mogul (arndt-1992 pp79, 87), never locked: legs straight between moguls is a fault (fis p28); 30 inferred.
+    absorb: { open: 30, deep: OUTSIDE_KNEE_MAX[RegularTurn.Moguls] },
     polePlant: true,
     // Shorter for quick plants on the bumps' backs.
     poleTrim: 0.05,

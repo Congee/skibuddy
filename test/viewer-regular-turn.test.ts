@@ -81,9 +81,12 @@ describe('regular turn', () => {
     for (const kind of KINDS)
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
-          const knee = angles(kind, i, k / 24).knee.right;
-          // Mogul knees extend near straight into the troughs (arndt-1992 pp79, 87).
-          assert.isTrue(knee >= (kind === RegularTurn.Moguls ? 10 : 25) && knee <= OUTSIDE_KNEE_MAX[kind][i], `${kind} ${i} ${k}/24: ${knee.toFixed(1)}`);
+          const { left, right } = angles(kind, i, k / 24).knee;
+          // At the zipper's switch the right leg is still the old inside one; the outside is the longer leg.
+          const knee = kind === RegularTurn.Moguls ? Math.min(left, right) : right;
+          // Mogul knees long after a mogul (arndt-1992 pp79, 87), never locked: straight legs are a fault (fis-freestyle-judging-2025 p28).
+          const open = kind === RegularTurn.Moguls ? (TURN_STYLES[kind].absorb?.open ?? 0) : 25;
+          assert.isTrue(knee >= open && knee <= OUTSIDE_KNEE_MAX[kind][i], `${kind} ${i} ${k}/24: ${knee.toFixed(1)}`);
         }
   });
 

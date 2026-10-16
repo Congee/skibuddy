@@ -298,8 +298,6 @@ const standBehind = (t: number): number => {
   return u >= TROUGH_END ? 0 : -TROUGH_AHEAD * Math.sin((Math.PI * (u - STAND_END)) / (TROUGH_END - STAND_END)) ** 2;
 };
 
-const inTrough = (t: number): boolean => wrapTime(t) >= STAND_END && wrapTime(t) < TROUGH_END;
-
 /** `x` held in [lo, hi], easing quadratically onto each end from `w` inside it to `w` beyond; hi - lo > 2w. */
 const softClamp = (x: number, lo: number, hi: number, w: number): number => {
   const up = x <= lo - w ? lo : x >= lo + w ? x : lo + (x - lo + w) ** 2 / (4 * w);
@@ -337,20 +335,29 @@ const solveRidden = (
   const held = (hip: number): number => softClamp(hip, lo, hi, w);
   const guess = warm?.hip ?? null;
   let ride = warm?.ride ?? rideOf(surface, t, solveOn(def, t, scenario, surface, FLAT_RIDE, held(lo), true));
-  // The mass's height over the level with the unclamped knee held in range by its ease.
+  // The mass's height over the level with the unclamped knee held in range by its ease, ridden afresh from one start
+  // so the secant sees a function of the knee alone, not of the order it was tried in.
+  const start = ride;
   const above = (knee: number): number => {
-    const next = ridden(held(knee), ride);
+    const next = ridden(held(knee), ridden(held(knee), start).ride);
     ride = next.ride;
     return ride.lift + centreOfMass(segmentMatrices(next.pose))[1] - level;
   };
   // Secant on the unclamped knee, started where the ease still moves it; the height falls near linearly with it.
   let a = Math.min(hi + w - 2 * DEG, Math.max(lo - w + DEG, guess ?? (lo + hi) / 2));
   let fa = above(a);
-  const tol = 1e-3;
+  // Far under the table's precision and far over the engines' last-bit noise, so neither flips the stop.
+  const tol = 1e-6;
   // On an end stop the ease flattens the height and the ride's noise can flip the slope: step back into the range.
   const step = warm === null || Math.abs(fa) <= tol ? DEG : warm.slope < 0 ? -fa / warm.slope : (lo + hi) / 2 - a;
   let b = Math.abs(fa) <= tol ? a : Math.min(hi + w, Math.max(lo - w, a + step));
   let fb = b === a ? fa : above(b);
+  // Slope only from knees far enough apart that the ride's noise cannot flip its sign.
+  let slope = warm?.slope ?? 0;
+  const measure = (): void => {
+    if (Math.abs(b - a) >= SLOPE_SPAN && fb !== fa) slope = (fb - fa) / (b - a);
+  };
+  measure();
   for (let i = 0; i < 8 && Math.abs(fb) > tol; i++) {
     if (fb === fa) break;
     const next = Math.min(hi + w, Math.max(lo - w, b - (fb * (b - a)) / (fb - fa)));
@@ -360,8 +367,8 @@ const solveRidden = (
     fa = fb;
     b = next;
     fb = above(b);
+    measure();
   }
-  const slope = b !== a && fb !== fa ? (fb - fa) / (b - a) : (warm?.slope ?? 0);
   // Where the legs' balancing fold holds the knee, the height goes flat and the secant can overshoot: keep the nearer.
   const knee = Math.abs(fa) < Math.abs(fb) ? a : b;
   // The legs' balancing fold changes the skis' pitch, so the ride settles once more.
@@ -386,10 +393,14 @@ const levels = new WeakMap<PoseDefinition, Map<string, Level>>();
 
 /** Share of the knee's reach the absorbing legs use at the extremes, so they ease onto their stops only briefly; inferred. */
 const KNEE_SPAN = 0.97;
-/** Half-width of the aim's window on the snow, turn time: short enough to keep the face's rise; inferred. */
-const AIM_HALF = 0.08;
+/** Least knee gap, radians, the absorbing secant takes a warm slope from. */
+const SLOPE_SPAN = 1e-3;
 /** Samples per turn of the legs' reach on the zipper. */
 const REACH_SAMPLES = 48;
+/** Fixed relaxation sweeps for the mass's taut string, enough to settle REACH_SAMPLES. */
+const TAUT_STEPS = 6000;
+/** Half-width of the aim's window on the snow, turn time: short enough to keep the face's rise; inferred. */
+const AIM_HALF = 0.08;
 
 /** The boots' snow along the skis' track at turn time t, raised-cosine averaged over AIM_HALF either side. */
 const snowAt = (surface: Surface, t: number): number => {
@@ -406,8 +417,8 @@ const snowAt = (surface: Surface, t: number): number => {
 
 /**
  * Off the zipper, from the mass stretched longest in the trough to folded deepest on the crest with the snow's rise. On the
- * zipper, the legs fold with the snow's rise under the skis, from stretched to folded deepest, each end inside the
- * knee's reach by its spare share, so the mass rises only by what the legs cannot take.
+ * zipper, the mass runs the straightest line inside the knee's reach, each end inside it by its spare share, so it
+ * rises and falls only by what the legs cannot take (fis-freestyle-judging-2025 p28; Gellie 05:20).
  */
 const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface): Level => {
   const key = JSON.stringify([scenario, surface]);
@@ -425,45 +436,30 @@ const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: S
     for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, surface, ride, hip, true));
     return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, surface, ride, hip, true)))[1];
   };
-  const high = snowAt(surface, surface.crest);
-  const low = snowAt(surface, surface.trough);
   if (surface.line !== MogulLine.Zipper) {
+    const high = snowAt(surface, surface.crest);
+    const low = snowAt(surface, surface.trough);
     // Folded deepest on the crest and long in the trough, the mass sinking on top by what the relief does not take.
     const crest = at(surface.crest, hi);
     const trough = at(surface.trough, lo);
     return cache({ at: (t) => trough + (crest - trough) * Math.min(1, Math.max(0, (snowAt(surface, t) - low) / (high - low))) });
   }
-  const rows = Array.from({ length: REACH_SAMPLES }, (_, k) => {
+  const bounds = Array.from({ length: REACH_SAMPLES }, (_, k) => {
     const t = k / REACH_SAMPLES;
     const stretched = at(t, lo);
     const folded = at(t, hi);
-    const spare = ((1 - KNEE_SPAN) / 2) * (stretched - folded);
-    const u = Math.min(1, Math.max(0, (snowAt(surface, t) - low) / (high - low)));
-    return { top: stretched - spare, bottom: folded + spare, u };
+    const spare = ((1 - KNEE_SPAN) / 2) * Math.abs(stretched - folded);
+    return { low: Math.min(stretched, folded) + spare, high: Math.max(stretched, folded) - spare };
   });
-  // The least rise d for which some base A keeps A + d u inside every sample's reach; the overlap's shortfall is convex in d.
-  const window = (d: number): readonly [number, number] => [Math.max(...rows.map((r) => r.bottom - d * r.u)), Math.min(...rows.map((r) => r.top - d * r.u))];
-  const short = (d: number): number => window(d)[0] - window(d)[1];
-  let dLo = 0;
-  let dHi = 1;
-  for (let i = 0; i < 40; i++) {
-    const m1 = dLo + (dHi - dLo) / 3;
-    const m2 = dHi - (dHi - dLo) / 3;
-    if (short(m1) < short(m2)) dHi = m2;
-    else dLo = m1;
+  // The taut string through the legs' reach: the straightest mass the knees allow, folding as the snow rises.
+  let reach = bounds.map((r) => (r.low + r.high) / 2);
+  for (let i = 0; i < TAUT_STEPS; i++) {
+    reach = reach.map((_, k) => {
+      const r = bounds[k] ?? { low: 0, high: 0 };
+      const mean = ((reach[(k + REACH_SAMPLES - 1) % REACH_SAMPLES] ?? 0) + (reach[(k + 1) % REACH_SAMPLES] ?? 0)) / 2;
+      return Math.min(r.high, Math.max(r.low, mean));
+    });
   }
-  let rise = (dLo + dHi) / 2;
-  if (short(0) <= 0) rise = 0;
-  else if (short(rise) < 0) {
-    let lo = 0;
-    for (let i = 0; i < 40; i++) {
-      const mid = (lo + rise) / 2;
-      if (short(mid) <= 0) rise = mid;
-      else lo = mid;
-    }
-  }
-  const [a, b] = window(rise);
-  const reach = rows.map((r) => (a + b) / 2 + rise * r.u);
   return cache({
     at: (t) => {
       const x = wrapTime(t) * REACH_SAMPLES;
@@ -690,10 +686,11 @@ const solveOn = (
         shin = softClamp(shin, cuff, SHIN_MAX + CUFF_EASE, CUFF_EASE);
         if (balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow, brake) > target) {
           if (c.absorb !== undefined) standUp(inside.extra, inside.tailLift, shin, matched);
-          // Off the zipper, and on it in the trough as the next face rises, the legs fold for what standing up cannot bring back.
-          if ((!zipper || inTrough(t)) && balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow, brake) > target) {
+          // The legs fold for what standing up cannot bring back.
+          if (balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow, brake) > target) {
             folded = true;
-            knee = balance(inside.extra, inside.tailLift, shin, target);
+            // Never past the kind's ceiling (OUTSIDE_KNEE_MAX); the mass keeps what is left.
+            knee = Math.min(balance(inside.extra, inside.tailLift, shin, target), c.absorb === undefined ? Infinity : absorbRange(def, scenario)[1] + 0.5 * DEG);
           }
         }
       }
