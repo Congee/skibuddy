@@ -490,6 +490,7 @@ const solveOn = (
   const brake = Math.tan(forceTiltAt(scenario, surface, t));
   const onAxis = turning && c.balanced !== false ? balanceShare(lean, scenario) : 0;
   const angulation = mild('angulation') + k.angulationStep * effort.scale;
+  const counter = mild('counter') + k.counterStep * effort.scale;
   const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];
   const under = Math.min(1, Math.max(0, effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale));
   const dorsiflexion = mild('dorsiflexion') + (c.underAnkle ?? 0) * under * k.hipUnder;
@@ -530,7 +531,7 @@ const solveOn = (
   let swing = 0;
   // The lead builds progressively from level at the edge change to about what square boots under the most countered
   // hips give, the hip spacing times the sine of the counter (Olivia Giaccio side-on).
-  const peakCounter = c.scissor === true ? Math.max(...Array.from({ length: 48 }, (_, j) => keyValuesAt(def.keys, j / 48).counter)) * (1 + (c.gains.counter ?? 0) * effort.scale) : 0;
+  const peakCounter = c.scissor === true ? Math.max(...Array.from({ length: 48 }, (_, j) => keyValuesAt(def.keys, j / 48)).map((v) => v.counter * (1 + (c.gains.counter ?? 0) * effort.scale) + v.counterStep * effort.scale)) : 0;
   const lead = c.scissor === true ? Math.min(LEAD_MAX, HIP_SPACING * Math.sin(peakCounter) * leadShape(wrapTime(t))) : null;
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
@@ -539,14 +540,14 @@ const solveOn = (
     // A folding hip turns the thighs' draw forward, so absorbing legs squeeze harder to keep the boots together.
     const adduction = c.stance * (c.absorb === undefined ? 1 : 1 + STANCE_SQUEEZE * Math.max(0, knee - SQUEEZE_FROM));
     const insideExtra = (1 - split) * extra;
-    const trunk = spineTipped(pelvisRotation(mild('counter'), mild('pelvisList'), pelvisPitch), { ...spine, spineFlex: spine.spineFlex - unflex }, outward);
+    const trunk = spineTipped(pelvisRotation(counter, mild('pelvisList'), pelvisPitch), { ...spine, spineFlex: spine.spineFlex - unflex }, outward);
     return {
       lean,
       hipAngulation: c.hipAngulation * angulation,
       eversion: mild('eversion'),
       pelvisList: mild('pelvisList'),
       pelvisPitch,
-      counter: mild('counter'),
+      counter,
       ...trunk,
       headYaw: 0,
       armAbduction: c.armAbduction ?? ARM_ABDUCTION,

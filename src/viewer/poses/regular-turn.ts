@@ -63,6 +63,8 @@ export interface TurnStyle {
   readonly comAhead: PhaseValues;
   /** How much a harder turn adds to comAhead, as a share per intensity step; defaults to COM_AHEAD_GAIN. */
   readonly comAheadGain?: number;
+  /** Low-back flex added at the finish key, degrees; absent, none. */
+  readonly finishFold?: number;
   /** Share of the peak angulation already in at the initiation key: feet and knees tip the new edges early. */
   readonly early: number;
   /** Share of the peak angulation at each phase key; absent, the shared turn shape with `early` at the initiation key. */
@@ -266,9 +268,10 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     // Tip pressure into the control phase, then the feet slide ahead to the finish (lemaster-2010 pp79-81, 85); inferred.
     // Mass toward the ball of the foot so the chest stays over the outside knee (lemaster-2010 pp57, 182-183); inferred.
-    comAhead: [0.065, 0.1, 0.06, 0.045, 0.034],
+    comAhead: [0.065, 0.1, 0.06, 0.055, 0.04],
     comAheadGain: 0.2,
     trunkOverShin: 10,
+    finishFold: -5, // The low back straightens as the feet slide ahead, the hips folding instead; inferred.
     trunkOverShinGain: -0.15, // Stands up with intensity: chest over the knee at a dynamic initiation; inferred.
     early: 0.65,
     // Cross-over at gentle and moderate; at dynamic the legs flex and retract so the skis stay on the snow
@@ -300,8 +303,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     // Feet drawn back through the transition, forward into the new turn, centred by the edge set (lemaster-2010 p86); inferred.
     // Mass toward the ball of the foot so the chest stays over the outside knee (lemaster-2010 pp57, 182-183); inferred.
-    comAhead: [0.08, 0.08, 0.035, 0.05, 0.035],
-    comAheadGain: 0,
+    comAhead: [0.078, 0.1, 0.035, 0.05, 0.035],
+    comAheadGain: -0.05, // Less forward at a harder switch, so the trunk tips no faster; inferred.
     trunkOverShin: 14,
     trunkOverShinGain: 0.3, // Trunk within 40 deg at dynamic; inferred.
     early: 0.6,
@@ -652,7 +655,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       hip: p.hip,
       hipUnder: p.under,
       ...popped(i),
-      lumbarFlex: style.spineFlex * DEG,
+      lumbarFlex: (style.spineFlex + (i === 4 ? (style.finishFold ?? 0) : 0)) * DEG,
       spineTwist: style.twist * (style.counterCurve[i] ?? 0) * DEG,
       counter: style.counter * (style.counterCurve[i] ?? 0) * DEG,
       // Solved from the balance.
