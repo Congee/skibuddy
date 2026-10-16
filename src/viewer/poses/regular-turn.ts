@@ -604,7 +604,7 @@ const PHASES: ReadonlyArray<Phase> = [
  * Where the mass rides the skis' arc, angulation leads the edge: tipped early, most just before the fall line, then
  * handing over to the inclination as the load peaks (carv-ligety-2024, reid-2020 Fig 4); shares at the phase keys.
  */
-const ARC_SHARES: PhaseValues = [0, 0.3, 0.85, 0.5, 0.5];
+const ARC_SHARES: PhaseValues = [0, 0.3, 0.85, 0.4, 0.45];
 /** Initiation angulation added per intensity step: a harder turn tips sooner; inferred. */
 const ARC_STEPS: PhaseValues = [0, 0.2, 0, 0, 0];
 /** The angulation's own key, at its peak. */
