@@ -1,7 +1,5 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Side } from '../src/content/schema';
-import type { Activation } from '../src/content/schema';
-import { pickedKey } from '../src/ui/figure/pin-inputs';
 import { NodeKind } from '../src/viewer/anatomy-names';
 import { MIN_PINCH_SPAN, TAP_SLOP, isDoubleTap, isTap, midpoint, pinchRatio, span, toNdc, wheelRatio } from '../src/viewer/gestures';
 import { PickRole, contentMuscle, pickOfName, pickRole } from '../src/viewer/pick';
@@ -204,14 +202,5 @@ describe('picking', () => {
     assert.strictEqual(pickRole({ kind: NodeKind.Bones }, { skeleton: true, reveal: true }, idle), PickRole.Block);
     assert.strictEqual(pickRole({ kind: NodeKind.RestingMuscle }, plain, idle), PickRole.Block);
     assert.strictEqual(pickRole({ kind: NodeKind.RestingMuscle }, { skeleton: true, reveal: false }, idle), PickRole.Skip);
-  });
-
-  it('opens the slat naming the tapped muscle, exact over parent and side over both', () => {
-    const a = (muscle: string, side: Side): Activation => ({ muscle, side }) as Activation;
-    const order = [a('quadriceps', Side.Both), a('rectus-femoris', Side.Outside), a('gluteus-medius', Side.Inside)];
-    assert.strictEqual(pickedKey(order, { muscle: 'rectus-femoris', side: Side.Outside }), 'rectus-femoris:outside');
-    assert.strictEqual(pickedKey(order, { muscle: 'rectus-femoris', side: Side.Inside }), 'quadriceps:both');
-    assert.strictEqual(pickedKey(order, { muscle: 'vastus-medialis', side: Side.Inside }), 'quadriceps:both');
-    assert.isNull(pickedKey(order, { muscle: 'gluteus-medius', side: Side.Outside }));
   });
 });

@@ -15,4 +15,3 @@ export const createMedia = (query: string): Accessor<boolean> => {
 };
 
 export const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
-export const PHONE = '(max-width: 600px)';
