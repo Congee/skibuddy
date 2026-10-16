@@ -21,6 +21,8 @@ const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 /** A ski on the snow along z, 9 cm wide, 2 cm thick, 1.6 m long. */
 const SKI = boxIn(IDENTITY, [0, 0.01, 0], [0.09, 0.02, 1.6]);
 
+const bump = (x: number, z: number): number => 0.5 * Math.cos(x / 3) * Math.cos(z / 3);
+
 describe('clearSnow', () => {
   it('keeps an orbit that clears the snow', () => {
     const orbit: Orbit = { azimuth: 0.4, elevation: 0.2 };
@@ -43,6 +45,14 @@ describe('clearSnow', () => {
           const frame: CameraFrame = { distance, target: [0.3, y, -0.2] };
           assert.isAtLeast(eyeOf(frame, clearSnow(frame, orbit))[1], SNOW_CLEARANCE - 1e-9);
         }
+  });
+
+  it('keeps the camera above a bump under it', () => {
+    const frame: CameraFrame = { distance: 2.4, target: [0, 0.4, 0] };
+    const raised = clearSnow(frame, { azimuth: 1, elevation: 0 }, bump);
+    const [x, y, z] = eyeOf(frame, raised);
+    assert.isAtLeast(y, bump(x, z) + SNOW_CLEARANCE - 1e-6);
+    assert.isAbove(raised.elevation, 0);
   });
 });
 
@@ -80,6 +90,16 @@ describe('boxes', () => {
     assert.closeTo(surfaceDepth(frame, orbit, [0, 0], LENS, [], [SKI]) ?? -1, 1, 1e-4);
     // Off to the side, the ray misses it.
     assert.isNull(surfaceDepth({ distance: 1, target: [0.5, 0.02, 0] }, orbit, [0, 0], LENS, [], [SKI]));
+  });
+
+  it('finds the snow under the cursor, flat or raised', () => {
+    const frame: CameraFrame = { distance: 1, target: [0, 0.5, 0] };
+    const orbit: Orbit = { azimuth: 0, elevation: Math.PI / 2 - 1e-6 };
+    assert.isNull(surfaceDepth(frame, orbit, [0, 0], LENS, []));
+    assert.closeTo(surfaceDepth(frame, orbit, [0, 0], LENS, [], [], () => 0) ?? -1, 1.5, 1e-4);
+    assert.closeTo(surfaceDepth(frame, orbit, [0, 0], LENS, [], [], () => 0.3) ?? -1, 1.2, 1e-4);
+    // The ski's top is nearer than the snow.
+    assert.closeTo(surfaceDepth({ distance: 1, target: [0, 0.02, 0] }, orbit, [0, 0], LENS, [], [SKI], () => 0) ?? -1, 1, 1e-4);
   });
 
   it('misses a box behind the camera', () => {

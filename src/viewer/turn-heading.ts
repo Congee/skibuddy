@@ -28,8 +28,11 @@ const MOGUL_CORRIDOR = 2;
 /** For a motion with no turn of its own, such as a drill's: a short turn. */
 const FALLBACK_RADIUS = 7;
 
-const STYLES: Readonly<Record<string, TurnStyle>> = { ...TURN_STYLES, 'closed-stance-short-turns': CLOSED_STANCE };
-const MOGUL_POSES: ReadonlySet<string> = new Set([RegularTurn.Moguls, 'closed-stance-short-turns']);
+export const MOGUL_POSE = RegularTurn.Moguls;
+export const POWDER_POSE = RegularTurn.Powder;
+export const CLOSED_STANCE_POSE = 'closed-stance-short-turns';
+const STYLES: Readonly<Record<string, TurnStyle>> = { ...TURN_STYLES, [CLOSED_STANCE_POSE]: CLOSED_STANCE };
+const MOGUL_POSES: ReadonlySet<string> = new Set([MOGUL_POSE, CLOSED_STANCE_POSE]);
 
 /** The path a pose's turn follows at this intensity. */
 export const turnPath = (pose: string, intensity: Intensity): TurnPath => {

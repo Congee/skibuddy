@@ -1,0 +1,198 @@
+import type { Intensity } from '../content/schema';
+import { CLOSED_STANCE_POSE, MOGUL_POSE, POWDER_POSE, transitionHeading, turnPath } from './turn-heading';
+import type { TurnPath } from './turn-heading';
+import type { Vec3 } from './mat4';
+
+/**
+ * Snow surfaces in the slope's own frame: x across the slope toward the first turn's inside, z down the fall
+ * line, y up from the slope. The turn starts at the origin, on the field's centre line; the mirrored next turn
+ * is the same field reflected in x, which every surface here is symmetric under.
+ */
+export const SurfaceKind = { Groomed: 'groomed', Moguls: 'moguls', Powder: 'powder' } as const;
+export type SurfaceKind = (typeof SurfaceKind)[keyof typeof SurfaceKind];
+
+export interface Surface {
+  readonly kind: SurfaceKind;
+  readonly path: TurnPath;
+  /** Metres down the fall line per turn; on moguls also the bump spacing along the line. */
+  readonly spacing: number;
+  /** Metres across between mogul columns; the columns either side are offset half a spacing. */
+  readonly columns: number;
+  /** Mogul crest-to-trough height, metres; 0 off moguls. */
+  readonly relief: number;
+  /** Loose snow over the packed base the skis ride on, metres; 0 off powder. */
+  readonly depth: number;
+  /** Metres of path per unit of turn time: the skier moves at a steady speed. */
+  readonly speed: number;
+}
+
+/** Recreational fields, gentle smaller; competition moguls run 1-1.5 m (arndt-1992 p1); inferred. */
+const MOGUL_RELIEF: Readonly<Record<Intensity, number>> = { gentle: 0.5, moderate: 0.7, dynamic: 0.9 };
+/** Diagonal neighbours about 3.8 m apart, close to the spacing along the line; inferred. */
+const MOGUL_COLUMNS = 3;
+/**
+ * Snow over the ski base: 15 cm or less still skis like packed snow, deeper calls for near even weighting
+ * (lemaster-2010 p197), which the powder pose uses; depths inferred, boots partly buried.
+ */
+const POWDER_DEPTH: Readonly<Record<Intensity, number>> = { gentle: 0.15, moderate: 0.2, dynamic: 0.25 };
+/** Soft swells on loose snow, so its top reads as a surface; height and length inferred. */
+const SWELL = 0.03;
+const SWELL_LENGTH = 3;
+const SWELL_ACROSS = 5;
+
+const SAMPLES = 256;
+
+/** The skis' heading off the fall line through one turn, t in 0..1, as headingAt without its wrap at 1. */
+const heading = (t: number, most: number): number => -most * Math.cos(Math.PI * t);
+
+/** Cumulative path offsets per unit speed at SAMPLES + 1 steps through the turn, by the trapezoid rule. */
+const integrate = (most: number): { readonly xs: Float64Array; readonly zs: Float64Array } => {
+  const xs = new Float64Array(SAMPLES + 1);
+  const zs = new Float64Array(SAMPLES + 1);
+  for (let i = 1; i <= SAMPLES; i++) {
+    const a = heading((i - 1) / SAMPLES, most);
+    const b = heading(i / SAMPLES, most);
+    xs[i] = (xs[i - 1] ?? 0) + (Math.sin(a) + Math.sin(b)) / (2 * SAMPLES);
+    zs[i] = (zs[i - 1] ?? 0) + (Math.cos(a) + Math.cos(b)) / (2 * SAMPLES);
+  }
+  return { xs, zs };
+};
+
+const tables = new Map<number, ReturnType<typeof integrate>>();
+const tableFor = (most: number): ReturnType<typeof integrate> => {
+  let table = tables.get(most);
+  if (table === undefined) {
+    table = integrate(most);
+    tables.set(most, table);
+  }
+  return table;
+};
+
+const kindOf = (pose: string): SurfaceKind =>
+  pose === MOGUL_POSE || pose === CLOSED_STANCE_POSE ? SurfaceKind.Moguls : pose === POWDER_POSE ? SurfaceKind.Powder : SurfaceKind.Groomed;
+
+/** The snow a pose's turn is skied on at this intensity. */
+export const surfaceFor = (pose: string, intensity: Intensity): Surface => {
+  const path = turnPath(pose, intensity);
+  const kind = kindOf(pose);
+  const { xs, zs } = tableFor(transitionHeading(path));
+  // Steady speed that reaches the corridor's edge on the fall line, as turnPath's corridor says.
+  const edge = -(xs[SAMPLES / 2] ?? 0);
+  const speed = edge > 1e-9 ? path.corridor / 2 / edge : 0;
+  return {
+    kind,
+    path,
+    spacing: speed * (zs[SAMPLES] ?? 0),
+    columns: MOGUL_COLUMNS,
+    relief: kind === SurfaceKind.Moguls ? MOGUL_RELIEF[intensity] : 0,
+    depth: kind === SurfaceKind.Powder ? POWDER_DEPTH[intensity] : 0,
+    speed,
+  };
+};
+
+/** Height of the snow's top at (x, z), metres. */
+export const heightAt = (s: Surface, x: number, z: number): number => {
+  const w = wave(s);
+  if (w === null) return 0;
+  return s.depth + w.a * Math.cos(w.kz * z) * Math.cos(w.kx * x);
+};
+
+/** The top as depth + a cos(kz z) cos(kx x): even in x, a whole number of waves per turn; null when flat. */
+const wave = (s: Surface): { readonly a: number; readonly kz: number; readonly kx: number } | null => {
+  if (s.spacing <= 0 || s.kind === SurfaceKind.Groomed) return null;
+  // An egg crate: crests on the line at each switch and on the columns either side between them.
+  if (s.kind === SurfaceKind.Moguls) return { a: s.relief / 2, kz: (2 * Math.PI) / s.spacing, kx: Math.PI / s.columns };
+  return { a: SWELL, kz: (2 * Math.PI * Math.max(1, Math.round(s.spacing / SWELL_LENGTH))) / s.spacing, kx: (2 * Math.PI) / SWELL_ACROSS };
+};
+
+/** Height of what the skis ride on: the packed base under any loose snow. */
+export const supportAt = (s: Surface, x: number, z: number): number => (s.kind === SurfaceKind.Powder ? 0 : heightAt(s, x, z));
+
+/** The unit normal of the snow's top at (x, z). */
+export const normalAt = (s: Surface, x: number, z: number): Vec3 => {
+  const w = wave(s);
+  if (w === null) return [0, 1, 0];
+  const { a, kz, kx } = w;
+  const dx = -a * kx * Math.cos(kz * z) * Math.sin(kx * x);
+  const dz = -a * kz * Math.sin(kz * z) * Math.cos(kx * x);
+  const n = Math.hypot(dx, 1, dz);
+  return [-dx / n, 1 / n, -dz / n];
+};
+
+/** The skier on the field at turn time t (0..1): where the skis' centre is and their heading off the fall line. */
+export interface OnField {
+  readonly x: number;
+  readonly z: number;
+  readonly heading: number;
+}
+
+/** Where the turn's path is at time t: from the centre line at the switch, across to the corridor's edge on the fall line, back to the centre line a spacing down at t = 1. */
+export const pathAt = (s: Surface, t: number): OnField => {
+  const most = transitionHeading(s.path);
+  const { xs, zs } = tableFor(most);
+  const u = Math.min(1, Math.max(0, t)) * SAMPLES;
+  const i = Math.min(SAMPLES - 1, Math.floor(u));
+  const f = u - i;
+  const lerp = (a: Float64Array): number => ((a[i] ?? 0) * (1 - f) + (a[i + 1] ?? 0) * f) * s.speed;
+  return { x: lerp(xs), z: lerp(zs), heading: heading(Math.min(1, Math.max(0, t)), most) };
+};
+
+/** A point under the skier: on the field, the snow's top and the support there, and the top's normal. */
+export interface UnderFoot {
+  readonly x: number;
+  readonly z: number;
+  readonly height: number;
+  readonly support: number;
+  readonly normal: Vec3;
+}
+
+/**
+ * The snow under a point fixed to the skis at turn time t: `local` is [across, along] the skis from their centre,
+ * across toward the turn's inside (+x of the figure's root). `mirrored` is the next turn, drawn reflected in x.
+ */
+export const underFoot = (s: Surface, t: number, local: readonly [number, number], mirrored = false): UnderFoot => {
+  const p = pathAt(s, t);
+  const across = mirrored ? -local[0] : local[0];
+  const c = Math.cos(p.heading);
+  const sn = Math.sin(p.heading);
+  const x = p.x + across * c + local[1] * sn;
+  const z = p.z - across * sn + local[1] * c;
+  // The mirrored turn sees the field reflected in x, which leaves it unchanged.
+  return { x, z, height: heightAt(s, x, z), support: supportAt(s, x, z), normal: normalAt(s, x, z) };
+};
+
+/** Boot centres either side of the skis' centre, metres; part 2 will place them from the pose. */
+export const BOOT_HALF_GAP = 0.1;
+
+/** How far the support sits above the slope's datum under the boots at turn time t: what lowers the field so the figure stands at y = 0. */
+export const liftAt = (s: Surface, t: number): number =>
+  s.kind === SurfaceKind.Groomed ? 0 : (underFoot(s, t, [-BOOT_HALF_GAP, 0]).support + underFoot(s, t, [BOOT_HALF_GAP, 0]).support) / 2;
+
+/** A grid over the field's square of half side `half`, `step` apart: positions, normals and triangle indices. */
+export const fieldMesh = (
+  s: Surface,
+  half: number,
+  step: number,
+): { readonly positions: Float32Array; readonly normals: Float32Array; readonly indices: Uint32Array } => {
+  const n = Math.max(1, Math.round((2 * half) / step));
+  const row = n + 1;
+  const positions = new Float32Array(row * row * 3);
+  const normals = new Float32Array(row * row * 3);
+  for (let j = 0; j <= n; j++)
+    for (let i = 0; i <= n; i++) {
+      const x = -half + (2 * half * i) / n;
+      const z = -half + (2 * half * j) / n;
+      const k = 3 * (j * row + i);
+      const [nx, ny, nz] = normalAt(s, x, z);
+      positions.set([x, heightAt(s, x, z), z], k);
+      normals.set([nx, ny, nz], k);
+    }
+  const indices = new Uint32Array(n * n * 6);
+  for (let j = 0; j < n; j++)
+    for (let i = 0; i < n; i++) {
+      const a = j * row + i;
+      // Counter-clockwise seen from above.
+      indices.set([a, a + row, a + 1, a + 1, a + row, a + row + 1], 6 * (j * n + i));
+    }
+  return { positions, normals, indices };
+};

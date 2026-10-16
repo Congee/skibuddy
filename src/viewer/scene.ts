@@ -1,5 +1,5 @@
-import { CircleGeometry, Color, DirectionalLight, Group, HemisphereLight, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, Raycaster, Scene, Vector2, WebGPURenderer } from 'three/webgpu';
-import { color, float, length, positionLocal, smoothstep, uniform, vec2 } from 'three/tsl';
+import { BufferAttribute, BufferGeometry, CircleGeometry, Color, DirectionalLight, Group, HemisphereLight, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, Raycaster, Scene, Vector2, Vector3, WebGPURenderer } from 'three/webgpu';
+import { color, dot, float, length, normalWorld, positionLocal, positionWorld, smoothstep, uniform, vec2, vec3 } from 'three/tsl';
 import type { MuscleLevel } from '../content/activation';
 import { Intensity } from '../content/schema';
 import { bestAnchors, sameAnchors } from './anchor-projection';
@@ -17,13 +17,15 @@ import { DRAG_DAMPING, TURN_DAMPING, dampOrbit, dampStep } from './orbit';
 import type { Orbit } from './orbit';
 import { pickOf } from './pick';
 import type { Pose } from './pose';
+import { SurfaceKind, fieldMesh, heightAt, liftAt, pathAt, surfaceFor } from './surface';
+import type { Surface } from './surface';
 import { headingAt, turnPath } from './turn-heading';
 import type { MusclePick } from './pick';
 import { pixelRatio } from './pixel-ratio';
 import { makeSlotTable } from './slots';
 import type { MusclePart } from './slots';
 import { FOLLOW_ORBIT, HOME_FRAME, HOME_ORBIT, SLOPE_ORBIT, ballsOf, clearSnow, dampFrame, fitFrame, panBy, surfaceDepth, turnAim, zoomAbout } from './view';
-import type { Ball, CameraFrame, GearStops, Lens } from './view';
+import type { Ball, CameraFrame, GearStops, Ground, Lens } from './view';
 
 export const FigureKind = { Capsule: 'capsule', Anatomy: 'anatomy' } as const;
 export type FigureKind = (typeof FigureKind)[keyof typeof FigureKind];
@@ -135,6 +137,18 @@ const FIT_SAMPLES = 24;
 /** A margin of `px` on a side `size` px long, in NDC; overlays never take most of the view. */
 const edge = (px: number, size: number): number => Math.min(0.8, (2 * px) / size);
 const MIRROR = new Matrix4().makeScale(-1, 1, 1);
+/** The field's grid: half its side covers the fade's radius wherever the turn puts the skier; metres. */
+const FIELD_HALF = 12;
+const FIELD_STEP: Readonly<Record<SurfaceKind, number>> = { groomed: 1, moguls: 0.1, powder: 0.25 };
+/** Loose snow lets the buried gear show through faintly. */
+const SNOW_SOLID: Readonly<Record<SurfaceKind, number>> = { groomed: 1, moguls: 1, powder: 0.8 };
+/** A fixed light, up and to the left of the home view, that tints the snow by its slope. */
+const SNOW_LIGHT = new Vector3(-0.5, 0.8, 0.35).normalize();
+/** How much a face turned toward or away from the light lightens or darkens, and a lift that reads on dark snow. */
+const SNOW_SHADE = 1.2;
+const SNOW_GLOW = 0.15;
+const sameSurface = (a: Surface, b: Surface): boolean =>
+  a.kind === b.kind && a.spacing === b.spacing && a.relief === b.relief && a.depth === b.depth && a.columns === b.columns;
 
 export const createViewer = async (
   canvas: HTMLCanvasElement,
@@ -159,6 +173,20 @@ export const createViewer = async (
   const ground = new Mesh(new CircleGeometry(GROUND_RADIUS, 96).rotateX(-Math.PI / 2), groundMaterial);
   ground.position.y = -0.002;
   scene.add(ground);
+
+  // Bumps and loose snow: the same colour and fade, tinted by how each face turns to SNOW_LIGHT.
+  const fieldMaterial = new MeshBasicNodeMaterial({ transparent: true });
+  const lit = dot(normalWorld, vec3(SNOW_LIGHT.x, SNOW_LIGHT.y, SNOW_LIGHT.z)).sub(SNOW_LIGHT.y);
+  fieldMaterial.colorNode = groundColour.mul(lit.mul(SNOW_SHADE).add(1)).add(lit.mul(SNOW_GLOW));
+  const fieldSolid = uniform(1);
+  fieldMaterial.opacityNode = smoothstep(float(GROUND_RADIUS), float(GROUND_SOLID), length(positionWorld.xz)).mul(fieldSolid);
+  let field: Mesh<BufferGeometry, MeshBasicNodeMaterial> | null = null;
+  const fieldInverse = new Matrix4();
+  const fieldTurn = new Matrix4();
+  const fieldShift = new Matrix4();
+  const probe = new Vector3();
+  // Metres the field is lowered so the support under the boots is at y = 0, where the figure stands.
+  let lift = 0;
 
   // A soft contact shadow along the skis.
   const shadowMaterial = new MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
@@ -213,12 +241,11 @@ export const createViewer = async (
   const placeCamera = (): void => {
     const { distance, target } = frame;
     // The eased orbit and frame can dip below the snow between two aims that clear it.
-    const { azimuth, elevation } = clearSnow(frame, orbit);
+    const { azimuth, elevation } = clearSnow(frame, orbit, snowAt);
     const r = distance * Math.cos(elevation);
     camera.position.set(target[0] + r * Math.sin(azimuth), target[1] + distance * Math.sin(elevation), target[2] + r * Math.cos(azimuth));
     camera.lookAt(target[0], target[1], target[2]);
   };
-  placeCamera();
 
   // Inputs to the next frame; a draw runs only when one of them changed.
   let time = 0;
@@ -234,6 +261,46 @@ export const createViewer = async (
   let intensity: Intensity = Intensity.Moderate;
   let drill = options.drill;
   figure.setMotion?.(drill, intensity);
+  let surface = surfaceFor(drill, intensity);
+  const buildField = (): void => {
+    if (field !== null) {
+      scene.remove(field);
+      field.geometry.dispose();
+      field = null;
+    }
+    const groomed = surface.kind === SurfaceKind.Groomed;
+    ground.visible = groomed;
+    // A flat shadow would float over the troughs or sit under loose snow.
+    contact.visible = groomed;
+    if (groomed) return;
+    fieldSolid.value = SNOW_SOLID[surface.kind];
+    const { positions, normals, indices } = fieldMesh(surface, FIELD_HALF, FIELD_STEP[surface.kind]);
+    const geometry = new BufferGeometry();
+    geometry.setAttribute('position', new BufferAttribute(positions, 3));
+    geometry.setAttribute('normal', new BufferAttribute(normals, 3));
+    geometry.setIndex(new BufferAttribute(indices, 1));
+    field = new Mesh(geometry, fieldMaterial);
+    field.matrixAutoUpdate = false;
+    field.renderOrder = -1;
+    scene.add(field);
+  };
+  buildField();
+  /** Slides the field so the skier at `time` stands on its path: rotated off the skis by the heading, mirrored with the figure. */
+  const placeField = (root: ArrayLike<number>): void => {
+    if (field === null) return;
+    const p = pathAt(surface, time);
+    lift = liftAt(surface, time);
+    field.matrix.fromArray(root).multiply(fieldTurn.makeRotationY(-p.heading)).multiply(fieldShift.makeTranslation(-p.x, -lift, -p.z));
+    if (mirrored) field.matrix.premultiply(MIRROR);
+    fieldInverse.copy(field.matrix).invert();
+    field.matrixWorldNeedsUpdate = true;
+  };
+  const snowAt: Ground = (x, z) => {
+    if (field === null) return 0;
+    probe.set(x, 0, z).applyMatrix4(fieldInverse);
+    return heightAt(surface, probe.x, probe.z) - lift;
+  };
+  placeCamera();
   // Set by a new focus; the turn is worked out once the pose is current.
   let turnPending = false;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -327,17 +394,21 @@ export const createViewer = async (
     if (time !== posedAt || mirrored !== posedMirrored) {
       posedAt = time;
       posedMirrored = mirrored;
-      rig.matrix.fromArray(rootAt(time));
+      const root = rootAt(time);
+      rig.matrix.fromArray(root);
+      placeField(root);
       // The other turn is this one reflected: outside and inside keep their meshes, so levels and slots hold.
       if (mirrored) rig.matrix.premultiply(MIRROR);
       rig.updateMatrixWorld(true);
       figure.update(time, levels(time));
+      // The snow moved under the camera.
+      if (field !== null) placeCamera();
     }
     if (turnPending) {
       turnPending = false;
       turnToward();
     }
-    aim = clearSnow(frameAim, aim);
+    aim = clearSnow(frameAim, aim, snowAt);
     if (orbit !== aim || frame !== frameAim) {
       const step = reducedMotion.matches ? { orbit: aim, settled: true } : dampOrbit(orbit, aim, seconds, damping);
       const zoom = reducedMotion.matches ? { frame: frameAim, settled: true } : dampFrame(frame, frameAim, seconds, damping);
@@ -373,9 +444,10 @@ export const createViewer = async (
     const gear: GearStops = figure.gearStops?.() ?? { capsules: [], boxes: [] };
     const at = viewNdc(p);
     const hit = surfaceDepth(frameAim, aim, at, lens(), [...body, ...gear.capsules], gear.boxes);
+    const snow = surfaceDepth(frameAim, aim, at, lens(), [], [], snowAt);
     // Off the body, zooming in stops while most of the figure is still in view, not in empty air.
     const step = hit === null && ratio < 1 ? Math.min(1, Math.max(ratio, OFF_BODY_DISTANCE / frameAim.distance)) : ratio;
-    frameAim = zoomAbout(frameAim, aim, at, step, lens(), hit, home);
+    frameAim = zoomAbout(frameAim, aim, at, step, lens(), hit === null ? snow : snow === null ? hit : Math.min(hit, snow), home);
     userMoved = true;
   };
 
@@ -463,10 +535,14 @@ export const createViewer = async (
     if (pointers.size !== 1) return;
     if (gesture !== null) gesture.travel = Math.max(gesture.travel, Math.hypot(p.x - gesture.start.x, p.y - gesture.start.y));
     if (gesture !== null && !isTap(gesture.travel, false)) userMoved = true;
-    aim = clearSnow(frameAim, {
-      azimuth: aim.azimuth - (p.x - before.x) * 0.01,
-      elevation: Math.min(1.2, Math.max(-0.1, aim.elevation + (p.y - before.y) * 0.01)),
-    });
+    aim = clearSnow(
+      frameAim,
+      {
+        azimuth: aim.azimuth - (p.x - before.x) * 0.01,
+        elevation: Math.min(1.2, Math.max(-0.1, aim.elevation + (p.y - before.y) * 0.01)),
+      },
+      snowAt,
+    );
     invalidate();
   };
   const onUp = (e: PointerEvent): void => {
@@ -557,6 +633,11 @@ export const createViewer = async (
       intensity = next;
       drill = nextDrill;
       figure.setMotion?.(nextDrill, next);
+      const nextSurface = surfaceFor(nextDrill, next);
+      if (!sameSurface(surface, nextSurface)) {
+        surface = nextSurface;
+        buildField();
+      }
       posedAt = Number.NaN;
       cycle = null;
       fitStale = true;
@@ -640,6 +721,8 @@ export const createViewer = async (
         m.geometry.dispose();
         m.material.dispose();
       }
+      field?.geometry.dispose();
+      fieldMaterial.dispose();
       void renderer.dispose();
     },
   };

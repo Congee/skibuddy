@@ -176,7 +176,32 @@ const boxDepth = (eye: Vec3, ray: Vec3, { corner, edges }: Box): number | null =
   return near;
 };
 
-/** How far ahead of the camera, along its forward axis, the ray through `ndc` meets the first capsule or box; null for none. */
+/** The snow's height at a point in world space, metres. */
+export type Ground = (x: number, z: number) => number;
+
+/** Forward steps a ray marches over the snow, and how far. */
+const GROUND_STEP = 0.05;
+const GROUND_REACH = 12;
+
+/** Where the ray first dips under the snow, by marching then bisecting; null for a miss or an eye already under it. */
+const groundDepth = (eye: Vec3, ray: Vec3, ground: Ground): number | null => {
+  const above = (t: number): number => eye[1] + ray[1] * t - ground(eye[0] + ray[0] * t, eye[2] + ray[2] * t);
+  if (above(0) < 0) return null;
+  for (let t = GROUND_STEP; t <= GROUND_REACH; t += GROUND_STEP) {
+    if (above(t) >= 0) continue;
+    let lo = t - GROUND_STEP;
+    let hi = t;
+    for (let k = 0; k < 16; k++) {
+      const mid = (lo + hi) / 2;
+      if (above(mid) >= 0) lo = mid;
+      else hi = mid;
+    }
+    return lo;
+  }
+  return null;
+};
+
+/** How far ahead of the camera, along its forward axis, the ray through `ndc` meets the first capsule, box or the snow; null for none. */
 export const surfaceDepth = (
   frame: CameraFrame,
   orbit: Orbit,
@@ -184,23 +209,35 @@ export const surfaceDepth = (
   lens: Lens,
   capsules: ReadonlyArray<Capsule>,
   boxes: ReadonlyArray<Box> = [],
+  ground: Ground | null = null,
 ): number | null => {
   const eye = eyeOf(frame, orbit);
   const ray = rayOf(orbit, ndc, lens);
   let best: number | null = null;
-  for (const depth of [...capsules.map((c) => capsuleDepth(eye, ray, c)), ...boxes.map((b) => boxDepth(eye, ray, b))])
+  const snow = ground === null ? [] : [groundDepth(eye, ray, ground)];
+  for (const depth of [...capsules.map((c) => capsuleDepth(eye, ray, c)), ...boxes.map((b) => boxDepth(eye, ray, b)), ...snow])
     if (depth !== null && (best === null || depth < best)) best = depth;
   return best;
 };
 
-/** Metres the camera keeps above the snow at y = 0, well past the near plane. */
+/** Metres the camera keeps above the snow, well past the near plane. */
 export const SNOW_CLEARANCE = 0.08;
 
-/** The orbit raised just enough that the camera stays SNOW_CLEARANCE above the snow; `orbit` itself when it already does. */
-export const clearSnow = (frame: CameraFrame, orbit: Orbit): Orbit => {
+const FLAT: Ground = () => 0;
+/** Raising the camera moves it over other snow; a few rounds settle it over the bumps. */
+const CLEAR_ROUNDS = 6;
+
+/** The orbit raised just enough that the camera stays SNOW_CLEARANCE above the snow under it; `orbit` itself when it already does. */
+export const clearSnow = (frame: CameraFrame, orbit: Orbit, ground: Ground = FLAT): Orbit => {
   const { distance, target } = frame;
-  if (target[1] + distance * Math.sin(orbit.elevation) >= SNOW_CLEARANCE - 1e-9) return orbit;
-  return { azimuth: orbit.azimuth, elevation: Math.asin(clamp((SNOW_CLEARANCE - target[1]) / distance, -1, 1)) };
+  let elevation = orbit.elevation;
+  for (let k = 0; k < CLEAR_ROUNDS; k++) {
+    const [x, y, z] = eyeOf(frame, { azimuth: orbit.azimuth, elevation });
+    const floor = ground(x, z) + SNOW_CLEARANCE;
+    if (y >= floor - 1e-9) break;
+    elevation = Math.max(elevation, Math.asin(clamp((floor - target[1]) / distance, -1, 1)));
+  }
+  return elevation === orbit.elevation ? orbit : { azimuth: orbit.azimuth, elevation };
 };
 
 /**
