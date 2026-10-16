@@ -205,7 +205,7 @@ const LAG_SAMPLES = 16;
 /**
  * On the zipper the snow pushes along the skis' normal, pitched uphill on a face and downhill on a backside; the body
  * cannot re-balance at 2-3 turns a second, so it meets that pitch raised-cosine averaged over BALANCE_LAG either side
- * of t, through the mirrored next turn. Radians uphill of the slope normal; 0 off the zipper.
+ * of t, through the mirrored next turn. Radians uphill of the slope normal; 0 off the zipper and on a face.
  */
 export const snowPitchAt = (scenario: DrillScenario | null, surface: Surface | null, t: number): number => {
   if (scenario === null || surface === null || surface.line !== MogulLine.Zipper || surface.speed === 0) return 0;
@@ -218,7 +218,8 @@ export const snowPitchAt = (scenario: DrillScenario | null, surface: Surface | n
     sum += w * trackRest(surface, wrapTime(t + u * half), SKI_TIP[2], -SKI_TAIL[2]).pitch;
     weights += w;
   }
-  return sum / weights;
+  // On a face the feet lead and the body catches up, centred, rather than sitting back on its pitch (duncan-smith-2021 3:30-3:54).
+  return Math.min(sum / weights, 0);
 };
 
 /** The snow's force line the mass balances on, radians uphill of the slope normal: the skis' averaged pitch plus braking. */

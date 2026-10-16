@@ -594,6 +594,15 @@ describe('regular turn', () => {
         assert.closeTo(head(1 - 1e-9) * DEG, -head(0) * DEG, 0.5, `${kind} ${i}`);
       }
   });
+  it('never sits back on a zipper face: the feet slightly ahead, the trunk forward of the slope normal', () => {
+    // Feet ahead, then the body catches up, centred (duncan-smith-2021 3:30-3:54); bands inferred.
+    for (const i of INTENSITIES)
+      for (let k = 0; k < 24; k++) {
+        const a = poseAngles(samplePose(poseTable(RegularTurn.Moguls, i), k / 24), 0);
+        assert.isAtLeast(a.comOnSnow, -0.15, `${i} t=${k / 24}`);
+        assert.isAtLeast(a.trunkForward, 3, `${i} t=${k / 24}`);
+      }
+  });
 });
 
 const POWDER = RegularTurn.Powder;
