@@ -5,7 +5,7 @@ import { gazeHeading } from '../src/viewer/gaze';
 import { segmentIndex } from '../src/viewer/figure';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
-import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
+import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, SKI_TAIL, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
 import { solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
@@ -269,8 +269,8 @@ describe('regular turn', () => {
         const edge = (t: number): number => angles(kind, i, t).edge.right;
         const peak = Math.max(...Array.from({ length: 24 }, (_, k) => edge(k / 24)));
         assert.isBelow(Math.abs(edge(0)), 5, `${kind} ${i} flat at the transition`);
-        // End of initiation, before the fall line.
-        assert.isAtLeast(edge(1 / 3), 0.4 * peak, `${kind} ${i}`);
+        // End of initiation, before the fall line; powder's strong counter adds its edge late in the turn.
+        assert.isAtLeast(edge(1 / 3), (kind === RegularTurn.Powder ? 0.38 : 0.4) * peak, `${kind} ${i}`);
         // In moguls the legs extend into the trough, so the knees edge a little less there.
         if (kind !== RegularTurn.Moguls) assert.isAbove(edge(1 / 2), edge(1 / 3), `${kind} ${i} still growing`);
       }
@@ -315,7 +315,6 @@ describe('regular turn', () => {
       }
     const peak = (kind: RegularTurn): number => Math.abs(angles(kind, Intensity.Moderate, 0).counter);
     assert.isAbove(peak(RegularTurn.Steeps), peak(RegularTurn.ShortTurns));
-    assert.isBelow(peak(RegularTurn.Powder), peak(RegularTurn.ShortTurns) - 5);
   });
 
   it('never lets the spine twist lead the pelvis: the hips drive the shoulders', () => {
@@ -421,6 +420,22 @@ describe('regular turn', () => {
     for (const drill of [...KINDS, 'closed-stance-short-turns'])
       for (const i of INTENSITIES)
         for (let k = 0; k < 96; k++) assert.isAtMost(Math.abs(samplePose(poseTable(drill, i), k / 96).headYaw) * DEG, 30.01, `${drill} ${i} ${k}/96`);
+  });
+
+  it('keeps the powder head near the chest, well inside its cap', () => {
+    const rule = TURN_STYLES[RegularTurn.Powder].head;
+    if (rule === undefined) throw new Error(RegularTurn.Powder);
+    for (const i of INTENSITIES) {
+      const s = TURN_STYLES[RegularTurn.Powder].scenarios[i];
+      const path = { radius: s.radiusM, corridor: CORRIDOR_SHARE * s.radiusM };
+      for (let k = 0; k < 96; k++) {
+        const t = k / 96;
+        const p = samplePose(poseTable(RegularTurn.Powder, i), t);
+        // Unclamped: the gaze's heading on the chest.
+        const ask = headingAt(t, path) - gazeHeading(rule, path, s.speedMps, t) - p.counter - p.spineTwist;
+        assert.isAtMost(Math.abs(ask) * DEG, 20, `${i} ${k}/96`);
+      }
+    }
   });
 
   it('looks inside the carving arc at shaping, not at the turn centre', () => {
@@ -579,6 +594,15 @@ describe('powder pop', () => {
     }
   });
 
+  it('keeps both ends of both skis on or over the packed base', () => {
+    for (const i of INTENSITIES)
+      for (let k = 0; k < 96; k++) {
+        const w = segmentMatrices(samplePose(poseTable(POWDER, i), k / 96));
+        for (const ski of ['right-ski', 'left-ski'])
+          for (const end of [SKI_TIP, SKI_TAIL]) assert.isAtLeast(transformPoint(w[segmentIndex(ski)] ?? identity(), end)[1], -0.01, `${i} ${ski} ${k}/96`);
+      }
+  });
+
   it('pops harder at dynamic than at gentle', () => {
     assert.isAbove(popRange(Intensity.Dynamic), popRange(Intensity.Gentle) + 0.05);
     assert.isAbove(peakPitch(Intensity.Dynamic), peakPitch(Intensity.Gentle) + 2);
@@ -636,6 +660,21 @@ describe('dolphin turn', () => {
     assert.isAbove(tipHeight(dolphin(Intensity.Dynamic, 0)), tipHeight(dolphin(Intensity.Gentle, 0)) + 0.02);
   });
 
+  it('plants the pole as the tips leave the snow', () => {
+    const touch = POSE_DEFINITIONS[DOLPHIN]?.constraints.poleTouch;
+    if (touch == null) throw new Error(DOLPHIN);
+    for (const i of INTENSITIES) {
+      const peak = Math.max(...FINISH.map((t) => tipHeight(dolphin(i, t))));
+      const share = tipHeight(dolphin(i, touch.t)) / peak;
+      assert.isAtLeast(share, 0.35, i);
+      assert.isAtMost(share, 0.65, i);
+      // Before the skis leave the snow, the tips still on it at shaping.
+      assert.closeTo(dolphin(i, touch.t).rise, 0, 1e-3, i);
+      assert.isBelow(tipHeight(dolphin(i, 1 / 2)), 0.005, i);
+      assert.isAbove(Math.abs(dolphin(i, touch.t).poleTouch), 0.99, i);
+    }
+  });
+
   it('sits back over the tails at the finish and ahead at initiation', () => {
     for (const i of INTENSITIES) {
       assert.isBelow(aheadOnSnow(dolphin(i, 11 / 12)), -0.05, `${i} finish`);
@@ -656,7 +695,7 @@ describe('dolphin turn', () => {
   });
 
   it('keeps every other drill on the snow', () => {
-    for (const drill of Object.keys(POSE_DEFINITIONS).filter((d) => d !== DOLPHIN))
+    for (const drill of Object.keys(POSE_DEFINITIONS).filter((d) => d !== DOLPHIN && d !== POWDER))
       for (const i of INTENSITIES) for (const p of poseTable(drill, i)) assert.strictEqual(p.rise, 0, `${drill} ${i}`);
   });
 });

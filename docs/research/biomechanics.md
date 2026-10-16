@@ -403,7 +403,8 @@ these generalise to drills.
    in the hips, with the spine adding about 5° to 8° (sporri-2016, fujii-2007). The figure sets the
    pelvis's counter at the switch as a share of the skis' heading off the fall line, capped by the hip's
    rotation range: about 0.6 in short turns (about 36° at the switch), more on steeps (skimag-steeps-2018,
-   kipp-2024), less in the rounder powder turns. The shares are inferred. In moguls the pelvis faces the
+   kipp-2024), and about 0.7 in open powder, where the head stays on the fall line and near the chest
+   (head within about 20° of the chest through the turn). The shares are inferred. In moguls the pelvis faces the
    fall line outright, so counter is the skis' whole heading off it with no spinal twist.
 
 **Muscles.**

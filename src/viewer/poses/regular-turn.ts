@@ -61,6 +61,8 @@ export interface TurnStyle {
   readonly crossUnder: readonly [number, number, number];
   /** A pole plant at the transition. */
   readonly polePlant: boolean;
+  /** Turn time of the touch; absent, just after the switch. */
+  readonly poleTouchAt?: number;
   /** Poles this many metres shorter than regular. */
   readonly poleTrim: number;
   /** Where the head looks; absent, with the chest. */
@@ -344,9 +346,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Gentle a soft rebound, dynamic a clear pop (iasi-2021 p88); inferred.
     hipSpread: 3,
     angulation: 4,
-    // Rounder, flowing turns: the trunk follows the skis more than in short turns; share inferred.
-    counter: anticipation(POWDER, 0.45),
-    twist: 3,
+    // Head on the fall line and near the chest in open powder, so the chest leads well down it; share inferred.
+    counter: anticipation(POWDER, 0.7),
+    twist: 7,
     counterCurve: HEADING,
     bend: 2,
     spineFlex: 19,
@@ -448,6 +450,8 @@ export const DOLPHIN: TurnStyle = {
   // A flexion transition: the legs retract under the mass (seifert-2023, lemaster-2010 pp152-154).
   crossUnder: [1, 1, 1],
   polePlant: true,
+  // As the tips leave the snow (dolphin-turns.yaml): half their lift at the finish key.
+  poleTouchAt: 5 / 6,
   poleTrim: 0,
   head: NEXT_APEX,
   rebound: DOLPHIN_POP,
@@ -551,7 +555,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       trunkOverShin: style.trunkOverShin * DEG,
       trunkOverShinGain: TRUNK_OVER_SHIN_GAIN,
       insideAnkleShare: INSIDE_ANKLE_SHARE,
-      poleTouch: style.polePlant ? { t: 1 / 24, hold: 0.02, swing: 0.11 } : null,
+      poleTouch: style.polePlant ? { t: style.poleTouchAt ?? 1 / 24, hold: 0.02, swing: 0.11 } : null,
       scapularRhythm: 0.3,
       stance: style.narrow * DEG,
       kneesIn: style.kneesIn * DEG,

@@ -38,7 +38,7 @@ const balanceShare = (lean: number, s: TurnScenario): number => {
   const a = Math.abs(lean);
   return 1 - (1 - fade((a - BALANCE_FROM) / (BALANCE_BY - BALANCE_FROM))) * (1 - fade(a / (BALANCE_PEAK * peakLean(s))));
 };
-import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
+import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TAIL, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
 import type { Pose } from './pose';
 
 /** How hard the drill is skied, from its physics. */
@@ -105,6 +105,18 @@ const riseOf = (pose: Pose, clearance: number): number => {
   const world = segmentMatrices({ ...pose, rise: 0 });
   const tip = (side: BodySide): number => transformPoint(world[skiIndex(side)] ?? identity(), SKI_TIP)[1];
   return Math.max(0, clearance, -Math.min(tip(BodySide.Left), tip(BodySide.Right)));
+};
+
+/** Softness of the lowest end, metres: the rise stays smooth as tail and tip swap. */
+const BASE_SOFTNESS = 0.005;
+
+/** In loose snow the pitched skis ride the packed base: the boots rise until neither ski's end dips under it. */
+const baseRiseOf = (pose: Pose): number => {
+  const world = segmentMatrices({ ...pose, rise: 0 });
+  const end = (side: BodySide, point: Vec3): number => transformPoint(world[skiIndex(side)] ?? identity(), point)[1];
+  const depths = [BodySide.Left, BodySide.Right].flatMap((side) => [-end(side, SKI_TIP), -end(side, SKI_TAIL)]);
+  const most = Math.max(...depths);
+  return Math.max(0, most + BASE_SOFTNESS * Math.log(depths.reduce((sum, d) => sum + Math.exp((d - most) / BASE_SOFTNESS), 0)));
 };
 
 const segmentOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
@@ -455,7 +467,7 @@ const solveOn = (
   const solved = base(knee, inside.extra, inside.tailLift, shin);
   // The head moves no mass to speak of, so it turns only once the trunk is set.
   const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist) };
-  const rested = (p: Pose): Pose => (firm ? { ...p, rise: riseOf(p, mild('skiClearance')) } : p);
+  const rested = (p: Pose): Pose => (firm ? { ...p, rise: riseOf(p, mild('skiClearance')) } : pitch === 0 ? p : { ...p, rise: baseRiseOf(p) });
   const legs = rested(turned);
   if (legs.poleTouch === 0) return legs;
   const reach = Math.abs(legs.poleTouch) * solveReach(legs, c.scapularRhythm, poleSize(CAPSULE_ARM, c.poleTrim).basket);
