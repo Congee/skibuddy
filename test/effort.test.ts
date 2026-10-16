@@ -1,5 +1,5 @@
 import { assert, describe, it } from '@effect/vitest';
-import { Effort, effortAt, effortColour, effortWord, hexRgb, steadyOrder } from '../src/content/effort';
+import { Effort, effortAt, effortColour, effortWord, hexRgb, steadyOrder, twinOf } from '../src/content/effort';
 import type { EffortRamp } from '../src/content/effort';
 import type { Activation, PhaseIntensity } from '../src/content/schema';
 
@@ -40,6 +40,34 @@ describe('effortAt', () => {
 
   it('is flat for a constant activation', () => {
     for (const t of [0, 0.2, 0.5, 0.9]) assert.strictEqual(effortAt(intensity(2, 2, 2), t), 2);
+  });
+
+  it('hands the old outside leg over to its new inside role at the switch', () => {
+    const outside = intensity(3, 3, 2);
+    const inside = intensity(1, 1, 0);
+    assert.closeTo(effortAt(outside, 1 - 1e-9, undefined, inside), effortAt(inside, 0, undefined, outside), 1e-6);
+    assert.closeTo(effortAt(outside, 0, undefined, inside), 1.5, 1e-9);
+    assert.closeTo(effortAt(outside, 1 / 6, undefined, inside), 3, 1e-9);
+  });
+});
+
+describe('twinOf', () => {
+  const sided = (muscle: string, side: string, i: number): Activation =>
+    ({ muscle, side, intensity: intensity(i, i, i) }) as unknown as Activation;
+  const out = sided('a', 'outside', 3);
+  const inn = sided('a', 'inside', 1);
+  const lone = sided('b', 'outside', 2);
+  const both = sided('c', 'both', 2);
+  const all = [out, inn, lone, both];
+
+  it('finds the same muscle on the other leg', () => {
+    assert.deepStrictEqual(twinOf(out, all), inn.intensity);
+    assert.deepStrictEqual(twinOf(inn, all), out.intensity);
+  });
+
+  it('rests a one-sided muscle and keeps a both-sided one', () => {
+    assert.deepStrictEqual(twinOf(lone, all), intensity(0, 0, 0));
+    assert.deepStrictEqual(twinOf(both, all), both.intensity);
   });
 });
 

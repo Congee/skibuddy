@@ -2,7 +2,7 @@ import { useAtomValue } from '@effect/atom-solid';
 import { Show, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { MuscleLevel } from '../content/activation';
-import { MAX_EFFORT, effortAt } from '../content/effort';
+import { MAX_EFFORT, effortAt, twinOf } from '../content/effort';
 import { Intensity } from '../content/schema';
 import type { Movement } from '../content/schema';
 import { isMirrored, playingAtom, turnDirectionAtom, turnNote, turnTimeAtom } from '../state/playback';
@@ -108,8 +108,9 @@ export const Viewer = (props: {
   const levels = createMemo(() => {
     const { activations } = props.movement;
     const setting = props.intensity ?? Intensity.Moderate;
+    const twins = activations.map((a) => twinOf(a, activations));
     return (at: number): ReadonlyArray<MuscleLevel> =>
-      activations.map((a) => ({ muscle: a.muscle, side: a.side, level: effortAt(a.intensity, at, setting) / MAX_EFFORT }));
+      activations.map((a, i) => ({ muscle: a.muscle, side: a.side, level: effortAt(a.intensity, at, setting, twins[i]) / MAX_EFFORT }));
   });
 
   onMount(() => {

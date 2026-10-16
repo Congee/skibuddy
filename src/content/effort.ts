@@ -1,4 +1,4 @@
-import { INTENSITIES, Intensity, PHASES, phaseContraction, phaseIntensity } from './schema';
+import { INTENSITIES, Intensity, PHASES, Side, phaseContraction, phaseIntensity } from './schema';
 import type { Activation, ActivationIntensity, PhaseContraction, PhaseIntensity } from './schema';
 
 export const Effort = { Resting: 'Resting', Light: 'Light', Working: 'Working', Hard: 'Hard' } as const;
@@ -22,10 +22,13 @@ export const contractionsFor = (a: Activation, i: Intensity): PhaseContraction =
 
 /**
  * Effort at `t` in [0, 1) through one turn at `setting`, smoothstep-blended between phase
- * centres and wrapping from finish back to initiation. For display only.
+ * centres and wrapping from finish into the next turn's initiation. The next turn swaps the
+ * legs, so across the switch the blend runs to or from `twin`, this muscle on the other leg
+ * (by default the same intensity, for a muscle that does not change sides). For display only.
  */
-export const effortAt = (intensity: ActivationIntensity, t: number, setting: Intensity = Intensity.Moderate): number => {
+export const effortAt = (intensity: ActivationIntensity, t: number, setting: Intensity = Intensity.Moderate, twin: ActivationIntensity = intensity): number => {
   const resolved = phaseIntensity(intensity, setting);
+  const other = phaseIntensity(twin, setting);
   const values = PHASES.map((p) => resolved[p]);
   const n = values.length;
   const first = PHASE_CENTRES[0] ?? 0;
@@ -35,12 +38,23 @@ export const effortAt = (intensity: ActivationIntensity, t: number, setting: Int
     const a = PHASE_CENTRES[i] ?? 0;
     const b = i + 1 < n ? (PHASE_CENTRES[i + 1] ?? 1) : first + 1;
     if (x <= b) {
-      const va = values[i] ?? 0;
-      const vb = values[(i + 1) % n] ?? 0;
+      const crossing = i + 1 === n;
+      // Before the switch this leg heads for the other leg's initiation; after it, it comes from the other leg's finish.
+      const va = crossing && wrapped < first ? other.finish : (values[i] ?? 0);
+      const vb = crossing ? (wrapped < first ? resolved.initiation : other.initiation) : (values[i + 1] ?? 0);
       return va + (vb - va) * smoothstep((x - a) / (b - a));
     }
   }
   return values[0] ?? 0;
+};
+
+const RESTING: ActivationIntensity = { initiation: 0, shaping: 0, finish: 0 };
+
+/** The same muscle on the other leg, which takes this one's place in the next turn; resting when it has none. */
+export const twinOf = (a: Activation, all: ReadonlyArray<Activation>): ActivationIntensity => {
+  if (a.side === Side.Both) return a.intensity;
+  const other = a.side === Side.Outside ? Side.Inside : Side.Outside;
+  return all.find((x) => x.muscle === a.muscle && x.side === other)?.intensity ?? RESTING;
 };
 
 export const effortWord = (v: number): Effort =>

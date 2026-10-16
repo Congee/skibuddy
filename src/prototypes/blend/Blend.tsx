@@ -495,7 +495,7 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
             <Match when={activation()}>
               {(a) => (
                 <>
-                  <Glance data={data} activation={a()} intensity={intensity()} ramp={ramp()} />
+                  <Glance data={data} activation={a()} order={order()} intensity={intensity()} ramp={ramp()} />
                   <Show when={sheet() !== Sheet.Full && !desktop()}>
                     <button type="button" class="more" onClick={() => setSheet(Sheet.Full)}>
                       <Icon name="up" />

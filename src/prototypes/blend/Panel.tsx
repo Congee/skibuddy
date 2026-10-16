@@ -1,6 +1,6 @@
 import { For, Show, createEffect, createMemo } from 'solid-js';
 import type { JSX } from 'solid-js';
-import { effortWord, effortsFor, contractionsFor } from '../../content/effort';
+import { effortWord, effortsFor, contractionsFor, twinOf } from '../../content/effort';
 import type { EffortRamp } from '../../content/effort';
 import { DOF_LABELS, PHASES, STRUCTURE_NAMES, shortNameOf } from '../../content/schema';
 import type { Activation, Citation, Intensity, Movement } from '../../content/schema';
@@ -41,6 +41,8 @@ const PhaseScale = (): JSX.Element => (
 export const Glance = (props: {
   readonly data: BlendData;
   readonly activation: Activation;
+  /** Every activation of the movement, for the muscle's twin on the other leg. */
+  readonly order: ReadonlyArray<Activation>;
   readonly intensity: Intensity;
   readonly ramp: EffortRamp;
 }): JSX.Element => {
@@ -54,6 +56,7 @@ export const Glance = (props: {
       <EffortStrip
         intensity={props.activation.intensity}
         setting={props.intensity}
+        twin={twinOf(props.activation, props.order)}
         ramp={props.ramp}
         height={34}
         scrub
@@ -253,7 +256,7 @@ export const MuscleList = (props: {
                   {shortName(props.data, a)}
                   <span class="row-side">{a.side === 'both' ? '' : a.side}</span>
                 </span>
-                <EffortStrip intensity={a.intensity} setting={props.intensity} ramp={props.ramp} height={16} label={shortName(props.data, a)} />
+                <EffortStrip intensity={a.intensity} setting={props.intensity} twin={twinOf(a, props.order)} ramp={props.ramp} height={16} label={shortName(props.data, a)} />
               </button>
               <Show when={props.selected === key}>
                 <button type="button" class="row-open" aria-label={`Details for ${shortName(props.data, a)}`} onClick={() => props.onOpen(key)}>

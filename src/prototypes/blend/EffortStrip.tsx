@@ -13,6 +13,8 @@ const W = 300;
 export const EffortStrip = (props: {
   readonly intensity: ActivationIntensity;
   readonly setting: Intensity;
+  /** The muscle on the other leg, which the next turn hands this one's effort to. */
+  readonly twin?: ActivationIntensity;
   readonly ramp: EffortRamp;
   readonly height: number;
   /** Dragging the strip scrubs the turn. */
@@ -26,14 +28,14 @@ export const EffortStrip = (props: {
   const samples = createMemo(() =>
     Array.from({ length: SAMPLES + 1 }, (_, i) => {
       const at = i / SAMPLES;
-      return { at, v: effortAt(props.intensity, at, props.setting) };
+      return { at, v: effortAt(props.intensity, at, props.setting, props.twin) };
     }),
   );
   const top = (v: number): number => h() - Math.max(1.5, (v / MAX_EFFORT) * (h() - 2));
   const area = createMemo(
     () => `M0 ${h()} ${samples().map((s) => `L${(s.at * W).toFixed(1)} ${top(s.v).toFixed(1)}`).join(' ')} L${W} ${h()} Z`,
   );
-  const now = createMemo(() => effortWord(effortAt(props.intensity, t(), props.setting)));
+  const now = createMemo(() => effortWord(effortAt(props.intensity, t(), props.setting, props.twin)));
 
   const scrubTo = (e: PointerEvent, el: Element): void => {
     const r = el.getBoundingClientRect();
