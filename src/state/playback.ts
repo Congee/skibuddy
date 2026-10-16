@@ -9,7 +9,7 @@ export const PLAYBACK_FPS = 30;
 
 /** Position through one turn, in [0, 1). */
 export const turnTimeAtom = Atom.keepAlive(Atom.make(0.5));
-/** Which way the shown turn goes; playback alternates them, the scrubber stays within one. */
+/** Which way the shown turn goes; playback and the scrubber run left then right. */
 export const TurnDirection = { Left: 'left', Right: 'right' } as const;
 export type TurnDirection = (typeof TurnDirection)[keyof typeof TurnDirection];
 /** The pose tables' turn has the right leg outside, a left turn; a right turn draws it mirrored. */
@@ -26,3 +26,12 @@ export const playingAtom = Atom.keepAlive(Atom.make(false));
 export const wrapTurn = (t: number): number => ((t % 1) + 1) % 1;
 
 export const phaseAt = (t: number): Phase => PHASES[Math.min(PHASES.length - 1, Math.floor(wrapTurn(t) * PHASES.length))] ?? Phase.Initiation;
+
+/** A left turn then a right turn, as one position in [0, 1). */
+export const cycleOf = (direction: TurnDirection, t: number): number => ((direction === TurnDirection.Left ? 0 : 1) + wrapTurn(t)) / 2;
+
+/** The turn, and the position in it, at a cycle position; wraps. */
+export const turnAt = (cycle: number): { readonly direction: TurnDirection; readonly t: number } => {
+  const c = wrapTurn(cycle) * 2;
+  return c < 1 ? { direction: TurnDirection.Left, t: c } : { direction: TurnDirection.Right, t: c - 1 };
+};

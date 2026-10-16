@@ -1,9 +1,9 @@
 import { useAtom } from '@effect/atom-solid';
-import { For, Match, Show, Switch, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js';
+import { For, Match, Show, Switch, batch, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { steadyOrder } from '../../content/effort';
-import { INTENSITIES, Intensity, isTurnScenarios } from '../../content/schema';
-import { phaseAt, playingAtom, turnTimeAtom, wrapTurn } from '../../state/playback';
+import { INTENSITIES, Intensity, PHASES, isTurnScenarios } from '../../content/schema';
+import { TurnDirection, cycleOf, phaseAt, playingAtom, turnAt, turnDirectionAtom, turnTimeAtom } from '../../state/playback';
 import { usePlayback } from './playback';
 import { REDUCED_MOTION, createMedia } from './media';
 import { ViewLock } from '../../viewer/hip-lock';
@@ -32,40 +32,27 @@ const VIEW_LOCK_NAMES: Readonly<Record<ViewLock, string>> = { [ViewLock.SkisFixe
 /** Mogul motions, seen as their hips hold the fall line. */
 const HIPS_FIXED_POSES: ReadonlySet<string> = new Set([RegularTurn.Moguls, 'closed-stance-short-turns']);
 
-/** Rail under the figure: play one turn, or drag through it. */
+const TURN_NAMES = { [TurnDirection.Left]: 'Left turn', [TurnDirection.Right]: 'Right turn' } as const;
+const HALVES = [TurnDirection.Left, TurnDirection.Right] as const;
+
+/** Rail under the figure: play a left then a right turn on a loop, or drag through them. */
 const Rail = (props: { readonly reducedMotion: boolean }): JSX.Element => {
   const [t, setT] = useAtom(() => turnTimeAtom);
+  const [direction, setDirection] = useAtom(() => turnDirectionAtom);
   const [playing, setPlaying] = useAtom(() => playingAtom);
-  let start = 0;
-  let travelled = 0;
-  let prev = 0;
-  createEffect(
-    on(t, (now) => {
-      if (!playing()) return;
-      travelled += wrapTurn(now - prev);
-      prev = now;
-      if (travelled >= 1) {
-        setPlaying(false);
-        setT(start);
-      }
-    }),
-  );
-  const play = (): void => {
-    if (playing()) {
-      setPlaying(false);
-      return;
-    }
-    start = t();
-    prev = start;
-    travelled = 0;
-    setPlaying(true);
+  const seek = (d: TurnDirection, at: number): void => {
+    setPlaying(false);
+    batch(() => {
+      setDirection(d);
+      setT(at);
+    });
   };
   return (
     <div class="rail">
       <button
         type="button"
         class="icon-button play"
-        onClick={play}
+        onClick={() => setPlaying(!playing())}
         disabled={props.reducedMotion}
         aria-label={playing() ? 'Pause' : 'Play'}
         title={props.reducedMotion ? 'Playback is off while reduced motion is on; drag the rail instead' : undefined}
@@ -78,17 +65,35 @@ const Rail = (props: { readonly reducedMotion: boolean }): JSX.Element => {
           min="0"
           max="0.999"
           step="0.001"
-          value={t()}
-          aria-label="Position in the turn"
-          aria-valuetext={`${PHASE_NAMES[phaseAt(t())]}, ${Math.round(t() * 100)}% through the turn`}
+          value={cycleOf(direction(), t())}
+          aria-label="Position in a left turn then a right turn"
+          aria-valuetext={`${TURN_NAMES[direction()]}, ${PHASE_NAMES[phaseAt(t())]}, ${Math.round(t() * 100)}% through the turn`}
           onInput={(e) => {
-            setPlaying(false);
-            setT(Number(e.currentTarget.value));
+            const at = turnAt(Number(e.currentTarget.value));
+            seek(at.direction, at.t);
           }}
         />
-        <div class="rail-phases" aria-hidden="true">
-          <For each={Object.entries(PHASE_NAMES)}>
-            {([p, name]) => <span data-on={phaseAt(t()) === p ? '' : undefined}>{name}</span>}
+        <div class="rail-halves">
+          <For each={HALVES}>
+            {(half) => (
+              <div class="rail-half" data-on={direction() === half ? '' : undefined}>
+                <div class="rail-phases">
+                  <For each={PHASES}>
+                    {(p, i) => (
+                      <button
+                        type="button"
+                        aria-pressed={direction() === half && phaseAt(t()) === p}
+                        aria-label={`${PHASE_NAMES[p]}, ${TURN_NAMES[half].toLowerCase()}`}
+                        onClick={() => seek(half, (i() + 0.5) / PHASES.length)}
+                      >
+                        {PHASE_NAMES[p]}
+                      </button>
+                    )}
+                  </For>
+                </div>
+                <span class="rail-turn">{TURN_NAMES[half]}</span>
+              </div>
+            )}
           </For>
         </div>
       </div>

@@ -1,24 +1,27 @@
 import { useAtom } from '@effect/atom-solid';
-import { createEffect, onCleanup } from 'solid-js';
+import { batch, createEffect, onCleanup } from 'solid-js';
 import type { Accessor } from 'solid-js';
 import { MIN_VISIBLE_FRACTION, createAutoPause } from '../../state/auto-pause';
-import { PLAYBACK_FPS, TURN_SECONDS, otherTurn, playingAtom, turnDirectionAtom, turnTimeAtom, wrapTurn } from '../../state/playback';
+import { PLAYBACK_FPS, TURN_SECONDS, cycleOf, playingAtom, turnAt, turnDirectionAtom, turnTimeAtom } from '../../state/playback';
 import { createTicker } from '../../state/ticker';
 
 /** Runs the turn clock; pauses for reduced motion, a hidden tab or an off-screen figure. */
 export const usePlayback = (reducedMotion: Accessor<boolean>, figure: Accessor<Element | undefined>): void => {
   const [playing, setPlaying] = useAtom(() => playingAtom);
   const [t, setT] = useAtom(() => turnTimeAtom);
-  const [, setDirection] = useAtom(() => turnDirectionAtom);
+  const [direction, setDirection] = useAtom(() => turnDirectionAtom);
   createEffect(() => {
     if (reducedMotion()) setPlaying(false);
   });
 
-  // Each wrap starts the next turn, the other way.
+  // Loops left turn, right turn until paused.
   const ticker = createTicker((seconds) => {
-    const next = t() + seconds / TURN_SECONDS;
-    if (Math.floor(next) % 2 === 1) setDirection(otherTurn);
-    setT(wrapTurn(next));
+    const next = turnAt(cycleOf(direction(), t()) + seconds / (2 * TURN_SECONDS));
+    // One update, so no frame shows the new side at the old time.
+    batch(() => {
+      if (next.direction !== direction()) setDirection(next.direction);
+      setT(next.t);
+    });
   }, PLAYBACK_FPS);
   createEffect(() => {
     if (playing()) ticker.start();

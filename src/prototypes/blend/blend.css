@@ -585,8 +585,11 @@ p {
   margin: 0;
   appearance: none;
   background:
-    linear-gradient(var(--contour), var(--contour)) calc(100% / 3) 50% / 2px 12px no-repeat,
-    linear-gradient(var(--contour), var(--contour)) calc(200% / 3) 50% / 2px 12px no-repeat,
+    linear-gradient(var(--contour), var(--contour)) calc(100% / 6) 50% / 2px 10px no-repeat,
+    linear-gradient(var(--contour), var(--contour)) calc(200% / 6) 50% / 2px 10px no-repeat,
+    linear-gradient(var(--ink-3), var(--ink-3)) 50% 50% / 2px 18px no-repeat,
+    linear-gradient(var(--contour), var(--contour)) calc(400% / 6) 50% / 2px 10px no-repeat,
+    linear-gradient(var(--contour), var(--contour)) calc(500% / 6) 50% / 2px 10px no-repeat,
     linear-gradient(var(--contour), var(--contour)) 0 50% / 100% 2px no-repeat;
   cursor: ew-resize;
 }
@@ -608,16 +611,41 @@ p {
   background: var(--snow);
 }
 
+.rail-halves {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
 .rail-phases {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  font-size: 13px;
+}
+
+.rail-phases button {
+  min-width: 0;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  /* Six labels share a phone-width rail. */
+  font-size: clamp(11px, 2.8vw, 13px);
+  color: var(--ink-3);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.rail-phases [aria-pressed='true'] {
+  color: var(--ink);
+}
+
+.rail-turn {
+  display: block;
+  font-size: 12px;
   color: var(--ink-3);
   text-align: center;
 }
 
-.rail-phases [data-on] {
-  color: var(--ink);
+.rail-half[data-on] .rail-turn {
+  color: var(--ink-2);
 }
 
 .kinds {
