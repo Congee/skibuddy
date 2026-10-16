@@ -3,4 +3,5 @@ dist
 public/content.json
 *.local
 .DS_Store
-.impeccable/review/
+.impeccable
+.claude
