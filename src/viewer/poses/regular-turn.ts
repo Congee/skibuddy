@@ -508,9 +508,10 @@ export const DOLPHIN: TurnStyle = {
   narrow: 0,
   kneesIn: 0,
   // Forebody at initiation, centred by shaping, the tails in the finish (lind-sanders-2004 pp69-70); inferred.
-  comAhead: [0.07, 0.075, 0.045, 0.035, -0.045],
-  comAheadGain: 0.1,
-  trunkOverShin: 12,
+  // Ahead late in shaping so the chest stays over the outside knee into the sit-back; inferred.
+  comAhead: [0.07, 0.065, 0.045, 0.1, -0.055],
+  comAheadGain: 0.25,
+  trunkOverShin: 11,
   trunkOverShinGain: 0,
   early: 0.6,
   // A flexion transition: the legs retract under the mass (seifert-2023, lemaster-2010 pp152-154).
