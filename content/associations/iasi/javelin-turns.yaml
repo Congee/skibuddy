@@ -1,0 +1,8 @@
+association: iasi
+drill: javelin-turns
+task: Javelin Turns
+# The manual gives its drills no level. It names rotation, edging and pressure control as this drill's skills
+# (p 169); reading pressure control as ski to ski is ours.
+fundamentals: { relation: and, ids: [rotation, edging, pressure-ski-to-ski] }
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=169
+reviewed_by: []

@@ -1,0 +1,9 @@
+association: psia
+drill: step-turns
+task: Step into Fall Line
+level: { label: Level 1, ordinal: 1 }
+category: Individual
+# The national list joins the two with "and/or".
+fundamentals: { relation: and/or, ids: [ski-to-ski, leg-rotation] }
+url: https://thesnowpros.org/wp-content/uploads/2026/10/PSIA-AASI_National_Alpine_Activities_List_v1.2a.pdf#page=16
+reviewed_by: []

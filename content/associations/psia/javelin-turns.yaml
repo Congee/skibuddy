@@ -1,0 +1,9 @@
+association: psia
+drill: javelin-turns
+task: Javelin
+level: { label: Level 3, ordinal: 3 }
+category: Individual
+# The page joins the two with "and".
+fundamentals: { relation: and, ids: [leg-rotation, pressure-magnitude] }
+url: https://psia-c.org/education/alpine/alpine-resources/javelin/
+reviewed_by: []

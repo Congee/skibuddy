@@ -290,3 +290,43 @@
   citation: PSIA-AASI Central. Stork Turns (alpine resources).
   url: https://psia-c.org/education/alpine/alpine-resources/stork-turns/
   read: full
+- id: psia-c-outside-ski-turn
+  type: web
+  citation: PSIA-AASI Central. Outside Ski Turn (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/outside-ski-turn/
+  read: full
+- id: psia-c-intermediate-one-ski
+  type: web
+  citation: PSIA-AASI Central. Intermediate One-Ski Activities (skill-building tasks).
+  url: https://psia-c.org/education/alpine/alpine-resources/intermediate-one-ski-activities/
+  read: full
+- id: psia-national-activities
+  type: web
+  citation: PSIA-AASI. National Alpine Activities List, version 1.2a. 2026.
+  url: https://thesnowpros.org/wp-content/uploads/2026/10/PSIA-AASI_National_Alpine_Activities_List_v1.2a.pdf
+  read: partial
+- id: psia-c-javelin
+  type: web
+  citation: PSIA-AASI Central. Javelin (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/javelin/
+  read: full
+- id: psia-c-1000-steps
+  type: web
+  citation: PSIA-AASI Central. 1000 Steps (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/1000-steps/
+  read: full
+- id: hermann-2023
+  type: article
+  citation: Hermann A et al. Muscular fatigue and quadriceps-to-hamstring ratio in alpine skiing in women over 40 years. Int J Environ Res Public Health. 2023;20:5486.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10138889/
+  read: full
+- id: kurpiers-2024
+  type: article
+  citation: Kurpiers N et al. The influence of two teaching approaches on foot loading in skiing beginners. Sensors. 2024;24.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC11644853/
+  read: full
+- id: psia-c-step-turn-fall-line
+  type: web
+  citation: PSIA-AASI Central. Step Turn into Fall Line (skill-building tasks).
+  url: https://psia-c.org/education/alpine/alpine-resources/step-turn-fall-line/
+  read: full

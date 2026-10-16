@@ -1,0 +1,9 @@
+association: psia
+drill: thousand-steps
+task: 1000 Steps
+level: { label: Level 2, ordinal: 2 }
+category: Individual
+# The page joins the two with "and/or".
+fundamentals: { relation: and/or, ids: [ski-to-ski, fore-aft] }
+url: https://psia-c.org/education/alpine/alpine-resources/1000-steps/
+reviewed_by: []

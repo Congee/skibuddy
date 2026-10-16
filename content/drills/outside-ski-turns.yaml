@@ -1,0 +1,35 @@
+id: outside-ski-turns
+name: Outside-ski turns
+movement: outside-ski-turn
+summary: Linked medium-radius turns on the outside ski alone. The new inside ski comes off the snow before the edge change, so the stance foot rolls its ski from the little-toe edge to the big-toe edge on its own, and the lifted ski stays about level and parallel through every phase. At the end of the turn it is set down at hip width, takes the weight and becomes the next stance ski. The stance ski bends and leaves a round, brushed track; balance comes from angulation over one edge and fore-aft control along one ski.
+# The task pages give the terrain; "slush or ruts" and the softened snow are our reading of L&S on one edge's hold.
+terrain: Blue to gentle black groomed runs with smooth, edgeable snow, softened rather than hard morning groom; not ice, slush or ruts
+# Linked medium turns; the track is brushed at every setting. Loads follow Lind & Sanders eq 4.9, p 103,
+# peaking below the fall line. Speeds and radii are our inference, well under race levels.
+scenarios:
+  gentle: { speed_mps: 7, radius_m: 12, slope_deg: 12 }
+  moderate: { speed_mps: 9, radius_m: 14, slope_deg: 16 }
+  dynamic: { speed_mps: 11, radius_m: 16, slope_deg: 20 }
+equipment: Efforts assume recreational carving skis and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. More lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee; a deeper sidecut tightens the turn. On one ski, canting and boot fit matter more, because one edge carries the whole lateral force.
+cautions:
+  - Build up to it. Lift only the tail at first, as in stork turns, then the whole ski, and practise on easier terrain before blue to black.
+  - Set the lifted ski down parallel, at hip width, on its little-toe edge; never in a wedge.
+  - Stop the drill when tired; a tired set-down is the risky one.
+sources:
+  - { source: lind-sanders-2004, pages: "25, 53, 67, 103, 125, 137-139" }
+  - { source: lemaster-2010, pages: "32-33, 131-132, 136, 164-169" }
+  - posch-2025
+  - ruedl-2022
+  - psia-c-outside-ski-turn
+  - psia-c-intermediate-one-ski
+  - psia-national-activities
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: whole load on one leg for the whole turn }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: the stance foot changes edges alone; the lifted foot tips with it }
+  - { primitive: leg-rotation, modifier: small }
+  - { primitive: counter, modifier: slight }
+  - { primitive: hip-angulation, modifier: inside half of the pelvis unsupported from before the edge change }
+  - { primitive: inside-leg-lift, modifier: "whole ski, lifted before the edge change and held level through every phase" }
+  - { primitive: pole-touch, modifier: optional light touch at the edge change }
+reviewed_by: []

@@ -1,0 +1,29 @@
+id: thousand-steps
+name: Thousand steps
+movement: thousand-steps-turn
+summary: Linked medium-large turns made while stepping continuously from ski to ski. Each ski is lifted a little, kept about parallel to the snow, and placed back on its edge, so the skis leave narrow edged tracks and stay nearly parallel after the first diverging step into the turn. The stepping carries on through the edge change. Each leg flexes and extends on its own to move the weight across, under a quiet, stable torso, with the weight on the outside ski for more of each step.
+terrain: Green to gentle blue groomed slopes with smooth snow; not ice, slush or ruts
+# Medium-large turns at modest speed. Loads follow Lind & Sanders eq 4.9, p 103, peaking below the fall line.
+# Speeds and radii are our inference, well under race levels.
+scenarios:
+  gentle: { speed_mps: 6, radius_m: 14, slope_deg: 8 }
+  moderate: { speed_mps: 8, radius_m: 16, slope_deg: 11 }
+  dynamic: { speed_mps: 10, radius_m: 18, slope_deg: 14 }
+equipment: Efforts assume recreational carving skis and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. More lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee; a deeper sidecut tightens the turn.
+cautions:
+  - Keep the steps small and the skis parallel; a diverging step that lands tip out can catch an edge.
+  - Step with the legs, not by swaying the upper body.
+sources:
+  - { source: lind-sanders-2004, pages: "103, 137" }
+  - { source: lemaster-2010, pages: "40-42, 136-140" }
+  - posch-2025
+  - ruedl-2022
+  - psia-c-1000-steps
+  - psia-national-activities
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: "repeated, each foot in turn, the outside one for longer" }
+  - { primitive: inside-leg-lift, modifier: "a little, ski level, at every step; the outside leg lifts too" }
+  - { primitive: inside-leg-shortening }
+  - { primitive: ankle-flexion, modifier: re-centred at every step }
+  - { primitive: tipping, modifier: each step placed on its edge; stepping continues through the edge change }
+reviewed_by: []

@@ -1,0 +1,9 @@
+association: psia
+drill: outside-ski-turns
+task: Outside Ski Turn
+level: { label: Level 3, ordinal: 3 }
+category: Individual
+# The page joins the two with "and".
+fundamentals: { relation: and, ids: [edge-angles, fore-aft] }
+url: https://psia-c.org/education/alpine/alpine-resources/outside-ski-turn/
+reviewed_by: []

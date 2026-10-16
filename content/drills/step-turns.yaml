@@ -1,0 +1,29 @@
+id: step-turns
+name: Step turns into the fall line
+movement: step-turn
+summary: One turn from a traverse to a stop. Sliding forward across the hill, the skier lifts the downhill ski, turns it a little toward the fall line in the air and sets it down, then steps the uphill ski to match; small steps, diverging or parallel, carry the skis round into the fall line. From there both skis glide and steer through the same turn shape until they are steered to a stop. The weight moves foot to foot by flexing and extending each leg on its own, and the legs turn in the hip sockets under a quiet upper body that faces down the hill.
+terrain: Gentle green groomed slopes
+# Slow, single turns. Loads follow Lind & Sanders eq 4.9, p 103; the braking to a stop (eq 4.7, p 91) needs about
+# the same. Speeds and radii are our inference.
+scenarios:
+  gentle: { speed_mps: 3, radius_m: 5, slope_deg: 6 }
+  moderate: { speed_mps: 4, radius_m: 6, slope_deg: 9 }
+  dynamic: { speed_mps: 5, radius_m: 7, slope_deg: 12 }
+equipment: Efforts assume recreational skis and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. Short, soft skis are easier to lift and turn; more lean or ramp deepens the knee.
+cautions:
+  - Keep the steps small; a big diverging step that lands tip out can catch an edge and twist the knee.
+  - Learn the stepping on the flat first, gliding in a straight run, then from a traverse.
+sources:
+  - { source: lind-sanders-2004, pages: "91, 103" }
+  - { source: lemaster-2010, pages: "107-108" }
+  - posch-2025
+  - psia-c-step-turn-fall-line
+  - psia-national-activities
+primitives:
+  - { primitive: inside-leg-lift, modifier: "alternating; the inside ski steps first, then the outside ski steps to match" }
+  - { primitive: stance-leg-edge-hold, modifier: "on each standing foot, then on the outside ski in the skid to a stop" }
+  - { primitive: leg-rotation, modifier: "each ski turned in the air, then both steered through the skid" }
+  - { primitive: counter, modifier: "slight; the upper body keeps facing down the hill as the skis turn across" }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: "small; the edges change in the fall line, started from the feet" }
+reviewed_by: []

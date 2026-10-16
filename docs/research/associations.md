@@ -43,7 +43,7 @@ Activities fall into three **categories**: Integrated, Individual and Versatilit
 
 ### National Alpine Activities List
 
-[PSIA-AASI National Alpine Activities List v1.2a](https://thesnowpros.org/wp-content/uploads/2026/10/PSIA-AASI_National_Alpine_Activities_List_v1.2a.pdf), linked from [thesnowpros.org/get-certified/alpine](https://thesnowpros.org/get-certified/alpine/). It is a public PDF, though it calls itself member-facing. Each activity has its own page, so a mapping URL can be `…v1.2a.pdf#page=N`. The pages give terrain, a description, ski and body performance, and a Vimeo demo link. They do not name fundamentals for each activity.
+[PSIA-AASI National Alpine Activities List v1.2a](https://thesnowpros.org/wp-content/uploads/2026/10/PSIA-AASI_National_Alpine_Activities_List_v1.2a.pdf), linked from [thesnowpros.org/get-certified/alpine](https://thesnowpros.org/get-certified/alpine/). It is a public PDF, though it calls itself member-facing. Each activity has its own page, so a mapping URL can be `…v1.2a.pdf#page=N`. The pages give terrain, a description, ski and body performance, and a Vimeo demo link. Some pages also name fundamentals (pp 16, 32, 50 and 52).
 
 | Level | Category | Exact name | PDF page |
 |---|---|---|---|

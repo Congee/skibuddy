@@ -1,0 +1,36 @@
+id: javelin-turns
+name: Javelin turns
+movement: javelin-turn
+summary: Linked medium-radius turns balanced on the outside ski with the inside ski lifted and crossed over it. The edges change on two feet; once the new outside ski holds, early in shaping, the inside ski comes off the snow and stays about level, pointing where the countered pelvis and chest face. The outside leg turns its ski underneath in the hip socket, so the lifted tip ends up across the stance ski's forebody from the fall line through the finish. In the transition the lifted ski is uncrossed and set down parallel, and becomes the new outside ski. The crossing must come from the stance leg turning, not from twisting the free leg across.
+# Associations differ on when the ski lifts: in shaping, by the fall line (PSIA, LeMaster), or earlier, in initiation (IASI).
+terrain: Green to gentle blue groomed slopes with smooth snow; not ice, slush or ruts
+# A brushed, steered drill at slow speed. Loads follow Lind & Sanders eq 4.9, p 103, peaking below the fall line.
+# Speeds and radii are our inference, well under race levels.
+scenarios:
+  gentle: { speed_mps: 6, radius_m: 10, slope_deg: 8 }
+  moderate: { speed_mps: 7, radius_m: 11, slope_deg: 11 }
+  dynamic: { speed_mps: 8, radius_m: 12, slope_deg: 14 }
+equipment: Efforts assume recreational carving skis and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. More lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee; a deeper sidecut tightens the turn.
+cautions:
+  - Uncross the lifted ski before setting it down, and set it down parallel at hip width; never land it crossed or in a wedge.
+  - Keep the stance knee bent and over the foot while the thigh turns in; don't push the hips back to make room for the crossed ski.
+  - Stop the drill when tired; a tired set-down is the risky one.
+sources:
+  - { source: lind-sanders-2004, pages: "103, 137-139" }
+  - { source: lemaster-2010, pages: "73, 76, 107-108" }
+  - { source: iasi-2021, pages: 169 }
+  - posch-2025
+  - ruedl-2022
+  - psia-c-javelin
+  - psia-national-activities
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: whole load on one leg once the inside ski lifts }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: on two feet at the edge change }
+  - { primitive: inside-leg-shortening, modifier: through the edge change only }
+  - { primitive: leg-rotation, modifier: "large; the stance thigh turns far in under the pelvis" }
+  - { primitive: counter, modifier: "large; the drill's point" }
+  - { primitive: hip-angulation, modifier: inside half of the pelvis unsupported once the ski lifts }
+  - { primitive: inside-leg-lift, modifier: "whole ski, held level and crossed over the stance ski" }
+  - { primitive: extension-transition, modifier: "small; the stance leg lengthens a little into the turn and absorbs through the finish" }
+reviewed_by: []
