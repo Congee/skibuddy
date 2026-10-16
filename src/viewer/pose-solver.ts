@@ -257,6 +257,8 @@ const standBehind = (t: number): number => {
   return u >= TROUGH_END ? 0 : -TROUGH_AHEAD * Math.sin((Math.PI * (u - STAND_END)) / (TROUGH_END - STAND_END)) ** 2;
 };
 
+const inTrough = (t: number): boolean => wrapTime(t) >= STAND_END && wrapTime(t) < TROUGH_END;
+
 /** `x` held in [lo, hi], easing quadratically onto each end from `w` inside it to `w` beyond; hi - lo > 2w. */
 const softClamp = (x: number, lo: number, hi: number, w: number): number => {
   const up = x <= lo - w ? lo : x >= lo + w ? x : lo + (x - lo + w) ** 2 / (4 * w);
@@ -636,8 +638,8 @@ const solveOn = (
         shin = softClamp(shin, cuff, SHIN_MAX + CUFF_EASE, CUFF_EASE);
         if (balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow, brake) > target) {
           if (c.absorb !== undefined) standUp(inside.extra, inside.tailLift, shin, matched);
-          // Off the zipper the legs fold for what standing up cannot bring back.
-          if (!zipper && balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow, brake) > target) {
+          // Off the zipper, and on it in the trough as the next face rises, the legs fold for what standing up cannot bring back.
+          if ((!zipper || inTrough(t)) && balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow, brake) > target) {
             folded = true;
             knee = balance(inside.extra, inside.tailLift, shin, target);
           }
