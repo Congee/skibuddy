@@ -49,7 +49,7 @@ export interface LegPose {
   readonly ankleFlex: number;
   /** Femur turned about its own axis so the knee moves toward the turn: outside internal, inside external rotation. */
   readonly femurRotation: number;
-  /** Ski pitch with the tail up. */
+  /** Ski pitch about the boot with the tail up; negative, the tip up. */
   readonly tailLift: number;
   /** Thigh drawn toward the other leg in the body frame. */
   readonly adduction: number;
@@ -341,6 +341,7 @@ const MASS_SHARE: Readonly<Record<SegmentKind, number>> = {
 };
 
 const OUTSIDE_BOOT = SEGMENTS.findIndex((s) => s.kind === SegmentKind.Boot && s.side === BodySide.Right);
+const OUTSIDE_SKI = SEGMENTS.findIndex((s) => s.kind === SegmentKind.Ski && s.side === BodySide.Right);
 
 /** The body's centre of mass, each segment's at its shape's centre; skis and boots left out. */
 export const centreOfMass = (world: ReadonlyArray<Mat4>): Vec3 => {
@@ -353,8 +354,16 @@ export const centreOfMass = (world: ReadonlyArray<Mat4>): Vec3 => {
   return sum;
 };
 
-/** How far the centre of mass sits ahead of the outside mid-foot (lemaster-2010 p57). */
-export const comAhead = (world: ReadonlyArray<Mat4>): number => centreOfMass(world)[2] - transformPoint(world[OUTSIDE_BOOT] ?? identity(), MID_FOOT)[2];
+/** How far `p` lies ahead of `from` along the outside ski: the snow pushes square to its base (lemaster-2010 p9). */
+export const aheadOnSki = (world: ReadonlyArray<Mat4>, p: Vec3, from: Vec3): number => {
+  const ski = world[OUTSIDE_SKI] ?? identity();
+  const [ox, oy, oz] = transformPoint(ski, [0, 0, 0]);
+  const [ax, ay, az] = transformPoint(ski, [0, 0, 1]);
+  return (p[0] - from[0]) * (ax - ox) + (p[1] - from[1]) * (ay - oy) + (p[2] - from[2]) * (az - oz);
+};
+
+/** How far the centre of mass sits ahead of the outside mid-foot along the ski (lemaster-2010 p57). */
+export const comAhead = (world: ReadonlyArray<Mat4>): number => aheadOnSki(world, centreOfMass(world), transformPoint(world[OUTSIDE_BOOT] ?? identity(), MID_FOOT));
 
 /** Pole measured from the centre of the fist. */
 export const POLE = {

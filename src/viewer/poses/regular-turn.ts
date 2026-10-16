@@ -67,10 +67,37 @@ export interface TurnStyle {
   readonly head?: HeadRule;
   /** Arm abduction; absent, the figure's default, hands wide. */
   readonly armAbduction?: number;
+  /** A two-footed pop through the switch in place of the shared hip curve; absent, none. */
+  readonly rebound?: Rebound;
+}
+
+/** Values at each phase key, then at the switch keys 1/12 and 11/12. */
+export type ReboundValues = readonly [...PhaseValues, number, number];
+
+/** Legs loaded through the finish and extended to their longest at the switch, the skis pitching as they rise and sink. */
+export interface Rebound {
+  /** Outside hip depth, 0 most open to 1 deepest. */
+  readonly hip: ReboundValues;
+  /** Degrees both skis pitch tip-up at moderate; negative, tip-down. */
+  readonly pitch: ReboundValues;
+  /** Share the pitch grows per step of intensity. */
+  readonly pitchGain: number;
 }
 
 /** One value per phase key, in PHASES order. */
 export type PhaseValues = readonly [number, number, number, number, number];
+
+/**
+ * Both legs flex through the finish as the snow packs (iasi-2021 p87), then extend to their longest at the switch,
+ * unweighting the skis in the snow (iasi-2021 p88, lemaster-2010 p196), and sink into the new turn. The feet move
+ * ahead by the finish (lemaster-2010 p197), the tips rising, and draw back under the hips into the new turn
+ * (iasi-2021 p87), the tips dipping, less, so the front never digs in. Pitches inferred.
+ */
+const POWDER_POP = {
+  hip: [0, 0.5, 0.45, 0.55, 0.95, 0.25, 0.6],
+  pitch: [0, -1, 0, 0, 2, -2, 4],
+  pitchGain: 0.4,
+} as const satisfies Rebound;
 
 // Carving scenarios as long-radius-carved-turns; short-turn ones as short-radius-turns.
 const LONG: TurnScenarios = {
@@ -303,7 +330,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     outsideShare: [0.52, 0.6],
     hip: [28, 46],
     hipStep: 4,
-    hipSpread: 0,
+    // Gentle a soft rebound, dynamic a clear pop (iasi-2021 p88); inferred.
+    hipSpread: 3,
     angulation: 4,
     // Rounder, flowing turns: the trunk follows the skis more than in short turns; share inferred.
     counter: anticipation(POWDER, 0.45),
@@ -317,12 +345,11 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     comAhead: [0.015, 0.045, 0.03, 0.01, -0.005],
     trunkOverShin: 6,
     early: 0.5,
-    // A two-footed rebound: both legs flex through the finish and extend through the switch, kept small
-    // (iasi-2021 p88, lemaster-2010 pp193-199).
     crossUnder: [0, 0, 0],
     polePlant: true,
     poleTrim: 0,
     head: DOWN_THE_LINE,
+    rebound: POWDER_POP,
   },
 };
 
@@ -404,6 +431,9 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
   const step = style.hipStep;
   const spread = style.hipSpread;
   const load = (i: Intensity): number => arcLoad(style.scenarios[i]);
+  const pop = style.rebound;
+  const popped = (i: number): Partial<PoseKey> =>
+    pop === undefined ? {} : { hip: pop.hip[i] ?? 0, hipUnder: pop.hip[i] ?? 0, skiPitch: (pop.pitch[i] ?? 0) * DEG };
   const keys = PHASES.map((p, i): PoseKey => {
     const share = p.share ?? style.early;
     return {
@@ -411,6 +441,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       angulation: share,
       hip: p.hip,
       hipUnder: p.under,
+      ...popped(i),
       pelvisList: 1.2 * style.angulation * share * DEG,
       lumbarFlex: style.spineFlex * DEG,
       spineBend: style.bend * share * DEG,
@@ -428,7 +459,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
     };
   });
   return {
-    keys: [...keys, ...SWITCH.map((k): PoseKey => ({ ...keyValuesAt(keys, k.t), t: k.t, hip: k.hip, hipUnder: k.under }))],
+    keys: [...keys, ...SWITCH.map((k, i): PoseKey => ({ ...keyValuesAt(keys, k.t), t: k.t, hip: k.hip, hipUnder: k.under, ...popped(PHASES.length + i) }))],
     constraints: {
       hipAngulation: style.angulation * DEG,
       femurRotation: (0.5 * style.angulation + (style.kneeAngulation ?? 0)) * DEG,
@@ -451,7 +482,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       poleTrim: style.poleTrim,
       ...(style.head === undefined ? {} : { head: style.head }),
       ...(style.armAbduction === undefined ? {} : { armAbduction: style.armAbduction * DEG }),
-      gains: { comAhead: 0.4, lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1 },
+      gains: { comAhead: 0.4, lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1, skiPitch: pop?.pitchGain ?? 0 },
     },
   };
 };

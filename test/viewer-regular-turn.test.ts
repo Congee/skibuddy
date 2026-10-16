@@ -5,7 +5,7 @@ import { gazeHeading } from '../src/viewer/gaze';
 import { segmentIndex } from '../src/viewer/figure';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
-import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
+import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
 import { solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
@@ -413,5 +413,74 @@ describe('regular turn', () => {
         };
         assert.closeTo(head(1 - 1e-9) * DEG, -head(0) * DEG, 0.5, `${kind} ${i}`);
       }
+  });
+});
+
+const POWDER = RegularTurn.Powder;
+const SAMPLES = 24;
+// Centre of mass from between the mid-feet: the legs' extension, whatever the lean.
+const extension = (p: ReturnType<typeof samplePose>): number => {
+  const w = segmentMatrices(p);
+  const at = (segment: string): Vec3 => transformPoint(w[segmentIndex(segment)] ?? identity(), MID_FOOT);
+  const [r, l, c] = [at('right-boot'), at('left-boot'), centreOfMass(w)];
+  return Math.hypot(c[0] - (r[0] + l[0]) / 2, c[1] - (r[1] + l[1]) / 2, c[2] - (r[2] + l[2]) / 2);
+};
+// Degrees tip-up of each ski.
+const pitch = (p: ReturnType<typeof samplePose>): readonly [number, number] => [-p.outside.tailLift * DEG, -p.inside.tailLift * DEG];
+const cycle = (i: Intensity): ReadonlyArray<number> => Array.from({ length: SAMPLES }, (_, k) => extension(samplePose(poseTable(POWDER, i), k / SAMPLES)));
+const popRange = (i: Intensity): number => Math.max(...cycle(i)) - Math.min(...cycle(i));
+const peakPitch = (i: Intensity): number => Math.max(...poseTable(POWDER, i).map((p) => pitch(p)[0]));
+
+describe('powder pop', () => {
+
+  it('extends highest near the switch and sinks lower by shaping', () => {
+    const margin = { gentle: 0.025, moderate: 0.04, dynamic: 0.06 } as const;
+    for (const i of INTENSITIES) {
+      const v = cycle(i);
+      const top = v.indexOf(Math.max(...v));
+      assert.isAtMost(Math.min(top, SAMPLES - top), 1, `${i} top at ${top}/${SAMPLES}`);
+      assert.isAbove(v[0] ?? 0, (v[SAMPLES / 2] ?? 0) + margin[i], i);
+      // Deepest through the finish, loading the skis.
+      const low = v.indexOf(Math.min(...v));
+      assert.isAtLeast(low, (3 * SAMPLES) / 4, `${i} low at ${low}/${SAMPLES}`);
+    }
+  });
+
+  it('pitches the tips up before the switch and down after it, both skis alike', () => {
+    for (const i of INTENSITIES) {
+      const before = pitch(samplePose(poseTable(POWDER, i), 11 / 12));
+      const after = pitch(samplePose(poseTable(POWDER, i), 1 / 12));
+      assert.isAbove(before[0], 1.5, `${i} tips up`);
+      assert.isBelow(after[0], -0.5, `${i} tips down`);
+      // The dive smaller than the rise, so the front never digs in (iasi-2021 p87).
+      assert.isBelow(-after[0], before[0], i);
+      assert.closeTo(before[1], before[0], 1e-3, i);
+      assert.closeTo(after[1], after[0], 1e-3, i);
+      assert.closeTo(pitch(samplePose(poseTable(POWDER, i), 1 / 2))[0], 0, 0.05, `${i} flat at shaping`);
+    }
+  });
+
+  it('carries the pop smoothly through the switch into the mirrored turn', () => {
+    for (const i of INTENSITIES) {
+      const table = poseTable(POWDER, i);
+      const seq = [...table, mirrorPose(table[0] ?? samplePose(table, 0))].map((p) => [extension(p), pitch(p)[0] / 100, pitch(p)[1] / 100]);
+      const steps = seq.slice(1).map((v, j) => Math.max(...v.map((x, n) => Math.abs(x - (seq[j]?.[n] ?? x)))));
+      assert.isAtMost(steps.at(-1) ?? 0, Math.max(...steps.slice(0, -1)), i);
+      assert.isBelow(Math.max(...steps), 0.02, i);
+    }
+  });
+
+  it('pops harder at dynamic than at gentle', () => {
+    assert.isAbove(popRange(Intensity.Dynamic), popRange(Intensity.Gentle) + 0.05);
+    assert.isAbove(peakPitch(Intensity.Dynamic), peakPitch(Intensity.Gentle) + 2);
+  });
+
+  it('keeps every other kind and drill flat, only the stork tail lifting', () => {
+    for (const drill of Object.keys(POSE_DEFINITIONS).filter((d) => d !== POWDER))
+      for (const i of INTENSITIES)
+        for (const p of poseTable(drill, i)) {
+          assert.strictEqual(p.outside.tailLift, 0, `${drill} ${i}`);
+          assert.isAtLeast(p.inside.tailLift, 0, `${drill} ${i}`);
+        }
   });
 });

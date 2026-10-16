@@ -13,7 +13,7 @@ import { CORRIDOR_SHARE, headingAt } from './turn-heading';
 const DEG = Math.PI / 180;
 /** The shin's forward limit in a shell, inferred. */
 const SHIN_MAX = 50 * DEG;
-import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, centreOfMass, outsideWeight, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
+import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
 import type { Pose } from './pose';
 
 /** How hard the drill is skied, from its physics. */
@@ -65,7 +65,12 @@ export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | 
   return Math.min(HEAD_LIMIT, Math.max(-HEAD_LIMIT, yaw));
 };
 
-const insideTipHeight = (pose: Pose): number => transformPoint(segmentMatrices(pose)[skiIndex(BodySide.Left)] ?? identity(), SKI_TIP)[1];
+// Above the outside tip, which sits on the snow unless both skis pitch.
+const insideTipHeight = (pose: Pose): number => {
+  const world = segmentMatrices(pose);
+  const tip = (side: BodySide): number => transformPoint(world[skiIndex(side)] ?? identity(), SKI_TIP)[1];
+  return tip(BodySide.Left) - tip(BodySide.Right);
+};
 
 const segmentOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 
@@ -75,8 +80,10 @@ const segmentOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIn
  */
 const balanceAhead = (world: ReadonlyArray<Mat4>, t: number): number => {
   const w = 0.5 * (1 - turnDepth(t)) ** 8;
-  const foot = (side: BodySide): number => transformPoint(world[segmentOf(SegmentKind.Boot, side)] ?? identity(), MID_FOOT)[2];
-  return centreOfMass(world)[2] - ((1 - w) * foot(BodySide.Right) + w * foot(BodySide.Left));
+  const right = transformPoint(world[segmentOf(SegmentKind.Boot, BodySide.Right)] ?? identity(), MID_FOOT);
+  const left = transformPoint(world[segmentOf(SegmentKind.Boot, BodySide.Left)] ?? identity(), MID_FOOT);
+  const foot: Vec3 = [(1 - w) * right[0] + w * left[0], (1 - w) * right[1] + w * left[1], (1 - w) * right[2] + w * left[2]];
+  return aheadOnSki(world, centreOfMass(world), foot);
 };
 
 /** How far ahead of its own ankle the touching pole's full touch lands. */
@@ -113,6 +120,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const hip = (effort.hipMin + hipShare * (effort.hipMax - effort.hipMin)) * DEG;
   const lifted = windowShare(c.tailLift, t);
   const fullLift = Math.max(0, mild('insideTailLift')) * lifted;
+  const pitch = mild('skiPitch');
   const femurRotation = c.femurRotation * angulation;
   // Past mid-turn the touch is the next turn's, made by this turn's outside arm.
   const poleTouch = touchShare(c.poleTouch, t) * (wrapTime(t) < 0.5 ? 1 : -1);
@@ -142,14 +150,14 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       armAbduction: c.armAbduction ?? ARM_ABDUCTION,
       poleTouch,
       reach: 0,
-      outside: { hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: 0, adduction: c.stance },
+      outside: { hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch, adduction: c.stance },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
       inside: {
         hipFlex: hipFlex + insideExtra * (1 - insideShare),
         ankleFlex: insideAnkle(tailLift, ankleFlex) + insideShare * insideExtra,
         femurRotation: c.insideFemurShare * femurRotation - c.kneesIn,
-        tailLift,
+        tailLift: tailLift - pitch,
         adduction: c.stance,
       },
       outsideGirdle: girdle,

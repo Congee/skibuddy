@@ -36,8 +36,10 @@ export interface PoseKey {
   readonly elevation: number;
   /** Inside ski pitched tail-up at a full lift. */
   readonly insideTailLift: number;
-  /** Centre of mass ahead of the outside mid-foot, metres: where the tripod takes the pressure. */
+  /** Centre of mass ahead of the outside mid-foot along the ski, metres: where the tripod takes the pressure. */
   readonly comAhead: number;
+  /** Both skis pitched tip-up about the boots; negative, tip-down. Absent, flat. */
+  readonly skiPitch?: number;
 }
 
 /** A smooth 0..1..0 window through the turn: up around `up`, down around `down`, each over `ramp` either side. */
@@ -161,6 +163,7 @@ const FIELDS: ReadonlyArray<KeyField> = [
   'elevation',
   'insideTailLift',
   'comAhead',
+  'skiPitch',
 ];
 
 /** Fields that lean or turn toward the inside: the next turn, mirrored, takes them with the other sign. */
@@ -177,7 +180,7 @@ export const keyValuesAt = (keys: ReadonlyArray<PoseKey>, t: number): KeyValues 
   const at = (i: number): Knot => {
     const key = sorted[((i % n) + n) % n];
     if (key === undefined) throw new Error('no key poses');
-    const k: Required<PoseKey> = { ...key, hipUnder: key.hipUnder ?? key.hip };
+    const k: Required<PoseKey> = { ...key, hipUnder: key.hipUnder ?? key.hip, skiPitch: key.skiPitch ?? 0 };
     const turn = Math.floor(i / n);
     const flipped = turn % 2 === 0 ? k : { ...k, ...Object.fromEntries([...ODD].map((f) => [f, -k[f]])) };
     return { ...flipped, time: k.t + turn };
