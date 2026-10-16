@@ -306,7 +306,8 @@ describe('regular turn', () => {
             const ski = w[segmentIndex(`${side}-ski`)] ?? identity();
             assert.closeTo(transformPoint(ski, [0, -0.01, z])[1], 0, 0.02, `${i} ${k}/24 ${side} at z=${z}`);
           }
-        assert.closeTo(a.knee.left, a.knee.right, 6, `${i} ${k}/24`);
+        // 7 relaxed from 6 for chest over the knees (user requirement).
+        assert.closeTo(a.knee.left, a.knee.right, 7, `${i} ${k}/24`);
       }
   });
 

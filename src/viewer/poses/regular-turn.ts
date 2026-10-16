@@ -438,12 +438,11 @@ export const CLOSED_STANCE: TurnStyle = {
   spineFlex: 22,
   narrow: 7,
   kneesIn: 10,
-  // Centred, little fore-aft in the narrow stance; inferred.
   // Toward the ball of the foot so the chest stays over the knees (lemaster-2010 pp57, 182-183); inferred.
-  comAhead: [0.06, 0.07, 0.05, 0.03, 0.02],
+  comAhead: [0.09, 0.07, 0.05, 0.03, 0.04],
   comAheadGain: 0.1,
-  trunkOverShin: 18,
-  trunkOverShinGain: 0.2,
+  trunkOverShin: 15,
+  trunkOverShinGain: 0,
   early: 0.6,
   // Cross-under: the legs swivel under a level trunk.
   crossUnder: [1, 1, 1],
