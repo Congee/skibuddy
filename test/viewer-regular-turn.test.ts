@@ -2,7 +2,7 @@ import { assert, describe, it } from '@effect/vitest';
 import { INTENSITIES, Intensity } from '../src/content/schema';
 import { CAPSULE_ARM, poleSize, poseToChannels, regularPoleReach } from '../src/viewer/pose';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
-import { motionFor, poleTrimOf } from '../src/viewer/poses';
+import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
 import { REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
@@ -94,6 +94,20 @@ describe('regular turn', () => {
       assert.isBelow(Math.abs(at(drill, 0)), 5, drill);
       assert.isAbove(at(drill, 5 / 6), 25, drill);
       assert.isAbove(at(drill, 5 / 6), at(drill, 1 / 2), drill);
+    }
+  });
+
+  it('never lets the spine twist lead the pelvis: the hips drive the shoulders', () => {
+    for (const [drill, def] of Object.entries(POSE_DEFINITIONS)) {
+      const peak = (f: (k: (typeof def.keys)[number]) => number): number => Math.max(...def.keys.map(f));
+      const twist = peak((k) => k.spineTwist);
+      const counter = peak((k) => k.counter);
+      // While counter builds, twist builds no sooner; as it unwinds the chest may hold.
+      const top = def.keys.findIndex((k) => k.counter === counter);
+      for (const [i, k] of def.keys.entries()) {
+        assert.isAtMost(k.spineTwist, k.counter + 1e-9, `${drill} ${k.t}`);
+        if (twist > 0 && i <= top) assert.isAtMost(k.spineTwist / twist, k.counter / counter + 1e-9, `${drill} ${k.t}`);
+      }
     }
   });
 

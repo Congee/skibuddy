@@ -71,12 +71,12 @@ const FOLLOW: PhaseValues = [0, 0.5, 0.9, 1, 0.4];
 const SWIVEL: PhaseValues = [0, 0.3, 0.8, 0.94, 1];
 // Pelvis counter at the finish: short turns 30-40 deg, low confidence (biomechanics.md D12); the spine adds 5-8 (sporri-2016).
 const SHORT_COUNTER = 35;
-// In moguls the chest faces the fall line (fis-freestyle-judging-2025 p29, dipiro-2005 p32), so pelvis counter plus twist
-// is the skis' heading off it, 0 at the transition; the pelvis trails the chest by about 5 deg (sporri-2016, lemaster-2010 p73).
-const MOGUL_TWIST = 5;
+// In moguls the hips (user's rule) and the head and chest (fis-freestyle-judging-2025 p29, dipiro-2005 p32) face the
+// fall line, so pelvis counter is the skis' heading off it with no spine twist.
 // An arc of radius r from the fall line across half a corridor w heads acos(1 - w/2r) off it, up to the hips' rotation range.
 const fallLineHeading = (r: number, w: number): number => Math.min(45, Math.acos(1 - w / (2 * r)) / DEG);
 // Constant turn rate: the heading grows as t / (5/6) to the finish key.
+// Signed, counter would start at -max, but the loop replays one right turn unmirrored: -max would whip from +max in 1/6 turn.
 const HEADING: PhaseValues = [0, 0.2, 0.6, 0.78, 1];
 
 const SHORT: TurnScenarios = {
@@ -171,8 +171,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hipStep: 5,
     angulation: 6,
     // Zipper line about 2 m wide.
-    counter: fallLineHeading(5, 2) - MOGUL_TWIST,
-    twist: MOGUL_TWIST,
+    counter: fallLineHeading(5, 2),
+    twist: 0,
     counterCurve: HEADING,
     bend: 3,
     dorsiflexion: 17,
@@ -257,8 +257,8 @@ export const CLOSED_STANCE: TurnStyle = {
   hipStep: 3,
   angulation: 3,
   // A corridor about 2 m wide, as the drill's terrain.
-  counter: fallLineHeading(4.5, 2) - MOGUL_TWIST,
-  twist: MOGUL_TWIST,
+  counter: fallLineHeading(4.5, 2),
+  twist: 0,
   counterCurve: HEADING,
   bend: 1,
   dorsiflexion: 15,

@@ -40,7 +40,7 @@ export const STORK_TURNS: PoseDefinition = {
       pelvisList: 10 * DEG,
       lumbarFlex: 11 * DEG,
       spineBend: 3 * DEG,
-      spineTwist: 2 * DEG,
+      spineTwist: 1.8 * DEG,
       counter: 5 * DEG,
       dorsiflexion: 21.5 * DEG,
       insideDorsiflexion: 17.8 * DEG,
