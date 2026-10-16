@@ -3,9 +3,10 @@ import { drillScenarios, turnScenarios } from '../scripts/anatomy/drill-scenario
 import { turnForcesAt } from '../src/physics/turn';
 import { INTENSITIES } from '../src/content/schema';
 import type { Intensity } from '../src/content/schema';
-import { BodySide } from '../src/viewer/figure';
+import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
-import { ARM_ABDUCTION, ARM_FLEXION, segmentMatrices, skiIndex } from '../src/viewer/pose';
+import { ARM_FLEXION, CAPSULE_GRIP, segmentMatrices, skiIndex } from '../src/viewer/pose';
+import type { Vec3 } from '../src/viewer/mat4';
 import { forceTiltAt } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS } from '../src/viewer/poses';
@@ -13,7 +14,7 @@ import { rideOf } from '../src/viewer/ride';
 import { heightAt, pathAt, surfaceFor } from '../src/viewer/surface';
 import { TOPS_PLANT } from '../src/viewer/poses/regular-turn';
 import { TOPS_POSE } from '../src/viewer/turn-heading';
-import { poseAngles } from './pose-angles';
+import { poseAngles, trunkFromVertical } from './pose-angles';
 
 const DEG = 180 / Math.PI;
 const N = 48;
@@ -32,6 +33,43 @@ const edgeAt = (i: Intensity, t: number): number => {
 const anglesAt = (i: Intensity, t: number) =>
   poseAngles(samplePose(poseTable(TOPS_POSE, i), t), forceTiltAt(drillScenarios(TOPS_POSE)[i], surfaceFor(TOPS_POSE, i), t));
 const kneeAt = (i: Intensity, t: number): number => anglesAt(i, t).knee.right;
+/** Gravity's up in the figure's root, the skis heading `h` off the fall line of a `slopeDeg` slope. */
+const gravityUp = (slopeDeg: number, h: number): Vec3 => {
+  const a = slopeDeg / DEG;
+  return [Math.sin(a) * Math.sin(h), Math.cos(a), -Math.sin(a) * Math.cos(h)];
+};
+const segment = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((g) => g.kind === kind && g.side === side);
+/** Each grip's height over its shoulder along gravity and ahead of it toward the chest's facing, and the grips' span over the shoulders', metres. */
+const handsAt = (i: Intensity, t: number) => {
+  const world = segmentMatrices(samplePose(poseTable(TOPS_POSE, i), t));
+  const at = (kind: SegmentKind, side: BodySide, p: Vec3): Vec3 => {
+    const m = world[segment(kind, side)];
+    if (m === undefined) throw new Error(`no ${side} ${kind}`);
+    return transformPoint(m, p);
+  };
+  const up = gravityUp(drillScenarios(TOPS_POSE)[i].slopeDeg, pathAt(surfaceFor(TOPS_POSE, i), t).heading);
+  const origin = at(SegmentKind.Trunk, BodySide.Center, [0, 0, 0]);
+  const axis = (p: Vec3): Vec3 => {
+    const q = at(SegmentKind.Trunk, BodySide.Center, p);
+    return [q[0] - origin[0], q[1] - origin[1], q[2] - origin[2]];
+  };
+  const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const lateral = axis([1, 0, 0]);
+  // The chest's facing, level along gravity.
+  const chest = axis([0, 0, 1]);
+  const lift = dot(chest, up);
+  const front: Vec3 = [chest[0] - lift * up[0], chest[1] - lift * up[1], chest[2] - lift * up[2]];
+  const across = (a: Vec3, b: Vec3): number => dot([a[0] - b[0], a[1] - b[1], a[2] - b[2]], lateral);
+  const side = (s: BodySide) => {
+    const shoulder = at(SegmentKind.UpperArm, s, [0, 0, 0]);
+    const grip = at(SegmentKind.Forearm, s, CAPSULE_GRIP);
+    const d: Vec3 = [grip[0] - shoulder[0], grip[1] - shoulder[1], grip[2] - shoulder[2]];
+    return { shoulder, grip, above: dot(d, up), ahead: dot(d, front) / Math.hypot(...front) };
+  };
+  const r = side(BodySide.Right);
+  const l = side(BodySide.Left);
+  return { sides: [r, l], span: across(l.grip, r.grip) - across(l.shoulder, r.shoulder) };
+};
 /** Snow under the skis' centre as a share of the relief above the troughs. */
 const snowShare = (i: Intensity, t: number): number => {
   const s = surfaceFor(TOPS_POSE, i);
@@ -87,11 +125,9 @@ describe('turns on the tops', () => {
     }
   });
 
-  it('holds the hands wide and plants the pole at the release on top', () => {
-    // Hands wide, poles out to the side (duncan-smith-2021 1:28-1:32); planted downhill at the release (1:31).
-    const c = POSE_DEFINITIONS[TOPS_POSE]?.constraints;
-    assert.isAbove((c?.armAbduction ?? 0) - ARM_ABDUCTION, 15 / DEG, 'wider than the default');
-    const plant = c?.poleTouch?.t ?? 0;
+  it('plants the pole at the release on top', () => {
+    // Planted downhill at the release (duncan-smith-2021 1:31).
+    const plant = POSE_DEFINITIONS[TOPS_POSE]?.constraints.poleTouch?.t ?? 0;
     assert.isTrue(plant > 5 / 6 && plant < 1, `plant at t ${plant}`);
   });
 
@@ -106,21 +142,47 @@ describe('turns on the tops', () => {
     }
   });
 
-  it('holds the hands forward at chest height, other drills keep the default', () => {
-    // Hands wide and in front (duncan-smith-2021 1:28-1:32, 4:26); amount inferred.
-    assert.isAtLeast(samplePose(poseTable(TOPS_POSE, 'moderate'), 0.5).armFlexion * DEG, 40);
+  it('holds the hands wide and in front, below the shoulders, other drills keep the default', () => {
+    // Wide and forward at about waist to lower-chest height, never above the shoulders (duncan-smith-2021 1:28-1:32,
+    // 4:26). The baked body's grips sit about 0.1 m higher than these, so the margin; bands inferred.
+    for (const i of INTENSITIES)
+      for (const t of TIMES) {
+        const { sides, span } = handsAt(i, t);
+        const reaching = t < 1 / 12 || t > 3 / 4;
+        for (const [k, h] of sides.entries()) {
+          // The plant's reach lifts the planting hand a little.
+          assert.isAtMost(h.above, reaching ? -0.15 : -0.2, `${i} t ${t} hand ${k} height`);
+          assert.isAtLeast(h.ahead, 0.05, `${i} t ${t} hand ${k} ahead`);
+        }
+        if (!reaching) assert.isAtLeast(span, 0.1, `${i} t ${t} span`);
+      }
     assert.strictEqual(samplePose(poseTable('regular-moguls', 'moderate'), 0.5).armFlexion, ARM_FLEXION);
   });
 
-  it('is centred on top, on the tips down the backside and on the tails into the face', () => {
-    // Seesaw top centred, tip pressure down the backside, heel and tail into the face (duncan-smith-2021 2:37-3:57);
-    // mass along the ski, bands inferred.
-    const along = (i: Intensity, from: number, to: number): ReadonlyArray<number> =>
-      TIMES.filter((t) => t >= from && t <= to).map((t) => anglesAt(i, t).comAhead);
+  it('never sits back: the trunk forward of gravity and of the slope normal', () => {
+    // Upright into the face, the feet ahead and the body catching up, never behind them (duncan-smith-2021 3:33-3:51);
+    // the slope-normal floor keeps it forward on the slope-level view as well; bands inferred.
+    for (const i of INTENSITIES) {
+      const slope = drillScenarios(TOPS_POSE)[i].slopeDeg;
+      for (const t of TIMES) {
+        const a = anglesAt(i, t);
+        assert.isAtLeast(trunkFromVertical(a.trunkForward, slope, pathAt(surfaceFor(TOPS_POSE, i), t).heading), 15, `${i} t ${t} gravity`);
+        assert.isAtLeast(a.trunkForward, 8, `${i} t ${t} slope normal`);
+      }
+    }
+  });
+
+  it('is centred on top, on the tips down the backside and the feet slightly ahead into the face', () => {
+    // Seesaw top centred, tip pressure down the backside (duncan-smith-2021 2:37-3:20); into the face the feet go out in
+    // front and the body catches up (3:33-3:51), so the mass is a little behind them along the snow; bands inferred.
+    const along = (i: Intensity, from: number, to: number, f: (a: ReturnType<typeof anglesAt>) => number): ReadonlyArray<number> =>
+      TIMES.filter((t) => t >= from && t <= to).map((t) => f(anglesAt(i, t)));
     for (const i of INTENSITIES) {
       assert.approximately(anglesAt(i, 0).comAhead, 0, 0.03, `${i} top`);
-      assert.isAtLeast(Math.max(...along(i, 1 / 12, 1 / 2)), 0.1, `${i} backside`);
-      assert.isAtMost(Math.min(...along(i, 2 / 3, 11 / 12)), -0.02, `${i} face`);
+      assert.isAtLeast(Math.max(...along(i, 1 / 12, 1 / 2, (a) => a.comAhead)), 0.1, `${i} backside`);
+      const face = along(i, 2 / 3, 11 / 12, (a) => a.comOnSnow);
+      assert.isAtMost(Math.min(...face), -0.03, `${i} feet ahead`);
+      assert.isAtLeast(Math.min(...face), -0.1, `${i} not sitting back`);
     }
   });
 

@@ -83,6 +83,10 @@ export interface TurnStyle {
   readonly armAbduction?: number;
   /** Upper arm flexion forward; absent, the figure's default. */
   readonly armFlexion?: number;
+  /** On moguls off the zipper, degrees the trunk stays forward of the slope normal as it stands up; absent, 0. */
+  readonly trunkMin?: number;
+  /** Inside knee flexion ceiling, degrees; absent, 120. */
+  readonly insideKneeMax?: number;
   /** A two-footed pop through the switch in place of the shared hip curve; absent, none. */
   readonly rebound?: Rebound;
   /** Skis on top of firm snow, lifting off it only by `rebound.clearance`; absent, they pivot at the boots as in powder. */
@@ -147,9 +151,9 @@ export const TOPS_EARLY = 0.7;
 /** Turn time of the tops plant: at the release, just before the crest. */
 export const TOPS_PLANT = 0.9;
 // Hands wide and forward, the poles out to the side (duncan-smith-2021 1:28-1:32, 4:26); past ARM_ABDUCTION's 29 deg.
-const HANDS_WIDE = 50;
-// Upper arms forward, the hands at chest height (duncan-smith-2021 1:28-1:32, 4:26); inferred.
-const HANDS_FORWARD = 45;
+const HANDS_WIDE = 35;
+// Upper arms forward, the hands at waist to lower chest (duncan-smith-2021 1:28-1:32, 4:26); inferred.
+const HANDS_FORWARD = 25;
 /** The zipper line swings about a rut's width across, between two mogul columns; inferred. */
 export const ZIPPER_CORRIDOR = 1.1;
 // The head stays still, facing downhill (fis-freestyle-judging-2025 p29).
@@ -496,10 +500,14 @@ export const TOPS: TurnStyle = {
   // A deep squat on the crest, thighs near level (duncan-smith-2021 4:26); never straight in the trough (fis p28,
   // arndt-1992 pp79, 87, 93); amounts inferred.
   absorb: { open: 30, deep: { gentle: 110, moderate: 118, dynamic: 122 } },
-  // Along the snow, so the bumps' pitch sets the contact: centred on top, tip down the backside, feet ahead and tail
-  // into the face (duncan-smith-2021 2:37-3:57); amounts inferred.
-  comAhead: [0.05, 0.16, 0.09, -0.05, -0.16],
+  // Along the snow, so the bumps' pitch sets the contact: centred on top, tip down the backside, feet slightly
+  // ahead into the face (duncan-smith-2021 2:37-3:57); amounts inferred.
+  comAhead: [0.05, 0.16, 0.09, -0.02, -0.08],
   comAheadGain: 0,
+  // Feet out in front into the face, the body catching up, never sitting back (duncan-smith-2021 3:33-3:51); inferred.
+  trunkMin: 15,
+  // Over the crest the inside leg folds past the deep outside one to keep its ski on the snow; inferred.
+  insideKneeMax: 140,
   // Planted downhill at the release, on the bump's top (duncan-smith-2021 1:31, campbell-rogan-2001).
   poleTouchAt: TOPS_PLANT,
   head: { ...DOWNHILL, corridor: TOPS_CORRIDOR_SHARE * 5 },
@@ -715,7 +723,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
         [load(Intensity.Moderate), open, deep],
         [load(Intensity.Dynamic), open + step - spread, deep + step + spread + (style.dynamicDeep ?? 0)],
       ],
-      insideKneeMax: 120 * DEG,
+      insideKneeMax: (style.insideKneeMax ?? 120) * DEG,
       tailLift: null,
       crossUnder: style.crossUnder,
       trunkOverShin: style.trunkOverShin * DEG,
@@ -730,6 +738,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       ...(style.head === undefined ? {} : { head: style.head }),
       ...(style.armAbduction === undefined ? {} : { armAbduction: style.armAbduction * DEG }),
       ...(style.armFlexion === undefined ? {} : { armFlexion: style.armFlexion * DEG }),
+      ...(style.trunkMin === undefined ? {} : { trunkMin: style.trunkMin * DEG }),
       ...(style.firmSnow === true ? { firmSnow: true } : {}),
       ...(style.absorb === undefined ? {} : { absorb: { open: style.absorb.open * DEG, deep: [style.absorb.deep.gentle * DEG, style.absorb.deep.moderate * DEG, style.absorb.deep.dynamic * DEG] as const } }),
       gains: {

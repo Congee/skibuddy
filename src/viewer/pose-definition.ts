@@ -122,6 +122,8 @@ export interface PoseConstraints {
   readonly armAbduction?: number;
   /** Radians both upper arms flex forward; absent, ARM_FLEXION. */
   readonly armFlexion?: number;
+  /** On moguls off the zipper, radians the trunk stays forward of the slope normal as it stands up; absent, 0. */
+  readonly trunkMin?: number;
   /** The skis stay on top of firm snow: a tip-down tip lifts the boots onto it; absent, they pivot at the boots, as in powder. */
   readonly firmSnow?: boolean;
   /**

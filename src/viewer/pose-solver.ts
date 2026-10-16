@@ -640,7 +640,7 @@ const solveOn = (
     let lo = from;
     standTo(from);
     // Off the zipper the trunk stands up no further than the slope normal; the legs fold for the rest.
-    const square = zipper ? Infinity : from + pitchOf(segmentMatrices(base(depthKnee, extra, tailLift, shin)), SegmentKind.Trunk, BodySide.Center);
+    const square = zipper ? Infinity : from + pitchOf(segmentMatrices(base(depthKnee, extra, tailLift, shin)), SegmentKind.Trunk, BodySide.Center) - (c.trunkMin ?? 0);
     let hi = Math.max(from, zipper ? stand + UNFLEX_MAX : Math.min(UPRIGHT_MAX, stand, square));
     for (let i = 0; i < 24; i++) {
       standTo((lo + hi) / 2);
