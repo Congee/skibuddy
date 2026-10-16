@@ -232,6 +232,8 @@ const SQUEEZE_FROM = 60 * DEG;
 const CUFF_EASE = 3 * DEG;
 /** The trunk stands up off the shin by at most this, radians; inferred. */
 const UPRIGHT_MAX = 20 * DEG;
+/** The most the trunk leans behind the shin, from the slope normal; inferred. */
+const TRUNK_BEHIND = 20 * DEG;
 
 /** `x` held in [lo, hi], easing quadratically onto each end from `w` inside it to `w` beyond; hi - lo > 2w. */
 const softClamp = (x: number, lo: number, hi: number, w: number): number => {
@@ -316,27 +318,29 @@ interface Level {
 const levels = new WeakMap<PoseDefinition, Map<string, Level>>();
 
 /** Share of the knee's reach the absorbing legs use at the extremes, so they ease onto their stops only briefly; inferred. */
-const KNEE_SPAN = 0.9;
-/** The most the mass follows the snow, a share of its rise, as the judges' level hip line allows (fis-freestyle-judging-2025 p28); inferred. */
-const FOLLOW_MAX = 0.3;
+const KNEE_SPAN = 0.97;
+/** Half-width of the aim's window on the snow, turn time: short enough to keep the face's rise; inferred. */
+const AIM_HALF = 0.08;
+/** Samples per turn of the legs' reach on the zipper. */
+const REACH_SAMPLES = 48;
 
-/** The snow under the skis at turn time t, averaged as the balance's force line is. */
-const snowAt = (scenario: DrillScenario | null, surface: Surface, t: number): number => {
-  const half = scenario === null || surface.speed === 0 ? 0 : (BALANCE_LAG * scenario.speedMps) / surface.speed;
+/** The boots' snow along the skis' track at turn time t, raised-cosine averaged over AIM_HALF either side. */
+const snowAt = (surface: Surface, t: number): number => {
   let sum = 0;
   let weights = 0;
   for (let i = 0; i < LAG_SAMPLES; i++) {
     const u = (2 * (i + 0.5)) / LAG_SAMPLES - 1;
     const w = 1 + Math.cos(Math.PI * u);
-    sum += w * trackRest(surface, wrapTime(t + u * half), SKI_TIP[2], -SKI_TAIL[2]).base;
+    sum += w * trackRest(surface, wrapTime(t + u * AIM_HALF), SKI_TIP[2], -SKI_TAIL[2]).base;
     weights += w;
   }
   return sum / weights;
 };
 
 /**
- * Midway between the mass folded deepest over the path's highest snow and stretched longest into its lowest; where the
- * snow rises further than the legs reach, the mass follows the averaged snow by the share the legs cannot take.
+ * Off the zipper, midway between the mass folded deepest over the crest and stretched longest into the trough. On the
+ * zipper, the legs fold with the snow's rise under the skis, from stretched to folded deepest, each end inside the
+ * knee's reach by its spare share, so the mass rises only by what the legs cannot take.
  */
 const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface): Level => {
   const key = JSON.stringify([scenario, surface]);
@@ -354,16 +358,50 @@ const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: S
     for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, surface, ride, hip, true));
     return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, surface, ride, hip, true)))[1];
   };
-  const crest = at(surface.crest, hi);
-  if (surface.line !== MogulLine.Zipper) return cache({ at: () => (crest + at(surface.trough, lo)) / 2 });
-  const trough = at(surface.trough, lo);
-  const high = snowAt(scenario, surface, surface.crest);
-  const low = snowAt(scenario, surface, surface.trough);
-  const rise = high - low;
-  const reach = trough - low - (crest - high);
-  const follow = rise <= 0 ? 0 : Math.min(FOLLOW_MAX, Math.max(0, 1 - (KNEE_SPAN * reach) / rise));
-  const middle = (crest + trough) / 2;
-  return cache({ at: (t) => middle + follow * (snowAt(scenario, surface, t) - (high + low) / 2) });
+  if (surface.line !== MogulLine.Zipper) {
+    const middle = (at(surface.crest, hi) + at(surface.trough, lo)) / 2;
+    return cache({ at: () => middle });
+  }
+  const high = snowAt(surface, surface.crest);
+  const low = snowAt(surface, surface.trough);
+  const rows = Array.from({ length: REACH_SAMPLES }, (_, k) => {
+    const t = k / REACH_SAMPLES;
+    const stretched = at(t, lo);
+    const folded = at(t, hi);
+    const spare = ((1 - KNEE_SPAN) / 2) * (stretched - folded);
+    const u = Math.min(1, Math.max(0, (snowAt(surface, t) - low) / (high - low)));
+    return { top: stretched - spare, bottom: folded + spare, u };
+  });
+  // The least rise d for which some base A keeps A + d u inside every sample's reach; the overlap's shortfall is convex in d.
+  const window = (d: number): readonly [number, number] => [Math.max(...rows.map((r) => r.bottom - d * r.u)), Math.min(...rows.map((r) => r.top - d * r.u))];
+  const short = (d: number): number => window(d)[0] - window(d)[1];
+  let dLo = 0;
+  let dHi = 1;
+  for (let i = 0; i < 40; i++) {
+    const m1 = dLo + (dHi - dLo) / 3;
+    const m2 = dHi - (dHi - dLo) / 3;
+    if (short(m1) < short(m2)) dHi = m2;
+    else dLo = m1;
+  }
+  let rise = (dLo + dHi) / 2;
+  if (short(0) <= 0) rise = 0;
+  else if (short(rise) < 0) {
+    let lo = 0;
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + rise) / 2;
+      if (short(mid) <= 0) rise = mid;
+      else lo = mid;
+    }
+  }
+  const [a, b] = window(rise);
+  const reach = rows.map((r) => (a + b) / 2 + rise * r.u);
+  return cache({
+    at: (t) => {
+      const x = wrapTime(t) * REACH_SAMPLES;
+      const k = Math.floor(x);
+      return (reach[k % REACH_SAMPLES] ?? 0) * (1 - (x - k)) + (reach[(k + 1) % REACH_SAMPLES] ?? 0) * (x - k);
+    },
+  });
 };
 
 /** The pose on snow that pitches the skis and lifts the inside tip by `ride`; `absorbKnee` replaces the keyed outside knee. */
@@ -499,6 +537,8 @@ const solveOn = (
   const target = mild('comAhead');
   const depthKnee = absorbKnee ?? hip + trunkOffset;
   const cuff = minShinAngle(EQUIPMENT) - pitch - ride.outside;
+  // Absorbing, the trunk stands up no further than a straight hip, nor further behind the shin than TRUNK_BEHIND.
+  const stand = c.absorb === undefined || surface?.line !== MogulLine.Zipper ? UPRIGHT_MAX : Math.min(hip, hip + mild('lumbarFlex') - depthKnee + TRUNK_BEHIND);
   const balanceShin = (extra: number, tailLift: number): number => {
     // The cuff stops the shin on the boot, which pitches with the ski.
     let lo = bumps ? cuff - CUFF_EASE : cuff;
@@ -512,8 +552,8 @@ const solveOn = (
   };
   // The hip opens until the mass sits back at the target; standing up moves it back.
   const standUp = (extra: number, tailLift: number, shin: number): number => {
-    let lo = 0;
-    let hi = UPRIGHT_MAX;
+    let lo = Math.min(0, stand);
+    let hi = Math.min(UPRIGHT_MAX, stand);
     for (let i = 0; i < 24; i++) {
       upright = (lo + hi) / 2;
       if (balanceAhead(segmentMatrices(base(depthKnee, extra, tailLift, shin)), t, alongSnow, brake) > target) lo = upright;
@@ -547,7 +587,7 @@ const solveOn = (
   for (let round = 0; round < 2; round++) {
     if (turning) tip = squareFold(knee, inside.extra, inside.tailLift, shin);
     if (shinFirst) {
-      upright = 0;
+      upright = Math.min(0, stand);
       shin = balanceShin(inside.extra, inside.tailLift);
       knee = depthKnee;
       // Down a bump's face the cuff holds the shin forward, easing on; the mass comes back by the legs folding or, absorbing,
