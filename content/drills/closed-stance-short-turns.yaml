@@ -4,11 +4,12 @@ movement: closed-stance-short-turn
 summary: Quick, rhythmic short turns on a groomer with the boots and knees touching, the way mogul skiers rehearse the zipper line before the bumps. The pelvis and chest keep facing down the fall line and stay still, hands forward, while both legs swivel together underneath them. The skis are mostly brushed with a little edge, and every turn ends with a light edge set and a pole plant.
 terrain: Smooth groomed blue in a corridor about two metres wide; dynamic on a steeper blue
 # Mogul-like short turns: tighter and slower than short-radius-turns. Speeds, radii and the corridor are our inference.
-# Loads follow Lind & Sanders eq 4.9, p 103.
+# Loads follow Lind & Sanders eq 4.9, p 103. The mass runs nearly straight while the legs swing under it
+# (lind-sanders-2004 pp114-115): its path about 4x the skis' arc, inferred.
 scenarios:
-  gentle: { speed_mps: 5, radius_m: 4.5, slope_deg: 14 }
-  moderate: { speed_mps: 6, radius_m: 4.5, slope_deg: 17 }
-  dynamic: { speed_mps: 7, radius_m: 5, slope_deg: 20 }
+  gentle: { speed_mps: 5, radius_m: 4.5, com_radius_m: 18, slope_deg: 14 }
+  moderate: { speed_mps: 6, radius_m: 4.5, com_radius_m: 18, slope_deg: 17 }
+  dynamic: { speed_mps: 7, radius_m: 5, com_radius_m: 20, slope_deg: 20 }
 equipment: Efforts assume recreational skis of about 12-15 m sidecut and boots with about 15° of cuff lean. Softer, narrower mogul skis and shorter poles make the rhythm easier.
 cautions:
   - A closed stance is a mogul habit, not a default; on other terrain, ski with the feet about hip-joint width apart.

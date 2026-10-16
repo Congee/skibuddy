@@ -373,7 +373,7 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
     pelvis = rot_y3(-p['counter']) @ rot_z3(p['pelvisList']) @ rot_x(p['pelvisPitch'])
     half = rot_y3(-p['spineTwist'] / 2) @ rot_z3(p['spineBend'] / 2) @ rot_x(p['spineFlex'] / 2)
     roll = HEAD_LEVEL * (p['pelvisList'] - p['lean'] + p['spineBend'])
-    lift = rot_z3(-roll / 2) @ rot_x(-HEAD_LIFT * (p['pelvisPitch'] + p['spineFlex']) / 2)
+    lift = rot_y3(-p.get('headYaw', 0.0) / 2) @ rot_z3(-roll / 2) @ rot_x(-HEAD_LIFT * (p['pelvisPitch'] + p['spineFlex']) / 2)
     R = {'pelvis': pelvis, 'lumbar': half, 'chest': half, 'neck': lift, 'head': lift}
     # As armLean in pose.ts: past ARMS['lean'] the shoulder and elbow flex further, keeping the forearm's pitch.
     lean = p['pelvisPitch'] + p['spineFlex'] - ARMS['lean']
@@ -388,7 +388,7 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
         flex = ARMS['flexion'] + ARMS['leanShoulder'] * lean + (reach if s == reacher else 0.0)
         girdle = p['outsideGirdle'] if s == 'R' else p['insideGirdle']
         R[f'scapula.{s}'] = rot_y3(-sign * girdle['protraction']) @ rot_z3(sign * girdle['elevation'])
-        R[f'upper_arm.{s}'] = (rot_y3(sign * girdle['protraction']) @ rot_z3(sign * ARMS['abduction']) @ rot_x(-flex)
+        R[f'upper_arm.{s}'] = (rot_y3(sign * girdle['protraction']) @ rot_z3(sign * p.get('armAbduction', ARMS['abduction'])) @ rot_x(-flex)
                                @ rot_z3(-rest['abduction'][s]))
         R[f'forearm.{s}'] = rot_x(-ARMS['forearmFlexion'] - (1 - ARMS['leanShoulder']) * lean + (ARMS['reachElbow'] * reach if s == reacher else 0.0))
         hand = rest['hands'][s]

@@ -127,6 +127,12 @@ export const findProblems = (content: Content): ReadonlyArray<string> => {
     if (turns.length > 0 && turns.length < INTENSITIES.length) {
       problems.push(`drill ${drill.id}: give radius_m at every setting or at none`);
     }
+    for (const i of INTENSITIES) {
+      const { radiusM, comRadiusM } = drill.scenarios[i];
+      if (comRadiusM !== undefined && (radiusM === undefined || comRadiusM < radiusM)) {
+        problems.push(`drill ${drill.id} ${i}: com_radius_m needs radius_m and must not be smaller`);
+      }
+    }
     for (const id of duplicates(drill.primitives.map((p) => p.primitive))) problems.push(`drill ${drill.id}: primitive ${id} appears twice`);
     for (const { primitive: id, mirrored } of drill.primitives) {
       const primitive = primitives.get(id);

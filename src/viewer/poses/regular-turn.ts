@@ -1,8 +1,9 @@
 import { Intensity } from '../../content/schema';
-import { phaseForces, turnForcesAt } from '../../physics/turn';
+import { arcLoad, phaseForces, turnForcesAt } from '../../physics/turn';
 import type { TurnScenarios } from '../../physics/turn';
 import { keyValuesAt } from '../pose-definition';
-import type { PoseDefinition, PoseKey } from '../pose-definition';
+import { HeadAim } from '../pose-definition';
+import type { HeadRule, PoseDefinition, PoseKey } from '../pose-definition';
 
 const DEG = Math.PI / 180;
 
@@ -34,6 +35,8 @@ export interface TurnStyle {
   readonly underAnkle?: number;
   /** Peak hip angulation and the outside femur's rotation into the turn. */
   readonly angulation: number;
+  /** Degrees both femurs turn further into the turn: edge from the knees, the pelvis left level. */
+  readonly kneeAngulation?: number;
   /** Peak pelvis turn toward the outside of the turn, relative to the skis, and the chest turned further beyond it. */
   readonly counter: number;
   readonly twist: number;
@@ -61,6 +64,10 @@ export interface TurnStyle {
   readonly polePlant: boolean;
   /** Poles this many metres shorter than regular. */
   readonly poleTrim: number;
+  /** Where the head looks; absent, with the chest. */
+  readonly head?: HeadRule;
+  /** Arm abduction; absent, the figure's default, hands wide. */
+  readonly armAbduction?: number;
 }
 
 /** One value per phase key, in PHASES order. */
@@ -80,11 +87,21 @@ const SWIVEL: PhaseValues = [0, 0.3, 0.8, 0.94, 1];
 const SHORT_COUNTER = 35;
 // In moguls the hips (user's rule) and the head and chest (fis-freestyle-judging-2025 p29, dipiro-2005 p32) face the
 // fall line, so pelvis counter is the skis' heading off it with no spine twist.
+// Mogul lines, and the closed-stance drill's terrain, run in a corridor about 2 m wide.
+const CORRIDOR = 2;
+// The head stays still, facing downhill (fis-freestyle-judging-2025 p29).
+const DOWNHILL: HeadRule = { aim: HeadAim.FallLine, corridor: CORRIDOR };
+// Hands in front of the body (fis-freestyle-judging-2025 p29), not out wide; amount inferred.
+const HANDS_IN = 10;
 // An arc of radius r from the fall line across half a corridor w heads acos(1 - w/2r) off it, up to the hips' rotation range.
 const fallLineHeading = (r: number, w: number): number => Math.min(45, Math.acos(1 - w / (2 * r)) / DEG);
 // Signed, as headingAt in turn-heading.ts: -max at the transition, 0 at the fall line, max into the next transition.
 const heading = (t: number): number => -Math.cos(Math.PI * t);
 const HEADING: PhaseValues = [heading(0), heading(1 / 6), heading(1 / 2), heading(0.65), heading(5 / 6)];
+
+// The mass runs nearly straight while the legs swing under it (lind-sanders-2004 pp114-115), the feet under the
+// hips (fis-freestyle-judging-2025 p26): its path about 4x the skis' arc, inferred, so the trunk inclines 10-20 deg.
+const MOGUL_COM = 4;
 
 const SHORT: TurnScenarios = {
   gentle: { speedMps: 6, radiusM: 6, slopeDeg: 12 },
@@ -201,9 +218,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   // Compact; the legs fold deep over each bump at the transition.
   [RegularTurn.Moguls]: {
     scenarios: {
-      gentle: { speedMps: 5, radiusM: 5, slopeDeg: 15 },
-      moderate: { speedMps: 6, radiusM: 5, slopeDeg: 18 },
-      dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22 },
+      gentle: { speedMps: 5, radiusM: 5, slopeDeg: 15, comRadiusM: MOGUL_COM * 5 },
+      moderate: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5 },
+      dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22, comRadiusM: MOGUL_COM * 5.5 },
     },
     outsideShare: [0.6, 0.75],
     // Elite mogul skiers fold the hip much deeper over the bump than the knee (arndt-1992 p85); the range widens with intensity.
@@ -211,8 +228,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hipStep: 5,
     hipSpread: 3,
     angulation: 6,
-    // Zipper line about 2 m wide.
-    counter: fallLineHeading(5, 2),
+    // Angulation of the lower leg sets the radius (fis-freestyle-judging-2025 p26); amount inferred.
+    kneeAngulation: 10,
+    counter: fallLineHeading(5, CORRIDOR),
     twist: 0,
     counterCurve: HEADING,
     bend: 3,
@@ -222,8 +240,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     ankle: [31, 25, 12, 12, 22],
     ankleGain: 0.16,
     spineFlex: 24,
-    narrow: 0,
-    kneesIn: 0,
+    // Legs together (fis-freestyle-judging-2025 p26), as the closed stance.
+    narrow: 7,
+    kneesIn: 10,
     comAhead: [0.12, 0.08, 0.01, 0.01, 0.06],
     early: 0.4,
     // Cross-under: the legs retract over the crest so the mass travels straight (lind-sanders-2004 pp114-115).
@@ -231,6 +250,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     polePlant: true,
     // Shorter for quick plants on the bumps' backs.
     poleTrim: 0.05,
+    head: DOWNHILL,
+    armAbduction: HANDS_IN,
   },
   // Strong counter and angulation, a firm pole plant.
   [RegularTurn.Steeps]: {
@@ -301,9 +322,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
  */
 export const CLOSED_STANCE: TurnStyle = {
   scenarios: {
-    gentle: { speedMps: 5, radiusM: 4.5, slopeDeg: 14 },
-    moderate: { speedMps: 6, radiusM: 4.5, slopeDeg: 17 },
-    dynamic: { speedMps: 7, radiusM: 5, slopeDeg: 20 },
+    gentle: { speedMps: 5, radiusM: 4.5, slopeDeg: 14, comRadiusM: MOGUL_COM * 4.5 },
+    moderate: { speedMps: 6, radiusM: 4.5, slopeDeg: 17, comRadiusM: MOGUL_COM * 4.5 },
+    dynamic: { speedMps: 7, radiusM: 5, slopeDeg: 20, comRadiusM: MOGUL_COM * 5 },
   },
   // Both feet share the load more evenly than in an open stance.
   outsideShare: [0.55, 0.65],
@@ -312,8 +333,7 @@ export const CLOSED_STANCE: TurnStyle = {
   hipStep: 3,
   hipSpread: 0,
   angulation: 3,
-  // A corridor about 2 m wide, as the drill's terrain.
-  counter: fallLineHeading(4.5, 2),
+  counter: fallLineHeading(4.5, CORRIDOR),
   twist: 0,
   counterCurve: HEADING,
   bend: 1,
@@ -329,6 +349,8 @@ export const CLOSED_STANCE: TurnStyle = {
   crossUnder: [1, 1, 1],
   polePlant: true,
   poleTrim: 0,
+  head: DOWNHILL,
+  armAbduction: HANDS_IN,
 };
 
 export const isRegularTurn = (id: string): id is RegularTurn => Object.hasOwn(TURN_STYLES, id);
@@ -367,7 +389,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
   const [open, deep] = style.hip;
   const step = style.hipStep;
   const spread = style.hipSpread;
-  const load = (i: Intensity): number => phaseForces(style.scenarios[i]).shaping.load;
+  const load = (i: Intensity): number => arcLoad(style.scenarios[i]);
   const keys = PHASES.map((p, i): PoseKey => {
     const share = p.share ?? style.early;
     const ankle = (style.ankle[i] ?? 0) * DEG;
@@ -395,7 +417,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
     keys: [...keys, ...SWITCH.map((k): PoseKey => ({ ...keyValuesAt(keys, k.t), t: k.t, hip: k.hip, hipUnder: k.under }))],
     constraints: {
       hipAngulation: style.angulation * DEG,
-      femurRotation: 0.5 * style.angulation * DEG,
+      femurRotation: (0.5 * style.angulation + (style.kneeAngulation ?? 0)) * DEG,
       insideFemurShare: 0.8,
       hipByLoad: [
         [load(Intensity.Gentle), open - step + spread, deep - step - spread],
@@ -411,6 +433,8 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       stance: style.narrow * DEG,
       kneesIn: style.kneesIn * DEG,
       poleTrim: style.poleTrim,
+      ...(style.head === undefined ? {} : { head: style.head }),
+      ...(style.armAbduction === undefined ? {} : { armAbduction: style.armAbduction * DEG }),
       gains: { dorsiflexion: style.ankleGain, lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1 },
     },
   };

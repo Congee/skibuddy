@@ -28,6 +28,10 @@ export interface Pose {
   readonly spineBend: number;
   /** Trunk turned toward the outside of the turn beyond the pelvis. */
   readonly spineTwist: number;
+  /** Head turned toward the outside of the turn beyond the chest. */
+  readonly headYaw: number;
+  /** Both arms abducted at the shoulder, so the hands ride out to the sides. */
+  readonly armAbduction: number;
   /** 0..1: the inside pole swings forward and plants at 1; negative, the outside pole does, for the next turn. */
   readonly poleTouch: number;
   /** Extra shoulder flexion of the touching arm that brings the touch beside the ski; solved per figure. */
@@ -86,6 +90,8 @@ export const POSE_CHANNELS = [
   'outsideGirdle.elevation',
   'insideGirdle.protraction',
   'insideGirdle.elevation',
+  'headYaw',
+  'armAbduction',
 ] as const;
 
 export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
@@ -114,6 +120,8 @@ export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
   p.outsideGirdle.elevation,
   p.insideGirdle.protraction,
   p.insideGirdle.elevation,
+  p.headYaw,
+  p.armAbduction,
 ];
 
 /** The inverse of `poseToChannels`, reading `channels` from `at`. */
@@ -135,13 +143,15 @@ export const poseFromChannels = (c: ArrayLike<number>, at = 0): Pose => {
     inside: { hipFlex: v(16), ankleFlex: v(17), femurRotation: v(18), tailLift: v(19), adduction: v(20) },
     outsideGirdle: { protraction: v(21), elevation: v(22) },
     insideGirdle: { protraction: v(23), elevation: v(24) },
+    headYaw: v(25),
+    armAbduction: v(26),
   };
 };
 
 /** 0 at the transition (t = 0), 1 mid-turn (t = 0.5). */
 export const turnDepth = (t: number): number => 0.5 - 0.5 * Math.cos(2 * Math.PI * (((t % 1) + 1) % 1));
 
-/** Arms abducted at the shoulder so the hands ride wide, poles clear of the body (lemaster-2010). */
+/** Arms abducted at the shoulder so the hands ride wide, poles clear of the body (lemaster-2010); a kind may hold them closer. */
 export const ARM_ABDUCTION = 0.5;
 /** Forward flexion of the upper arm; build_anatomy.py reads it from the pose track. */
 export const ARM_FLEXION = 0.4;
@@ -180,6 +190,7 @@ export const mirrorPose = (p: Pose): Pose => ({
   counter: -p.counter,
   spineBend: -p.spineBend,
   spineTwist: -p.spineTwist,
+  headYaw: -p.headYaw,
   poleTouch: -p.poleTouch,
   outside: mirrorLeg(p.inside),
   inside: mirrorLeg(p.outside),
@@ -207,6 +218,7 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
     case SegmentKind.Head:
       // Eyes ahead, not at the snow.
       return compose(
+        rotationY(-pose.headYaw),
         rotationZ(-HEAD_LEVEL * (pose.pelvisList - pose.lean + pose.spineBend)),
         rotationX(-HEAD_LIFT * (pose.pelvisPitch + pose.spineFlex)),
       );
@@ -220,7 +232,7 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
       const g = girdlePose(pose, segment.side);
       return compose(
         rotationY(out * g.protraction),
-        rotationZ(out * ARM_ABDUCTION),
+        rotationZ(out * pose.armAbduction),
         rotationX(-ARM_FLEXION - ARM_LEAN_SHOULDER * armLean(pose) - (segment.side === touchSide(pose) ? pose.reach : 0)),
       );
     }

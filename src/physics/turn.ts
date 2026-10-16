@@ -1,10 +1,13 @@
 import type { Intensity } from '../content/schema';
 
-/** A round turn at constant speed: speed, radius of the centre of mass's path, slope. Content's `Scenario` fits it. */
+/** A round turn at constant speed: speed, radius of the skis' arc, slope. Content's `Scenario` fits it. */
 export interface TurnScenario {
   readonly speedMps: number;
+  /** The skis' arc, and the centre of mass's path unless `comRadiusM` is set. */
   readonly radiusM: number;
   readonly slopeDeg: number;
+  /** The centre of mass's path when the legs swing the skis under a straighter mass, as in moguls. */
+  readonly comRadiusM?: number;
 }
 
 export const G = 9.81;
@@ -17,6 +20,7 @@ export interface DrillScenario {
   readonly speedMps: number;
   readonly slopeDeg: number;
   readonly radiusM?: number;
+  readonly comRadiusM?: number;
 }
 
 /** Structural twin of content's `isTurnScenario`, so the physics needs nothing from the content schema. */
@@ -29,14 +33,20 @@ export interface TurnForces {
   readonly tilt: number;
 }
 
+/** Radius of the centre of mass's path. */
+export const comRadius = (s: TurnScenario): number => s.comRadiusM ?? s.radiusM;
+
 /**
- * Lind & Sanders eq 4.9 at heading `beta`, radians: 0 across the hill at the top of the
+ * Lind & Sanders eq 4.9 at the skis' heading `beta`, radians: 0 across the hill at the top of the
  * turn, π/2 down the fall line, π across again at the finish. Gravity opposes the turn
- * above the fall line and adds below it (lind-sanders-2004).
+ * above the fall line and adds below it (lind-sanders-2004). A wider mass path keeps the skis'
+ * rhythm, so it heads off the fall line by the share radiusM / comRadiusM of the skis' heading.
  */
 export const forcesAt = (s: TurnScenario, beta: number): TurnForces => {
   const alpha = (s.slopeDeg * Math.PI) / 180;
-  const f = s.speedMps ** 2 / (G * s.radiusM) - Math.sin(alpha) * Math.cos(beta);
+  const r = comRadius(s);
+  const off = (Math.PI / 2 - beta) * (s.radiusM / r);
+  const f = s.speedMps ** 2 / (G * r) - Math.sin(alpha) * Math.sin(off);
   return { load: Math.hypot(f, Math.cos(alpha)), tilt: Math.atan2(f, Math.cos(alpha)) };
 };
 
@@ -67,6 +77,9 @@ export const phaseForces = (s: TurnScenario): { readonly initiation: TurnForces;
   shaping: forcesAt(s, Math.PI / 2),
   finish: forcesAt(s, FINISH_HEADING),
 });
+
+/** Fall-line load were the mass on the skis' arc: the effort key, which a straighter mass path must not soften. */
+export const arcLoad = (s: TurnScenario): number => phaseForces({ speedMps: s.speedMps, radiusM: s.radiusM, slopeDeg: s.slopeDeg }).shaping.load;
 
 const smooth = (u: number): number => u * u * (3 - 2 * u);
 

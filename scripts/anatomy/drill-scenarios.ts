@@ -9,7 +9,8 @@ import { TURN_STYLES, isRegularTurn } from '../../src/viewer/poses/regular-turn'
 
 export const drillFile = (drill: string): URL => new URL(`../../content/drills/${drill}.yaml`, import.meta.url);
 
-const KEYS = { speed_mps: 'speedMps', slope_deg: 'slopeDeg', radius_m: 'radiusM' } as const;
+const KEYS = { speed_mps: 'speedMps', slope_deg: 'slopeDeg', radius_m: 'radiusM', com_radius_m: 'comRadiusM' } as const;
+const OPTIONAL: ReadonlySet<string> = new Set(['radiusM', 'comRadiusM']);
 
 /** Read loosely: `bun run content` validates the drill; here only the numbers the physics uses matter. */
 const scenarioOf = (raw: unknown, where: string): DrillScenario => {
@@ -19,7 +20,7 @@ const scenarioOf = (raw: unknown, where: string): DrillScenario => {
   for (const [yaml, key] of Object.entries(KEYS)) {
     const v = r[yaml];
     if (typeof v === 'number') out[key] = v;
-    else if (v !== undefined || key !== 'radiusM') throw new Error(`${where}: ${yaml} is not a number`);
+    else if (v !== undefined || !OPTIONAL.has(key)) throw new Error(`${where}: ${yaml} is not a number`);
   }
   return out as unknown as DrillScenario;
 };

@@ -54,6 +54,13 @@ export interface PoleTouch {
   readonly swing: number;
 }
 
+/** Where the head looks through the turn, beyond the chest's own heading. */
+export const HeadAim = { Chest: 'chest', FallLine: 'fall-line' } as const;
+export type HeadAim = (typeof HeadAim)[keyof typeof HeadAim];
+
+/** The head's rule: with the chest, or down the fall line of a turn swinging across a `corridor` metres wide. */
+export type HeadRule = { readonly aim: typeof HeadAim.Chest } | { readonly aim: typeof HeadAim.FallLine; readonly corridor: number };
+
 export interface PoseConstraints {
   /** Peak hip angulation and outside femur rotation at moderate intensity. */
   readonly hipAngulation: number;
@@ -80,6 +87,10 @@ export interface PoseConstraints {
   readonly crossUnder?: readonly [number, number, number];
   /** Radians both ankles close further in a full cross-under, timed by `hipUnder`. */
   readonly underAnkle?: number;
+  /** Where the head looks; absent, with the chest. */
+  readonly head?: HeadRule;
+  /** Radians both arms are abducted; absent, ARM_ABDUCTION. */
+  readonly armAbduction?: number;
   /** Per key field, how much more a dynamic turn takes (and a gentle one less), as a share per step of effort. */
   readonly gains: Readonly<Partial<Record<Exclude<keyof PoseKey, 't'>, number>>>;
 }

@@ -1,14 +1,36 @@
 import { assert, describe, it } from '@effect/vitest';
 import { INTENSITIES, Intensity } from '../src/content/schema';
-import { CAPSULE_ARM, poleSize, poseToChannels, regularPoleReach } from '../src/viewer/pose';
+import { turnForcesAt } from '../src/physics/turn';
+import { segmentIndex } from '../src/viewer/figure';
+import { inverseRotation, transformPoint } from '../src/viewer/mat4';
+import type { Vec3 } from '../src/viewer/mat4';
+import { CAPSULE_ARM, CAPSULE_GRIP, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
-import { OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
+import { headingAt, turnPath } from '../src/viewer/turn-heading';
+import { CLOSED_STANCE, OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
 
 const KINDS = Object.values(RegularTurn);
 const angles = (kind: RegularTurn, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(kind, i), t));
+const DEG = 180 / Math.PI;
+const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as const;
+const local = (drill: string, t: number, segment: string, point: Vec3, frame: string): Vec3 => {
+  const w = segmentMatrices(samplePose(poseTable(drill, Intensity.Moderate), t));
+  const m = w[segmentIndex(frame)];
+  const p = w[segmentIndex(segment)];
+  if (!m || !p) throw new Error(`${segment} in ${frame}`);
+  const o = transformPoint(m, [0, 0, 0]);
+  const q = transformPoint(p, point);
+  return transformPoint(inverseRotation(m), [q[0] - o[0], q[1] - o[1], q[2] - o[2]]);
+};
+// Left boot from the right one, across the right ski.
+const bootGap = (drill: string, t: number): number => {
+  const [x, y] = local(drill, t, 'left-boot', [0, 0, 0], 'right-ski');
+  const [bx, by] = local(drill, t, 'right-boot', [0, 0, 0], 'right-ski');
+  return Math.hypot(x - bx, y - by);
+};
 const ankle = (kind: RegularTurn, i: Intensity, t: number): number => angles(kind, i, t).dorsiflexion.right;
 
 describe('regular turn', () => {
@@ -111,12 +133,14 @@ describe('regular turn', () => {
     }
   });
 
-  it('keeps both skis on the snow, the inside leg more flexed mid-turn', () => {
+  it('keeps both skis on the snow, the inside leg more flexed mid-turn but in moguls', () => {
     for (const kind of KINDS) {
       const a = angles(kind, Intensity.Moderate, 1 / 2);
       assert.closeTo(a.insideTip, 0, 0.01, kind);
       assert.closeTo(a.insideTail, 0, 0.02, kind);
-      assert.isAbove(a.knee.left, a.knee.right, kind);
+      // Moguls: legs together over a near-upright mass, flexed alike.
+      if (kind === RegularTurn.Moguls) assert.closeTo(a.knee.left, a.knee.right, 5, kind);
+      else assert.isAbove(a.knee.left, a.knee.right, kind);
     }
   });
 
@@ -208,5 +232,48 @@ describe('regular turn', () => {
     }
     assert.strictEqual(poleTrimOf(null), 0);
     assert.strictEqual(poleTrimOf('stork-turns'), 0);
+  });
+
+  it('skis moguls and closed stance with the legs together', () => {
+    for (const drill of FALL_LINE_KINDS)
+      for (let k = 0; k < 24; k++) {
+        const gap = bootGap(drill, k / 24);
+        assert.isBelow(gap, 0.17, `${drill} ${k}/24`);
+        assert.isBelow(gap, 0.8 * bootGap(RegularTurn.Cruising, k / 24), `${drill} ${k}/24`);
+      }
+  });
+
+  it('keeps the mogul mass near upright: the lean bounded, the edge from the legs', () => {
+    for (const style of [TURN_STYLES[RegularTurn.Moguls], CLOSED_STANCE])
+      for (const i of INTENSITIES) {
+        const tilt = Math.max(...Array.from({ length: 96 }, (_, k) => Math.abs(turnForcesAt(style.scenarios[i], k / 96).tilt)));
+        assert.isAtMost(tilt * DEG, 20, i);
+        assert.isAtLeast(tilt * DEG, 8, i);
+      }
+    const mogul = angles(RegularTurn.Moguls, Intensity.Moderate, 1 / 2);
+    assert.isAbove(mogul.edge.right, turnForcesAt(TURN_STYLES[RegularTurn.Moguls].scenarios.moderate, 1 / 2).tilt * DEG + 10);
+  });
+
+  it('plants the mogul pole lightly, both hands in front of the chest', () => {
+    for (const drill of FALL_LINE_KINDS)
+      for (const side of ['left', 'right']) {
+        const [x, , z] = local(drill, 1 / 24, `${side}-forearm`, CAPSULE_GRIP, 'trunk');
+        assert.isAbove(z, 0.3, `${drill} ${side}`);
+        assert.isBelow(Math.abs(x), 0.22, `${drill} ${side}`);
+      }
+    const wide = Math.abs(local(RegularTurn.Cruising, 1 / 2, 'right-forearm', CAPSULE_GRIP, 'trunk')[0]);
+    assert.isBelow(Math.abs(local(RegularTurn.Moguls, 1 / 2, 'right-forearm', CAPSULE_GRIP, 'trunk')[0]), wide - 0.03);
+  });
+
+  it('faces the head down the fall line in moguls, with the chest elsewhere', () => {
+    for (const drill of FALL_LINE_KINDS)
+      for (const i of INTENSITIES)
+        for (let k = 0; k < 24; k++) {
+          const p = samplePose(poseTable(drill, i), k / 24);
+          const head = p.counter + p.spineTwist + p.headYaw;
+          assert.closeTo(head * DEG, headingAt(k / 24, turnPath(drill, i)) * DEG, 1.5, `${drill} ${i} ${k}/24`);
+        }
+    for (const kind of KINDS.filter((k) => k !== RegularTurn.Moguls))
+      for (let k = 0; k < 24; k++) assert.strictEqual(samplePose(poseTable(kind, Intensity.Moderate), k / 24).headYaw, 0, kind);
   });
 });

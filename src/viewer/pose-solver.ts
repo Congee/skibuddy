@@ -1,15 +1,16 @@
 // Build time only: scripts/anatomy/pose-tables.ts solves every definition into src/viewer/poses/tables.json.
-import { isTurn, phaseForces, turnForcesAt } from '../physics/turn';
+import { arcLoad, isTurn, turnForcesAt } from '../physics/turn';
 import type { DrillScenario } from '../physics/turn';
 import { EQUIPMENT, shinAngle } from './equipment';
 import { BodySide, SEGMENTS, SegmentKind } from './figure';
 import { identity, transformPoint } from './mat4';
 import type { Mat4, Vec3 } from './mat4';
-import { keyValuesAt, touchShare, windowShare, wrapTime } from './pose-definition';
-import type { KeyField, PoseDefinition } from './pose-definition';
+import { HeadAim, keyValuesAt, touchShare, windowShare, wrapTime } from './pose-definition';
+import type { HeadRule, KeyField, PoseDefinition } from './pose-definition';
+import { headingAt } from './turn-heading';
 
 const DEG = Math.PI / 180;
-import { CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, centreOfMass, outsideWeight, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
+import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, centreOfMass, outsideWeight, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
 import type { Pose } from './pose';
 
 /** How hard the drill is skied, from its physics. */
@@ -40,7 +41,7 @@ const interpolate = (table: ReadonlyArray<readonly [number, number, number]>, x:
 /** The fall-line load of a turn; a drill that is not a turn stands on the slope's normal share of weight. */
 const loadOf = (s: DrillScenario | null): number => {
   if (s === null) return 1;
-  return isTurn(s) ? phaseForces(s).shaping.load : Math.cos((s.slopeDeg * Math.PI) / 180);
+  return isTurn(s) ? arcLoad(s) : Math.cos((s.slopeDeg * Math.PI) / 180);
 };
 
 export const effortOf = (def: PoseDefinition, scenario: DrillScenario | null): Effort => {
@@ -49,6 +50,13 @@ export const effortOf = (def: PoseDefinition, scenario: DrillScenario | null): E
   const mid = rows[Math.floor(rows.length / 2)]?.[1] ?? hipMin;
   const span = rows.length > 1 ? mid - (rows[0]?.[1] ?? mid) : 0;
   return { hipMin, hipMax, scale: span === 0 ? 0 : (hipMin - mid) / span };
+};
+
+/** Head yaw beyond the chest, toward the outside, that `rule` asks for at turn time `t` given the chest's heading on the skis. */
+export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | null, t: number, chest: number): number => {
+  if (rule === undefined || rule.aim === HeadAim.Chest || scenario === null || !isTurn(scenario)) return 0;
+  // The fall line lies the skis' heading off it toward the outside.
+  return headingAt(t, { radius: scenario.radiusM, corridor: rule.corridor }) - chest;
 };
 
 const insideTipHeight = (pose: Pose): number => transformPoint(segmentMatrices(pose)[skiIndex(BodySide.Left)] ?? identity(), SKI_TIP)[1];
@@ -118,6 +126,8 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       spineFlex: mild('lumbarFlex'),
       spineBend: mild('spineBend'),
       spineTwist: mild('spineTwist'),
+      headYaw: headYawOf(c.head, scenario, t, mild('counter') + mild('spineTwist')),
+      armAbduction: c.armAbduction ?? ARM_ABDUCTION,
       poleTouch,
       reach: 0,
       outside: { hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: 0, adduction: c.stance },
