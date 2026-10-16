@@ -15,6 +15,7 @@ import { heightAt, pathAt, surfaceFor } from '../src/viewer/surface';
 import { TOPS_PLANT } from '../src/viewer/poses/regular-turn';
 import { TOPS_POSE } from '../src/viewer/turn-heading';
 import { poseAngles, trunkFromVertical } from './pose-angles';
+import type { PoseAngles } from './pose-angles';
 
 const DEG = 180 / Math.PI;
 const N = 48;
@@ -30,7 +31,7 @@ const edgeAt = (i: Intensity, t: number): number => {
   const a = transformPoint(ski, [1, 0, 0]);
   return Math.abs((Math.asin(a[1] - o[1]) - rideOf(s, t, pose).outsideBank) * DEG);
 };
-const anglesAt = (i: Intensity, t: number) =>
+const anglesAt = (i: Intensity, t: number): PoseAngles =>
   poseAngles(samplePose(poseTable(TOPS_POSE, i), t), forceTiltAt(drillScenarios(TOPS_POSE)[i], surfaceFor(TOPS_POSE, i), t));
 const kneeAt = (i: Intensity, t: number): number => anglesAt(i, t).knee.right;
 /** Gravity's up in the figure's root, the skis heading `h` off the fall line of a `slopeDeg` slope. */
@@ -40,7 +41,13 @@ const gravityUp = (slopeDeg: number, h: number): Vec3 => {
 };
 const segment = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((g) => g.kind === kind && g.side === side);
 /** Each grip's height over its shoulder along gravity and ahead of it toward the chest's facing, and the grips' span over the shoulders', metres. */
-const handsAt = (i: Intensity, t: number) => {
+interface Hand {
+  readonly shoulder: Vec3;
+  readonly grip: Vec3;
+  readonly above: number;
+  readonly ahead: number;
+}
+const handsAt = (i: Intensity, t: number): { readonly sides: readonly [Hand, Hand]; readonly span: number } => {
   const world = segmentMatrices(samplePose(poseTable(TOPS_POSE, i), t));
   const at = (kind: SegmentKind, side: BodySide, p: Vec3): Vec3 => {
     const m = world[segment(kind, side)];
@@ -60,7 +67,7 @@ const handsAt = (i: Intensity, t: number) => {
   const lift = dot(chest, up);
   const front: Vec3 = [chest[0] - lift * up[0], chest[1] - lift * up[1], chest[2] - lift * up[2]];
   const across = (a: Vec3, b: Vec3): number => dot([a[0] - b[0], a[1] - b[1], a[2] - b[2]], lateral);
-  const side = (s: BodySide) => {
+  const side = (s: BodySide): Hand => {
     const shoulder = at(SegmentKind.UpperArm, s, [0, 0, 0]);
     const grip = at(SegmentKind.Forearm, s, CAPSULE_GRIP);
     const d: Vec3 = [grip[0] - shoulder[0], grip[1] - shoulder[1], grip[2] - shoulder[2]];
