@@ -11,7 +11,7 @@ import { HEAD_LIMIT, gazeHeading } from './gaze';
 import { CORRIDOR_SHARE, headingAt } from './turn-heading';
 import { FLAT_RIDE, rideOf } from './ride';
 import type { Ride } from './ride';
-import { SurfaceKind } from './surface';
+import { MogulLine, SurfaceKind, trackRest } from './surface';
 import type { Surface } from './surface';
 
 const DEG = Math.PI / 180;
@@ -148,6 +148,33 @@ export const brakingTiltAt = (scenario: DrillScenario | null, surface: Surface |
   return brakingTilt(scenario, ski, (ski * scenario.radiusM) / comRadius(scenario), turnForcesAt(scenario, t).load);
 };
 
+/** Half-width of the window the body balances the snow's force over, seconds: about a postural correction's latency; inferred. */
+const BALANCE_LAG = 0.15;
+const LAG_SAMPLES = 16;
+
+/**
+ * On the zipper the snow pushes along the skis' normal, pitched uphill on a face and downhill on a backside; the body
+ * cannot re-balance at 2-3 turns a second, so it meets that pitch raised-cosine averaged over BALANCE_LAG either side
+ * of t, through the mirrored next turn. Radians uphill of the slope normal; 0 off the zipper.
+ */
+export const snowPitchAt = (scenario: DrillScenario | null, surface: Surface | null, t: number): number => {
+  if (scenario === null || surface === null || surface.line !== MogulLine.Zipper || surface.speed === 0) return 0;
+  const half = (BALANCE_LAG * scenario.speedMps) / surface.speed;
+  let sum = 0;
+  let weights = 0;
+  for (let i = 0; i < LAG_SAMPLES; i++) {
+    const u = (2 * (i + 0.5)) / LAG_SAMPLES - 1;
+    const w = 1 + Math.cos(Math.PI * u);
+    sum += w * trackRest(surface, wrapTime(t + u * half), SKI_TIP[2], -SKI_TAIL[2]).pitch;
+    weights += w;
+  }
+  return sum / weights;
+};
+
+/** The snow's force line the mass balances on, radians uphill of the slope normal: the skis' averaged pitch plus braking. */
+export const forceTiltAt = (scenario: DrillScenario | null, surface: Surface | null, t: number): number =>
+  brakingTiltAt(scenario, surface, t) + snowPitchAt(scenario, surface, t);
+
 type Spine = Pick<Pose, 'spineFlex' | 'spineBend' | 'spineTwist'>;
 
 /** The spine that tips the trunk `outward` about the body frame's fore-aft axis, so the tip adds no pitch. */
@@ -236,7 +263,7 @@ const solveRidden = (
   const settle = (hip: number | null, ride: Ride): Pose => solveOn(def, t, scenario, surface, ridden(hip, ride).ride, hip, true);
   if (c.absorb === undefined) return { pose: settle(null, ridden(null, ridden(null, FLAT_RIDE).ride).ride), warm: null };
   const [lo, hi] = absorbRange(def, scenario);
-  const level = levelOf(def, scenario, surface);
+  const level = levelOf(def, scenario, surface).at(t);
   // The knee folds as the snow rises under the skis, so the mass rides at `level` while the legs reach; past the
   // range's ends it eases in, so the knee settles on its stops without a kink.
   const w = ABSORB_EASE;
@@ -281,24 +308,62 @@ const absorbRange = (def: PoseDefinition, scenario: DrillScenario | null): reado
   return [(absorb?.open ?? 0) + 0.5 * DEG, deep - 0.5 * DEG];
 };
 
-const levels = new WeakMap<PoseDefinition, Map<string, number>>();
+/** The mass's height aim on moguls, from turn time. */
+interface Level {
+  readonly at: (t: number) => number;
+}
 
-/** Midway between the mass folded deepest over the path's highest snow and stretched longest into its lowest. */
-const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface): number => {
+const levels = new WeakMap<PoseDefinition, Map<string, Level>>();
+
+/** Share of the knee's reach the absorbing legs use at the extremes, so they ease onto their stops only briefly; inferred. */
+const KNEE_SPAN = 0.9;
+/** The most the mass follows the snow, a share of its rise, as the judges' level hip line allows (fis-freestyle-judging-2025 p28); inferred. */
+const FOLLOW_MAX = 0.3;
+
+/** The snow under the skis at turn time t, averaged as the balance's force line is. */
+const snowAt = (scenario: DrillScenario | null, surface: Surface, t: number): number => {
+  const half = scenario === null || surface.speed === 0 ? 0 : (BALANCE_LAG * scenario.speedMps) / surface.speed;
+  let sum = 0;
+  let weights = 0;
+  for (let i = 0; i < LAG_SAMPLES; i++) {
+    const u = (2 * (i + 0.5)) / LAG_SAMPLES - 1;
+    const w = 1 + Math.cos(Math.PI * u);
+    sum += w * trackRest(surface, wrapTime(t + u * half), SKI_TIP[2], -SKI_TAIL[2]).base;
+    weights += w;
+  }
+  return sum / weights;
+};
+
+/**
+ * Midway between the mass folded deepest over the path's highest snow and stretched longest into its lowest; where the
+ * snow rises further than the legs reach, the mass follows the averaged snow by the share the legs cannot take.
+ */
+const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface): Level => {
   const key = JSON.stringify([scenario, surface]);
   const cached = levels.get(def)?.get(key);
   if (cached !== undefined) return cached;
+  const cache = (level: Level): Level => {
+    const map = levels.get(def) ?? new Map<string, Level>();
+    map.set(key, level);
+    levels.set(def, map);
+    return level;
+  };
   const [lo, hi] = absorbRange(def, scenario);
   const at = (t: number, hip: number): number => {
     let ride = FLAT_RIDE;
     for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, surface, ride, hip, true));
     return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, surface, ride, hip, true)))[1];
   };
-  const level = (at(surface.crest, hi) + at(surface.trough, lo)) / 2;
-  const map = levels.get(def) ?? new Map<string, number>();
-  map.set(key, level);
-  levels.set(def, map);
-  return level;
+  const crest = at(surface.crest, hi);
+  if (surface.line !== MogulLine.Zipper) return cache({ at: () => (crest + at(surface.trough, lo)) / 2 });
+  const trough = at(surface.trough, lo);
+  const high = snowAt(scenario, surface, surface.crest);
+  const low = snowAt(scenario, surface, surface.trough);
+  const rise = high - low;
+  const reach = trough - low - (crest - high);
+  const follow = rise <= 0 ? 0 : Math.min(FOLLOW_MAX, Math.max(0, 1 - (KNEE_SPAN * reach) / rise));
+  const middle = (crest + trough) / 2;
+  return cache({ at: (t) => middle + follow * (snowAt(scenario, surface, t) - (high + low) / 2) });
 };
 
 /** The pose on snow that pitches the skis and lifts the inside tip by `ride`; `absorbKnee` replaces the keyed outside knee. */
@@ -318,7 +383,7 @@ const solveOn = (
   const turning = scenario !== null && isTurn(scenario);
   const lean = turning ? turnForcesAt(scenario, t).tilt : 0;
   const braking = brakingTiltAt(scenario, surface, t);
-  const brake = Math.tan(braking);
+  const brake = Math.tan(forceTiltAt(scenario, surface, t));
   const onAxis = turning && c.balanced !== false ? balanceShare(lean, scenario) : 0;
   const angulation = mild('angulation');
   const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];

@@ -160,11 +160,11 @@ const MOGUL_COM = 4;
 // FIS course angles: FIS level 25 ± 3°, World Cup 28 ± 4° (fis-course-standards-2023 p3); gentle's 18° inferred.
 // Dynamic nears the pace speeds, 9.0 and 10.3 m/s down the course (fis-icr-book6-2025 §4207.2), 235 m in 25-30 s (fis-moguls-101-2026):
 // one radius at every intensity keeps one turn per mogul on the course's 3.5 m spacing (surface.ts), 1.6, 2.1 and 2.7 turns a second.
-// Half the braking is fore-aft at the feet, inferred; the mogul faces, their normal tilted uphill, take the rest (not modelled).
+// A quarter of the braking is fore-aft at the feet, inferred: at a level hip line the faces average none, the edges skidding take the rest.
 const ZIPPER_SCENARIOS: TurnScenarios = {
-  gentle: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5, brakingShare: 0.5 },
-  moderate: { speedMps: 8, radiusM: 5, slopeDeg: 25, comRadiusM: MOGUL_COM * 5, brakingShare: 0.5 },
-  dynamic: { speedMps: 10, radiusM: 5, slopeDeg: 28, comRadiusM: MOGUL_COM * 5, brakingShare: 0.5 },
+  gentle: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
+  moderate: { speedMps: 8, radiusM: 5, slopeDeg: 25, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
+  dynamic: { speedMps: 10, radiusM: 5, slopeDeg: 28, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
 };
 
 const SHORT: TurnScenarios = {

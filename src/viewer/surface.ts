@@ -323,6 +323,14 @@ export const skiRest = (s: Surface, t: number, at: readonly [number, number], ah
   return { pitch: Math.atan(slope), roll, base, tip: base + ahead * c * slope };
 };
 
+/** A ski's rest on the zipper where the skis cross the path's z at turn time t, as skiRest. */
+export const trackRest = (s: Surface, t: number, ahead: number, behind: number): SkiRest => {
+  const p = pathAt(s, t);
+  let across = 0;
+  for (let i = 0; i < 2; i++) across = (trackX(s, p.z - across * Math.sin(p.heading)) - p.x) / Math.cos(p.heading);
+  return skiRest(s, t, [across, 0], ahead, behind);
+};
+
 /** A grid over the field's square of half side `half`, `step` apart: positions, normals and triangle indices. */
 export const fieldMesh = (
   s: Surface,

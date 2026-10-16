@@ -7,7 +7,7 @@ import { segmentIndex } from '../src/viewer/figure';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
 import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, SKI_TAIL, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
-import { brakingTiltAt, solvePose } from '../src/viewer/pose-solver';
+import { forceTiltAt, solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
 import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
@@ -26,7 +26,7 @@ const surfaceOf = (drill: string, i: Intensity): ReturnType<typeof surfaceFor> =
   return s;
 };
 // Braking drills balance on the snow's force line, tilted uphill of the slope normal.
-const brakeOf = (drill: string, i: Intensity, t: number): number => brakingTiltAt(drillScenarios(drill)[i], surfaceOf(drill, i), t);
+const brakeOf = (drill: string, i: Intensity, t: number): number => forceTiltAt(drillScenarios(drill)[i], surfaceOf(drill, i), t);
 const anglesOf = (drill: string, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(drill, i), t), brakeOf(drill, i, t));
 const angles: (kind: RegularTurn, i: Intensity, t: number) => ReturnType<typeof poseAngles> = anglesOf;
 const DEG = 180 / Math.PI;
