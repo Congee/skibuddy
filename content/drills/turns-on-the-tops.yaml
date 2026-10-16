@@ -5,11 +5,12 @@ movement: closed-stance-short-turn
 summary: The recreational line through moguls, each turn starting on top of a bump. On the crest only the middle of the skis touches the snow, so the legs pivot both skis round with little effort (campbell-rogan-2001). Fore-aft, the feet work against the bump. Coming into it, with the legs long, the feet move a little ahead (lemaster-2010 fig 6.2 pp88-89, craenen-2022); a feel cue we use is to let the tails meet the bump and take its rebound. Near the crest the feet pull back under the body, the tails lift and the tips drop early onto the back side (lemaster-2010 pp88-89, smith-j2ski-compression, dipiro-2005 pp36, 44). Then the tips are pressed down into the trough, keeping as much of the ski on the snow as possible, and the legs fold again as the next bump rises (dipiro-2005 p46). The upper body stays forward and square to the fall line, ready for the plant, made on the top (campbell-rogan-2001), or just below the crest with the pole tip reaching the bump well before the feet (wiegand-2021). An easier line than the zipper (see Moguls), which keeps to the ruts between the bumps; we teach it first (our inference).
 terrain: An easy, soft mogul field on a blue, bumps about half a metre high, in a corridor about two metres wide; dynamic on a steeper, bigger field
 # The mogul turn's speeds and radii; inferred.
+# Half of gravity's pull along the line is braked fore-aft at the feet, the rest by the mogul faces; inferred.
 # The mass runs nearly straight while the legs swing under it: its path about 4x the skis' arc, inferred.
 scenarios:
-  gentle: { speed_mps: 5, radius_m: 5, com_radius_m: 20, slope_deg: 15 }
-  moderate: { speed_mps: 6, radius_m: 5, com_radius_m: 20, slope_deg: 18 }
-  dynamic: { speed_mps: 7.5, radius_m: 5.5, com_radius_m: 22, slope_deg: 22 }
+  gentle: { speed_mps: 5, radius_m: 5, com_radius_m: 20, slope_deg: 15, braking_share: 0.5 }
+  moderate: { speed_mps: 6, radius_m: 5, com_radius_m: 20, slope_deg: 18, braking_share: 0.5 }
+  dynamic: { speed_mps: 7.5, radius_m: 5.5, com_radius_m: 22, slope_deg: 22, braking_share: 0.5 }
 equipment: Efforts assume recreational skis of about 12-15 m sidecut and boots with about 15° of cuff lean. Softer, narrower skis and shorter poles make the bumps easier (lemaster-2010 p185).
 cautions:
   - "Common mistake: staying low the whole turn. Stand taller as the skis slide down into the trough, then fold again for the next bump (lemaster-2010 p191)."

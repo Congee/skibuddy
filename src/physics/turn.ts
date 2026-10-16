@@ -8,6 +8,8 @@ export interface TurnScenario {
   readonly slopeDeg: number;
   /** The centre of mass's path when the legs swing the skis under a straighter mass, as in moguls. */
   readonly comRadiusM?: number;
+  /** Share of gravity's pull along the path the snow takes to hold the speed: 1 steady, 0 none; absent, 0. */
+  readonly brakingShare?: number;
 }
 
 export const G = 9.81;
@@ -21,6 +23,7 @@ export interface DrillScenario {
   readonly slopeDeg: number;
   readonly radiusM?: number;
   readonly comRadiusM?: number;
+  readonly brakingShare?: number;
 }
 
 /** Structural twin of content's `isTurnScenario`, so the physics needs nothing from the content schema. */
@@ -48,6 +51,22 @@ export const forcesAt = (s: TurnScenario, beta: number): TurnForces => {
   const off = (Math.PI / 2 - beta) * (s.radiusM / r);
   const f = s.speedMps ** 2 / (G * r) - Math.sin(alpha) * Math.sin(off);
   return { load: Math.hypot(f, Math.cos(alpha)), tilt: Math.atan2(f, Math.cos(alpha)) };
+};
+
+/** Air drag over weight per (m/s)²: ½ ρ CdA / mg at 1 kg/m³, 0.4 m², 75 kg; inferred. */
+export const DRAG_PER_V2 = (0.5 * 1 * 0.4) / (75 * G);
+
+/**
+ * Tilt of the snow's force uphill from the slope normal in the skis' pitch plane, radians. Holding the speed, the
+ * snow takes gravity's pull along the mass's path, sinθ cosψ less air drag, in the share `brakingShare`; projected
+ * on skis heading `ski` off the fall line, against the snow's normal load. `mass` is the mass path's heading.
+ */
+export const brakingTilt = (s: DrillScenario, ski: number, mass: number, load: number): number => {
+  const share = s.brakingShare ?? 0;
+  if (share === 0) return 0;
+  const slope = (s.slopeDeg * Math.PI) / 180;
+  const along = Math.max(0, Math.sin(slope) * Math.cos(mass) - DRAG_PER_V2 * s.speedMps ** 2);
+  return Math.atan2(share * along * Math.cos(ski - mass), load);
 };
 
 /** Turn time of each phase's key pose; the transition is at 0. */

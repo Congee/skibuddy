@@ -157,6 +157,16 @@ const HEADING: PhaseValues = [heading(0), heading(1 / 6), heading(1 / 2), headin
 // hips (fis-freestyle-judging-2025 p26): its path about 4x the skis' arc, inferred, so the trunk inclines 10-20 deg.
 const MOGUL_COM = 4;
 
+// FIS course angles: FIS level 25 ± 3°, World Cup 28 ± 4° (fis-course-standards-2023 p3); gentle's 18° inferred.
+// Dynamic nears the pace speeds, 9.0 and 10.3 m/s down the course (fis-icr-book6-2025 §4207.2), 235 m in 25-30 s (fis-moguls-101-2026):
+// the zipper runs 0.95 of its path speed downhill, 1.6, 2.1 and 2.5 turns a second over 3.5-3.7 m.
+// Half the braking is fore-aft at the feet, inferred; the mogul faces, their normal tilted uphill, take the rest (not modelled).
+const ZIPPER_SCENARIOS: TurnScenarios = {
+  gentle: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5, brakingShare: 0.5 },
+  moderate: { speedMps: 8, radiusM: 5, slopeDeg: 25, comRadiusM: MOGUL_COM * 5, brakingShare: 0.5 },
+  dynamic: { speedMps: 10, radiusM: 5.5, slopeDeg: 28, comRadiusM: MOGUL_COM * 5.5, brakingShare: 0.5 },
+};
+
 const SHORT: TurnScenarios = {
   gentle: { speedMps: 6, radiusM: 6, slopeDeg: 12 },
   moderate: { speedMps: 7, radiusM: 6, slopeDeg: 15 },
@@ -284,11 +294,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   },
   // Compact, on the zipper line; the legs fold deep up each bump's face.
   [RegularTurn.Moguls]: {
-    scenarios: {
-      gentle: { speedMps: 5, radiusM: 5, slopeDeg: 15, comRadiusM: MOGUL_COM * 5 },
-      moderate: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5 },
-      dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22, comRadiusM: MOGUL_COM * 5.5 },
-    },
+    scenarios: ZIPPER_SCENARIOS,
     outsideShare: [0.6, 0.75],
     // Elite mogul skiers fold the hip much deeper over the bump than the knee (arndt-1992 p85); the range widens with intensity.
     hip: [30, 72],
@@ -421,6 +427,12 @@ export const CLOSED_STANCE: TurnStyle = {
 /** Turns on the tops (content/drills/turns-on-the-tops.yaml): the mogul style turning over each crest in the 2 m corridor. */
 export const TOPS: TurnStyle = {
   ...TURN_STYLES[RegularTurn.Moguls],
+  // As content/drills/turns-on-the-tops.yaml: a recreational field.
+  scenarios: {
+    gentle: { speedMps: 5, radiusM: 5, slopeDeg: 15, comRadiusM: MOGUL_COM * 5, brakingShare: 0.5 },
+    moderate: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5, brakingShare: 0.5 },
+    dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22, comRadiusM: MOGUL_COM * 5.5, brakingShare: 0.5 },
+  },
   counter: fallLineHeading(5, CORRIDOR),
   counterGain: COUNTER_GAIN,
   trunkOverShin: 12,

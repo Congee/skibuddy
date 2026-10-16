@@ -9,8 +9,8 @@ import { TURN_STYLES, isRegularTurn } from '../../src/viewer/poses/regular-turn'
 
 export const drillFile = (drill: string): URL => new URL(`../../content/drills/${drill}.yaml`, import.meta.url);
 
-const KEYS = { speed_mps: 'speedMps', slope_deg: 'slopeDeg', radius_m: 'radiusM', com_radius_m: 'comRadiusM' } as const;
-const OPTIONAL: ReadonlySet<string> = new Set(['radiusM', 'comRadiusM']);
+const KEYS = { speed_mps: 'speedMps', slope_deg: 'slopeDeg', radius_m: 'radiusM', com_radius_m: 'comRadiusM', braking_share: 'brakingShare' } as const;
+const OPTIONAL: ReadonlySet<string> = new Set(['radiusM', 'comRadiusM', 'brakingShare']);
 
 /** Read loosely: `bun run content` validates the drill; here only the numbers the physics uses matter. */
 const scenarioOf = (raw: unknown, where: string): DrillScenario => {
@@ -26,8 +26,11 @@ const scenarioOf = (raw: unknown, where: string): DrillScenario => {
 };
 
 /** A kind of skiing's regular turn carries its own scenarios; a drill's come from its content. */
-export const drillScenarios = (drill = 'stork-turns'): Readonly<Record<Intensity, DrillScenario>> => {
-  if (isRegularTurn(drill)) return TURN_STYLES[drill].scenarios;
+export const drillScenarios = (drill = 'stork-turns'): Readonly<Record<Intensity, DrillScenario>> =>
+  isRegularTurn(drill) ? TURN_STYLES[drill].scenarios : contentScenarios(drill);
+
+/** The scenarios in a drill's content file. */
+export const contentScenarios = (drill: string): Readonly<Record<Intensity, DrillScenario>> => {
   const raw: unknown = parse(readFileSync(drillFile(drill), 'utf8'));
   const scenarios = typeof raw === 'object' && raw !== null && 'scenarios' in raw ? raw.scenarios : undefined;
   if (typeof scenarios !== 'object' || scenarios === null) throw new Error(`${drill}: no scenarios`);

@@ -379,11 +379,13 @@ export type Primitive = typeof Primitive.Type;
 const Positive = Schema.Number.check(Schema.isGreaterThan(0));
 
 const SlopeDeg = Schema.Number.check(Schema.isBetween({ minimum: 0, maximum: 45 }));
+const Share = Schema.Number.check(Schema.isBetween({ minimum: 0, maximum: 1 }));
 const SCENARIO_KEYS = {
   speedMps: 'speed_mps',
   slopeDeg: 'slope_deg',
   radiusM: 'radius_m',
   comRadiusM: 'com_radius_m',
+  brakingShare: 'braking_share',
   stepRateHz: 'step_rate_hz',
   stopDistanceM: 'stop_distance_m',
 } as const;
@@ -395,6 +397,8 @@ export const Scenario = Schema.Struct({
   radiusM: Schema.optionalKey(Positive),
   /** The centre of mass's path, when wider than the skis' arc. */
   comRadiusM: Schema.optionalKey(Positive),
+  /** Share of gravity's pull along the path the snow takes to hold the speed; absent, 0. */
+  brakingShare: Schema.optionalKey(Share),
   stepRateHz: Schema.optionalKey(Positive),
   /** Distance the skis brake over to a stop (Lind & Sanders eq 4.7). */
   stopDistanceM: Schema.optionalKey(Positive),
@@ -407,6 +411,7 @@ export const TurnScenario = Schema.Struct({
   slopeDeg: SlopeDeg,
   radiusM: Positive,
   comRadiusM: Schema.optionalKey(Positive),
+  brakingShare: Schema.optionalKey(Share),
   stepRateHz: Schema.optionalKey(Positive),
   stopDistanceM: Schema.optionalKey(Positive),
 }).pipe(Schema.encodeKeys(SCENARIO_KEYS));

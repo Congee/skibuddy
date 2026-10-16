@@ -43,7 +43,7 @@ export interface PoseAngles {
   readonly counter: number;
   /** Trunk forward of the pelvis: positive rounds the low back. */
   readonly spineFlex: number;
-  /** Trunk forward of vertical. */
+  /** Trunk forward of the slope normal, in the skis' pitch plane. */
   readonly trunkForward: number;
   /** Shoulders tipped up on the inside. */
   readonly shoulderList: number;
@@ -52,7 +52,7 @@ export interface PoseAngles {
   readonly insideTip: number;
   /** Inside ankle ahead of the outside one, metres. */
   readonly lead: number;
-  /** Hip joints ahead of the outside mid-foot, metres. */
+  /** Hip joints ahead of the outside mid-foot, metres; this and the mass's, from the snow's force line. */
   readonly hipsAhead: number;
   /** Centre of mass ahead of the outside mid-foot, metres. */
   readonly comAhead: number;
@@ -67,7 +67,8 @@ const lateral = (side: LegSide): number => (side === BodySide.Right ? -1 : 1);
 
 const indexOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 
-export const poseAngles = (pose: Pose): PoseAngles => {
+/** `brake`: the snow's force line tilt uphill of the slope normal, radians, as the solver's brakingTiltAt. */
+export const poseAngles = (pose: Pose, brake = 0): PoseAngles => {
   const world = segmentMatrices(pose);
   const seg = (kind: SegmentKind, side: BodySide): Mat4 => {
     const m = world[indexOf(kind, side)];
@@ -94,6 +95,11 @@ export const poseAngles = (pose: Pose): PoseAngles => {
   const unlean = ([x, y, z]: Vec3): Vec3 => [x * Math.cos(body) - y * Math.sin(body), x * Math.sin(body) + y * Math.cos(body), z];
   const by = unlean(py);
   const bx = unlean(px);
+  const foot = transformPoint(boot(BodySide.Right), MID_FOOT);
+  const com = centreOfMass(world);
+  const [hr, hl] = [hipAt(BodySide.Right), hipAt(BodySide.Left)];
+  const hips: Vec3 = [(hr[0] + hl[0]) / 2, (hr[1] + hl[1]) / 2, (hr[2] + hl[2]) / 2];
+  const line = (p: Vec3): number => Math.tan(brake) * Math.hypot(p[0] - foot[0], p[1] - foot[1]);
   return {
     dorsiflexion: perLeg((side) => {
       const f = boot(side);
@@ -134,9 +140,9 @@ export const poseAngles = (pose: Pose): PoseAngles => {
     insideTail: transformPoint(ski(BodySide.Left), SKI_TAIL)[1],
     insideTip: transformPoint(ski(BodySide.Left), SKI_TIP)[1],
     lead: ankleAt(BodySide.Left)[2] - ankleAt(BodySide.Right)[2],
-    hipsAhead: (hipAt(BodySide.Right)[2] + hipAt(BodySide.Left)[2]) / 2 - transformPoint(boot(BodySide.Right), MID_FOOT)[2],
-    comAhead: comAhead(world),
-    comOnSnow: centreOfMass(world)[2] - transformPoint(boot(BodySide.Right), MID_FOOT)[2],
+    hipsAhead: hips[2] - foot[2] + line(hips),
+    comAhead: comAhead(world) + line(com),
+    comOnSnow: com[2] - foot[2] + line(com),
     tailLift: (() => {
       const tail = transformPoint(ski(BodySide.Left), SKI_TAIL);
       const tip = transformPoint(ski(BodySide.Left), SKI_TIP);
@@ -144,3 +150,7 @@ export const poseAngles = (pose: Pose): PoseAngles => {
     })(),
   };
 };
+
+/** Trunk forward of gravity's vertical, degrees: `trunkForward` plus the slope's pitch along skis heading `heading` off the fall line. */
+export const trunkFromVertical = (trunkForward: number, slopeDeg: number, heading: number): number =>
+  trunkForward + Math.atan(Math.tan(slopeDeg / DEG) * Math.cos(heading)) * DEG;

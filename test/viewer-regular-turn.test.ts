@@ -1,4 +1,5 @@
 import { assert, describe, it } from '@effect/vitest';
+import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
 import { INTENSITIES, Intensity } from '../src/content/schema';
 import { PHASE_T, turnForcesAt } from '../src/physics/turn';
 import { gazeHeading } from '../src/viewer/gaze';
@@ -6,7 +7,7 @@ import { segmentIndex } from '../src/viewer/figure';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
 import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, SKI_TAIL, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
-import { solvePose } from '../src/viewer/pose-solver';
+import { brakingTiltAt, solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
 import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
@@ -17,7 +18,17 @@ import { poseAngles } from './pose-angles';
 import { SIDES, clearance, ridden } from './ride-probes';
 
 const KINDS = Object.values(RegularTurn);
-const angles = (kind: RegularTurn, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(kind, i), t));
+const surfaces = new Map<string, ReturnType<typeof surfaceFor>>();
+const surfaceOf = (drill: string, i: Intensity): ReturnType<typeof surfaceFor> => {
+  const key = `${drill} ${i}`;
+  const s = surfaces.get(key) ?? surfaceFor(drill, i);
+  surfaces.set(key, s);
+  return s;
+};
+// Braking drills balance on the snow's force line, tilted uphill of the slope normal.
+const brakeOf = (drill: string, i: Intensity, t: number): number => brakingTiltAt(drillScenarios(drill)[i], surfaceOf(drill, i), t);
+const anglesOf = (drill: string, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(drill, i), t), brakeOf(drill, i, t));
+const angles: (kind: RegularTurn, i: Intensity, t: number) => ReturnType<typeof poseAngles> = anglesOf;
 const DEG = 180 / Math.PI;
 const DEG_RAD = Math.PI / 180;
 const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as const;
@@ -127,7 +138,7 @@ describe('regular turn', () => {
     // In the zipper's ruts the knees stay flexed between the moguls (fis p28, arndt-1992 p93).
     for (const drill of [RegularTurn.Moguls, TOPS_POSE])
       for (const i of INTENSITIES) {
-        const knees = Array.from({ length: 24 }, (_, k) => poseAngles(samplePose(poseTable(drill, i), k / 24)).knee);
+        const knees = Array.from({ length: 24 }, (_, k) => anglesOf(drill, i, k / 24).knee);
         const v = knees.map((k) => k.right);
         assert.isAtMost(Math.min(...v), drill === TOPS_POSE ? 28 : 40, `${drill} ${i} trough`);
         assert.isAtLeast(Math.max(...v), Math.min(...v) + 35, `${drill} ${i} crest`);
@@ -154,7 +165,7 @@ describe('regular turn', () => {
     // Over the crest: ankles closed, feet pulled back; in the trough: legs long, tips down.
     for (const drill of [RegularTurn.Moguls, TOPS_POSE]) {
       const { crest, trough } = surfaceFor(drill, Intensity.Moderate);
-      const mogul = (t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(drill, Intensity.Moderate), t));
+      const mogul = (t: number): ReturnType<typeof poseAngles> => anglesOf(drill, Intensity.Moderate, t);
       assert.isAbove(mogul(crest).dorsiflexion.right, mogul(trough).dorsiflexion.right + 12, drill);
       // Near the transition the balance is over both feet, the countered outside one trailing.
       assert.isAbove(mogul(crest).comOnSnow - mogul(crest).lead / 2, mogul(trough).comOnSnow + 0.05, drill);
@@ -168,7 +179,7 @@ describe('regular turn', () => {
     for (const kind of [...KINDS, 'closed-stance-short-turns'])
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
-          const a = poseAngles(samplePose(poseTable(kind, i), k / 24));
+          const a = anglesOf(kind, i, k / 24);
           const com = balanceOf(kind, a);
           assert.isAbove(Math.max(com, com - a.lead), -0.04, `${kind} ${i} ${k}/24`);
           assert.isBelow(Math.min(com, com - a.lead), 0.095, `${kind} ${i} ${k}/24`);
@@ -202,14 +213,14 @@ describe('regular turn', () => {
   });
 
   it('carries the fore-aft smoothly through the switch into the mirrored turn', () => {
-    const fore = (kind: string, p: ReturnType<typeof samplePose>): readonly number[] => {
-      const a = poseAngles(p);
+    const fore = (kind: string, i: Intensity, p: ReturnType<typeof samplePose>, t: number): readonly number[] => {
+      const a = poseAngles(p, brakeOf(kind, i, t));
       return [balanceOf(kind, a) - a.lead / 2, a.hipsAhead - a.lead / 2, a.trunkForward / 100];
     };
     for (const kind of [...KINDS, 'closed-stance-short-turns'])
       for (const i of INTENSITIES) {
         const table = poseTable(kind, i);
-        const seq = [...table, mirrorPose(table[0] ?? samplePose(table, 0))].map((p) => fore(kind, p));
+        const seq = [...table, mirrorPose(table[0] ?? samplePose(table, 0))].map((p, j) => fore(kind, i, p, j / table.length));
         const steps = seq.slice(1).map((v, j) => Math.max(...v.map((x, n) => Math.abs(x - (seq[j]?.[n] ?? x)))));
         const wrap = steps.at(-1) ?? 0;
         assert.isAtMost(wrap, 1.25 * Math.max(...steps.slice(0, -1)), `${kind} ${i}`);
@@ -224,11 +235,13 @@ describe('regular turn', () => {
       for (const i of INTENSITIES) {
         const p = samplePose(poseTable(kind, i), 0);
         const w = segmentMatrices(p);
-        const z = (segment: string, point: Vec3 = [0, 0, 0]): number => transformPoint(w[segmentIndex(segment)] ?? identity(), point)[2];
-        const mid = (z('right-boot', MID_FOOT) + z('left-boot', MID_FOOT)) / 2;
-        const hips = (z('right-thigh') + z('left-thigh')) / 2;
-        assert.isAbove(hips - mid, -0.2, `${kind} ${i} hips`);
-        assert.isBelow(z('head') - mid, 0.3, `${kind} ${i} head`);
+        const at = (segment: string, point: Vec3 = [0, 0, 0]): Vec3 => transformPoint(w[segmentIndex(segment)] ?? identity(), point);
+        const half = (a: Vec3, b: Vec3): Vec3 => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+        const mid = half(at('right-boot', MID_FOOT), at('left-boot', MID_FOOT));
+        // Ahead of the snow's force line through the mid-foot.
+        const ahead = (q: Vec3): number => q[2] - mid[2] + Math.tan(brakeOf(kind, i, 0)) * Math.hypot(q[0] - mid[0], q[1] - mid[1]);
+        assert.isAbove(ahead(half(at('right-thigh'), at('left-thigh'))), -0.2, `${kind} ${i} hips`);
+        assert.isBelow(ahead(at('head')), 0.3, `${kind} ${i} head`);
         assert.isAtMost(poseAngles(p).trunkForward, 50, `${kind} ${i} trunk`);
       }
     const crest = angles(RegularTurn.Moguls, Intensity.Moderate, 0);
