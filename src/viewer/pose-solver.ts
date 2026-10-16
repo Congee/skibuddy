@@ -5,78 +5,12 @@ import { EQUIPMENT, shinAngle } from './equipment';
 import { BodySide, SEGMENTS, SegmentKind } from './figure';
 import { identity, transformPoint } from './mat4';
 import type { Mat4, Vec3 } from './mat4';
-import { touchShare, windowShare, wrapTime } from './pose-definition';
-import type { PoseDefinition, PoseKey } from './pose-definition';
-import { CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, centreOfMass, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
-import type { Pose } from './pose';
-
-type KeyField = Exclude<keyof PoseKey, 't'>;
-type KeyValues = Readonly<Record<KeyField, number>>;
-
-const FIELDS: ReadonlyArray<KeyField> = [
-  'angulation',
-  'hip',
-  'pelvisList',
-  'lumbarFlex',
-  'spineBend',
-  'spineTwist',
-  'counter',
-  'dorsiflexion',
-  'insideDorsiflexion',
-  'eversion',
-  'protraction',
-  'elevation',
-  'insideTailLift',
-  'comAhead',
-];
+import { keyValuesAt, touchShare, windowShare, wrapTime } from './pose-definition';
+import type { KeyField, PoseDefinition } from './pose-definition';
 
 const DEG = Math.PI / 180;
-
-/** Fields that lean or turn toward the inside: the next turn, mirrored, takes them with the other sign. */
-const ODD: ReadonlySet<KeyField> = new Set(['angulation', 'pelvisList', 'spineBend', 'spineTwist', 'counter', 'eversion']);
-
-/**
- * Monotone cubic Hermite through the keys, so nothing overshoots a key: no counter into the new turn. Turns
- * alternate, so the keys before and after this turn's are its own with the odd fields' signs flipped.
- */
-export const keyValuesAt = (keys: ReadonlyArray<PoseKey>, t: number): KeyValues => {
-  const u = ((t % 1) + 1) % 1;
-  const sorted = keys.toSorted((a, b) => a.t - b.t);
-  const n = sorted.length;
-  const at = (i: number): PoseKey & { readonly time: number } => {
-    const k = sorted[((i % n) + n) % n];
-    if (k === undefined) throw new Error('no key poses');
-    const turn = Math.floor(i / n);
-    const flipped = turn % 2 === 0 ? k : { ...k, ...Object.fromEntries([...ODD].map((f) => [f, -k[f]])) };
-    return { ...flipped, time: k.t + turn };
-  };
-  let i = n - 1;
-  while (i > 0 && at(i).time > u) i--;
-  // Before the first key, interpolate from the last one of the previous turn.
-  if (at(i).time > u) i = -1;
-  const p0 = at(i - 1);
-  const p1 = at(i);
-  const p2 = at(i + 1);
-  const p3 = at(i + 2);
-  const h = p2.time - p1.time;
-  const s = (u - p1.time) / h;
-  const h00 = 2 * s ** 3 - 3 * s ** 2 + 1;
-  const h10 = s ** 3 - 2 * s ** 2 + s;
-  const h01 = -2 * s ** 3 + 3 * s ** 2;
-  const h11 = s ** 3 - s ** 2;
-  // Zero at a turning key, and limited to three times the smaller secant (Fritsch-Carlson).
-  const tangent = (a: PoseKey & { readonly time: number }, b: PoseKey & { readonly time: number }, c: PoseKey & { readonly time: number }, f: KeyField): number => {
-    const d0 = (b[f] - a[f]) / (b.time - a.time);
-    const d1 = (c[f] - b[f]) / (c.time - b.time);
-    if (d0 * d1 <= 0) return 0;
-    const m = (c[f] - a[f]) / (c.time - a.time);
-    return Math.sign(m) * Math.min(Math.abs(m), 3 * Math.abs(d0), 3 * Math.abs(d1));
-  };
-  const out = Object.fromEntries(FIELDS.map((f) => [f, 0])) as Record<KeyField, number>;
-  if (n === 1) return { ...out, ...Object.fromEntries(FIELDS.map((f) => [f, p1[f]])) };
-  for (const f of FIELDS) out[f] = h00 * p1[f] + h10 * h * tangent(p0, p1, p2, f) + h01 * p2[f] + h11 * h * tangent(p1, p2, p3, f);
-  return out;
-};
+import { CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, centreOfMass, outsideWeight, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
+import type { Pose } from './pose';
 
 /** How hard the drill is skied, from its physics. */
 export interface Effort {
@@ -159,7 +93,10 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const dorsiflexion = mild('dorsiflexion');
   const ankleFlex = shinAngle(dorsiflexion, EQUIPMENT);
   // Hip flexion on the pelvis is set; the knee and the pelvis's pitch follow from balance.
-  const hip = (effort.hipMin + k.hip * (effort.hipMax - effort.hipMin)) * DEG;
+  const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];
+  const under = effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale;
+  const hipShare = k.hip + (k.hipUnder - k.hip) * Math.min(1, Math.max(0, under));
+  const hip = (effort.hipMin + hipShare * (effort.hipMax - effort.hipMin)) * DEG;
   const lifted = windowShare(c.tailLift, t);
   const fullLift = Math.max(0, mild('insideTailLift')) * lifted;
   const femurRotation = c.femurRotation * angulation;
@@ -167,6 +104,8 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const poleTouch = touchShare(c.poleTouch, t) * (wrapTime(t) < 0.5 ? 1 : -1);
   const girdle = { protraction: k.protraction, elevation: k.elevation };
   const insideAnkle = (tailLift: number): number => shinAngle(dorsiflexion + (k.insideDorsiflexion - dorsiflexion) * lifted, EQUIPMENT) + tailLift;
+  // Near the switch the legs share the difference in length, so neither kinks as outside and inside swap.
+  const split = 1 - outsideWeight(lean);
   const base = (knee: number, extra: number, tailLift = fullLift): Pose => {
     const hipFlex = knee - ankleFlex;
     return {
@@ -181,11 +120,11 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       spineTwist: mild('spineTwist'),
       poleTouch,
       reach: 0,
-      outside: { hipFlex, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: 0, adduction: c.stance },
+      outside: { hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: 0, adduction: c.stance },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
       inside: {
-        hipFlex: hipFlex + extra,
+        hipFlex: hipFlex + (1 - split) * extra,
         ankleFlex: insideAnkle(tailLift),
         femurRotation: c.insideFemurShare * femurRotation - c.kneesIn,
         tailLift,
@@ -208,7 +147,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   };
   // The lifted inside knee stops at insideKneeMax: past it the tail lifts less instead, so the tip stays on the snow.
   const insideLeg = (knee: number): { readonly extra: number; readonly tailLift: number } => {
-    const capped = (tailLift: number): number => c.insideKneeMax - (knee - ankleFlex) - insideAnkle(tailLift);
+    const capped = (tailLift: number): number => (c.insideKneeMax - (knee - ankleFlex) - insideAnkle(tailLift)) / (1 - split);
     const extra = tipFlex(knee, fullLift);
     if (extra <= capped(fullLift)) return { extra, tailLift: fullLift };
     let lo = 0;

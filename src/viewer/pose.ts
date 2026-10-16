@@ -274,17 +274,22 @@ const FOOT_KINDS: ReadonlySet<SegmentKind> = new Set([SegmentKind.Boot, SegmentK
 const SHINS = [BodySide.Right, BodySide.Left].map((side) => SEGMENTS.findIndex((s) => s.kind === SegmentKind.Shin && s.side === side));
 /** Lean by which the outside shin alone sets the edge. */
 const EDGE_HANDOVER = (10 * Math.PI) / 180;
+/** The outside leg's share of what both legs set: 1 past EDGE_HANDOVER of lean, half at the switch, flat there. */
+export const outsideWeight = (lean: number): number => {
+  const u = Math.min(1, Math.abs(lean) / EDGE_HANDOVER);
+  return 0.5 + 0.5 * u * u * (3 - 2 * u);
+};
+
 /** Both shins' tilt, evenly at the switch where the lean is nil, so the edge flips with the mirrored pose. */
 const edgeOf = (world: ReadonlyArray<Mat4>, pose: Pose): number => {
-  const u = Math.min(1, Math.abs(pose.lean) / EDGE_HANDOVER);
-  const outside = 0.5 + 0.5 * u * u * (3 - 2 * u);
+  const outside = outsideWeight(pose.lean);
   const [right, left] = SHINS.map((i) => shinTilt(world[i] ?? identity()));
   return outside * (right ?? 0) + (1 - outside) * (left ?? 0) + pose.eversion;
 };
 
 /**
- * World matrix per segment: the outside ski base rests on y = 0 and the whole
- * figure leans toward the inside of the turn about that contact.
+ * World matrix per segment: the outside ski base rests on y = 0 and the whole figure leans toward the inside of
+ * the turn about that contact; near the switch about a point between both skis, so the mass rolls across smoothly.
  */
 export const segmentMatrices = (pose: Pose): ReadonlyArray<Mat4> => {
   const world: Array<Mat4> = [];
@@ -298,8 +303,10 @@ export const segmentMatrices = (pose: Pose): ReadonlyArray<Mat4> => {
   // The boots wait for both shins.
   place(false, 0);
   place(true, edgeOf(world, pose));
-  const outsideSki = world[skiIndex(BodySide.Right)] ?? identity();
-  const [cx, cy, cz] = transformPoint(outsideSki, [0, SKI_BASE, 0]);
+  const o = outsideWeight(pose.lean);
+  const [rx, ry, rz] = transformPoint(world[skiIndex(BodySide.Right)] ?? identity(), [0, SKI_BASE, 0]);
+  const [lx, ly, lz] = transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), [0, SKI_BASE, 0]);
+  const [cx, cy, cz] = [o * rx + (1 - o) * lx, o * ry + (1 - o) * ly, o * rz + (1 - o) * lz];
   // Negative z rotation tips the figure toward +x, the inside (left) side.
   const lean = compose(translation([cx, 0, cz]), rotationZ(-pose.lean), translation([-cx, -cy, -cz]));
   return world.map((m) => compose(lean, m));

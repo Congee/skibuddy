@@ -1,6 +1,7 @@
 import { Intensity } from '../../content/schema';
 import { phaseForces, turnForcesAt } from '../../physics/turn';
 import type { TurnScenarios } from '../../physics/turn';
+import { keyValuesAt } from '../pose-definition';
 import type { PoseDefinition, PoseKey } from '../pose-definition';
 
 const DEG = Math.PI / 180;
@@ -50,6 +51,8 @@ export interface TurnStyle {
   readonly comAhead: PhaseValues;
   /** Share of the peak angulation already in at the initiation key: feet and knees tip the new edges early. */
   readonly early: number;
+  /** Share of a cross-under transition at gentle, moderate and dynamic; the rest is a cross-over. */
+  readonly crossUnder: readonly [number, number, number];
   /** A pole plant at the transition. */
   readonly polePlant: boolean;
   /** Poles this many metres shorter than regular. */
@@ -129,6 +132,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     comAhead: [0.05, 0.1, 0.07, 0.05, 0.04],
     early: 0.4,
+    // Cross-over: the mass moves across the skis into the new turn (iasi-2021 p46, lemaster-2010 pp144-148).
+    crossUnder: [0, 0, 0],
     polePlant: false,
     poleTrim: 0,
   },
@@ -154,6 +159,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     comAhead: [0.05, 0.13, 0.08, 0.05, 0.02],
     early: 0.65,
+    // Cross-over at gentle and moderate; at dynamic the legs flex and retract so the skis stay on the snow
+    // (lemaster-2010 p154, komissarov-2022b, seifert-2023).
+    crossUnder: [0, 0, 1],
     polePlant: false,
     poleTrim: 0,
   },
@@ -177,6 +185,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     comAhead: [0.06, 0.12, 0.09, 0.06, 0.04],
     early: 0.6,
+    // Cross-under: the edges release as the legs flex back toward the mass (iasi-2021 p63, lemaster-2010 p152).
+    crossUnder: [1, 1, 1],
     polePlant: true,
     poleTrim: 0,
   },
@@ -208,6 +218,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     comAhead: [0.12, 0.08, 0.01, 0.01, 0.06],
     early: 0.4,
+    // Cross-under: the legs retract over the crest so the mass travels straight (lind-sanders-2004 pp114-115).
+    crossUnder: [1, 1, 1],
     polePlant: true,
     // Shorter for quick plants on the bumps' backs.
     poleTrim: 0.05,
@@ -237,6 +249,8 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     comAhead: [0.06, 0.12, 0.09, 0.07, 0.05],
     early: 0.6,
+    // Cross-under: flexing and relaxing the downhill leg, on a solid pole plant (lemaster-2010 pp151-156).
+    crossUnder: [1, 1, 1],
     polePlant: true,
     poleTrim: 0,
   },
@@ -265,6 +279,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     comAhead: [0.05, 0.1, 0.08, 0.05, 0.03],
     early: 0.5,
+    // A two-footed rebound: both legs flex through the finish and extend through the switch, kept small
+    // (iasi-2021 p88, lemaster-2010 pp193-199).
+    crossUnder: [0, 0, 0],
     polePlant: true,
     poleTrim: 0,
   },
@@ -300,6 +317,8 @@ export const CLOSED_STANCE: TurnStyle = {
   kneesIn: 10,
   comAhead: [0.11, 0.11, 0.1, 0.09, 0.1],
   early: 0.6,
+  // Cross-under: the legs swivel under a level trunk.
+  crossUnder: [1, 1, 1],
   polePlant: true,
   poleTrim: 0,
 };
@@ -313,17 +332,26 @@ export const DEFAULT_REGULAR_TURN: RegularTurn = RegularTurn.Cruising;
 interface Phase {
   readonly t: number;
   readonly share: number | null;
+  /** Outside hip depth in a cross-over, and in a cross-under. */
   readonly hip: number;
+  readonly under: number;
 }
 
-// Flexed through the transition, longest at shaping, flexing again through the finish
-// (lemaster-2010 pp40-42); edge, counter and angulation build to late shaping.
+// Longest at shaping, flexing again through the finish (lemaster-2010 pp40-42); edge, counter and angulation
+// build to late shaping. A cross-over is deepest late in the finish and extends through the switch, so the mass
+// rises across the skis (iasi-2021 pp35, 38; seifert-2023). A cross-under stays deepest around the switch while the
+// skis swing under a lower, steadier mass (lemaster-2010 pp152-154, lind-sanders-2004 p120).
 const PHASES: ReadonlyArray<Phase> = [
-  { t: 0, share: 0, hip: 1 },
-  { t: 1 / 6, share: null, hip: 0.45 },
-  { t: 1 / 2, share: 0.9, hip: 0 },
-  { t: 0.65, share: 1, hip: 0.08 },
-  { t: 5 / 6, share: 0.4, hip: 0.55 },
+  { t: 0, share: 0, hip: 0.7, under: 1 },
+  { t: 1 / 6, share: null, hip: 0.35, under: 0.45 },
+  { t: 1 / 2, share: 0.9, hip: 0, under: 0 },
+  { t: 0.65, share: 1, hip: 0.08, under: 0.08 },
+  { t: 5 / 6, share: 0.4, hip: 0.7, under: 0.55 },
+];
+/** Hip-only keys either side of the switch; every other field keeps the phase keys' curve. */
+const SWITCH: ReadonlyArray<Pick<Phase, 't' | 'hip' | 'under'>> = [
+  { t: 1 / 12, hip: 0.5, under: 0.9 },
+  { t: 11 / 12, hip: 1, under: 0.9 },
 ];
 
 /** The kind's two-footed turn as a pose definition: both skis on the snow, the inside leg shorter. */
@@ -332,29 +360,31 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
   const step = style.hipStep;
   const spread = style.hipSpread;
   const load = (i: Intensity): number => phaseForces(style.scenarios[i]).shaping.load;
+  const keys = PHASES.map((p, i): PoseKey => {
+    const share = p.share ?? style.early;
+    const ankle = (style.ankle[i] ?? 0) * DEG;
+    return {
+      t: p.t,
+      angulation: share,
+      hip: p.hip,
+      hipUnder: p.under,
+      pelvisList: 1.2 * style.angulation * share * DEG,
+      lumbarFlex: style.spineFlex * DEG,
+      spineBend: style.bend * share * DEG,
+      spineTwist: style.twist * (style.counterCurve[i] ?? 0) * DEG,
+      counter: style.counter * (style.counterCurve[i] ?? 0) * DEG,
+      dorsiflexion: ankle,
+      insideDorsiflexion: ankle,
+      // The feet tip first, the hips follow.
+      eversion: 0.2 * style.angulation * Math.sqrt(share) * DEG,
+      protraction: 6 * DEG,
+      elevation: 0,
+      insideTailLift: 0,
+      comAhead: style.comAhead[i] ?? 0,
+    };
+  });
   return {
-    keys: PHASES.map((p, i): PoseKey => {
-      const share = p.share ?? style.early;
-      const ankle = (style.ankle[i] ?? 0) * DEG;
-      return {
-        t: p.t,
-        angulation: share,
-        hip: p.hip,
-        pelvisList: 1.2 * style.angulation * share * DEG,
-        lumbarFlex: style.spineFlex * DEG,
-        spineBend: style.bend * share * DEG,
-        spineTwist: style.twist * (style.counterCurve[i] ?? 0) * DEG,
-        counter: style.counter * (style.counterCurve[i] ?? 0) * DEG,
-        dorsiflexion: ankle,
-        insideDorsiflexion: ankle,
-        // The feet tip first, the hips follow.
-        eversion: 0.2 * style.angulation * Math.sqrt(share) * DEG,
-        protraction: 6 * DEG,
-        elevation: 0,
-        insideTailLift: 0,
-        comAhead: style.comAhead[i] ?? 0,
-      };
-    }),
+    keys: [...keys, ...SWITCH.map((k): PoseKey => ({ ...keyValuesAt(keys, k.t), t: k.t, hip: k.hip, hipUnder: k.under }))],
     constraints: {
       hipAngulation: style.angulation * DEG,
       femurRotation: 0.5 * style.angulation * DEG,
@@ -366,6 +396,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       ],
       insideKneeMax: 120 * DEG,
       tailLift: null,
+      crossUnder: style.crossUnder,
       poleTouch: style.polePlant ? { t: 1 / 24, hold: 0.02, swing: 0.11 } : null,
       scapularRhythm: 0.3,
       stance: style.narrow * DEG,

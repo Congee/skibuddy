@@ -12,6 +12,8 @@ export interface PoseKey {
   readonly angulation: number;
   /** Outside hip flexion between its most open (0) and its deepest (1); the knee follows from balance. */
   readonly hip: number;
+  /** `hip` in a cross-under transition, where the constraints call for one; else `hip`. */
+  readonly hipUnder?: number;
   /** Pelvis tipped up on the inside against the balance axis. */
   readonly pelvisList: number;
   /** Low back flexed on the pelvis. */
@@ -74,6 +76,8 @@ export interface PoseConstraints {
   readonly kneesIn: number;
   /** Poles this many metres shorter than the figure's regular length. */
   readonly poleTrim: number;
+  /** Share of a cross-under transition (`hipUnder`) at gentle, moderate and dynamic; absent, none. */
+  readonly crossUnder?: readonly [number, number, number];
   /** Per key field, how much more a dynamic turn takes (and a gentle one less), as a share per step of effort. */
   readonly gains: Readonly<Partial<Record<Exclude<keyof PoseKey, 't'>, number>>>;
 }
@@ -105,4 +109,73 @@ export const touchShare = (touch: PoleTouch | null, t: number): number => {
   if (d <= 0) return 1;
   if (d >= touch.swing) return 0;
   return 0.5 + 0.5 * Math.cos((Math.PI * d) / touch.swing);
+};
+
+export type KeyField = Exclude<keyof PoseKey, 't'>;
+export type KeyValues = Readonly<Record<KeyField, number>>;
+type Knot = Required<PoseKey> & { readonly time: number };
+
+const FIELDS: ReadonlyArray<KeyField> = [
+  'angulation',
+  'hip',
+  'hipUnder',
+  'pelvisList',
+  'lumbarFlex',
+  'spineBend',
+  'spineTwist',
+  'counter',
+  'dorsiflexion',
+  'insideDorsiflexion',
+  'eversion',
+  'protraction',
+  'elevation',
+  'insideTailLift',
+  'comAhead',
+];
+
+/** Fields that lean or turn toward the inside: the next turn, mirrored, takes them with the other sign. */
+const ODD: ReadonlySet<KeyField> = new Set(['angulation', 'pelvisList', 'spineBend', 'spineTwist', 'counter', 'eversion']);
+
+/**
+ * Monotone cubic Hermite through the keys, so nothing overshoots a key: no counter into the new turn. Turns
+ * alternate, so the keys before and after this turn's are its own with the odd fields' signs flipped.
+ */
+export const keyValuesAt = (keys: ReadonlyArray<PoseKey>, t: number): KeyValues => {
+  const u = ((t % 1) + 1) % 1;
+  const sorted = keys.toSorted((a, b) => a.t - b.t);
+  const n = sorted.length;
+  const at = (i: number): Knot => {
+    const key = sorted[((i % n) + n) % n];
+    if (key === undefined) throw new Error('no key poses');
+    const k: Required<PoseKey> = { ...key, hipUnder: key.hipUnder ?? key.hip };
+    const turn = Math.floor(i / n);
+    const flipped = turn % 2 === 0 ? k : { ...k, ...Object.fromEntries([...ODD].map((f) => [f, -k[f]])) };
+    return { ...flipped, time: k.t + turn };
+  };
+  let i = n - 1;
+  while (i > 0 && at(i).time > u) i--;
+  // Before the first key, interpolate from the last one of the previous turn.
+  if (at(i).time > u) i = -1;
+  const p0 = at(i - 1);
+  const p1 = at(i);
+  const p2 = at(i + 1);
+  const p3 = at(i + 2);
+  const h = p2.time - p1.time;
+  const s = (u - p1.time) / h;
+  const h00 = 2 * s ** 3 - 3 * s ** 2 + 1;
+  const h10 = s ** 3 - 2 * s ** 2 + s;
+  const h01 = -2 * s ** 3 + 3 * s ** 2;
+  const h11 = s ** 3 - s ** 2;
+  // Zero at a turning key, and limited to three times the smaller secant (Fritsch-Carlson).
+  const tangent = (a: Knot, b: Knot, c: Knot, f: KeyField): number => {
+    const d0 = (b[f] - a[f]) / (b.time - a.time);
+    const d1 = (c[f] - b[f]) / (c.time - b.time);
+    if (d0 * d1 <= 0) return 0;
+    const m = (c[f] - a[f]) / (c.time - a.time);
+    return Math.sign(m) * Math.min(Math.abs(m), 3 * Math.abs(d0), 3 * Math.abs(d1));
+  };
+  const out = Object.fromEntries(FIELDS.map((f) => [f, 0])) as Record<KeyField, number>;
+  if (n === 1) return { ...out, ...Object.fromEntries(FIELDS.map((f) => [f, p1[f]])) };
+  for (const f of FIELDS) out[f] = h00 * p1[f] + h10 * h * tangent(p0, p1, p2, f) + h01 * p2[f] + h11 * h * tangent(p1, p2, p3, f);
+  return out;
 };

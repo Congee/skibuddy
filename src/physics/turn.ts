@@ -58,8 +58,8 @@ export const headingAt = (t: number): number | null => {
   // Wrapping costs an ulp, so the phase keys land a hair off.
   if (u < PHASE_T.initiation - 1e-12 || u > PHASE_T.finish + 1e-12) return null;
   const x = Math.min(1, Math.max(0, (u - PHASE_T.initiation) / (PHASE_T.finish - PHASE_T.initiation)));
-  // Smooth and monotone, with the shaping key on the fall line.
-  return FINISH_HEADING * (x + (2 / 3) * x * (1 - x));
+  // Smooth and monotone, with the shaping key on the fall line; still at the finish, so the forces ease into the transition.
+  return FINISH_HEADING * x * (4 + x - 2 * x * x) / 3;
 };
 
 export const phaseForces = (s: TurnScenario): { readonly initiation: TurnForces; readonly shaping: TurnForces; readonly finish: TurnForces } => ({
@@ -70,18 +70,41 @@ export const phaseForces = (s: TurnScenario): { readonly initiation: TurnForces;
 
 const smooth = (u: number): number => u * u * (3 - 2 * u);
 
+/** Cubic Hermite on 0..1 from `a`, still, to `b` at slope `m` (per unit of u). */
+const easeTo = (a: number, b: number, m: number, u: number): number => a + (b - a) * smooth(u) + m * u * u * (u - 1);
+
 /**
- * Forces at turn time `t`. Through the transition the edges change: tilt eases to 0 and
- * the load to the slope's normal share of weight, so both peak at the finish key.
+ * Rate the tilt passes through 0 at the switch, per unit of turn time: monotone (Fritsch-Carlson) through
+ * the finish tilt, 0, and the next turn's initiation tilt with its sign flipped.
+ */
+const switchRate = (s: TurnScenario): number => {
+  const finish = forcesAt(s, FINISH_HEADING).tilt;
+  const initiation = forcesAt(s, 0).tilt;
+  const d0 = -finish / (1 - PHASE_T.finish);
+  const d1 = -initiation / PHASE_T.initiation;
+  if (d0 * d1 <= 0) return 0;
+  const secant = -(finish + initiation) / (1 - PHASE_T.finish + PHASE_T.initiation);
+  return Math.sign(d0) * Math.min(Math.abs(secant), 3 * Math.abs(d0), 3 * Math.abs(d1));
+};
+
+/**
+ * Forces at turn time `t`. Through the transition the edges change: the load eases to the slope's normal share
+ * of weight, and the tilt passes through 0 at the switch without stopping there, into the mirrored next turn.
  */
 export const turnForcesAt = (s: TurnScenario, t: number): TurnForces => {
   const beta = headingAt(t);
   if (beta !== null) return forcesAt(s, beta);
   const u = wrap(t);
-  const flat: TurnForces = { load: Math.cos((s.slopeDeg * Math.PI) / 180), tilt: 0 };
-  // Finish to transition, or transition to initiation.
-  const [from, w] = u > PHASE_T.finish ? [forcesAt(s, FINISH_HEADING), smooth((1 - u) / (1 - PHASE_T.finish))] : [forcesAt(s, 0), smooth(u / PHASE_T.initiation)];
-  return { load: flat.load + (from.load - flat.load) * w, tilt: from.tilt * w };
+  const flat = Math.cos((s.slopeDeg * Math.PI) / 180);
+  const rate = switchRate(s);
+  if (u > PHASE_T.finish) {
+    const from = forcesAt(s, FINISH_HEADING);
+    const x = (u - PHASE_T.finish) / (1 - PHASE_T.finish);
+    return { load: flat + (from.load - flat) * smooth(1 - x), tilt: easeTo(from.tilt, 0, rate * (1 - PHASE_T.finish), x) };
+  }
+  const to = forcesAt(s, 0);
+  const x = 1 - u / PHASE_T.initiation;
+  return { load: flat + (to.load - flat) * smooth(1 - x), tilt: easeTo(to.tilt, 0, rate * PHASE_T.initiation, x) };
 };
 
 /** How a drill shares the load between the feet. */

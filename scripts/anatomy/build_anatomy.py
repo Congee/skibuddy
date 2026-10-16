@@ -408,10 +408,15 @@ def shin_tilt(shin):
     return math.atan2(up.x, up.z)
 
 
+def outside_weight(lean):
+    """outsideWeight in pose.ts: the outside leg's share, half at the switch."""
+    u = min(1.0, abs(lean) / EDGE_HANDOVER)
+    return 0.5 + 0.5 * u * u * (3 - 2 * u)
+
+
 def foot_rotation(p, s, rest, shins):
     """bootRotation in pose.ts: both skis on the shins' tilt (edgeOf) plus the eversion, the foot heel-up by the ramp."""
-    u = min(1.0, abs(p['lean']) / EDGE_HANDOVER)
-    outside = 0.5 + 0.5 * u * u * (3 - 2 * u)
+    outside = outside_weight(p['lean'])
     edge = outside * shin_tilt(shins['R']) + (1 - outside) * shin_tilt(shins['L']) + p['eversion']
     tail = (p['outside'] if s == 'R' else p['inside'])['tailLift']
     return rot_z3(p['lean']) @ rot_x(tail) @ rot_z3(-p['lean'] - edge) @ rot_x(rest['ramp'])
@@ -445,7 +450,9 @@ def world_pose(bones, order, R, ski_pivot, p, rest):
         else:
             r = R[name]
         D[name] = parent @ Matrix.Translation(j) @ r @ Matrix.Translation(-j)
-    c = D['foot.R'] @ Vector(ski_pivot)
+    # As segmentMatrices in pose.ts: about the outside ski, near the switch about a point between both.
+    o = outside_weight(p['lean'])
+    c = o * (D['foot.R'] @ Vector(ski_pivot['R'])) + (1 - o) * (D['foot.L'] @ Vector(ski_pivot['L']))
     tilt = Matrix.Translation((c.x, c.y, 0)) @ Matrix.Rotation(p['lean'], 4, 'Y') @ Matrix.Translation(-c)
     return {k: tilt @ m for k, m in D.items()}
 
@@ -729,7 +736,7 @@ def palm_in(bones, track, J, rest):
     order = [b.name for b in bones]
     still = (Matrix(), Matrix())
     flat = dict(rest, hands={s: dict(twist=Matrix(), curl=still, thumb=still) for s in ('R', 'L')})
-    D = world_pose(bones, order, local_rotations(track[0], flat), (0, 0, 0), dict(track[0], lean=0), flat)
+    D = world_pose(bones, order, local_rotations(track[0], flat), {'R': (0, 0, 0), 'L': (0, 0, 0)}, dict(track[0], lean=0), flat)
     out = {}
     for s, medial in (('R', 1.0), ('L', -1.0)):
         j = J[s]
@@ -951,7 +958,7 @@ def main():
     # The palm-in twist is found on the first posed turn, as the bake always has; else the still stance.
     track = next((v for k, v in tracks.items() if k != 'neutral'), tracks['neutral'])
     # Skis: 1.6 m x 9 cm slabs centred 3 cm ahead of the foot, under each binding as in figure.ts and equipment.ts.
-    ski_pivot = None
+    ski_pivot = {}
     thick = binding['skiThickness']
     for s in ('R', 'L'):
         j = J[s]
@@ -972,9 +979,8 @@ def main():
         tris = np.array([t for a, b, c, d in quads for t in ((a, b, c), (a, c, d))])
         make_object(f'gear_ski_{s}', verts, tris, np.zeros(len(tris), np.int32), [mats['gear']], rig,
                     [[(f'foot.{s}', 1.0)]] * len(verts))
-        if s == 'R':
-            ski_pivot = tuple(float(x) for x in rest_point((0, -thick, zc)))
-        else:
+        ski_pivot[s] = tuple(float(x) for x in rest_point((0, -thick, zc)))
+        if s == 'L':
             inside_tip = tuple(float(x) for x in rest_point((0, -thick, zc + 0.8)))
 
     rest = dict(abduction={}, ramp=binding['bootBoardRamp'] + binding['deltaAngle'],
