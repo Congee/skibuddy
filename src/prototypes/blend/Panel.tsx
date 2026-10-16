@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo } from 'solid-js';
+import { For, Show, createEffect, createMemo, createResource } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { effortWord, effortsFor, contractionsFor, twinOf } from '../../content/effort';
 import type { EffortRamp } from '../../content/effort';
@@ -21,6 +21,7 @@ import {
 } from './detail';
 import type { TrainTag } from './detail';
 import { EffortStrip } from './EffortStrip';
+import { ankleBend } from './ankle';
 import { Glyph } from './glyphs';
 import { Icon } from './icons';
 
@@ -314,6 +315,11 @@ export const DrillPicker = (props: {
 export const TrainPanel = (props: {
   readonly data: BlendData;
   readonly tags: ReadonlyArray<TrainTag>;
+  readonly order: ReadonlyArray<Activation>;
+  readonly intensity: Intensity;
+  readonly ramp: EffortRamp;
+  /** The kind's regular-turn pose, for the ankle bend it needs. */
+  readonly pose: string;
   readonly kindName: string;
   readonly drills: ReadonlyArray<string>;
   readonly current: string | null;
@@ -321,13 +327,22 @@ export const TrainPanel = (props: {
   readonly onDrill: (id: string) => void;
 }): JSX.Element => {
   const drill = (id: string): BlendDrill | undefined => props.data.drills.find((d) => d.id === id);
+  const main = createMemo(() => props.tags.filter((t) => t.edge !== true));
+  const edgers = createMemo(() => props.tags.filter((t) => t.edge === true));
+  const [bend] = createResource(() => [props.pose, props.intensity] as const, ([pose, i]) => ankleBend(pose, i));
+  // The ankle mobilisation, reached through the muscle it stretches.
+  const mobilise = createMemo(() => {
+    const a = props.order.find((x) => x.muscle === 'soleus' && x.side !== 'inside');
+    const exercise = props.data.exercises.find((e) => e.id === 'banded-dorsiflexion');
+    return a === undefined || exercise === undefined ? undefined : { key: keyOf(a), exercise };
+  });
   return (
     <div class="train">
       <section>
         <h3>Train these</h3>
-        <Show when={props.tags.length > 0} fallback={<p class="muted">No muscle works hard enough here to need training.</p>}>
+        <Show when={main().length > 0} fallback={<p class="muted">No muscle works hard enough here to need training.</p>}>
           <ul class="train-list">
-            <For each={props.tags}>
+            <For each={main()}>
               {(t) => (
                 <li>
                   <button type="button" onClick={() => props.onPick(keyOf(t.activation))}>
@@ -345,6 +360,60 @@ export const TrainPanel = (props: {
         </Show>
         <p class="muted small">The same pictograms sit on the figure. Tap one for the muscle's detail.</p>
       </section>
+      <Show when={edgers().length > 0}>
+        <section>
+          <h3>Edging early</h3>
+          <p class="muted small">Each foot sets its edge as the turn starts, and the legs swap roles every turn.</p>
+          <ul class="edge-list">
+            <For each={edgers()}>
+              {(t) => (
+                <li>
+                  <button type="button" onClick={() => props.onPick(keyOf(t.activation))}>
+                    <span class="edge-name">
+                      {shortName(props.data, t.activation)}
+                      <span class="muted"> · {SIDE_LABEL[t.activation.side].toLowerCase()}, {t.activation.side === 'outside' ? 'big-toe edge' : 'little-toe edge'}</span>
+                    </span>
+                    <EffortStrip
+                      intensity={t.activation.intensity}
+                      twin={twinOf(t.activation, props.order)}
+                      setting={props.intensity}
+                      ramp={props.ramp}
+                      height={22}
+                      label={`${shortName(props.data, t.activation)}, ${SIDE_LABEL[t.activation.side].toLowerCase()}, through the turn`}
+                    />
+                    <span class="edge-ex">
+                      <Glyph exercise={t.exercise.id} class="edge-glyph" />
+                      {t.exercise.name}
+                    </span>
+                  </button>
+                </li>
+              )}
+            </For>
+          </ul>
+        </section>
+      </Show>
+      <Show when={bend()}>
+        {(deg) => (
+          <section>
+            <h3>Ankle range</h3>
+            <p>
+              {props.kindName} needs about {Math.round(deg())}° of ankle bend, shin toward the toes, at its deepest.
+            </p>
+            <Show when={mobilise()}>
+              {(m) => (
+                <button type="button" class="train-link" onClick={() => props.onPick(m().key)}>
+                  <Glyph exercise={m().exercise.id} class="train-glyph" />
+                  <span>
+                    Keep that range
+                    <span class="train-ex">{m().exercise.name}</span>
+                  </span>
+                </button>
+              )}
+            </Show>
+            <p class="muted small">From the figure's pose at this setting, not measured.</p>
+          </section>
+        )}
+      </Show>
       <section>
         <h3>On snow, drills that build {props.kindName.toLowerCase()}</h3>
         <div class="chips">

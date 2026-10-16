@@ -138,6 +138,7 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
   // The kind of skiing to return to from a drill.
   const [home, setHome] = createSignal<KindId>(KindId.Carving);
   const homeName = (): string => KINDS.find((k) => k.id === home())?.name ?? '';
+  const homePose = (): string => KINDS.find((k) => k.id === home())?.pose ?? '';
   const chooseKind = (id: KindId): void => {
     setHome(id);
     setSource({ kind: id });
@@ -474,6 +475,10 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
               <TrainPanel
                   data={data}
                   tags={tags()}
+                  order={order()}
+                  intensity={intensity()}
+                  ramp={ramp()}
+                  pose={homePose()}
                   kindName={homeName()}
                   drills={KIND_DRILLS[home()]}
                   current={kind() === undefined ? (drill()?.id ?? null) : null}
@@ -525,6 +530,10 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
               <TrainPanel
                   data={data}
                   tags={tags()}
+                  order={order()}
+                  intensity={intensity()}
+                  ramp={ramp()}
+                  pose={homePose()}
                   kindName={homeName()}
                   drills={KIND_DRILLS[home()]}
                   current={kind() === undefined ? (drill()?.id ?? null) : null}

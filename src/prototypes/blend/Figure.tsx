@@ -8,7 +8,7 @@ import { phaseAt, turnTimeAtom } from '../../state/playback';
 import type { MuscleAnchor } from '../../viewer/anchors';
 import type { FigureHighlight } from '../../viewer/highlight';
 import type { ViewLock } from '../../viewer/hip-lock';
-import { keyOf } from './detail';
+import { SIDE_LABEL, gearFor, keyOf } from './detail';
 import type { TrainTag } from './detail';
 import { Glyph } from './glyphs';
 import { GROUND } from './theme';
@@ -103,8 +103,9 @@ export const Figure = (props: {
   const [size, setSize] = createSignal({ w: 0, h: 0 });
   const t = useAtomValue(() => turnTimeAtom);
   const phase = createMemo(() => phaseAt(t()));
+  const picked = createMemo(() => props.order.find((x) => keyOf(x) === props.selected));
   const highlight = createMemo((): FigureHighlight | null => {
-    const a = props.order.find((x) => keyOf(x) === props.selected);
+    const a = picked();
     return a === undefined ? null : { muscle: a.muscle, side: a.side, focus: true };
   });
   const level = (a: Activation): number => effortsFor(a, props.intensity)[phase()];
@@ -112,7 +113,7 @@ export const Figure = (props: {
     anchors().find((m) => m.muscle === a.muscle && m.side === (a.side === 'both' ? 'outside' : a.side));
   const onField = (m: MuscleAnchor): boolean => m.x >= 0 && m.y >= 0 && m.x <= size().w && m.y <= size().h;
   // Fixed order and the same Activation objects, so <For> keeps each tag's element.
-  const tagged = createMemo(() => new Map(props.tags.map((g) => [g.activation, g.exercise])));
+  const tagged = createMemo(() => new Map(props.tags.map((g) => [g.activation, g])));
   const shown = createMemo(() =>
     props.order.filter((a) => {
       const m = anchorOf(a);
@@ -172,6 +173,7 @@ export const Figure = (props: {
           ground={GROUND[props.theme]}
           highlight={highlight()}
           skeleton={highlight() !== null}
+          gear={gearFor(picked())}
           onPick={props.onMuscle}
           inset={{ bottom: inset() }}
           margin={MARGIN}
@@ -203,18 +205,23 @@ export const Figure = (props: {
               type="button"
               class="pin pin-tag"
               aria-pressed={keyOf(a) === props.selected}
-              aria-label={`${props.name(a)}: train with ${tagged().get(a)?.name ?? ''}`}
+              aria-label={`${props.name(a)}${tagged().get(a)?.edge === true ? `, ${SIDE_LABEL[a.side].toLowerCase()}, edges early` : ''}: train with ${tagged().get(a)?.exercise.name ?? ''}`}
               data-behind={placed(a).behind ? '' : undefined}
               style={{ transform: `translate(${placed(a).x - HALF}px, ${placed(a).y - HALF}px)` }}
               onClick={() => props.onPick(keyOf(a))}
             >
               <Show when={tagged().get(a)}>
-                {(ex) => (
+                {(tag) => (
                   <span class="tag-face">
-                    <Glyph exercise={ex().id} class="tag-glyph" />
+                    <Glyph exercise={tag().exercise.id} class="tag-glyph" />
                     <span class="tag-level" style={{ width: `${Math.max(12, (level(a) / MAX_EFFORT) * 100)}%`, background: effortColour(level(a), props.ramp) }} />
                   </span>
                 )}
+              </Show>
+              <Show when={tagged().get(a)?.edge === true && keyOf(a) !== props.selected}>
+                <span class="pin-side" aria-hidden="true">
+                  {a.side}
+                </span>
               </Show>
               <Show when={keyOf(a) === props.selected}>
                 <span class="pin-name">{props.name(a)}</span>

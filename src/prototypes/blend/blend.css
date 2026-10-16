@@ -501,6 +501,69 @@ p {
   color: var(--course);
 }
 
+.edge-list {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.edge-list button {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.edge-ex {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--course);
+}
+
+.edge-glyph {
+  width: 28px;
+  height: 28px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.edge-list button:hover {
+  background: var(--course-tint);
+}
+
+.train-link {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 60px;
+  padding: 6px 4px;
+  border: 0;
+  border-block: 1px solid var(--line);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.train-link:hover {
+  background: var(--course-tint);
+}
+
 .train .chips + p {
   margin-top: 10px;
 }
@@ -553,6 +616,23 @@ p {
 
 .pin-tag .pin-name {
   left: 50px;
+}
+
+/* Which leg an early-edging tag is on. */
+.pin-side {
+  position: absolute;
+  left: 50%;
+  top: 46px;
+  translate: -50% 0;
+  padding: 0 5px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--snow);
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* Dock: turn rail over the kinds of skiing. */

@@ -1,6 +1,7 @@
 import { effortsFor } from '../../content/effort';
-import { Confidence, Contraction, PHASES, citedPages, citedSource, contractionsOf, formatPages, phaseContraction } from '../../content/schema';
+import { Confidence, Contraction, Dof, PHASES, Side, citedPages, citedSource, contractionsOf, formatPages, phaseContraction } from '../../content/schema';
 import type { Activation, Citation, Exercise, Intensity, Movement, Muscle, Source } from '../../content/schema';
+import { GearMode } from '../../viewer/gear-mode';
 import type { BlendData } from './data';
 
 export const keyOf = (a: Activation): string => `${a.muscle}:${a.side}`;
@@ -24,6 +25,12 @@ export const SIDE_LABEL: Readonly<Record<Activation['side'], string>> = {
 };
 
 export const PHASE_LABEL = { initiation: 'Initiation', shaping: 'Shaping', finish: 'Finish' } as const;
+
+const FOOT_DOFS: ReadonlyArray<Dof> = [Dof.AnkleFlexion, Dof.AnkleInversion, Dof.FootArch];
+
+/** Boots hide the ankle and foot muscles, so they come off while one of those is picked. */
+export const gearFor = (a: Activation | undefined): GearMode =>
+  a !== undefined && a.serves.every((d) => FOOT_DOFS.includes(d)) ? GearMode.Off : GearMode.Translucent;
 
 export const muscleOf = (data: BlendData, id: string): Muscle | undefined => data.muscles.find((m) => m.id === id);
 
@@ -71,9 +78,29 @@ export const drillsFor = (data: BlendData, a: Activation, i: Intensity, current:
 export interface TrainTag {
   readonly activation: Activation;
   readonly exercise: Exercise;
+  /** Sets this leg's edge in initiation: big-toe edge outside, little-toe edge inside. */
+  readonly edge?: boolean;
 }
 
-/** The few muscles worth training for this movement and setting, one per group, each with a gym exercise; steady order. */
+// Peroneals roll the outside foot onto its big-toe edge; tibialis posterior and anterior roll the inside foot onto its little-toe edge.
+const EDGERS: Readonly<Record<'outside' | 'inside', ReadonlyArray<string>>> = {
+  outside: ['peroneals'],
+  inside: ['tibialis-posterior', 'tibialis-anterior'],
+};
+
+/** Per leg, the foot muscle that edges the ski earliest: working in initiation and no harder later; steady order. */
+export const earlyEdgers = (order: ReadonlyArray<Activation>, i: Intensity): ReadonlyArray<Activation> =>
+  [Side.Outside, Side.Inside].flatMap((side) => {
+    const fits = order.filter((a) => {
+      const e = effortsFor(a, i);
+      return a.side === side && EDGERS[side].includes(a.muscle) && e.initiation >= 1 && e.initiation >= e.shaping;
+    });
+    const best = Math.max(0, ...fits.map((a) => effortsFor(a, i).initiation));
+    const a = fits.find((x) => effortsFor(x, i).initiation === best);
+    return a === undefined ? [] : [a];
+  });
+
+/** The few muscles worth training for this movement and setting, one per group, then each leg's early edger; each with a gym exercise; steady order. */
 export const trainThese = (data: BlendData, order: ReadonlyArray<Activation>, i: Intensity, size = 4): ReadonlyArray<TrainTag> => {
   const family = (id: string): string => muscleOf(data, id)?.partOf ?? id;
   const plan: Array<TrainTag> = [];
@@ -86,6 +113,19 @@ export const trainThese = (data: BlendData, order: ReadonlyArray<Activation>, i:
     if (fit === undefined) continue;
     used.add(fit.exercise.id);
     plan.push({ activation: a, exercise: fit.exercise });
+  }
+  for (const a of earlyEdgers(order, i)) {
+    const at = plan.findIndex((p) => p.activation === a);
+    const had = plan[at];
+    if (had !== undefined) {
+      plan[at] = { ...had, edge: true };
+      continue;
+    }
+    const fits = exercisesFor(data, a, i).filter((f) => !f.mobilisation);
+    const fit = fits.find((f) => !used.has(f.exercise.id)) ?? fits[0];
+    if (fit === undefined) continue;
+    used.add(fit.exercise.id);
+    plan.push({ activation: a, exercise: fit.exercise, edge: true });
   }
   return plan;
 };
