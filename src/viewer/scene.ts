@@ -1,5 +1,5 @@
 import { BufferAttribute, BufferGeometry, CircleGeometry, Color, DirectionalLight, Group, HemisphereLight, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, Raycaster, Scene, Vector2, Vector3, WebGPURenderer } from 'three/webgpu';
-import { color, dot, float, length, normalWorld, positionLocal, positionWorld, smoothstep, uniform, vec2, vec3 } from 'three/tsl';
+import { color, dot, float, length, mix, normalWorld, positionLocal, positionWorld, smoothstep, uniform, vec2, vec3 } from 'three/tsl';
 import type { MuscleLevel } from '../content/activation';
 import { Intensity } from '../content/schema';
 import { bestAnchors, sameAnchors } from './anchor-projection';
@@ -138,16 +138,28 @@ const FIT_SAMPLES = 24;
 /** A margin of `px` on a side `size` px long, in NDC; overlays never take most of the view. */
 const edge = (px: number, size: number): number => Math.min(0.8, (2 * px) / size);
 const MIRROR = new Matrix4().makeScale(-1, 1, 1);
+/** Where each field fades out and is solid, metres from the skier; moguls show several bumps per column. */
+const FIELD_FADE: Readonly<Record<SurfaceKind, readonly [number, number]>> = {
+  groomed: [GROUND_RADIUS, GROUND_SOLID],
+  moguls: [16, 4],
+  powder: [GROUND_RADIUS, GROUND_SOLID],
+};
 /** The field's grid: half its side covers the fade's radius wherever the turn puts the skier; metres. */
-const FIELD_HALF = 12;
-const FIELD_STEP: Readonly<Record<SurfaceKind, number>> = { groomed: 1, moguls: 0.1, powder: 0.25 };
+const FIELD_HALF: Readonly<Record<SurfaceKind, number>> = { groomed: 12, moguls: 21, powder: 12 };
+const FIELD_STEP: Readonly<Record<SurfaceKind, number>> = { groomed: 1, moguls: 0.125, powder: 0.25 };
 /** Loose snow lets the buried gear show through faintly. */
 const SNOW_SOLID: Readonly<Record<SurfaceKind, number>> = { groomed: 1, moguls: 1, powder: 0.8 };
-/** A fixed light, up and to the left of the home view, that tints the snow by its slope. */
-const SNOW_LIGHT = new Vector3(-0.5, 0.8, 0.35).normalize();
-/** How much a face turned toward or away from the light lightens or darkens, and a lift that reads on dark snow. */
-const SNOW_SHADE = 1.2;
-const SNOW_GLOW = 0.15;
+/** A low key light, up and to the left of the home view, so the relief reads by its faces. */
+const SNOW_LIGHT = new Vector3(-0.6, 0.55, 0.4).normalize();
+/** Per theme: faces turned to the key tone toward `lift`, faces turned away or steep toward the sky-filled `shade`. */
+const SNOW_TONES = {
+  light: { lift: new Color(0xffffff), shade: new Color(0xa9b4c2) },
+  dark: { lift: new Color(0x6a7482), shade: new Color(0x0a0b0d) },
+} as const;
+/** How fast faces tone toward the key, away from it, and by steepness alone. */
+const SNOW_TOWARD = 2.2;
+const SNOW_AWAY = 0.9;
+const SNOW_STEEP = 0.8;
 const sameSurface = (a: Surface, b: Surface): boolean =>
   a.kind === b.kind && a.spacing === b.spacing && a.relief === b.relief && a.depth === b.depth && a.columns === b.columns;
 
@@ -175,12 +187,26 @@ export const createViewer = async (
   ground.position.y = -0.002;
   scene.add(ground);
 
-  // Bumps and loose snow: the same colour and fade, tinted by how each face turns to SNOW_LIGHT.
-  const fieldMaterial = new MeshBasicNodeMaterial({ transparent: true });
-  const lit = dot(normalWorld, vec3(SNOW_LIGHT.x, SNOW_LIGHT.y, SNOW_LIGHT.z)).sub(SNOW_LIGHT.y);
-  fieldMaterial.colorNode = groundColour.mul(lit.mul(SNOW_SHADE).add(1)).add(lit.mul(SNOW_GLOW));
+  // Opaque, so the grid never blends over itself; fades into the page's colour instead.
+  const fieldMaterial = new MeshBasicNodeMaterial();
+  const snowLift = uniform(new Color());
+  const snowShade = uniform(new Color());
+  const fieldOuter = uniform(GROUND_RADIUS);
+  const fieldInner = uniform(GROUND_SOLID);
+  const key = dot(normalWorld, vec3(SNOW_LIGHT.x, SNOW_LIGHT.y, SNOW_LIGHT.z)).sub(SNOW_LIGHT.y);
+  const toward = key.mul(SNOW_TOWARD).clamp(0, 1);
+  const away = key.negate().mul(SNOW_AWAY).add(float(1).sub(normalWorld.y).mul(SNOW_STEEP)).clamp(0, 1);
+  const near = smoothstep(fieldOuter, fieldInner, length(positionWorld.xz));
+  fieldMaterial.colorNode = mix(groundColour, mix(mix(groundColour, snowLift, toward), snowShade, away.mul(float(1).sub(toward))), near);
   const fieldSolid = uniform(1);
-  fieldMaterial.opacityNode = smoothstep(float(GROUND_RADIUS), float(GROUND_SOLID), length(positionWorld.xz)).mul(fieldSolid);
+  fieldMaterial.opacityNode = fieldSolid;
+  const toneSnow = (): void => {
+    const { r, g, b } = groundColour.value;
+    const tones = 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.25 ? SNOW_TONES.dark : SNOW_TONES.light;
+    snowLift.value.copy(tones.lift);
+    snowShade.value.copy(tones.shade);
+  };
+  toneSnow();
   let field: Mesh<BufferGeometry, MeshBasicNodeMaterial> | null = null;
   const fieldInverse = new Matrix4();
   const fieldTurn = new Matrix4();
@@ -277,7 +303,14 @@ export const createViewer = async (
     contact.visible = groomed;
     if (groomed) return;
     fieldSolid.value = SNOW_SOLID[surface.kind];
-    const { positions, normals, indices } = fieldMesh(surface, FIELD_HALF, FIELD_STEP[surface.kind]);
+    // Loose snow alone is see-through; its swells are too low to overlap themselves.
+    const solid = SNOW_SOLID[surface.kind] === 1;
+    if (fieldMaterial.transparent === solid) {
+      fieldMaterial.transparent = !solid;
+      fieldMaterial.needsUpdate = true;
+    }
+    [fieldOuter.value, fieldInner.value] = FIELD_FADE[surface.kind];
+    const { positions, normals, indices } = fieldMesh(surface, FIELD_HALF[surface.kind], FIELD_STEP[surface.kind]);
     const geometry = new BufferGeometry();
     geometry.setAttribute('position', new BufferAttribute(positions, 3));
     geometry.setAttribute('normal', new BufferAttribute(normals, 3));
@@ -656,6 +689,7 @@ export const createViewer = async (
       // Dark snow means the dark theme.
       const { r, g, b } = groundColour.value;
       figure.setDark?.(0.2126 * r + 0.7152 * g + 0.0722 * b < 0.25);
+      toneSnow();
       invalidate();
     },
     setLevels: (next) => {
