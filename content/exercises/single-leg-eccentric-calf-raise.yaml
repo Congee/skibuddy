@@ -1,0 +1,32 @@
+id: single-leg-eccentric-calf-raise
+name: Single-leg calf raise, slow lower
+targets:
+  - { muscle: gastrocnemius, contraction: eccentric }
+  - { muscle: soleus, contraction: eccentric }
+  - { muscle: peroneals, contraction: isometric }
+  - { muscle: foot-intrinsics, contraction: isometric }
+single_leg: true
+matches_on_snow: One calf controlling the shin's lean on the outside ski while the foot stays steady over its edge
+easier: Rise on two feet, lower on one
+harder: Lower from a step edge into the stretch, or hold a load
+cautions: [Achilles pain - reduce range and load]
+dosing:
+  per_side: true
+  ranges:
+    - goal: strength
+      sets: { min: 2, max: 3 }
+      reps: { min: 6, max: 10 }
+      rest_seconds: { min: 60, max: 120 }
+      note: Straight knee; rise on both feet if needed, lower on one over 3 to 4 seconds; keep the weight over the big-toe side and the ankle from rolling out.
+      basis: Lengthening work dominates in racing turns (measured in the knee extensors); a racing book lists gastrocnemius among the muscles to train and writes tempo as seconds of lowering. The foot holding its edge on one leg is our inference from the outside foot's lateral load. Rep and rest ranges follow ACSM's strength zone.
+      sources:
+        - berg-1999
+        - { source: pritchard-cross-2023, pages: "74, 79" }
+        - { source: lemaster-2010, pages: "137-139" }
+        - acsm-2009
+  suggested: { goal: strength, sets: 2, reps: 8 }
+sources:
+  - { source: pritchard-cross-2023, pages: 79 }
+  - hintermeister-1997
+  - berg-1999
+reviewed_by: []

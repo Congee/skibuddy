@@ -1,0 +1,32 @@
+id: straight-knee-calf-raise
+name: Straight-knee calf raise
+targets:
+  - { muscle: gastrocnemius, contraction: eccentric }
+  - { muscle: soleus, contraction: eccentric }
+single_leg: false
+matches_on_snow: The calf yielding and holding as the shin presses the boot tongue in a turn's high-load phase, with the straight knee keeping the gastrocnemius in the work
+easier: Hands on a wall, heels to the floor only
+harder: Heels lowered below a step edge, or a load held
+cautions: [Achilles pain - reduce range and load]
+dosing:
+  per_side: false
+  ranges:
+    - goal: endurance
+      sets: { min: 2, max: 3 }
+      reps: { min: 15, max: 20 }
+      rest_seconds: { min: 30, max: 60 }
+      note: Knees straight but not locked; rise in about a second, lower over about 3 seconds.
+      basis: Medial gastrocnemius averaged above half of maximum in measured GS turns, with peaks above maximum; the straight knee keeps the two-joint gastrocnemius long so it shares the load with soleus, by anatomy. Rep and rest ranges follow ACSM's endurance zone for healthy adults.
+      sources: [hintermeister-1997, acsm-2009]
+    - goal: strength
+      sets: { min: 2, max: 4 }
+      reps: { min: 8, max: 12 }
+      rest_seconds: { min: 60, max: 120 }
+      note: Off a step edge or holding a load; 3-second lowering every rep.
+      basis: A racing book lists gastrocnemius among the muscles to train and writes tempo as seconds of lowering; the rep and rest ranges follow ACSM's strength zone.
+      sources: [{ source: pritchard-cross-2023, pages: "74, 79" }, acsm-2009]
+  suggested: { goal: endurance, sets: 2, reps: 15 }
+sources:
+  - { source: pritchard-cross-2023, pages: 79 }
+  - hintermeister-1997
+reviewed_by: []
