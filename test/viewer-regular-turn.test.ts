@@ -34,7 +34,7 @@ const DEG = 180 / Math.PI;
 const DEG_RAD = Math.PI / 180;
 const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as const;
 // The bumps pitch the skis, so mogul turns balance along the snow, not along the ski.
-const balanceOf = (kind: string, a: ReturnType<typeof poseAngles>): number => (kind === RegularTurn.Moguls ? a.comOnSnow : a.comAhead);
+const balanceOf = (kind: string, a: ReturnType<typeof poseAngles>): number => (kind === RegularTurn.Moguls || kind === ROUND_POSE ? a.comOnSnow : a.comAhead);
 // Head turned toward the outside of the turn beyond the skis.
 const headOnSkis = (kind: RegularTurn, i: Intensity, t: number): number => {
   const p = samplePose(poseTable(kind, i), t);
@@ -199,7 +199,7 @@ describe('regular turn', () => {
 
   it('keeps the mass over the feet: never behind the heels nor past the ball', () => {
     // About ball to back of arch over one foot or the other (lemaster-2010 p85); the heel is 0.095 behind the mid-foot.
-    for (const kind of [...KINDS, 'closed-stance-short-turns'])
+    for (const kind of [...KINDS, 'closed-stance-short-turns', ROUND_POSE])
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
           const a = anglesOf(kind, i, k / 24);

@@ -203,23 +203,24 @@ const BALANCE_LAG = 0.15;
 const LAG_SAMPLES = 16;
 
 /**
- * On the zipper the snow pushes along the skis' normal, pitched uphill on a face and downhill on a backside; the body
- * cannot re-balance at 2-3 turns a second, so it meets that pitch raised-cosine averaged over BALANCE_LAG either side
- * of t, through the mirrored next turn. Radians uphill of the slope normal; 0 off the zipper and on a face.
+ * On moguls the snow pushes along the skis' normal, pitched downhill on a backside; the body cannot re-balance at
+ * 2-3 turns a second, so it meets that pitch raised-cosine averaged over BALANCE_LAG either side of t, through the
+ * mirrored next turn. Radians uphill of the slope normal; 0 off moguls.
  */
 export const snowPitchAt = (scenario: DrillScenario | null, surface: Surface | null, t: number): number => {
-  if (scenario === null || surface === null || surface.line !== MogulLine.Zipper || surface.speed === 0) return 0;
+  if (scenario === null || surface === null || surface.kind !== SurfaceKind.Moguls || surface.speed === 0) return 0;
   const half = (BALANCE_LAG * scenario.speedMps) / surface.speed;
   let sum = 0;
   let weights = 0;
   for (let i = 0; i < LAG_SAMPLES; i++) {
     const u = (2 * (i + 0.5)) / LAG_SAMPLES - 1;
     const w = 1 + Math.cos(Math.PI * u);
-    sum += w * trackRest(surface, wrapTime(t + u * half), SKI_TIP[2], -SKI_TAIL[2]).pitch;
+    // On a face the feet lead and the body catches up, centred, rather than sitting back on its pitch (duncan-smith-2021 3:30-3:54).
+    sum += w * Math.min(0, trackRest(surface, wrapTime(t + u * half), SKI_TIP[2], -SKI_TAIL[2]).pitch);
     weights += w;
   }
-  // On a face the feet lead and the body catches up, centred, rather than sitting back on its pitch (duncan-smith-2021 3:30-3:54).
-  return Math.min(sum / weights, 0);
+  // Down the backside the ankle brings the tip down and presses it downhill (duncan-smith-2021 3:00-3:25).
+  return sum / weights;
 };
 
 /** The snow's force line the mass balances on, radians uphill of the slope normal: the skis' averaged pitch plus braking. */
@@ -437,10 +438,13 @@ const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: S
     return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, surface, ride, hip, true)))[1];
   };
   if (surface.line !== MogulLine.Zipper) {
-    const high = snowAt(surface, surface.crest);
+    // The boots' own highest snow: on the round line's wall it comes after the path centre's crest.
+    const ts = Array.from({ length: REACH_SAMPLES }, (_, k) => k / REACH_SAMPLES);
+    const snow = ts.map((t) => snowAt(surface, t));
+    const high = Math.max(...snow);
     const low = snowAt(surface, surface.trough);
     // Folded deepest on the crest and long in the trough, the mass sinking on top by what the relief does not take.
-    const crest = at(surface.crest, hi);
+    const crest = at(ts[snow.indexOf(high)] ?? surface.crest, hi);
     const trough = at(surface.trough, lo);
     return cache({ at: (t) => trough + (crest - trough) * Math.min(1, Math.max(0, (snowAt(surface, t) - low) / (high - low))) });
   }

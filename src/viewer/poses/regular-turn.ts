@@ -553,7 +553,7 @@ export const ROUND: TurnStyle = {
   // The plant downhill at the release, on the bump's top or shoulder (jds-bumps-style 3:24, 4:25).
   poleTouchAt: 0.78,
   // Edges build to the set and hold to the release; the hips tip the long legs on the wall, where the knees cannot (inferred).
-  edgeCurve: [0, 0.3, 1.2, 1, 0.7],
+  edgeCurve: [0, 0.3, 1.2, 1, 0.75],
   angulation: 15,
   kneeAngulation: 25,
   head: { ...DOWNHILL, corridor: ROUND_CORRIDOR },

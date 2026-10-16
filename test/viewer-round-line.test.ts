@@ -7,6 +7,7 @@ import { BodySide } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
 import { segmentMatrices, skiIndex } from '../src/viewer/pose';
 import { rideOf } from '../src/viewer/ride';
+import { poseAngles } from './pose-angles';
 import { heightAt, MogulLine, pathAt, ROUND_FIELD, surfaceFor } from '../src/viewer/surface';
 import { ROUND_POSE, TOPS_POSE, transitionHeading, turnPath } from '../src/viewer/turn-heading';
 
@@ -156,6 +157,15 @@ describe('round line', () => {
       const { newEdge } = edgeTiming(intensity);
       assert.isAtLeast(newEdge - SET, 0.4, intensity);
       assert.isAtMost(newEdge - SET, 0.5, intensity);
+    }
+  });
+
+  it('reaches its longest leg in the trough, t 0.25-0.35 (duncan-smith-2021 4:33-4:55)', () => {
+    for (const intensity of INTENSITIES) {
+      const table = poseTable(ROUND_POSE, intensity);
+      const knee = (t: number): number => poseAngles(samplePose(table, t), 0).knee.right;
+      const trough = Math.min(...ts.filter((t) => t >= 0.25 && t <= 0.35).map(knee));
+      assert.isAtMost(trough, Math.min(...ts.map(knee)) + 3, intensity);
     }
   });
 
