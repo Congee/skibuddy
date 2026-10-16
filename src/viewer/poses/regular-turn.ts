@@ -38,7 +38,7 @@ export interface TurnStyle {
   readonly dorsiflexion: number;
   /** Degrees off `dorsiflexion` at each phase key: shin into the tongue to load the tip, opened to use the tail. */
   readonly ankle: PhaseValues;
-  /** Low back flexed on the pelvis at moderate intensity. */
+  /** Low back flexed on the pelvis at moderate intensity; racers measure 11-27 deg (sporri-2016). */
   readonly spineFlex: number;
   /** Thighs drawn toward each other: a narrower stance than hip width. */
   readonly narrow: number;
@@ -68,7 +68,7 @@ const SHORT: TurnScenarios = {
 };
 
 /**
- * Per kind. Outside knee about 30-45 deg in recreational turns (video reference), deeper only
+ * Per kind. Trunk 20-35 deg forward of vertical: outside hip flexion peaks at 55-65 deg (gao-2024). Outside knee about 30-45 deg in recreational turns (video reference), deeper only
  * when moguls absorb; outside share 0.6 gentle to 0.85 dynamic (heinrich-2022), powder near even.
  */
 export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
