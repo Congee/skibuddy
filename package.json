@@ -14,7 +14,7 @@
     "lint": "oxlint --ignore-pattern '.claude/**'",
     "test": "vitest run",
     "test:model": "vitest run --config vitest.model.config.ts",
-    "check": "bun run typecheck && bun run lint && bun run test"
+    "check": "bun run content && bun run typecheck && bun run lint && bun run test"
   },
   "dependencies": {
     "@effect/atom-solid": "4.0.5",
