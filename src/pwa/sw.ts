@@ -8,12 +8,16 @@ type FetchEvent = ExtendableEvent & { request: Request; respondWith: (response: 
 type WorkerScope = {
   registration: { scope: string };
   clients: { claim: () => Promise<void> };
+  skipWaiting: () => Promise<void>;
   addEventListener: ((type: 'install' | 'activate', listener: (event: ExtendableEvent) => void) => void) &
-    ((type: 'fetch', listener: (event: FetchEvent) => void) => void);
+    ((type: 'fetch', listener: (event: FetchEvent) => void) => void) &
+    ((type: 'message', listener: (event: MessageEvent) => void) => void);
 };
 
 declare const SKIBUDDY_SW_MANIFEST: SwManifest;
 const MANIFEST = SKIBUDDY_SW_MANIFEST;
+// sw.js is built alone, so it can't share a module with the page; register.ts sends the same string.
+const SKIP_WAITING = 'skibuddy:skip-waiting';
 
 const worker = self as unknown as WorkerScope;
 const scope = new URL(worker.registration.scope);
@@ -44,7 +48,11 @@ const precacheModel = async (): Promise<void> => {
   if ((await cache.match(url)) === undefined) await cache.put(url, await fetchOk(url, { cache: 'no-cache' }));
 };
 
-// No skipWaiting: a new build waits until every skibuddy tab is closed, then takes over on the next launch.
+// The page asks a waiting build to take over, then reloads; waiting for every tab to close kept reloads stale.
+worker.addEventListener('message', (event) => {
+  if (event.data === SKIP_WAITING) void worker.skipWaiting();
+});
+
 worker.addEventListener('install', (event) => {
   event.waitUntil(Promise.all([precacheShell(), precacheModel()]));
 });
@@ -54,7 +62,6 @@ worker.addEventListener('activate', (event) => {
     (async () => {
       const stale = staleCaches(await caches.keys(), scope.pathname, MANIFEST);
       await Promise.all(stale.map((key) => caches.delete(key)));
-      // Only the first install has pages to claim; an update activates with none open.
       await worker.clients.claim();
     })(),
   );

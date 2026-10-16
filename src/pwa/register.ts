@@ -1,5 +1,9 @@
 // Registers the service worker after first paint and reports when a new build is waiting.
 
+
+// sw.ts listens for the same string.
+const SKIP_WAITING = 'skibuddy:skip-waiting';
+
 type Listener = () => void;
 
 const listeners = new Set<Listener>();
@@ -21,13 +25,20 @@ export const onUpdateReady = (listener: Listener): (() => void) => {
   return () => listeners.delete(listener);
 };
 
+/** Hands over to the waiting build and reloads once it controls the page. */
+const takeOver = (registration: ServiceWorkerRegistration): void => {
+  markReady();
+  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
+  registration.waiting?.postMessage(SKIP_WAITING);
+};
+
 const watch = (registration: ServiceWorkerRegistration): void => {
   // A worker waiting behind an active controller is an update; on first install there is no controller.
-  if (registration.waiting !== null && navigator.serviceWorker.controller !== null) markReady();
+  if (registration.waiting !== null && navigator.serviceWorker.controller !== null) takeOver(registration);
   registration.addEventListener('updatefound', () => {
     const installing = registration.installing;
     installing?.addEventListener('statechange', () => {
-      if (installing.state === 'installed' && navigator.serviceWorker.controller !== null) markReady();
+      if (installing.state === 'installed' && navigator.serviceWorker.controller !== null) takeOver(registration);
     });
   });
 };
