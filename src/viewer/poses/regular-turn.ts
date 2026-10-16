@@ -208,8 +208,9 @@ const TRUNK_OVER_SHIN_GAIN = 0.4;
 const COM_AHEAD_GAIN = 0.4;
 
 /**
- * Per kind. Trunk 20-35 deg forward of vertical: outside hip flexion peaks at 55-65 deg (gao-2024). Outside knee within
- * OUTSIDE_KNEE_MAX; outside share 0.6 gentle to 0.85 dynamic (heinrich-2022), powder near even.
+ * Per kind. Trunk 17-40 deg forward of the slope normal, the chest over the outside knee (inferred); outside hip
+ * flexion peaks at 55-65 deg (gao-2024). Outside knee within OUTSIDE_KNEE_MAX; outside share 0.6 gentle to 0.85
+ * dynamic (heinrich-2022), powder near even.
  */
 export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   // Skidded and tall: less edge, less speed.
