@@ -138,8 +138,8 @@ dof_matrix:
     side: inside
     cells:
       initiation: { action: Arch held under a light load on the outer border, contraction: isometric, cue: Keep the heel in touch with the boot, confidence: low, sources: [psia-c-railroad-tracks] }
-      shaping: { action: Arch held under a light load, contraction: isometric, cue: Ski on the whole side of the boot, confidence: low, sources: [] }
-      finish: { action: Arch held as the foot rolls back, contraction: isometric, cue: Whole foot on the boot sole, confidence: low, sources: [] }
+      shaping: { action: Arch held under a light load, contraction: isometric, cue: Ski on the whole side of the boot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held as the foot rolls back, contraction: isometric, cue: Whole foot on the boot sole, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:

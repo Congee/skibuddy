@@ -162,7 +162,9 @@ dof_matrix:
         contraction: eccentric
         cue: Release both edges together
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -186,13 +188,15 @@ dof_matrix:
         contraction: isometric
         cue: Spread the pressure as it moves to the heel
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 139 }
+          - falda-buscaiot-2017
   - dof: foot.arch
     side: inside
     cells:
       initiation: { action: Arch held under a lighter load, contraction: isometric, cue: Feel all three contact points in the uphill boot too, confidence: low, sources: [psia-c-carved-uphill-arc] }
-      shaping: { action: Arch held under a lighter load, contraction: isometric, cue: Feel the uphill foot on the snow, confidence: low, sources: [] }
-      finish: { action: Arch held under a lighter load, contraction: isometric, cue: Feel the uphill foot on the snow, confidence: low, sources: [] }
+      shaping: { action: Arch held under a lighter load, contraction: isometric, cue: Feel the uphill foot on the snow, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held under a lighter load, contraction: isometric, cue: Feel the uphill foot on the snow, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:

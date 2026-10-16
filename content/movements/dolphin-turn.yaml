@@ -157,7 +157,9 @@ dof_matrix:
         contraction: isometric
         cue: Keep the inside ski tipped with the outside
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
       finish:
         action: Releases toward flat with the outside foot
         contraction: eccentric

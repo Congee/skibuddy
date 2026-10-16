@@ -139,13 +139,17 @@ dof_matrix:
         contraction: isometric
         cue: Keep both skis tipped the same way
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
       finish:
         action: Releases toward flat with the outside ski
         contraction: eccentric
         cue: Flatten both skis together
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -168,13 +172,15 @@ dof_matrix:
         contraction: isometric
         cue: Spread the pressure as it moves to the heel
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 139 }
+          - falda-buscaiot-2017
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: Arch held as the folded foot takes little load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [] }
-      shaping: { action: Arch held under a lighter load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [] }
-      finish: { action: Arch held under a lighter load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [] }
+      initiation: { action: Arch held as the folded foot takes little load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      shaping: { action: Arch held under a lighter load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held under a lighter load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:
@@ -922,8 +928,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Adds a little ankle stiffness; slack with the knee deeply bent
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; medial gastrocnemius averaged above half of maximum in GS turns, but the boot shaft carries much of the ankle moment and the bent knee slackens it, so its share here is small; not measured in this drill
+    sources: [hintermeister-1997, heinrich-2022]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -943,8 +949,8 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
     role: Holds the arch up and co-contracts with the peroneals
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; the ankle muscles help the boot resist the edge's flattening torque, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "123-124, 139" }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -952,8 +958,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the pressure over the sole
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the outside foot's arch is built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 139 }]
   - muscle: iliopsoas
     side: outside
     serves: [pelvis.tilt]
@@ -1024,8 +1030,8 @@ activations:
     contraction: { initiation: concentric, shaping: null, finish: null }
     role: Helps fold the knee while the leg is light
     confidence: low
-    basis: Anatomy; a knee flexor on an unloaded leg (biomechanics.md F6.4)
-    sources: []
+    basis: Inferred from anatomy; it crosses the knee, so it can help bend the light leg while the boot holds the ankle flexed; not measured on snow
+    sources: [{ source: patterson-2023, pages: 89 }]
   - muscle: vasti
     side: inside
     serves: [knee.flexion]
@@ -1102,8 +1108,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Pull the inside foot up with tibialis anterior
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from their dorsiflexor moment arm, working with tibialis anterior on the book's pull-the-toes-up cue; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: tibialis-posterior
     side: inside
     serves: [ankle.inversion]
@@ -1111,8 +1117,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Rolls the inside ski onto its little-toe edge and lets it go
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   - muscle: soleus
     side: inside
     serves: [ankle.flexion]
@@ -1129,8 +1135,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the lighter load over the inside sole
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the inside foot carries a small share of the load and is not built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "137-139" }]
   # Pelvis and trunk. The trunk folds deep at the switch, so the back extensors hold it there.
   - muscle: erector-spinae
     side: both

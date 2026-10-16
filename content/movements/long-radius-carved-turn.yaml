@@ -173,13 +173,15 @@ dof_matrix:
         contraction: isometric
         cue: Spread the pressure as it moves to the heel
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 139 }
+          - falda-buscaiot-2017
   - dof: foot.arch
     side: inside
     cells:
       initiation: { action: Arch held under a light load on the outer border of the foot, contraction: isometric, cue: Feel the whole little-toe side of the foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
-      shaping: { action: Arch held under a light load, contraction: isometric, cue: Feel the whole little-toe side of the foot, confidence: low, sources: [] }
-      finish: { action: Arch held as the foot loads up to become the outside foot, contraction: isometric, cue: Spread the pressure over the whole foot, confidence: low, sources: [] }
+      shaping: { action: Arch held under a light load, contraction: isometric, cue: Feel the whole little-toe side of the foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held as the foot loads up to become the outside foot, contraction: isometric, cue: Spread the pressure over the whole foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:
@@ -1121,8 +1123,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Help pull the inside foot back and the toes up
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from their dorsiflexor moment arm, working with tibialis anterior on the book's pull-the-toes-up cue; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: tibialis-posterior
     side: inside
     serves: [ankle.inversion]
@@ -1171,8 +1173,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Steady the inside foot on its outer border
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the inside foot carries a small share of the load and is not built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: "137-139" }]
   # Pelvis and trunk. The spine bends toward the outside ski, so the inside side controls it lengthening.
   - muscle: erector-spinae
     side: both
