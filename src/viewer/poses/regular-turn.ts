@@ -25,6 +25,8 @@ export interface TurnStyle {
   readonly hip: readonly [number, number];
   /** Degrees both hip ends deepen per step of intensity. */
   readonly hipStep: number;
+  /** Degrees the hip ends move apart per step of intensity: a wider absorption range. */
+  readonly hipSpread: number;
   /** Peak hip angulation and the outside femur's rotation into the turn. */
   readonly angulation: number;
   /** Peak pelvis turn toward the outside of the turn, relative to the skis, and the chest turned further beyond it. */
@@ -36,6 +38,8 @@ export interface TurnStyle {
   readonly bend: number;
   /** Ankle dorsiflexion at each phase key: closed draws the feet back, opened pushes them ahead (lemaster-2010 p81). */
   readonly ankle: PhaseValues;
+  /** Share the ankle closes further per step of intensity, and opens at gentle. */
+  readonly ankleGain: number;
   /** Low back flexed on the pelvis at moderate intensity; racers measure 11-27 deg (sporri-2016). */
   readonly spineFlex: number;
   /** Thighs drawn toward each other: a narrower stance than hip width. */
@@ -82,8 +86,22 @@ const SHORT: TurnScenarios = {
 };
 
 /**
- * Per kind. Trunk 20-35 deg forward of vertical: outside hip flexion peaks at 55-65 deg (gao-2024). Outside knee about 30-45 deg in recreational turns (video reference), deeper only
- * when moguls absorb; outside share 0.6 gentle to 0.85 dynamic (heinrich-2022), powder near even.
+ * Outside knee flexion ceiling over the whole turn, degrees. Gentle and moderate are recreational: about 30-45 at shaping
+ * (video reference), folding deeper through a flexed transition and over bumps (inferred). Dynamic takes the measured
+ * ceiling: a GS instructor's 56-80 (heinrich-2022), elite moguls little past 100 (arndt-1992 p85).
+ */
+export const OUTSIDE_KNEE_MAX: Readonly<Record<RegularTurn, Readonly<Record<Intensity, number>>>> = {
+  [RegularTurn.Cruising]: { gentle: 50, moderate: 50, dynamic: 80 },
+  [RegularTurn.Carving]: { gentle: 50, moderate: 50, dynamic: 80 },
+  [RegularTurn.ShortTurns]: { gentle: 65, moderate: 65, dynamic: 80 },
+  [RegularTurn.Moguls]: { gentle: 80, moderate: 90, dynamic: 100 },
+  [RegularTurn.Steeps]: { gentle: 65, moderate: 65, dynamic: 80 },
+  [RegularTurn.Powder]: { gentle: 60, moderate: 60, dynamic: 80 },
+};
+
+/**
+ * Per kind. Trunk 20-35 deg forward of vertical: outside hip flexion peaks at 55-65 deg (gao-2024). Outside knee within
+ * OUTSIDE_KNEE_MAX; outside share 0.6 gentle to 0.85 dynamic (heinrich-2022), powder near even.
  */
 export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   // Skidded and tall: less edge, less speed.
@@ -96,6 +114,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     outsideShare: [0.6, 0.75],
     hip: [32, 38],
     hipStep: 2,
+    hipSpread: 0,
     angulation: 5,
     // Between carving and short turns; inferred.
     counter: 12,
@@ -104,6 +123,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     bend: 2,
     // Forward at initiation, slightly back while steering (debertin-2022); skidded turns lean back less than carving.
     ankle: [13.5, 15.8, 15, 14, 13.2],
+    ankleGain: 0,
     spineFlex: 20,
     narrow: 0,
     kneesIn: 0,
@@ -118,6 +138,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     outsideShare: [0.65, 0.88],
     hip: [32, 38],
     hipStep: 2,
+    hipSpread: 0,
     angulation: 12,
     // Slight, from the strong inside half; the trunk turns with the skis (debertin-2022, biomechanics.md D13).
     counter: 5,
@@ -125,8 +146,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     counterCurve: FOLLOW,
     bend: 6,
     // Ankles close and the mass moves forward at initiation, then the feet slide ahead to the finish (debertin-2022,
-    // falda-buscaiot-2017, lemaster-2010 p79). GS ankles reach 18-27 deg (heinrich-2022); past 19 the knee passes 50.
-    ankle: [13, 19, 16, 15, 12],
+    // falda-buscaiot-2017, lemaster-2010 p79). A GS instructor's reach 18-27 deg (heinrich-2022): dynamic only.
+    ankle: [13, 20, 16, 15, 12],
+    ankleGain: 0.18,
     spineFlex: 21,
     narrow: 0,
     kneesIn: 0,
@@ -141,6 +163,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     outsideShare: [0.62, 0.85],
     hip: [32, 56],
     hipStep: 4,
+    hipSpread: 0,
     angulation: 9,
     counter: SHORT_COUNTER,
     twist: 5,
@@ -148,6 +171,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     bend: 5,
     // Feet drawn back through the transition, forward into the new turn, centred by the edge set (lemaster-2010 p86).
     ankle: [19, 23, 18, 16, 16],
+    ankleGain: 0,
     spineFlex: 22,
     narrow: 0,
     kneesIn: 0,
@@ -164,9 +188,10 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
       dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22 },
     },
     outsideShare: [0.6, 0.75],
-    // Elite mogul skiers fold the hip much deeper over the bump than the knee (arndt-1992 p85).
-    hip: [35, 85],
+    // Elite mogul skiers fold the hip much deeper over the bump than the knee (arndt-1992 p85); the range widens with intensity.
+    hip: [30, 90],
     hipStep: 5,
+    hipSpread: 3,
     angulation: 6,
     // Zipper line about 2 m wide.
     counter: fallLineHeading(5, 2),
@@ -174,8 +199,10 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     counterCurve: HEADING,
     bend: 3,
     // Crest at the transition: ankles, knees and hips fold and the feet are pulled back; into the trough the legs
-    // extend and the tips are pushed down. Elite ankles span about 35 deg (arndt-1992 p67); half that recreationally, inferred.
-    ankle: [28, 22, 12, 12, 20],
+    // extend and the tips are pushed down. Elite ankles span about 35 deg (arndt-1992 p67); about half that at
+    // gentle, nearer it at dynamic, inferred. The shell stops the shin in the trough.
+    ankle: [31, 25, 12, 12, 22],
+    ankleGain: 0.16,
     spineFlex: 24,
     narrow: 0,
     kneesIn: 0,
@@ -195,6 +222,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     outsideShare: [0.65, 0.85],
     hip: [36, 56],
     hipStep: 4,
+    hipSpread: 0,
     angulation: 14,
     // Pivoted, so near short turns; inferred.
     counter: 30,
@@ -203,6 +231,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     bend: 9,
     // Forward relative to the feet as the slope steepens (lemaster-2010 pp83-84), low and over the feet (p200); values inferred.
     ankle: [18, 24, 19, 17, 17],
+    ankleGain: 0,
     spineFlex: 24,
     narrow: 0,
     kneesIn: 0,
@@ -221,6 +250,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     outsideShare: [0.52, 0.6],
     hip: [28, 54],
     hipStep: 4,
+    hipSpread: 0,
     angulation: 4,
     // Rhythmic fall-line turns, rounder than short turns; inferred.
     counter: 20,
@@ -229,6 +259,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     bend: 2,
     // Onto the balls of the feet into the turn, feet slightly forward near the bottom, never sitting back (lemaster-2010 pp193-199).
     ankle: [15, 19, 16, 14, 13],
+    ankleGain: 0,
     spineFlex: 19,
     narrow: 2,
     kneesIn: 0,
@@ -254,6 +285,7 @@ export const CLOSED_STANCE: TurnStyle = {
   // Little up and down: the trunk stays level.
   hip: [40, 50],
   hipStep: 3,
+  hipSpread: 0,
   angulation: 3,
   // A corridor about 2 m wide, as the drill's terrain.
   counter: fallLineHeading(4.5, 2),
@@ -262,6 +294,7 @@ export const CLOSED_STANCE: TurnStyle = {
   bend: 1,
   // The moguls' pattern, damped: closed ankles keep the mass over the feet in the deep stance; inferred.
   ankle: [25, 23, 22, 21, 24],
+  ankleGain: 0,
   spineFlex: 22,
   narrow: 7,
   kneesIn: 10,
@@ -297,6 +330,7 @@ const PHASES: ReadonlyArray<Phase> = [
 export const regularTurn = (style: TurnStyle): PoseDefinition => {
   const [open, deep] = style.hip;
   const step = style.hipStep;
+  const spread = style.hipSpread;
   const load = (i: Intensity): number => phaseForces(style.scenarios[i]).shaping.load;
   return {
     keys: PHASES.map((p, i): PoseKey => {
@@ -326,9 +360,9 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       femurRotation: 0.5 * style.angulation * DEG,
       insideFemurShare: 0.8,
       hipByLoad: [
-        [load(Intensity.Gentle), open - step, deep - step],
+        [load(Intensity.Gentle), open - step + spread, deep - step - spread],
         [load(Intensity.Moderate), open, deep],
-        [load(Intensity.Dynamic), open + step, deep + step],
+        [load(Intensity.Dynamic), open + step - spread, deep + step + spread],
       ],
       insideKneeMax: 120 * DEG,
       tailLift: null,
@@ -337,7 +371,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       stance: style.narrow * DEG,
       kneesIn: style.kneesIn * DEG,
       poleTrim: style.poleTrim,
-      gains: { lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1 },
+      gains: { dorsiflexion: style.ankleGain, lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1 },
     },
   };
 };

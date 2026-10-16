@@ -3,7 +3,7 @@ import { INTENSITIES, Intensity } from '../src/content/schema';
 import { CAPSULE_ARM, poleSize, poseToChannels, regularPoleReach } from '../src/viewer/pose';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
-import { REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
+import { OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
 
@@ -30,13 +30,22 @@ describe('regular turn', () => {
     assert.isAtLeast(weightSplit(TURN_STYLES[RegularTurn.Carving], Intensity.Dynamic, 1 / 2).outside, 0.8);
   });
 
-  it('keeps the outside knee at 25-50 deg flexion when cruising and carving', () => {
-    for (const kind of [RegularTurn.Cruising, RegularTurn.Carving])
+  it('keeps the outside knee flexed, within its kind and intensity ceiling', () => {
+    for (const kind of KINDS)
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
           const knee = angles(kind, i, k / 24).knee.right;
-          assert.isTrue(knee >= 25 && knee <= 50, `${kind} ${i} ${k}/24: ${knee.toFixed(1)}`);
+          assert.isTrue(knee >= 25 && knee <= OUTSIDE_KNEE_MAX[kind][i], `${kind} ${i} ${k}/24: ${knee.toFixed(1)}`);
         }
+  });
+
+  it('reaches a measured GS ankle only when carving dynamically', () => {
+    // A GS instructor's outside ankle 18-27 deg (heinrich-2022).
+    const peak = (i: Intensity): number => Math.max(...Array.from({ length: 24 }, (_, k) => ankle(RegularTurn.Carving, i, k / 24)));
+    assert.isAtLeast(peak(Intensity.Dynamic), 22);
+    assert.isAtMost(peak(Intensity.Dynamic), 27);
+    assert.isAtLeast(ankle(RegularTurn.Carving, Intensity.Dynamic, 1 / 2), 18);
+    assert.isBelow(peak(Intensity.Moderate), peak(Intensity.Dynamic) - 2);
   });
 
   it('leans the trunk forward within the measured range', () => {
@@ -54,8 +63,16 @@ describe('regular turn', () => {
     assert.isBelow(Math.max(...gentle) - Math.min(...gentle), 3);
   });
 
-  it('absorbs deeper in moguls at the transition', () => {
+  it('absorbs deeper in moguls at the transition, over a wider range as the intensity grows', () => {
     assert.isAbove(angles(RegularTurn.Moguls, Intensity.Moderate, 0).knee.right, angles(RegularTurn.Carving, Intensity.Moderate, 0).knee.right + 15);
+    const span = (i: Intensity): number => {
+      const v = Array.from({ length: 24 }, (_, k) => angles(RegularTurn.Moguls, i, k / 24).knee.right);
+      return Math.max(...v) - Math.min(...v);
+    };
+    assert.isAbove(span(Intensity.Moderate), span(Intensity.Gentle) + 4);
+    assert.isAbove(span(Intensity.Dynamic), span(Intensity.Moderate) + 4);
+    // Elite: near straight to about 100 deg (arndt-1992 pp85, 87).
+    assert.isAbove(angles(RegularTurn.Moguls, Intensity.Dynamic, 0).knee.right, 85);
   });
 
   it('moves forward at initiation and back through the finish, most in moguls', () => {
