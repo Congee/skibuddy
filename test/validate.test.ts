@@ -218,6 +218,18 @@ describe('findProblems: primitives, drills and fundamentals', () => {
     ]);
   });
 
+  it('checks a mirrored primitive on the other leg and counts it toward fundamentals met wholly mirrored', () => {
+    const drills = rawContent.drills.map((d) => ({ ...d, primitives: [{ primitive: 'knee-bend', mirrored: true }] }));
+    assert.deepStrictEqual(findProblems(contentWith({ drills })), []);
+    const tipped = rawContent.drills.map((d) => ({ ...d, primitives: [{ primitive: 'tip', mirrored: true }] }));
+    assert.include(findProblems(contentWith({ drills: tipped })), 'drill stork-turns: movement turn does not work every row of mirrored primitive tip');
+  });
+
+  it('rejects a mirrored primitive with no outside or inside row', () => {
+    const drills = rawContent.drills.map((d) => ({ ...d, primitives: [{ primitive: 'knee-bend' }, { primitive: 'tip', mirrored: true }] }));
+    assert.include(findProblems(contentWith({ drills })), 'drill stork-turns: mirrored primitive tip has no outside or inside row');
+  });
+
   it('reads any_of as one of several primitives', () => {
     const drills = rawContent.drills.map((d) => ({ ...d, primitives: [{ primitive: 'knee-bend' }] }));
     const fundamentals = rawContent.fundamentals.map((f) => ({

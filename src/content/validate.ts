@@ -128,11 +128,18 @@ export const findProblems = (content: Content): ReadonlyArray<string> => {
       problems.push(`drill ${drill.id}: give radius_m at every setting or at none`);
     }
     for (const id of duplicates(drill.primitives.map((p) => p.primitive))) problems.push(`drill ${drill.id}: primitive ${id} appears twice`);
-    for (const { primitive: id } of drill.primitives) {
+    for (const { primitive: id, mirrored } of drill.primitives) {
       const primitive = primitives.get(id);
-      if (primitive === undefined) problems.push(`drill ${drill.id}: unknown primitive ${id}`);
-      else if (movement !== undefined && !shows(movement, primitive)) {
-        problems.push(`drill ${drill.id}: movement ${movement.id} does not work every row of primitive ${id}`);
+      if (primitive === undefined) {
+        problems.push(`drill ${drill.id}: unknown primitive ${id}`);
+        continue;
+      }
+      if (mirrored === true && !primitive.rows.some((r) => r.side === MatrixSide.Outside || r.side === MatrixSide.Inside)) {
+        problems.push(`drill ${drill.id}: mirrored primitive ${id} has no outside or inside row`);
+      }
+      if (movement !== undefined && !shows(movement, primitive, mirrored === true)) {
+        const which = mirrored === true ? `mirrored primitive ${id}` : `primitive ${id}`;
+        problems.push(`drill ${drill.id}: movement ${movement.id} does not work every row of ${which}`);
       }
     }
   }

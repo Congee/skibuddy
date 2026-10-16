@@ -43,10 +43,17 @@ export const servedRows = (movement: Movement, a: Activation, dof: Dof): Readonl
 /** A row moves (rather than holds neutral) in at least one phase. */
 export const isWorking = (row: MatrixRow): boolean => PHASES.some((p) => row.cells[p].neutral !== true);
 
-/** The movement works every row the primitive owns. */
-export const shows = (movement: Movement, primitive: Primitive): boolean =>
+const MIRROR: Readonly<Record<MatrixSide, MatrixSide>> = {
+  [MatrixSide.Outside]: MatrixSide.Inside,
+  [MatrixSide.Inside]: MatrixSide.Outside,
+  [MatrixSide.Both]: MatrixSide.Both,
+  [MatrixSide.Trunk]: MatrixSide.Trunk,
+};
+
+/** The movement works every row the primitive owns, on the other leg when `mirrored`. */
+export const shows = (movement: Movement, primitive: Primitive, mirrored = false): boolean =>
   primitive.rows.every((ref) => {
-    const rows = rowsFor(movement.dofMatrix, ref.dof, ref.side);
+    const rows = rowsFor(movement.dofMatrix, ref.dof, mirrored ? MIRROR[ref.side] : ref.side);
     return rows.length > 0 && rows.every(isWorking);
   });
 
@@ -76,11 +83,12 @@ export const matrixProblems = (matrix: ReadonlyArray<MatrixRow>, dofs: ReadonlyA
 const requirementMet = (have: ReadonlySet<PrimitiveId>, r: Requirement): boolean =>
   typeof r === 'string' ? have.has(r) : r.anyOf.some((id) => have.has(id));
 
-/** The drill's declared primitives meet every requirement of the fundamental. */
-export const drillMeets = (drill: Drill, fundamental: Fundamental): boolean => {
-  const have = new Set(drill.primitives.map((p) => p.primitive));
-  return fundamental.requires.every((r) => requirementMet(have, r));
-};
+/** The drill's plain primitives, or its mirrored ones, meet every requirement of the fundamental; the two never mix. */
+export const drillMeets = (drill: Drill, fundamental: Fundamental): boolean =>
+  [false, true].some((mirrored) => {
+    const have = new Set(drill.primitives.flatMap((p) => ((p.mirrored === true) === mirrored ? [p.primitive] : [])));
+    return fundamental.requires.every((r) => requirementMet(have, r));
+  });
 
 /** Why a task's fundamentals do not follow from its drill's primitives, or undefined. */
 export const taskFundamentalsProblem = (

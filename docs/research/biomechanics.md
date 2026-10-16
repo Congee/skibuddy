@@ -791,7 +791,7 @@ is the ski's edge angle.
 
 **Measured joint-angle reference for long carved and GS-type turns.** These are ranges over the
 analysed steering phase of one instructor's GS turn, from the tracked musculoskeletal model
-(heinrich-2022, Table 1). Racing trunk data are from IMUs (sporri-2016, sporri-2018). Use these as the
+(heinrich-2022, Table 1). Racing trunk data are from IMUs (sporri-2016). Use these as the
 shaping-phase pose for D1, D2 and D13, scaled down for slower drills.
 
 | Joint | Outside leg | Inside leg | Source |
@@ -803,8 +803,8 @@ shaping-phase pose for D1, D2 and D13, scaled down for slower drills.
 | Hip rotation | 5° to 28° internal | 10° to 26° external | heinrich-2022 |
 | Pelvis | anterior tilt 28° to 39° (the hip hinge; the lumbar row below is the low back's own flexion, so the low back flattens from standing while the pelvis carries most of the fold), list 15° to 33°, rotation −18° to 30° (sign convention as printed) | | heinrich-2022 |
 | Lumbar | sagittal 23° to 29°, lateral bending 0° to 5°, rotation −3° to 10° | | heinrich-2022 |
-| Trunk, sacrum to sternum, GS | frontal bending 27° (turn mean) and 35° (after the gate), peak 40°; lateral bending 7° (turn mean) and 12° (after the gate), peak 15°; torsion 3° to 6°, peak 8° | | sporri-2018 |
-| Trunk, SL | frontal bending 11°, lateral bending 6°, torsion 5° (after the gate) | | sporri-2016 |
+| Trunk, sacrum to sternum, GS | frontal bending 27°, peak 29°; lateral bending 11°, peak 14°; torsion 6°, peak 8° (after the gate) | | sporri-2016 |
+| Trunk, SL | frontal bending 11°, peak 13°; lateral bending 6°, peak 9°; torsion 5°, peak 7° (after the gate) | | sporri-2016 |
 
 | Drill | Initiation | Shaping | Finish |
 |---|---|---|---|

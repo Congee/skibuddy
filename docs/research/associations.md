@@ -420,7 +420,7 @@ Use the plain English name that most associations already use, and avoid any one
 - **pivot-slips**: map PSIA Pivot Slips, RM/NZSIA "Linked pivot slips", and CSIA Braquage with a note that it is the nearest match. "Linked hockey slips" (RM) belongs under hockey-stops as a variant.
 - **sideslips**, with variants for fall line, diagonal and edge set. PSIA spells it "Sideslip"; NZSIA "Side Slips". Prefer one word, as PSIA does.
 - **hop-turns** covers both the pivoted, Spiess-style hop and the leaper (a hop between carved or parallel turns, landing already on edge); biomechanics.md D11 treats them as one drill. Leaper mappings, including CSIA "Edge to Edge (Hop Turn)", say in their notes that they are the carved form.
-- **railroad-track-turns** (PSIA's full name; NZSIA says "Railroad tracks"). Variants: one-footed, garland.
+- **railroad-track-turns** (PSIA's full name; NZSIA says "Railroad tracks"). Variant: one-footed. PSIA-C's L3 Railroad Track Garlands is the carved form of **garlands** and maps there.
 - **garlands**: a generic drill with no current national task. Map PSIA-C's former tasks and mark them as such.
 - **short-radius-turns**, **medium-radius-turns**, **long-radius-turns**. Add a "dynamic" variant for PSIA L3 / NZSIA. Prefer "long" to PSIA's "large", because BASI, Snowsport Austria (lange Radien) and SAJ (大回り) all say long.
 

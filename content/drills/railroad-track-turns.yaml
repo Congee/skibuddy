@@ -1,0 +1,28 @@
+id: railroad-track-turns
+name: Railroad-track turns
+movement: railroad-track-turn
+summary: Linked shallow turns down a narrow corridor on gentle terrain, made only by rolling both skis from one pair of edges, through flat, onto the other, with no steering. The inside foot leads the roll, both skis tip at the same rate, and the tails follow the tips in two thin tracks. The edge stays small, building to its most at the fall line and rolling back to flat, while the trunk stays quiet over the skis. One-footed railroad tracks are a separate drill.
+# PSIA-C asks for green terrain and one groomer width; the snow wording is ours.
+terrain: Gentle green groomed slopes with smooth, edgeable snow and a run-out; a corridor about one groomer width wide
+# Settings are speed and pitch; every setting is carved. At these speeds a carved track on a 15 m ski is a long,
+# shallow arc (Lind & Sanders pp 65-66, 106), so the radius stays near the sidecut and the load near body weight
+# (eq 4.9, p 103). Speeds and pitches are our inference.
+scenarios:
+  gentle: { speed_mps: 4, radius_m: 15, slope_deg: 6 }
+  moderate: { speed_mps: 5.5, radius_m: 14.5, slope_deg: 8 }
+  dynamic: { speed_mps: 7, radius_m: 14, slope_deg: 10 }
+equipment: Efforts assume recreational carving skis of about 15 m sidecut radius, and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. A deeper sidecut makes a rounder track at the same small edge; a stiff or upright cuff makes the small roll inside the boot harder to feel.
+cautions:
+  - Choose a slope gentle enough that speed stays low without steering; on steeper terrain the drill turns into skidded turns or a runaway.
+  - Roll the inside foot first; putting the new outside ski on its big-toe edge first is the habit the drill is meant to break.
+sources:
+  - { source: lind-sanders-2004, pages: "65-66, 103, 106" }
+  - { source: lemaster-2010, pages: "32-33, 49, 124-125" }
+  - psia-c-railroad-tracks
+  - psia-c-beginning-railroad-tracks
+primitives:
+  - { primitive: tipping, modifier: "the whole drill, inside foot leading, no steering" }
+  - { primitive: ankle-flexion }
+  - { primitive: stance-leg-edge-hold, modifier: "light, at about body weight" }
+  - { primitive: inside-leg-shortening, modifier: slight }
+reviewed_by: []

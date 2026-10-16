@@ -43,7 +43,7 @@ Intensities are 0 (idle) to 3 (high) for the `initiation`, `shaping` and `finish
 - Activations name parts, never a group: `vasti` and `rectus-femoris`, not `quadriceps`. Groups stay for exercise targets, which match their parts.
 - A citation is a source id, or `{ source, pages }` for a book: `pages: 14` or `pages: "79-81, 86"`.
 
-A drill's `primitives` must each be shown by its movement: every row the primitive owns works (is not neutral) in some phase. A task's `fundamentals: { relation, ids }` must follow from the drill's primitives: all of them for `and`, at least one for `or` and `and/or`.
+A drill's `primitives` must each be shown by its movement: every row the primitive owns works (is not neutral) in some phase. `mirrored: true` marks a primitive worked by the other leg, such as the stance-leg hold on the uphill ski: its outside rows are checked on the inside and the reverse, while `both` and trunk rows are unchanged, so it must own at least one outside or inside row. A primitive appears once per drill, so it cannot be listed both plain and mirrored. A fundamental is met by the drill's plain primitives or by its mirrored ones, never a mix of the two. A task's `fundamentals: { relation, ids }` must follow from the drill's primitives: all of them for `and`, at least one for `or` and `and/or`.
 
 ### Adding a drill
 

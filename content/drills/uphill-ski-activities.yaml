@@ -1,0 +1,33 @@
+id: uphill-ski-activities
+name: Uphill-ski activities
+movement: uphill-ski-arc
+summary: All the weight goes on the uphill ski, tipped onto its outer edge, while the downhill leg folds to hold its ski just off the snow and level with the other. The progression has three stages, done to the left and to the right - first a traverse that leaves a single clean groove, then a diagonal sideslip that drifts forward and down, then a skidded arc that curls back up the hill. To stay over the standing foot the hips move toward the hill and the chest stays over the downhill side, the stance leg steers beneath a calm trunk, and the hip of the standing leg keeps the unsupported side of the pelvis from dropping. The aim is to stay balanced on either foot anywhere in a turn, including on the outer edge, where the foot is least stable.
+# The matrix is the skidded arc; the traverse is its initiation held and the sideslip its shaping with the edge let off.
+# PSIA-C asks for groomed blue terrain; the snow and traffic wording is ours.
+terrain: Groomed blue slopes with smooth, edgeable snow, in a quiet area with room to traverse and stop
+# Settings are speed, arc radius and pitch. Loads follow Lind & Sanders eq 4.9, p 103, all on the stance leg, with
+# gravity adding to the arc's turn force; they fall as the arc slows. Speeds and radii are our inference.
+scenarios:
+  gentle: { speed_mps: 4, radius_m: 6, slope_deg: 12 }
+  moderate: { speed_mps: 6, radius_m: 8, slope_deg: 16 }
+  dynamic: { speed_mps: 8, radius_m: 10, slope_deg: 20 }
+equipment: Efforts assume recreational carving skis of about 15 m sidecut radius, and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. A snug, laterally stiff, well-canted boot matters most here, because the little-toe edge is held through the boot's outer side; more lean or ramp deepens the knee.
+cautions:
+  - Build up from both skis on the snow - lighten the downhill tail first, then the whole ski, then lift it.
+  - If balance goes, set the downhill ski down flat, parallel and at hip width, not wide in a wedge.
+  - Practise on both legs; one side is usually much weaker on the little-toe edge.
+sources:
+  - psia-c-advanced-one-ski
+  - ishige-2021
+  - { source: lemaster-2010, pages: "136-139, 157-160" }
+  - { source: lind-sanders-2004, pages: "103, 125, 137" }
+  - { source: jordan-sporri-taylor-2023, pages: 122 }
+primitives:
+  - { primitive: stance-leg-edge-hold, mirrored: true, modifier: "on the uphill ski's little-toe edge, whole load" }
+  - { primitive: inside-leg-lift, mirrored: true, modifier: "the downhill ski, held parallel to the slope" }
+  - { primitive: hip-angulation, mirrored: true, modifier: over the uphill foot }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: the lifted foot tips in step with the stance foot }
+  - { primitive: leg-rotation, modifier: the stance leg steering the skidded arc }
+  - { primitive: counter, modifier: the trunk faces down the hill while the ski arcs up }
+reviewed_by: []

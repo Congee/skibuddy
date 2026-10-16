@@ -1,0 +1,33 @@
+id: garlands
+name: Garlands
+movement: garland
+summary: A run of half-turns along a line across the hill, never crossing the fall line, then the same the other way. From a traverse the edges let go and the skis head toward the fall line; before they reach it they roll back onto their uphill edges and arc back across the hill, and the next garland starts. The brushed form steers the flattened skis with the legs turning under a quiet upper body; the carved form only rolls the skis, just past flat onto the downhill edges and back, leaving thin tracks. Either way the release, the transition and the start of the turn are rehearsed many times on one side, with the edge built progressively through each uphill arc and let go into the next.
+# PSIA-C gives green to blue terrain and a path about 45° to the fall line; the snow wording is ours.
+terrain: Green to easy blue groomed slopes wide enough for a long diagonal path, about 45° to the fall line, or a natural side-hill; smooth, edgeable snow
+# Settings are speed, arc radius and pitch; brushed and carved are technique at any setting. Loads follow
+# Lind & Sanders eq 4.9, p 103, and peak in the uphill arc. Speeds and radii are our inference.
+scenarios:
+  gentle: { speed_mps: 5, radius_m: 8, slope_deg: 12 }
+  moderate: { speed_mps: 7, radius_m: 10, slope_deg: 16 }
+  dynamic: { speed_mps: 9, radius_m: 12, slope_deg: 20 }
+equipment: Efforts assume recreational carving skis of about 15 m sidecut radius, and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. A deeper sidecut tightens the carved uphill arc at the same edge; more lean or ramp deepens the knee.
+cautions:
+  - Look uphill before each garland's line and keep to a quiet part of the slope; the path crosses the hill.
+  - Turn back uphill before the fall line; if speed builds, finish the uphill arc to a stop.
+  - Don't lean into the hill in the uphill arc; it unloads the downhill ski and invites a slip.
+sources:
+  - psia-c-basic-garlands
+  - psia-c-basic-parallel-garlands
+  - psia-c-l3-railroad-track-garlands
+  - { source: iasi-2021, pages: "48, 167" }
+  - { source: lind-sanders-2004, pages: "103, 211" }
+  - { source: lemaster-2010, pages: 184 }
+primitives:
+  - { primitive: tipping, modifier: "release and re-edge every garland, in both directions" }
+  - { primitive: leg-rotation, modifier: in the brushed form; held in the carved form }
+  - { primitive: stance-leg-edge-hold, modifier: on the downhill ski through the uphill arc }
+  - { primitive: ankle-flexion }
+  - { primitive: counter, modifier: the trunk faces down the hill while the skis turn under it }
+  - { primitive: hip-angulation, modifier: building through the uphill arc }
+  - { primitive: inside-leg-shortening, modifier: the uphill leg }
+reviewed_by: []

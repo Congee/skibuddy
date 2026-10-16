@@ -422,6 +422,12 @@ export const DrillPrimitive = Schema.Struct({
   primitive: PrimitiveId,
   /** How the drill bends it, e.g. "tail only". */
   modifier: Schema.optionalKey(Text),
+  /**
+   * Worked by the other leg, e.g. the stance-leg hold on the inside ski: outside rows are read as inside and the
+   * reverse; `both` and trunk rows are unchanged, so the primitive needs a sided row. A primitive is listed once per
+   * drill, so it cannot be both plain and mirrored.
+   */
+  mirrored: Schema.optionalKey(Schema.Literal(true)),
 });
 export type DrillPrimitive = typeof DrillPrimitive.Type;
 

@@ -1,0 +1,865 @@
+id: one-footed-railroad-track-turn
+name: One-footed railroad-track turn, rolled on the outside ski with the inside ski held up
+# No study has measured this drill: nothing is high confidence. Efforts are inferred from normal turns and mechanics.
+# The drill is skied on one ski for a whole run, so the turns alternate: this matrix is the turn where the stance
+# ski is the outside ski, on its big-toe edge, with the inside ski lifted. In the next turn the same ski is the
+# inside ski on its little-toe edge with the other leg lifted, as in uphill-ski activities (movement uphill-ski-arc).
+# Phases as in railroad-track-turn: initiation from the flat edge change to the new edge biting, shaping at the
+# arc's apex in the fall line, finish rolling back toward flat; the transition is the flat moment.
+#
+# Intensity (the drill's scenarios), Lind & Sanders eq 4.9 (p 103), load factor n at headings 60°, 90° (fall line)
+# and 120° from across the hill:
+#   gentle   4 m/s, R 15 m,   6°:  about 1.00, 1.00, 1.01
+#   moderate 5 m/s, R 14.5 m, 7°:  about 1.00, 1.01, 1.02
+#   dynamic  6 m/s, R 14 m,   8°:  about 1.01, 1.02, 1.04
+# The stance leg carries all of it, about body weight, and the skier is an inverted pendulum on one edge (L&S
+# pp 137, 234-241): balance is kept by small, fast corrections at the foot and ankle and by subtle upper-body
+# angulation, not by the trunk swaying. The lifted leg, boot and ski (about 16 kg) hang from the hip.
+# Stance knee and hip: most flexed in the transition, a little longer through initiation, held through shaping,
+# flexing a little through the finish (LeMaster pp 40-42), all small. Our inference: stance knee about 40-50°,
+# hip about 40-50°, the lifted knee and hip about 60-80°.
+#
+# Equipment assumed: recreational carving skis of about 15 m sidecut radius; boots with about 15° cuff lean,
+# about 0.9° binding ramp (4.7 mm) and about 42 mm stand height. A firm, well-fitted boot and a correct cant matter
+# more on one ski (LeMaster pp 168-169, L&S p 125); more lean or ramp deepens the knee (posch-2025).
+# Book citations give printed page numbers; for the IASI manual, the PDF page.
+dof_matrix:
+  - dof: ankle.flexion
+    side: outside
+    cells:
+      initiation:
+        action: Dorsiflexes as the foot is drawn back and the shin moves into the tongue at the edge change, pressure toward the ball of the foot so the shovel bites
+        contraction: concentric
+        cue: Shin to the cuff; more pressure on the ball of the foot
+        confidence: medium
+        sources:
+          - psia-c-one-footed-railroad-track
+          - { source: lemaster-2010, pages: "79-81" }
+      shaping:
+        action: Held flexed with three points of contact in the boot (shin, heel, ball of the foot), with constant small fore-aft corrections
+        moment: Plantarflexion, small, shared with the boot shaft
+        contraction: isometric
+        cue: Shin to the cuff, some heel, more ball of the foot
+        confidence: medium
+        sources:
+          - psia-c-one-footed-railroad-track
+          - { source: lemaster-2010, pages: "81, 85" }
+      finish:
+        action: Opens a little as the foot slides forward under the body, still flexed past upright
+        contraction: concentric
+        cue: Let the foot run a little ahead as the arc ends
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "85-86" }
+  - dof: ankle.flexion
+    side: inside
+    cells:
+      initiation: { action: Lifted; the shin stays forward in the boot so the ski hangs level with the slope, contraction: isometric, cue: Lifted ski parallel to the snow, confidence: low, sources: [psia-c-one-footed-railroad-track] }
+      shaping: { action: Held with the shin forward, contraction: isometric, cue: Lifted ski parallel to the snow, confidence: low, sources: [] }
+      finish: { action: Held with the shin forward, contraction: isometric, cue: Lifted ski parallel to the snow, confidence: low, sources: [] }
+  - dof: ankle.inversion
+    side: outside
+    cells:
+      initiation:
+        action: Rolls from flat onto the big-toe edge inside the boot; the whole drill is this roll on one foot
+        contraction: concentric
+        cue: Roll onto the big-toe edge from the ankle, not by leaning
+        confidence: medium
+        sources:
+          - psia-c-one-footed-railroad-track
+          - { source: iasi-2021, pages: "187, 189" }
+      shaping:
+        action: The small edge builds to its most at the fall line and holds, with constant small corrections on the one edge
+        moment: Eversion, small at this edge angle; most of it carried by the boot shell
+        contraction: concentric
+        cue: Keep rolling a little; let the ski's shape turn you
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "123-124, 127" }
+          - { source: lind-sanders-2004, pages: "54-55, 137" }
+      finish:
+        action: Rolls back toward flat, ready to roll onto the little-toe edge for the next turn
+        contraction: eccentric
+        cue: Roll smoothly back through flat
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+  - dof: ankle.inversion
+    side: inside
+    cells:
+      initiation:
+        action: The lifted foot tips onto its little-toe edge in step with the stance foot, as if it were on the snow
+        contraction: concentric
+        cue: Lifted foot tips with the stance foot
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+      shaping:
+        action: Tilt held, matching the stance ski
+        contraction: isometric
+        cue: Both feet tipped the same way
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+      finish:
+        action: Rolls back toward flat with the stance foot
+        contraction: eccentric
+        cue: Roll both feet back together
+        confidence: low
+        sources: []
+  - dof: foot.arch
+    side: outside
+    cells:
+      initiation: { action: Arch held as the whole load rolls onto the big-toe side, contraction: isometric, cue: Stand on heel and both balls of the foot, confidence: low, sources: [{ source: iasi-2021, pages: 190 }] }
+      shaping: { action: Arch held under the whole load with constant small corrections, contraction: isometric, cue: Keep the arch from collapsing, confidence: low, sources: [{ source: lemaster-2010, pages: 139 }, { source: lind-sanders-2004, pages: 137 }] }
+      finish: { action: Arch held as the foot rolls back, contraction: isometric, cue: Keep the heel in touch with the boot, confidence: low, sources: [psia-c-railroad-tracks] }
+  - dof: foot.arch
+    side: inside
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: A quiet foot in the lifted boot, confidence: low, sources: [] }
+      shaping: { neutral: true, contraction: isometric, cue: A quiet foot in the lifted boot, confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: A quiet foot in the lifted boot, confidence: low, sources: [] }
+  - dof: knee.flexion
+    side: outside
+    cells:
+      initiation:
+        action: Lengthens a little from its slightly deeper bend in the transition as the edge bites
+        contraction: concentric
+        cue: Stand a little taller as the edge bites
+        confidence: low
+        sources:
+          - psia-c-one-footed-railroad-track
+          - { source: lemaster-2010, pages: "40-42" }
+      shaping:
+        action: Held, quasi-isometric, at a modest bend, about 40-50° (our inference), with the whole load on it
+        moment: Extension, about body weight on one leg
+        contraction: isometric
+        cue: One steady leg while the foot tips
+        confidence: low
+        sources:
+          - { source: lind-sanders-2004, pages: 103 }
+          - { source: bacharach-cross-2023, pages: 27 }
+      finish:
+        action: Flexes a little, absorbing the slight rise in load, into the transition
+        contraction: eccentric
+        cue: Soften the leg as the edge rolls off
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "40-42" }
+  - dof: knee.flexion
+    side: inside
+    cells:
+      initiation:
+        action: Flexed to hold the lifted ski off the snow, parallel to the slope; the lift is made from the shaping phase of a two-footed turn and then kept
+        contraction: isometric
+        cue: Pick the foot up by bending the leg
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+      shaping:
+        action: Held flexed, the heel drawn up toward the seat
+        contraction: isometric
+        cue: Lifted ski level and quiet
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+      finish:
+        action: Held flexed; the leg stays up through the edge change
+        contraction: isometric
+        cue: Keep the lifted ski up through the edge change
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+  - dof: knee.rotation
+    side: outside
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: "Turn the thigh, not the knee", confidence: low, sources: [{ source: iasi-2021, pages: 191 }] }
+      shaping: { neutral: true, contraction: isometric, cue: Knee over the foot, confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: Knee over the foot, confidence: low, sources: [] }
+  - dof: knee.rotation
+    side: inside
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: Lifted knee points where the ski points, confidence: low, sources: [] }
+      shaping: { neutral: true, contraction: isometric, cue: Lifted knee points where the ski points, confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: Lifted knee points where the ski points, confidence: low, sources: [] }
+  - dof: knee.valgus
+    side: outside
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: Knee moves with the foot as it rolls, confidence: low, sources: [{ source: lemaster-2010, pages: "124-125" }] }
+      shaping: { neutral: true, contraction: isometric, cue: Knee stays over the foot, confidence: low, sources: [{ source: lemaster-2010, pages: 69 }] }
+      finish: { neutral: true, contraction: isometric, cue: Knee stays over the foot, confidence: low, sources: [] }
+  - dof: knee.valgus
+    side: inside
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: Lifted knee in line with the foot, confidence: low, sources: [] }
+      shaping: { neutral: true, contraction: isometric, cue: Lifted knee in line with the foot, confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: Lifted knee in line with the foot, confidence: low, sources: [] }
+  - dof: hip.flexion
+    side: outside
+    cells:
+      initiation:
+        action: Opens a little from the transition's fold as the leg lengthens
+        contraction: concentric
+        cue: Rise a little with the stance leg
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "40-42" }
+      shaping:
+        action: Held at a modest fold, about 40-50° (our inference), the trunk hinged over the stance foot
+        contraction: isometric
+        cue: Fold at the hips, not the waist
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "54, 57" }
+      finish:
+        action: Folds a little more with the knee into the transition
+        contraction: eccentric
+        cue: Fold at the hips as the leg softens
+        confidence: low
+        sources: []
+  - dof: hip.flexion
+    side: inside
+    cells:
+      initiation:
+        action: Flexed to hold the lifted thigh up, more than the stance hip
+        contraction: isometric
+        cue: Lifted thigh up; ski parallel to the snow
+        confidence: low
+        sources:
+          - psia-c-one-footed-railroad-track
+          - kroll-2010
+      shaping:
+        action: Held flexed, the hip flexors carrying the leg, boot and ski
+        contraction: isometric
+        cue: Lifted thigh up and quiet
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+      finish:
+        action: Held flexed through the edge change
+        contraction: isometric
+        cue: Keep the lifted ski up
+        confidence: low
+        sources: []
+  - dof: hip.abduction
+    side: outside
+    cells:
+      initiation:
+        action: The stance knee moves in with the rolling foot, then the pelvis tips over the stance thigh as the leg tilts, the unsupported inside half held up, pelvis on femur
+        contraction: concentric
+        cue: Keep the lifted side's hip up
+        confidence: medium
+        sources:
+          - moore-2020
+          - { source: lemaster-2010, pages: "70-71, 140" }
+      shaping:
+        action: Held, carrying the whole inside half of the pelvis over the small edge
+        moment: Abduction
+        contraction: isometric
+        cue: Strong over the stance hip
+        confidence: medium
+        sources:
+          - moore-2020
+          - ganderton-2017
+      finish:
+        action: Back toward neutral as the ski rolls flat, the pelvis still held level
+        contraction: eccentric
+        cue: Hips level for the flat moment
+        confidence: low
+        sources: []
+  - dof: hip.abduction
+    side: inside
+    cells:
+      initiation: { action: Lifted leg held at hip width beside the stance leg, contraction: isometric, cue: Lifted boot at hip width, confidence: low, sources: [psia-c-one-footed-railroad-track] }
+      shaping: { action: Held at hip width, contraction: isometric, cue: Lifted boot at hip width, confidence: low, sources: [] }
+      finish: { action: Held at hip width, contraction: isometric, cue: Lifted boot at hip width, confidence: low, sources: [] }
+  - dof: hip.rotation
+    side: outside
+    cells:
+      initiation:
+        action: Turns inward a few degrees, carrying the knee with the rolling foot; this tips the ski, it does not pivot it
+        contraction: concentric
+        cue: Roll the knee with the foot; never twist the ski
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "124-125" }
+          - psia-c-one-footed-railroad-track
+      shaping:
+        action: Held; the sidecut, not the leg, turns the ski
+        contraction: isometric
+        cue: Let the ski's shape do the turning
+        confidence: low
+        sources:
+          - { source: lind-sanders-2004, pages: "65-66, 106" }
+      finish:
+        action: Back toward neutral with the release
+        contraction: eccentric
+        cue: Let the knee come back over the foot
+        confidence: low
+        sources: []
+  - dof: hip.rotation
+    side: inside
+    cells:
+      initiation: { action: Lifted thigh turns with the stance thigh so the lifted ski stays parallel, contraction: concentric, cue: Keep the lifted ski parallel, confidence: low, sources: [psia-c-one-footed-railroad-track] }
+      shaping: { action: Held parallel to the stance ski, contraction: isometric, cue: Keep the lifted ski parallel, confidence: low, sources: [] }
+      finish: { action: Held parallel to the stance ski, contraction: isometric, cue: Keep the lifted ski parallel, confidence: low, sources: [] }
+  - dof: pelvis.tilt
+    side: trunk
+    cells:
+      initiation:
+        action: Comes up a little from the transition's hinge as the stance leg lengthens; the low back slightly flattened from standing, never arched or slumped
+        contraction: concentric
+        cue: Rise a little; the hinge stays at the hips
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "40-42, 62-63" }
+      shaping:
+        action: Modest hinge held over the stance foot, never standing tall
+        contraction: isometric
+        cue: Hinged at the hips, low back slightly flattened, never arched or slumped
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "62-63" }
+          - { source: iasi-2021, pages: 194 }
+      finish:
+        action: Tilts forward a little with the hinge as the leg softens
+        contraction: eccentric
+        cue: Fold at the hips as the leg softens
+        confidence: low
+        sources: []
+  - dof: pelvis.list
+    side: trunk
+    cells:
+      initiation:
+        action: The lifted side, unsupported, held up a little as the stance leg tips; it must not drop into the turn
+        contraction: concentric
+        cue: Lifted side's hip up
+        confidence: low
+        sources:
+          - psia-c-one-footed-railroad-track
+          - { source: lemaster-2010, pages: "70-71" }
+      shaping:
+        action: Held up a little by the stance hip's abductors
+        contraction: isometric
+        cue: Lower core steady; hips level with the slope
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+      finish:
+        action: Back to level as the ski rolls flat
+        contraction: eccentric
+        cue: Hips level for the flat moment
+        confidence: low
+        sources: []
+  - dof: pelvis.rotation
+    side: trunk
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: Belt buckle down the fall line, confidence: low, sources: [psia-c-one-footed-railroad-track] }
+      shaping: { neutral: true, contraction: isometric, cue: Square and quiet, confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: Square and quiet, confidence: low, sources: [] }
+  - dof: lumbar.flexion
+    side: trunk
+    cells:
+      initiation: { action: Low back slightly flattened from standing and constant; the fold is made at the hips, contraction: isometric, cue: "Low back slightly flattened, never arched or slumped", confidence: low, sources: [{ source: lemaster-2010, pages: "62-63" }] }
+      shaping: { action: Held slightly flattened from standing, contraction: isometric, cue: "Low back slightly flattened, never arched or slumped", confidence: low, sources: [] }
+      finish: { action: Held slightly flattened from standing, contraction: isometric, cue: "Low back slightly flattened, never arched or slumped", confidence: low, sources: [] }
+  - dof: lumbar.side-bend
+    side: trunk
+    cells:
+      initiation:
+        action: Bends a little toward the stance ski as it tips, a subtle angulation that keeps the balance over the one edge; the lifted side's quadratus lumborum and obliques lengthen to control it
+        contraction: eccentric
+        cue: A little upper-body angulation, not banking
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+      shaping:
+        action: Small bend held with constant small corrections
+        contraction: isometric
+        cue: Balance over the one edge with the upper body, quietly
+        confidence: low
+        sources: [psia-c-one-footed-railroad-track]
+      finish:
+        action: Returns toward straight as the ski rolls flat
+        contraction: concentric
+        cue: Straighten up through the flat moment
+        confidence: low
+        sources: []
+  - dof: lumbar.rotation
+    side: trunk
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: No twisting, confidence: low, sources: [] }
+      shaping: { neutral: true, contraction: isometric, cue: No twisting, confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: No twisting, confidence: low, sources: [] }
+  - dof: thoracic.flexion
+    side: trunk
+    cells:
+      initiation: { action: Chest a little forward over the stance knee and held, contraction: isometric, cue: Move the body forward with the foot, confidence: low, sources: [psia-c-one-footed-railroad-track] }
+      shaping: { action: Slight forward flexion held, contraction: isometric, cue: Chest over the knee, confidence: low, sources: [] }
+      finish: { action: Slight forward flexion held, contraction: isometric, cue: Don't sit up, confidence: low, sources: [] }
+  - dof: thoracic.side-bend
+    side: trunk
+    cells:
+      initiation: { action: Tips a little toward the stance ski with the lumbar bend, contraction: eccentric, cue: Shoulders level with the slope, confidence: low, sources: [psia-c-one-footed-railroad-track] }
+      shaping: { action: Small bend held, contraction: isometric, cue: Shoulders level with the slope, confidence: low, sources: [] }
+      finish: { action: Returns toward straight, contraction: concentric, cue: Shoulders level, confidence: low, sources: [] }
+  - dof: thoracic.rotation
+    side: trunk
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: Chest down the fall line, confidence: low, sources: [psia-c-one-footed-railroad-track] }
+      shaping: { neutral: true, contraction: isometric, cue: Chest down the fall line, confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: Chest down the fall line, confidence: low, sources: [] }
+  - dof: shoulder-girdle.protraction
+    side: both
+    cells:
+      initiation: { action: Shoulder blades slightly forward and level, contraction: isometric, cue: Hands forward and in view, confidence: low, sources: [{ source: lemaster-2010, pages: "142-143" }] }
+      shaping: { action: Shoulder blades slightly forward and level, contraction: isometric, cue: Hands forward and in view, confidence: low, sources: [] }
+      finish: { action: Shoulder blades slightly forward and level, contraction: isometric, cue: Hands forward and in view, confidence: low, sources: [] }
+  - dof: shoulder.flexion
+    side: outside
+    cells:
+      initiation: { action: Arm held forward with the pole tip off the snow, contraction: isometric, cue: Don't drag the poles, confidence: low, sources: [psia-c-one-footed-railroad-track] }
+      shaping: { action: Arm held forward, contraction: isometric, cue: Hands forward, confidence: low, sources: [] }
+      finish: { action: Arm held forward, contraction: isometric, cue: Hands forward, confidence: low, sources: [] }
+  - dof: shoulder.flexion
+    side: inside
+    cells:
+      initiation: { action: Arm held forward with the pole tip off the snow, contraction: isometric, cue: Inside hand up; don't lean on the pole, confidence: low, sources: [psia-c-one-footed-railroad-track] }
+      shaping: { action: Arm held forward, contraction: isometric, cue: Inside hand up, confidence: low, sources: [{ source: lemaster-2010, pages: "71, 142" }] }
+      finish: { action: Arm held forward, contraction: isometric, cue: Hands forward, confidence: low, sources: [] }
+  - dof: shoulder.abduction
+    side: both
+    cells:
+      initiation: { action: Arms a little out from the sides for balance, contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [{ source: lind-sanders-2004, pages: "127-128" }] }
+      shaping: { action: Hands held wide, contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [] }
+      finish: { action: Hands held wide, contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [] }
+  - dof: elbow.flexion
+    side: both
+    cells:
+      initiation: { action: Bent about 75° and held, contraction: isometric, cue: Forearms roughly parallel to the snow, confidence: low, sources: [{ source: lemaster-2010, pages: 142 }] }
+      shaping: { action: Bent about 75° and held, contraction: isometric, cue: Forearms roughly parallel to the snow, confidence: low, sources: [] }
+      finish: { action: Bent about 75° and held, contraction: isometric, cue: Forearms roughly parallel to the snow, confidence: low, sources: [] }
+  - dof: wrist.grip
+    side: both
+    cells:
+      initiation: { action: Light grip held, contraction: isometric, cue: Hold the poles lightly, confidence: low, sources: [] }
+      shaping: { action: Light grip held, contraction: isometric, cue: Hold the poles lightly, confidence: low, sources: [] }
+      finish: { action: Light grip held, contraction: isometric, cue: Hold the poles lightly, confidence: low, sources: [] }
+  - dof: neck.flexion
+    side: trunk
+    cells:
+      initiation: { action: Head up with the eyes down the corridor, contraction: isometric, cue: Eyes ahead down the corridor, confidence: low, sources: [{ source: lemaster-2010, pages: 64 }] }
+      shaping: { action: Head held steady, contraction: isometric, cue: A steady head, confidence: low, sources: [] }
+      finish: { action: Head held steady, contraction: isometric, cue: A steady head, confidence: low, sources: [] }
+  - dof: neck.side-bend
+    side: trunk
+    cells:
+      initiation: { action: Head kept level, contraction: isometric, cue: Don't tip the head into the turn, confidence: low, sources: [{ source: lemaster-2010, pages: 72 }] }
+      shaping: { action: Head kept level, contraction: isometric, cue: Level head, confidence: low, sources: [] }
+      finish: { action: Head kept level, contraction: isometric, cue: Level head, confidence: low, sources: [] }
+  - dof: neck.rotation
+    side: trunk
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: Look straight down the corridor, confidence: low, sources: [] }
+      shaping: { neutral: true, contraction: isometric, cue: Look straight down the corridor, confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: Look straight down the corridor, confidence: low, sources: [] }
+
+activations:
+  # Stance (outside) leg: the whole load, about body weight, at a modest bend; balance efforts change little.
+  - muscle: vasti
+    side: outside
+    serves: [knee.flexion]
+    intensity:
+      initiation: { gentle: 1, moderate: 2, dynamic: 2 }
+      shaping: 2
+      finish: { gentle: 1, moderate: 2, dynamic: 2 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Hold the stance knee at a modest bend under the whole load, lengthening a little into the arc and softening out of it
+    confidence: medium
+    basis: Measured in normal turns; here about body weight on one leg at a shallow bend, close to a held single-leg quarter squat, so the values are our inference
+    sources:
+      - hintermeister-1997
+      - kroll-2010
+      - { source: lind-sanders-2004, pages: 103 }
+  - muscle: gluteus-maximus
+    side: outside
+    serves: [hip.flexion, hip.abduction]
+    intensity:
+      initiation: 1
+      shaping: { gentle: 1, moderate: 2, dynamic: 2 }
+      finish: { gentle: 1, moderate: 2, dynamic: 2 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Holds the stance hip's hinge and helps hold the pelvis over it
+    confidence: medium
+    basis: Measured in normal turns; single-leg squats activated gluteus maximus at about 59-64 % MVIC off snow, at deeper bends than here
+    sources: [hintermeister-1997, distefano-2009]
+  - muscle: gluteus-medius
+    side: outside
+    serves: [hip.abduction, pelvis.list]
+    intensity: { initiation: 2, shaping: 2, finish: 2 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Holds up the unsupported lifted side of the pelvis from the stance hip, with constant small corrections
+    confidence: medium
+    basis: The one-leg pelvic hold is mechanics; the standing hip hitch ranks highest for gluteus medius off snow. A balance and posture effort, so it changes little with speed
+    sources: [moore-2020, ganderton-2017, seifert-2023]
+  - muscle: gluteus-minimus
+    side: outside
+    serves: [hip.abduction, pelvis.list]
+    intensity: { initiation: 2, shaping: 2, finish: 2 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Shares the pelvic hold with gluteus medius and steadies the head of the femur
+    confidence: medium
+    basis: Inferred from single-leg exercise data; not measured on snow
+    sources: [moore-2020, ganderton-2017]
+  - muscle: tensor-fasciae-latae
+    side: outside
+    serves: [hip.abduction, hip.rotation]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Helps hold the pelvis and roll the knee in with the foot
+    confidence: low
+    basis: Inferred from exercise data; not measured on snow
+    sources: [selkowitz-2024]
+  - muscle: adductors
+    side: outside
+    serves: [hip.rotation, hip.abduction]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Roll the bent thigh's knee in with the foot, then brace the hip against the abductors
+    confidence: low
+    basis: With the leg bent the adductors turn and edge the thigh; small here
+    sources:
+      - { source: lemaster-2010, pages: "108, 124-125" }
+  - muscle: biceps-femoris
+    side: outside
+    serves: [knee.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Co-contracts with the quadriceps to steady the knee and the trunk's fore-aft pitch on one leg
+    confidence: medium
+    basis: On one leg, biceps femoris rose with forward trunk pitch in an amputee racer; 12-35 % MVC in a simulated edged stance
+    sources: [ishige-2021, zorko-2020]
+  - muscle: medial-hamstrings
+    side: outside
+    serves: [knee.valgus, knee.rotation]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Resist the knee caving in or twisting as the foot rolls
+    confidence: low
+    basis: Semitendinosus 6-15 % MVC in a simulated edged stance
+    sources: [zorko-2020]
+  - muscle: deep-hip-rotators
+    side: outside
+    serves: [hip.rotation]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: eccentric, shaping: isometric, finish: concentric }
+    role: Control the small inward roll of the stance thigh so it tips the ski without steering it
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: [delp-1999]
+  - muscle: peroneals
+    side: outside
+    serves: [ankle.inversion]
+    intensity: { initiation: 2, shaping: 2, finish: 2 }
+    contraction: { initiation: concentric, shaping: concentric, finish: eccentric }
+    role: Roll the stance foot onto its big-toe edge and make the constant small corrections on one edge
+    confidence: low
+    basis: Peroneus longus was recorded on snow; balancing on one edge adds continuous corrections. A balance effort, so it changes little with intensity
+    sources:
+      - louie-1984
+      - { source: lind-sanders-2004, pages: "54-55, 137" }
+  - muscle: tibialis-posterior
+    side: outside
+    serves: [foot.arch, ankle.inversion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Holds the arch and co-contracts with the peroneals for balance on one edge
+    confidence: low
+    basis: Anatomy and the mechanics of balancing on one ski; not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: 137 }
+  - muscle: foot-intrinsics
+    side: outside
+    serves: [foot.arch]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Keep heel and both balls of the foot loaded and make fine corrections
+    confidence: low
+    basis: Anatomy and the mechanics of balancing on one ski; not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: 137 }
+  - muscle: tibialis-anterior
+    side: outside
+    serves: [ankle.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Pulls the foot back and the shin to the cuff, and makes the fore-aft corrections that keep the shovel engaged
+    confidence: medium
+    basis: Highly active in turns on snow; small here at about body weight
+    sources:
+      - hintermeister-1997
+      - { source: lemaster-2010, pages: "79-81" }
+  - muscle: toe-extensors
+    side: outside
+    serves: [ankle.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Pull the toes up with tibialis anterior
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: soleus
+    side: outside
+    serves: [ankle.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: eccentric, shaping: isometric, finish: concentric }
+    role: Holds the small plantarflexion moment with the boot and lets the foot run forward through the finish
+    confidence: low
+    basis: Mechanics at about body weight
+    sources: [heinrich-2022]
+  # Lifted (inside) leg: thigh, shank, boot and ski, about 16 kg, held up and parallel to the slope.
+  - muscle: iliopsoas
+    side: inside
+    serves: [hip.flexion]
+    intensity: { initiation: 2, shaping: 2, finish: 2 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Holds the lifted thigh up with the whole ski off the snow
+    confidence: low
+    basis: Inference; no study has measured iliopsoas on snow. Holding about 16 kg of leg, boot and ski off the snow is a moderate hip-flexor effort
+    sources:
+      - jiroumaru-2014
+      - juan-2024
+      - { source: lind-sanders-2004, pages: 70 }
+  - muscle: rectus-femoris
+    side: inside
+    serves: [hip.flexion]
+    intensity: { initiation: 2, shaping: 2, finish: 2 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Works as a hip flexor holding the lifted leg up
+    confidence: medium
+    basis: Measured as a hip flexor on the lightly loaded inside leg in normal turns
+    sources: [kroll-2010, cuniberti-2026]
+  - muscle: biceps-femoris
+    side: inside
+    serves: [knee.flexion]
+    intensity: { initiation: 2, shaping: 2, finish: 2 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Holds the lifted shank and ski up; with no tip resting on the snow it carries the whole ski
+    confidence: low
+    basis: Mechanics of the suspended leg; inside-leg hamstring activity is measured only in normal turns
+    sources: [chollet-2025]
+  - muscle: medial-hamstrings
+    side: inside
+    serves: [knee.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Help hold the lifted ski up
+    confidence: low
+    basis: Mechanics of the suspended leg
+    sources: [chollet-2025]
+  - muscle: gastrocnemius
+    side: inside
+    serves: [knee.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Helps flex the lifted knee
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: sartorius
+    side: inside
+    serves: [hip.flexion, knee.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Flexes the hip and knee together to hold the lifted leg
+    confidence: low
+    basis: Hip-flexor EMG off snow
+    sources: [andersson-1997]
+  - muscle: tensor-fasciae-latae
+    side: inside
+    serves: [hip.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Helps hold the thigh up
+    confidence: low
+    basis: Hip-flexor EMG off snow
+    sources: [andersson-1997, jiroumaru-2014]
+  - muscle: adductors
+    side: inside
+    serves: [hip.abduction]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Keep the lifted leg at hip width
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: deep-hip-rotators
+    side: inside
+    serves: [hip.rotation]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: isometric }
+    role: Keep the lifted ski parallel to the stance ski
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: [delp-1999]
+  - muscle: tibialis-anterior
+    side: inside
+    serves: [ankle.flexion, ankle.inversion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Tips the lifted foot with the stance foot and keeps the shin forward so the ski hangs level
+    confidence: low
+    basis: Mechanics; not measured on snow
+    sources: [psia-c-one-footed-railroad-track]
+  - muscle: tibialis-posterior
+    side: inside
+    serves: [ankle.inversion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
+    role: Tips the lifted foot onto its little-toe edge in step
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  # Trunk. The lifted side is unsupported; the trunk makes the fine lateral corrections.
+  - muscle: quadratus-lumborum
+    side: inside
+    serves: [lumbar.side-bend]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: eccentric, shaping: isometric, finish: concentric }
+    role: Controls the small bend toward the stance ski from the lifted side; the pelvic hold itself is the stance hip's work
+    confidence: low
+    basis: EMG off snow; the role here is mechanics
+    sources: [andersson-1996, mcgill-1996]
+  - muscle: quadratus-lumborum
+    side: outside
+    serves: [lumbar.side-bend]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Co-contracts to steady the low back
+    confidence: low
+    basis: EMG off snow
+    sources: [mcgill-1996]
+  - muscle: internal-oblique
+    side: both
+    serves: [lumbar.side-bend, thoracic.side-bend]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Stiffen the lower core so the ankle can tip apart from the upper body
+    confidence: low
+    basis: The task page asks for active core muscles; their level is our inference
+    sources: [psia-c-one-footed-railroad-track]
+  - muscle: external-oblique
+    side: both
+    serves: [thoracic.side-bend, thoracic.rotation]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Keep the chest square and make the small lateral corrections
+    confidence: low
+    basis: Mechanics; not measured in this drill
+    sources: []
+  - muscle: erector-spinae
+    side: both
+    serves: [lumbar.flexion, thoracic.flexion, pelvis.tilt]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Hold the modest hinge with the low back slightly flattened from standing, never arched or slumped
+    confidence: medium
+    basis: Measured in normal turns; low here at about body weight
+    sources: [hintermeister-1997]
+  - muscle: rectus-abdominis
+    side: both
+    serves: [lumbar.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Balances the back extensors and the lifted leg's hip flexors so the pelvis does not tip forward
+    confidence: medium
+    basis: Measured at low levels in normal turns
+    sources: [hintermeister-1997]
+  - muscle: transversus-abdominis
+    side: both
+    serves: [lumbar.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Stiffens the trunk without bracing it rigid
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: multifidus
+    side: both
+    serves: [lumbar.rotation]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Steadies the low back against small twists
+    confidence: low
+    basis: Anatomy; not measured in turns
+    sources: []
+  - muscle: neck-stabilisers
+    side: both
+    serves: [neck.flexion, neck.side-bend]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Keep the head level and the eyes down the corridor
+    confidence: low
+    basis: Book technique point; not measured on snow
+    sources:
+      - { source: lemaster-2010, pages: "64, 72" }
+  # Arms: held forward and wide for balance, poles off the snow.
+  - muscle: anterior-deltoid
+    side: both
+    serves: [shoulder.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Hold the arms forward with the poles off the snow
+    confidence: low
+    basis: Book technique point; not measured on snow
+    sources:
+      - { source: lemaster-2010, pages: "142-143" }
+  - muscle: rotator-cuff
+    side: both
+    serves: [shoulder.flexion, shoulder.abduction]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Steady the shoulders with the arms held forward and wide
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: serratus-anterior
+    side: both
+    serves: [shoulder-girdle.protraction]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Hold the shoulder blades forward with the hands
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: trapezius
+    side: both
+    serves: [shoulder-girdle.protraction]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Keep the shoulders level
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: biceps-brachii
+    side: both
+    serves: [elbow.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Hold the elbows bent
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: forearm-flexors
+    side: both
+    serves: [wrist.grip]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Hold the poles lightly
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+
+structures:
+  - structure: acl
+    side: inside
+    phases: [shaping]
+    mechanism: Loaded if the lifted ski is put down wide and catches in a wedge to save balance, twisting the knee inward; the dynamic snowplow seen in racing injuries
+    protected_by: [medial-hamstrings, biceps-femoris, gluteus-medius]
+    confidence: low
+    sources:
+      - bere-2011
+      - { source: jordan-sporri-taylor-2023, pages: 122 }
+
+reviewed_by: []

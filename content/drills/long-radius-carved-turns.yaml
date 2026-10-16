@@ -1,0 +1,38 @@
+id: long-radius-carved-turns
+name: Long-radius carved turns
+movement: long-radius-carved-turn
+summary: Linked, round turns across a wide corridor, carved arc to arc. The edges change before the skis turn, both skis tip together onto similar edge angles, and the tails follow the tips in two thin tracks. The edge builds steadily from the edge change to its most in late shaping, then lets go. The outside leg lengthens a little into the turn, stays long and steady through shaping, and flexes to absorb the load that peaks below the fall line; the inside leg shortens, its hip held up and its foot a little ahead.
+# "Three groomer widths" is the PSIA-C corridor; the snow and traffic wording is ours.
+terrain: Smooth groomed blue to steeper blue with room for turns about three groomer widths across; firm, edgeable snow, not ice; a quiet slope with a clear view
+# Settings are speed, radius and pitch, all carved. Loads follow Lind & Sanders eq 4.9, p 103, peaking below the
+# fall line. The radius tightens as speed rises because a fully carved ski bends to about its sidecut radius times
+# the cosine of the edge angle (L&S pp 65-66). Dynamic is close to the modelled GS-type turn (heinrich-2022);
+# gentle and moderate are our inference.
+scenarios:
+  gentle: { speed_mps: 9, radius_m: 17, slope_deg: 10 }
+  moderate: { speed_mps: 11, radius_m: 14, slope_deg: 14 }
+  dynamic: { speed_mps: 12, radius_m: 11, slope_deg: 18 }
+equipment: Efforts assume a long-turn carving ski of about 20 m sidecut radius, and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. A shorter-radius ski carves these speeds only in tighter turns; more lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee.
+cautions:
+  - Speed builds quickly in carved turns; ski them only where you can see the whole turn and the slope below is clear.
+  - If the outside ski slips, don't straighten the leg hard to catch the edge; stay forward and flexed and let it grip again.
+  - Stop when the legs tire; knee injuries cluster late in runs.
+sources:
+  - { source: lind-sanders-2004, pages: "65-66, 103" }
+  - { source: lemaster-2010, pages: "32-33, 45-49, 131-132, 164-167" }
+  - { source: jordan-sporri-taylor-2023, pages: "121-122" }
+  - heinrich-2022
+  - posch-2025
+  - ruedl-2022
+  - psia-c-dynamic-long-radius-turns
+primitives:
+  - { primitive: stance-leg-edge-hold }
+  - { primitive: inside-leg-shortening, modifier: growing with the edge angle }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: "early and progressive, both skis together" }
+  - { primitive: hip-angulation }
+  - { primitive: extension-transition, modifier: "a little, after the edge change; the legs are most flexed in the transition" }
+  - { primitive: leg-rotation, modifier: "small, complementing the tipping; the sidecut turns the ski" }
+  - { primitive: counter, modifier: slight }
+  - { primitive: pole-touch, modifier: a light timing touch }
+reviewed_by: []

@@ -457,3 +457,38 @@
   citation: PSIA-AASI Central. Skating - Down the Hill (alpine resources).
   url: https://psia-c.org/education/alpine/alpine-resources/skating-down-the-hill/
   read: full
+- id: psia-c-railroad-tracks
+  type: web
+  citation: PSIA-AASI Central. Railroad Track Turns (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/railroad-tracks/
+  read: full
+- id: psia-c-dynamic-long-radius-turns
+  type: web
+  citation: PSIA-AASI Central. Dynamic Long Radius Turns (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/dynamic-long-radius-turns/
+  read: full
+- id: psia-c-beginning-railroad-tracks
+  type: web
+  citation: PSIA-AASI Central. Beginning Railroad Tracks (skill-building tasks).
+  url: https://psia-c.org/education/alpine/alpine-resources/beginning-railroad-tracks/
+  read: full
+- id: psia-c-one-footed-railroad-track
+  type: web
+  citation: PSIA-AASI Central. One-Footed Railroad Track (skill-building tasks).
+  url: https://psia-c.org/education/alpine/alpine-resources/one-footed-railroad-track/
+  read: full
+- id: psia-c-l3-railroad-track-garlands
+  type: web
+  citation: PSIA-AASI Central. L3 Railroad Track Garlands (skill-building tasks).
+  url: https://psia-c.org/education/alpine/alpine-resources/l3-railroad-track-garlands/
+  read: full
+- id: psia-c-basic-garlands
+  type: web
+  citation: PSIA-AASI Central. Basic Garlands (skill-building tasks).
+  url: https://psia-c.org/education/alpine/alpine-resources/basic-garlands/
+  read: full
+- id: psia-c-basic-parallel-garlands
+  type: web
+  citation: PSIA-AASI Central. Basic Parallel Garlands (skill-building tasks).
+  url: https://psia-c.org/education/alpine/alpine-resources/basic-parallel-garlands/
+  read: full

@@ -1,0 +1,8 @@
+association: iasi
+drill: long-radius-carved-turns
+# A piste turn form (manual ch. 6, pp 58, 67), assessed at levels the manual does not state; the Level 4 criteria
+# ask for medium and long carved turns. IASI names no fundamentals per task.
+task: Carved turns
+category: Piste turn form
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=67
+reviewed_by: []

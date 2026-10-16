@@ -1,0 +1,9 @@
+association: psia
+drill: long-radius-carved-turns
+# PSIA-C's name; the national list v1.2a calls it Dynamic Large Radius Turns (p 60). Versatility pages name no fundamentals.
+# Large Radius Parallel Turns (Level 1) asks for brushed tracks, so it is not mapped here.
+task: Dynamic Long Radius Turns
+level: { label: Level 3, ordinal: 3 }
+category: Versatility
+url: https://psia-c.org/education/alpine/alpine-resources/dynamic-long-radius-turns/
+reviewed_by: []

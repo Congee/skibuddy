@@ -1,0 +1,8 @@
+association: nzsia
+drill: railroad-track-turns
+# A Trainer skill drill under the lateral movement (Ski Trainer Certification outline, 2018); NZSIA names no fundamentals per drill.
+task: Railroad tracks
+level: { label: Trainer }
+category: Lateral
+url: https://www.nzsia.org/wp-content/uploads/2018/07/NZSIA-Ski-Trainer-Certification-.pdf
+reviewed_by: []

@@ -1,0 +1,9 @@
+association: psia
+drill: railroad-track-turns
+task: Railroad Track Turns
+level: { label: Level 2, ordinal: 2 }
+category: Individual
+# The page joins the two with "and/or".
+fundamentals: { relation: and/or, ids: [edge-angles, fore-aft] }
+url: https://psia-c.org/education/alpine/alpine-resources/railroad-tracks/
+reviewed_by: []

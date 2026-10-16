@@ -1,0 +1,30 @@
+id: one-footed-railroad-track-turns
+name: One-footed railroad-track turns
+movement: one-footed-railroad-track-turn
+summary: Railroad-track turns on one ski for a whole run, then on the other. The stance ski is rolled from edge to edge with no steering and leaves a thin carved track, while the lifted ski is held quiet, parallel to the snow, and tipped in step as if it were on the snow. The turns alternate between the stance ski's big-toe edge, as the outside ski, and its harder little-toe edge, as the inside ski; balance on the one edge comes from the ankle and foot under a quiet upper body, helped by a little upper-body angulation, never by leaning on the poles.
+# The matrix is the big-toe-edge turn; the little-toe-edge turn's stance leg works as in uphill-ski activities.
+# PSIA-C asks for green terrain flat enough to stay near the fall line; the snow wording is ours.
+terrain: Gentle green groomed slopes, flat enough to stay near the fall line without gaining speed; smooth, edgeable snow
+# Settings are speed and pitch; every setting is carved. Loads follow Lind & Sanders eq 4.9, p 103, and stay near
+# body weight, all of it on one leg. Speeds are our inference.
+scenarios:
+  gentle: { speed_mps: 4, radius_m: 15, slope_deg: 6 }
+  moderate: { speed_mps: 5, radius_m: 14.5, slope_deg: 7 }
+  dynamic: { speed_mps: 6, radius_m: 14, slope_deg: 8 }
+equipment: Efforts assume recreational carving skis of about 15 m sidecut radius, and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. A snug, well-canted boot matters more on one ski, and the little-toe-edge turns need it most.
+cautions:
+  - Learn it with about 90 % of the weight on one foot before lifting the other ski fully.
+  - If you lose balance, put the lifted ski down parallel and at hip width, not wide in a wedge.
+  - Ski both legs; the little-toe-edge turns are harder, so expect one direction to feel weaker.
+sources:
+  - psia-c-one-footed-railroad-track
+  - { source: lind-sanders-2004, pages: "125, 137, 234-241" }
+  - { source: lemaster-2010, pages: "137-139, 168-169" }
+  - { source: jordan-sporri-taylor-2023, pages: 122 }
+primitives:
+  - { primitive: tipping, modifier: on one ski with the lifted foot tipping in step }
+  - { primitive: stance-leg-edge-hold, modifier: whole load on one leg }
+  - { primitive: ankle-flexion }
+  - { primitive: inside-leg-lift, modifier: whole ski held parallel to the snow }
+  - { primitive: hip-angulation, modifier: subtle }
+reviewed_by: []
