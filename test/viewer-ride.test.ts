@@ -10,7 +10,7 @@ import { ALONG, SIDES, clearance, ridden } from './ride-probes';
 import type { Ridden } from './ride-probes';
 
 const DEG = 180 / Math.PI;
-const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as const;
+const FALL_LINE_KINDS = [RegularTurn.Moguls] as const;
 
 const table = (drill: string, i: Intensity): ReadonlyArray<Ridden> => {
   const s = surfaceFor(drill, i);
@@ -56,8 +56,8 @@ describe('ride on moguls', () => {
         const swing = Math.max(...com) - Math.min(...com);
         const relief = Math.max(...boot) - Math.min(...boot);
         assert.isAbove(relief, 0.2, `${drill} ${i}`);
-        // The legs take most of the bumps; closed stance folds shallower; shares inferred.
-        assert.isBelow(swing, (drill === RegularTurn.Moguls ? 0.35 : 0.5) * relief, `${drill} ${i}`);
+        // The legs take most of the bumps; share inferred.
+        assert.isBelow(swing, 0.35 * relief, `${drill} ${i}`);
       }
   });
 

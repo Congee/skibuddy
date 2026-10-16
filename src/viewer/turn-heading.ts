@@ -32,6 +32,7 @@ export const MOGUL_POSE = RegularTurn.Moguls;
 export const POWDER_POSE = RegularTurn.Powder;
 export const CLOSED_STANCE_POSE = 'closed-stance-short-turns';
 const STYLES: Readonly<Record<string, TurnStyle>> = { ...TURN_STYLES, [CLOSED_STANCE_POSE]: CLOSED_STANCE };
+/** The closed-stance drill rehearses the mogul line on groomed snow, in the same corridor. */
 const MOGUL_POSES: ReadonlySet<string> = new Set([MOGUL_POSE, CLOSED_STANCE_POSE]);
 
 /** The path a pose's turn follows at this intensity. */

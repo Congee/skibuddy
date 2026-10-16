@@ -933,7 +933,7 @@ poses follow the foundations above, with these additions.
   past 100° (arndt-1992 p85). The mass then rises and falls by well under the bumps' height; the open
   knee, the share absorbed and the extra squeeze that keeps the boots together in deep flexion are
   inferred. Pitched by the bumps, the mass balances over the feet along the snow, not along the ski.
-  Closed-stance turns absorb shallower bumps the same way, keeping the hips over the heels.
+  Closed-stance turns rehearse the line on smooth groomed snow, so they skip the ride and the absorption.
 - *Powder pop.* In snow deeper than a few inches on flat to moderate pitches, rhythm, bounce and
   up-unweighting help (lemaster-2010 p196). Both legs flex through the finish as the snow packs, the
   feet moving slightly ahead of the hips, then extend to their longest at the switch and sink into the

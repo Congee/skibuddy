@@ -29,9 +29,9 @@ const POINTS: ReadonlyArray<readonly [number, number]> = [
 ];
 
 describe('surfaceFor', () => {
-  it('puts mogul and closed-stance turns on moguls, powder on powder, the rest on groomed snow', () => {
+  it('puts mogul turns on moguls, powder on powder, the rest, closed stance too, on groomed snow', () => {
     assert.strictEqual(moguls.kind, SurfaceKind.Moguls);
-    assert.strictEqual(surfaceFor(CLOSED_STANCE_POSE, Intensity.Gentle).kind, SurfaceKind.Moguls);
+    for (const i of INTENSITIES) assert.strictEqual(surfaceFor(CLOSED_STANCE_POSE, i).kind, SurfaceKind.Groomed, i);
     assert.strictEqual(powder.kind, SurfaceKind.Powder);
     assert.strictEqual(groomed.kind, SurfaceKind.Groomed);
   });

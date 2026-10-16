@@ -20,9 +20,8 @@ const KINDS = Object.values(RegularTurn);
 const angles = (kind: RegularTurn, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(kind, i), t));
 const DEG = 180 / Math.PI;
 const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as const;
-// The bumps pitch the skis, so the fall-line kinds balance along the snow, not along the ski.
-const balanceOf = (kind: string, a: ReturnType<typeof poseAngles>): number =>
-  (FALL_LINE_KINDS as ReadonlyArray<string>).includes(kind) ? a.comOnSnow : a.comAhead;
+// The bumps pitch the skis, so mogul turns balance along the snow, not along the ski.
+const balanceOf = (kind: string, a: ReturnType<typeof poseAngles>): number => (kind === RegularTurn.Moguls ? a.comOnSnow : a.comAhead);
 // Head turned toward the outside of the turn beyond the skis.
 const headOnSkis = (kind: RegularTurn, i: Intensity, t: number): number => {
   const p = samplePose(poseTable(kind, i), t);
@@ -124,12 +123,11 @@ describe('regular turn', () => {
 
   it('extends the mogul legs into the trough and folds them over the crest', () => {
     // Extension right after the top of the bump (fis-freestyle-judging-2025 p28), knees near straight (arndt-1992 p79).
-    for (const kind of FALL_LINE_KINDS)
-      for (const i of INTENSITIES) {
-        const v = Array.from({ length: 24 }, (_, k) => poseAngles(samplePose(poseTable(kind, i), k / 24)).knee.right);
-        assert.isAtMost(Math.min(...v), kind === RegularTurn.Moguls ? 28 : 32, `${kind} ${i} trough`);
-        assert.isAtLeast(v[0] ?? 0, Math.min(...v) + 35, `${kind} ${i} crest`);
-      }
+    for (const i of INTENSITIES) {
+      const v = Array.from({ length: 24 }, (_, k) => angles(RegularTurn.Moguls, i, k / 24).knee.right);
+      assert.isAtMost(Math.min(...v), 28, `${i} trough`);
+      assert.isAtLeast(v[0] ?? 0, Math.min(...v) + 35, `${i} crest`);
+    }
   });
 
   it('moves forward at initiation and back through the finish, most in moguls', () => {
@@ -223,13 +221,29 @@ describe('regular turn', () => {
     assert.isAbove(crest.hip.right, crest.trunkForward + 25);
   });
 
-  it('keeps the closed-stance hips over the heels in the deep stance', () => {
-    for (let k = 0; k < 24; k++) {
-      const a = poseAngles(samplePose(poseTable('closed-stance-short-turns', Intensity.Moderate), k / 24));
-      // Near the outside boot, or at the transition, where the countered outside foot trails, between both.
-      // Heel about 0.095 behind the mid-foot; the balanced mass keeps the flexed hips near it.
-      assert.isAbove(Math.max(a.hipsAhead, a.hipsAhead - a.lead / 2), -0.15, `${k}/24`);
-    }
+  it('keeps the closed-stance hips over the heels', () => {
+    for (const i of INTENSITIES)
+      for (let k = 0; k < 24; k++) {
+        const a = poseAngles(samplePose(poseTable('closed-stance-short-turns', i), k / 24));
+        // Near the outside boot, or at the transition, where the countered outside foot trails, between both.
+        // Heel about 0.095 behind the mid-foot; the balanced mass keeps the flexed hips near it, the deeper dynamic knees a little behind.
+        assert.isAbove(Math.max(a.hipsAhead, a.hipsAhead - a.lead / 2), i === Intensity.Dynamic ? -0.16 : -0.15, `${i} ${k}/24`);
+      }
+  });
+
+  it('skis the closed stance flat on groomed snow, the knees together and flexed alike', () => {
+    for (const i of INTENSITIES)
+      for (let k = 0; k < 24; k++) {
+        const p = samplePose(poseTable('closed-stance-short-turns', i), k / 24);
+        const a = poseAngles(p);
+        const w = segmentMatrices(p);
+        for (const side of ['right', 'left'])
+          for (const z of [-0.7, 0, 0.8]) {
+            const ski = w[segmentIndex(`${side}-ski`)] ?? identity();
+            assert.closeTo(transformPoint(ski, [0, -0.01, z])[1], 0, 0.02, `${i} ${k}/24 ${side} at z=${z}`);
+          }
+        assert.closeTo(a.knee.left, a.knee.right, 6, `${i} ${k}/24`);
+      }
   });
 
   it('keeps both skis on the snow, the inside leg more flexed mid-turn but in moguls', () => {

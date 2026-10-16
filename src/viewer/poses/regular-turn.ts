@@ -396,13 +396,10 @@ export const CLOSED_STANCE: TurnStyle = {
   early: 0.6,
   // Cross-under: the legs swivel under a level trunk.
   crossUnder: [1, 1, 1],
-  // Legs absorb the bumps under a level trunk, shallower than moguls so the hips stay over the heels; inferred.
-  absorb: { open: 25, deep: { gentle: 65, moderate: 68, dynamic: 80 } },
   polePlant: true,
   poleTrim: 0,
   head: DOWNHILL,
-  // Upright over the shallower knees, the arms reach less far, so they draw in a little more; inferred.
-  armAbduction: HANDS_IN - 2,
+  armAbduction: HANDS_IN,
 };
 
 /**
