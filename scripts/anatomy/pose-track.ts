@@ -4,7 +4,7 @@ import { INTENSITIES } from '../../src/content/schema';
 import { NEUTRAL_CLIP, motionClipName } from '../../src/viewer/anatomy-names';
 import { EQUIPMENT, deltaAngle, stackHeight } from '../../src/viewer/equipment';
 import { HEEL_ROOM, TOE_ROOM } from '../../src/viewer/gear-fit';
-import { ARM_ABDUCTION, ARM_FLEXION, CARRY_HEADING, FOREARM_FLEXION, PLANT_AHEAD, PLANT_SIDE, POLE } from '../../src/viewer/pose';
+import { ARM_ABDUCTION, ARM_FLEXION, ARM_LEAN, ARM_LEAN_SHOULDER, CARRY_HEADING, FOREARM_FLEXION, PLANT_AHEAD, PLANT_SIDE, POLE } from '../../src/viewer/pose';
 import type { Pose } from '../../src/viewer/pose';
 import { hasTable, poseTable, samplePose } from '../../src/viewer/pose-table';
 import { POSE_DEFINITIONS, poleTrimOf } from '../../src/viewer/poses';
@@ -19,7 +19,7 @@ const binding = {
   heelRoom: HEEL_ROOM,
   toeRoom: TOE_ROOM,
 };
-const arms = { abduction: ARM_ABDUCTION, flexion: ARM_FLEXION, forearmFlexion: FOREARM_FLEXION };
+const arms = { abduction: ARM_ABDUCTION, flexion: ARM_FLEXION, forearmFlexion: FOREARM_FLEXION, lean: ARM_LEAN, leanShoulder: ARM_LEAN_SHOULDER };
 const drills = Object.keys(POSE_DEFINITIONS);
 const trim = Object.fromEntries(drills.flatMap((d) => INTENSITIES.map((i) => [motionClipName(d, i), poleTrimOf(d)])));
 const pole = { basketUp: POLE.basketUp, carry: POLE.carry, carryHeading: CARRY_HEADING, plantSide: PLANT_SIDE, plantAhead: PLANT_AHEAD, trim };

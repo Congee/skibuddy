@@ -369,6 +369,8 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
     roll = HEAD_LEVEL * (p['pelvisList'] - p['lean'] + p['spineBend'])
     lift = rot_z3(-roll / 2) @ rot_x(-HEAD_LIFT * (p['pelvisPitch'] + p['spineFlex']) / 2)
     R = {'pelvis': pelvis, 'lumbar': half, 'chest': half, 'neck': lift, 'head': lift}
+    # As armLean in pose.ts: past ARMS['lean'] the shoulder and elbow open, keeping the forearm's pitch.
+    lean = p['pelvisPitch'] + p['spineFlex'] - ARMS['lean']
     for s, sign in (('R', -1), ('L', 1)):
         leg = p['outside'] if s == 'R' else p['inside']
         # The inside leg shortens at the hip, as in solvePose.
@@ -377,12 +379,12 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
         R[f'thigh.{s}'] = (pelvis.inverted() @ rot_z3(-p['hipAngulation'] - sign * leg.get('adduction', 0.0)) @ rot_x(-hip)
                            @ Matrix.Rotation(leg['femurRotation'], 4, rest['femur'][s]))
         R[f'shin.{s}'] = rot_x(hip + ankle)
-        flex = ARMS['flexion'] + (reach if s == 'L' else 0.0)
+        flex = ARMS['flexion'] - ARMS['leanShoulder'] * lean + (reach if s == 'L' else 0.0)
         girdle = p['outsideGirdle'] if s == 'R' else p['insideGirdle']
         R[f'scapula.{s}'] = rot_y3(-sign * girdle['protraction']) @ rot_z3(sign * girdle['elevation'])
         R[f'upper_arm.{s}'] = (rot_y3(sign * girdle['protraction']) @ rot_z3(sign * ARMS['abduction']) @ rot_x(-flex)
                                @ rot_z3(-rest['abduction'][s]))
-        R[f'forearm.{s}'] = rot_x(-ARMS['forearmFlexion'])
+        R[f'forearm.{s}'] = rot_x(-ARMS['forearmFlexion'] + (1 - ARMS['leanShoulder']) * lean)
         hand = rest['hands'][s]
         R[f'hand.{s}'] = hand['twist']
         R[f'fingers.{s}'] = hand['curl'][0]

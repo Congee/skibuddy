@@ -4,6 +4,8 @@ import type { TurnScenarios } from '../../physics/turn';
 import type { PoseDefinition, PoseKey } from '../pose-definition';
 
 const DEG = Math.PI / 180;
+// 5 deg of shin moves the mass about 7.6 cm with the other joints held (lemaster-2010 p58).
+const SHIN_TRAVEL = 0.076 / 5;
 
 /** The kinds of skiing a regular two-footed turn is shown for; each is a pose id. */
 export const RegularTurn = {
@@ -34,6 +36,10 @@ export interface TurnStyle {
   readonly bend: number;
   /** Outside ankle dorsiflexion at shaping. */
   readonly dorsiflexion: number;
+  /** Degrees off `dorsiflexion` at each phase key: shin into the tongue to load the tip, opened to use the tail. */
+  readonly ankle: PhaseValues;
+  /** Low back flexed on the pelvis at moderate intensity. */
+  readonly spineFlex: number;
   /** Thighs drawn toward each other: a narrower stance than hip width. */
   readonly narrow: number;
   /** Mass ahead of the outside mid-foot at shaping, metres. */
@@ -45,6 +51,9 @@ export interface TurnStyle {
   /** Poles this many metres shorter than regular. */
   readonly poleTrim: number;
 }
+
+/** One value per phase key, in PHASES order. */
+export type PhaseValues = readonly [number, number, number, number, number];
 
 // Carving scenarios as long-radius-carved-turns; short-turn ones as short-radius-turns.
 const LONG: TurnScenarios = {
@@ -71,13 +80,15 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
       dynamic: { speedMps: 10, radiusM: 13, slopeDeg: 16 },
     },
     outsideShare: [0.6, 0.75],
-    hip: [28, 40],
-    hipStep: 4,
+    hip: [32, 38],
+    hipStep: 2,
     angulation: 5,
     counter: 6,
     twist: 2,
     bend: 2,
     dorsiflexion: 13,
+    ankle: [0, 1, 0, 0, -1],
+    spineFlex: 20,
     narrow: 0,
     comAhead: 0.05,
     early: 0.4,
@@ -88,15 +99,17 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   [RegularTurn.Carving]: {
     scenarios: LONG,
     outsideShare: [0.65, 0.88],
-    hip: [22, 38],
-    hipStep: 4,
+    hip: [32, 38],
+    hipStep: 2,
     angulation: 12,
     counter: 7,
     twist: 3,
     bend: 6,
     dorsiflexion: 14,
+    ankle: [-1, 4, 2, 0, -2],
+    spineFlex: 21,
     narrow: 0,
-    comAhead: 0.07,
+    comAhead: 0.08,
     early: 0.65,
     polePlant: false,
     poleTrim: 0,
@@ -105,13 +118,15 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   [RegularTurn.ShortTurns]: {
     scenarios: SHORT,
     outsideShare: [0.62, 0.85],
-    hip: [22, 48],
+    hip: [32, 56],
     hipStep: 4,
     angulation: 9,
     counter: 14,
     twist: 10,
     bend: 5,
     dorsiflexion: 15,
+    ankle: [0, 3, 2, 0, -2],
+    spineFlex: 22,
     narrow: 0,
     comAhead: 0.06,
     early: 0.6,
@@ -126,13 +141,15 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
       dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22 },
     },
     outsideShare: [0.6, 0.75],
-    hip: [30, 75],
+    hip: [36, 75],
     hipStep: 5,
     angulation: 6,
     counter: 15,
     twist: 10,
     bend: 3,
     dorsiflexion: 17,
+    ankle: [4, 2, -1, -1, 2],
+    spineFlex: 20,
     narrow: 0,
     comAhead: 0.05,
     early: 0.4,
@@ -148,13 +165,15 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
       dynamic: { speedMps: 7, radiusM: 6, slopeDeg: 35 },
     },
     outsideShare: [0.65, 0.85],
-    hip: [26, 50],
+    hip: [36, 56],
     hipStep: 4,
     angulation: 14,
     counter: 18,
     twist: 12,
     bend: 9,
     dorsiflexion: 15,
+    ankle: [-1, 4, 2, 0, -2],
+    spineFlex: 24,
     narrow: 0,
     comAhead: 0.06,
     early: 0.6,
@@ -169,13 +188,15 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
       dynamic: { speedMps: 10, radiusM: 12, slopeDeg: 26 },
     },
     outsideShare: [0.52, 0.6],
-    hip: [20, 50],
+    hip: [28, 54],
     hipStep: 4,
     angulation: 4,
     counter: 5,
     twist: 2,
     bend: 2,
     dorsiflexion: 13,
+    ankle: [0, 1, 0, -1, -1],
+    spineFlex: 16,
     narrow: 2,
     comAhead: 0.04,
     early: 0.5,
@@ -195,18 +216,16 @@ interface Phase {
   readonly share: number | null;
   readonly hip: number;
   readonly ahead: number;
-  /** Degrees off the kind's dorsiflexion. */
-  readonly ankle: number;
 }
 
 // Flexed through the transition, longest at shaping, flexing again through the finish
 // (lemaster-2010 pp40-42); edge, counter and angulation build to late shaping.
 const PHASES: ReadonlyArray<Phase> = [
-  { t: 0, share: 0, hip: 1, ahead: 0.2, ankle: -1.5 },
-  { t: 1 / 6, share: null, hip: 0.45, ahead: 1, ankle: 0 },
-  { t: 1 / 2, share: 0.9, hip: 0, ahead: 1, ankle: 0 },
-  { t: 0.65, share: 1, hip: 0.08, ahead: 0.9, ankle: -0.5 },
-  { t: 5 / 6, share: 0.4, hip: 0.55, ahead: 0.4, ankle: -2 },
+  { t: 0, share: 0, hip: 1, ahead: 0.5 },
+  { t: 1 / 6, share: null, hip: 0.45, ahead: 1 },
+  { t: 1 / 2, share: 0.9, hip: 0, ahead: 1 },
+  { t: 0.65, share: 1, hip: 0.08, ahead: 0.9 },
+  { t: 5 / 6, share: 0.4, hip: 0.55, ahead: 0.6 },
 ];
 
 /** The kind's two-footed turn as a pose definition: both skis on the snow, the inside leg shorter. */
@@ -215,15 +234,16 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
   const step = style.hipStep;
   const load = (i: Intensity): number => phaseForces(style.scenarios[i]).shaping.load;
   return {
-    keys: PHASES.map((p): PoseKey => {
+    keys: PHASES.map((p, i): PoseKey => {
       const share = p.share ?? style.early;
-      const ankle = (style.dorsiflexion + p.ankle) * DEG;
+      const offset = style.ankle[i] ?? 0;
+      const ankle = (style.dorsiflexion + offset) * DEG;
       return {
         t: p.t,
         angulation: share,
         hip: p.hip,
         pelvisList: 1.2 * style.angulation * share * DEG,
-        lumbarFlex: 11 * DEG,
+        lumbarFlex: style.spineFlex * DEG,
         spineBend: style.bend * share * DEG,
         spineTwist: style.twist * share * DEG,
         counter: style.counter * share * DEG,
@@ -234,7 +254,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
         protraction: 6 * DEG,
         elevation: 0,
         insideTailLift: 0,
-        comAhead: style.comAhead * p.ahead,
+        comAhead: style.comAhead * p.ahead + SHIN_TRAVEL * offset,
       };
     }),
     constraints: {
@@ -252,7 +272,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       scapularRhythm: 0.3,
       stance: style.narrow * DEG,
       poleTrim: style.poleTrim,
-      gains: { angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1 },
+      gains: { lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1 },
     },
   };
 };

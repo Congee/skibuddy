@@ -147,6 +147,11 @@ export const ARM_ABDUCTION = 0.5;
 export const ARM_FLEXION = 0.4;
 /** Elbow flexion, about 75 deg (lemaster-2010 p142); build_anatomy.py reads it from the pose track. */
 export const FOREARM_FLEXION = 1.3;
+/** Trunk pitch the arm angles are set at; leaning past it opens shoulder and elbow so the forearm keeps its pitch over the snow. */
+export const ARM_LEAN = 0.35;
+/** Share of that opening the shoulder takes; the elbow takes the rest. */
+export const ARM_LEAN_SHOULDER = 0.5;
+const armLean = (pose: Pose): number => pose.pelvisPitch + pose.spineFlex - ARM_LEAN;
 
 // Outside = the figure's right leg until turns alternate sides.
 const legPose = (pose: Pose, side: BodySide): LegPose => (side === BodySide.Right ? pose.outside : pose.inside);
@@ -183,11 +188,11 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
       return compose(
         rotationY(out * g.protraction),
         rotationZ(out * ARM_ABDUCTION),
-        rotationX(-ARM_FLEXION - (segment.side === BodySide.Left ? pose.insideReach : 0)),
+        rotationX(-ARM_FLEXION + ARM_LEAN_SHOULDER * armLean(pose) - (segment.side === BodySide.Left ? pose.insideReach : 0)),
       );
     }
     case SegmentKind.Forearm:
-      return rotationX(-FOREARM_FLEXION);
+      return rotationX(-FOREARM_FLEXION + (1 - ARM_LEAN_SHOULDER) * armLean(pose));
     case SegmentKind.Thigh:
       // Set in the body frame, so the pelvis's counter and tip are rotation and abduction in the hip.
       return compose(inverseRotation(pelvisRotation(pose)), rotationZ(-pose.hipAngulation - out * leg.adduction), rotationX(-leg.hipFlex), rotationY(leg.femurRotation));

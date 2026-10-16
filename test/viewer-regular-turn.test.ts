@@ -9,6 +9,7 @@ import { poseAngles } from './pose-angles';
 
 const KINDS = Object.values(RegularTurn);
 const angles = (kind: RegularTurn, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(kind, i), t));
+const ankle = (kind: RegularTurn, i: Intensity, t: number): number => angles(kind, i, t).dorsiflexion.right;
 
 describe('regular turn', () => {
   it('splits the load between the feet, the outside share rising with intensity', () => {
@@ -36,6 +37,21 @@ describe('regular turn', () => {
           const knee = angles(kind, i, k / 24).knee.right;
           assert.isTrue(knee >= 25 && knee <= 50, `${kind} ${i} ${k}/24: ${knee.toFixed(1)}`);
         }
+  });
+
+  it('leans the trunk forward within the measured range', () => {
+    // Spine flexion 11-27 deg in racers (sporri-2016) on a pelvis pitched forward; outside hip up to 55-65 deg (gao-2024).
+    for (const kind of KINDS)
+      for (const i of INTENSITIES) {
+        const trunk = angles(kind, i, 1 / 2).trunkForward;
+        assert.isTrue(trunk >= 15 && trunk <= 40, `${kind} ${i}: ${trunk.toFixed(1)}`);
+      }
+  });
+
+  it('presses the shin forward at a carve initiation and opens it by the finish', () => {
+    for (const i of INTENSITIES) assert.isAbove(ankle(RegularTurn.Carving, i, 1 / 6), ankle(RegularTurn.Carving, i, 5 / 6) + 4, i);
+    const gentle = Array.from({ length: 24 }, (_, k) => ankle(RegularTurn.Cruising, Intensity.Gentle, k / 24));
+    assert.isBelow(Math.max(...gentle) - Math.min(...gentle), 3);
   });
 
   it('absorbs deeper in moguls at the transition', () => {
