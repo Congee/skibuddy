@@ -450,10 +450,10 @@ def world_pose(bones, order, R, ski_pivot, p, rest):
         else:
             r = R[name]
         D[name] = parent @ Matrix.Translation(j) @ r @ Matrix.Translation(-j)
-    # As segmentMatrices in pose.ts: about the outside ski, near the switch about a point between both.
+    # As segmentMatrices in pose.ts: about the outside ski, near the switch about a point between both, raised by the rise.
     o = outside_weight(p['lean'])
     c = o * (D['foot.R'] @ Vector(ski_pivot['R'])) + (1 - o) * (D['foot.L'] @ Vector(ski_pivot['L']))
-    tilt = Matrix.Translation((c.x, c.y, 0)) @ Matrix.Rotation(p['lean'], 4, 'Y') @ Matrix.Translation(-c)
+    tilt = Matrix.Translation((c.x, c.y, p.get('rise', 0.0))) @ Matrix.Rotation(p['lean'], 4, 'Y') @ Matrix.Translation(-c)
     return {k: tilt @ m for k, m in D.items()}
 
 
@@ -545,7 +545,7 @@ def solve_reach(bones, order, p, rest, flex, ski_pivot):
     return (lo + hi) / 2
 
 
-def bake(rig, ski_pivot, inside_tip, track, rest, name='stork-turn'):
+def bake(rig, ski_pivot, tips, track, rest, name='stork-turn'):
     bones = rig.data.bones
     order = [b.name for b in bones]  # parents precede children
     frames = len(track) - 1
@@ -560,12 +560,12 @@ def bake(rig, ski_pivot, inside_tip, track, rest, name='stork-turn'):
     for pb in rig.pose.bones:
         pb.rotation_mode = 'QUATERNION'
     for f, p in enumerate(track):
-        # Re-solve the inside leg's flex for this body, so its ski tip stays on the snow.
+        # Re-solve the inside leg's flex for this body, so its ski tip stays level with the outside one, as insideTipHeight.
         lo, hi = -0.3, 0.6
         for _ in range(20):
             mid = (lo + hi) / 2
             D = world_pose(bones, order, local_rotations(p, rest, mid), ski_pivot, p, rest)
-            if (D['foot.L'] @ Vector(inside_tip)).z > 0:
+            if (D['foot.L'] @ Vector(tips['L'])).z > (D['foot.R'] @ Vector(tips['R'])).z:
                 hi = mid
             else:
                 lo = mid
@@ -958,7 +958,7 @@ def main():
     # The palm-in twist is found on the first posed turn, as the bake always has; else the still stance.
     track = next((v for k, v in tracks.items() if k != 'neutral'), tracks['neutral'])
     # Skis: 1.6 m x 9 cm slabs centred 3 cm ahead of the foot, under each binding as in figure.ts and equipment.ts.
-    ski_pivot = {}
+    ski_pivot, tips = {}, {}
     thick = binding['skiThickness']
     for s in ('R', 'L'):
         j = J[s]
@@ -980,8 +980,7 @@ def main():
         make_object(f'gear_ski_{s}', verts, tris, np.zeros(len(tris), np.int32), [mats['gear']], rig,
                     [[(f'foot.{s}', 1.0)]] * len(verts))
         ski_pivot[s] = tuple(float(x) for x in rest_point((0, -thick, zc)))
-        if s == 'L':
-            inside_tip = tuple(float(x) for x in rest_point((0, -thick, zc + 0.8)))
+        tips[s] = tuple(float(x) for x in rest_point((0, -thick, zc + 0.8)))
 
     rest = dict(abduction={}, ramp=binding['bootBoardRamp'] + binding['deltaAngle'],
                 femur={s: (Vector(J[s]['hip']) - Vector(J[s]['knee'])).normalized() for s in ('R', 'L')})
@@ -1003,7 +1002,7 @@ def main():
     reach = l['shoulder'][2] - snow - float(np.linalg.norm(l['elbow'] - l['shoulder']))
     for name in sorted(tracks, key=lambda n: n == 'neutral'):
         POLE['basket'] = reach - POLE['trim'].get(name, 0.0) - POLE['basketUp']
-        action = bake(rig, ski_pivot, inside_tip, tracks[name], rest, name)
+        action = bake(rig, ski_pivot, tips, tracks[name], rest, name)
         strip = rig.animation_data.nla_tracks.new()
         strip.name = name
         strip.strips.new(name, 0, action)

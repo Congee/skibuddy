@@ -36,6 +36,8 @@ export interface Pose {
   readonly poleTouch: number;
   /** Extra shoulder flexion of the touching arm that brings the touch beside the ski; solved per figure. */
   readonly reach: number;
+  /** Metres the whole figure stands above its outside ski's contact: a tip-down ski's tip on or over the snow. */
+  readonly rise: number;
   readonly outside: LegPose;
   readonly inside: LegPose;
   readonly outsideGirdle: GirdlePose;
@@ -92,6 +94,7 @@ export const POSE_CHANNELS = [
   'insideGirdle.elevation',
   'headYaw',
   'armAbduction',
+  'rise',
 ] as const;
 
 export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
@@ -122,6 +125,7 @@ export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
   p.insideGirdle.elevation,
   p.headYaw,
   p.armAbduction,
+  p.rise,
 ];
 
 /** The inverse of `poseToChannels`, reading `channels` from `at`. */
@@ -145,6 +149,7 @@ export const poseFromChannels = (c: ArrayLike<number>, at = 0): Pose => {
     insideGirdle: { protraction: v(23), elevation: v(24) },
     headYaw: v(25),
     armAbduction: v(26),
+    rise: v(27),
   };
 };
 
@@ -300,7 +305,7 @@ const edgeOf = (world: ReadonlyArray<Mat4>, pose: Pose): number => {
 };
 
 /**
- * World matrix per segment: the outside ski base rests on y = 0 and the whole figure leans toward the inside of
+ * World matrix per segment: the outside ski base rests on y = `rise` and the whole figure leans toward the inside of
  * the turn about that contact; near the switch about a point between both skis, so the mass rolls across smoothly.
  */
 export const segmentMatrices = (pose: Pose): ReadonlyArray<Mat4> => {
@@ -320,7 +325,7 @@ export const segmentMatrices = (pose: Pose): ReadonlyArray<Mat4> => {
   const [lx, ly, lz] = transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), [0, SKI_BASE, 0]);
   const [cx, cy, cz] = [o * rx + (1 - o) * lx, o * ry + (1 - o) * ly, o * rz + (1 - o) * lz];
   // Negative z rotation tips the figure toward +x, the inside (left) side.
-  const lean = compose(translation([cx, 0, cz]), rotationZ(-pose.lean), translation([-cx, -cy, -cz]));
+  const lean = compose(translation([cx, pose.rise, cz]), rotationZ(-pose.lean), translation([-cx, -cy, -cz]));
   return world.map((m) => compose(lean, m));
 };
 

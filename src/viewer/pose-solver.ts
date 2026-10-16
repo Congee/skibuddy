@@ -72,18 +72,30 @@ const insideTipHeight = (pose: Pose): number => {
   return tip(BodySide.Left) - tip(BodySide.Right);
 };
 
+/**
+ * On firm snow the boots stand `clearance` over it, or higher if a tip-down tip would dip under it; a tip-up ski's
+ * tail stays under it, drawn so for the bent, loaded tail.
+ */
+const riseOf = (pose: Pose, clearance: number): number => {
+  const world = segmentMatrices({ ...pose, rise: 0 });
+  const tip = (side: BodySide): number => transformPoint(world[skiIndex(side)] ?? identity(), SKI_TIP)[1];
+  return Math.max(0, clearance, -Math.min(tip(BodySide.Left), tip(BodySide.Right)));
+};
+
 const segmentOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 
 /**
  * The centre of mass ahead of the outside mid-foot; near the transition, where the outside foot changes, ahead of
- * a point between both, so a turn's end balances as the mirrored next turn's start.
+ * a point between both, so a turn's end balances as the mirrored next turn's start. Along the ski, or on firm snow
+ * along the snow, which takes the load of a pitched ski at its tail or tip.
  */
-const balanceAhead = (world: ReadonlyArray<Mat4>, t: number): number => {
+const balanceAhead = (world: ReadonlyArray<Mat4>, t: number, firm: boolean): number => {
   const w = 0.5 * (1 - turnDepth(t)) ** 8;
   const right = transformPoint(world[segmentOf(SegmentKind.Boot, BodySide.Right)] ?? identity(), MID_FOOT);
   const left = transformPoint(world[segmentOf(SegmentKind.Boot, BodySide.Left)] ?? identity(), MID_FOOT);
   const foot: Vec3 = [(1 - w) * right[0] + w * left[0], (1 - w) * right[1] + w * left[1], (1 - w) * right[2] + w * left[2]];
-  return aheadOnSki(world, centreOfMass(world), foot);
+  const com = centreOfMass(world);
+  return firm ? com[2] - foot[2] : aheadOnSki(world, com, foot);
 };
 
 /** How far ahead of its own ankle the touching pole's full touch lands. */
@@ -127,6 +139,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const girdle = { protraction: k.protraction, elevation: k.elevation };
   // Shin-first: the inside ankle closes with the outside one and takes a share of the inside leg's extra flexion.
   const shinFirst = c.trunkOverShin !== undefined;
+  const firm = c.firmSnow === true;
   const insideShare = shinFirst ? (c.insideAnkleShare ?? 0) : 0;
   const insideAnkle = (tailLift: number, shin: number): number =>
     (shinFirst ? shin : shinAngle(dorsiflexion + (k.insideDorsiflexion - dorsiflexion) * lifted, EQUIPMENT)) + tailLift;
@@ -150,6 +163,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       armAbduction: c.armAbduction ?? ARM_ABDUCTION,
       poleTouch,
       reach: 0,
+      rise: 0,
       outside: { hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch, adduction: c.stance },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
@@ -197,7 +211,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
     let hi = 120 * DEG;
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
-      if (balanceAhead(segmentMatrices(base(mid, extra, tailLift, keyedShin)), t) > k.comAhead) lo = mid;
+      if (balanceAhead(segmentMatrices(base(mid, extra, tailLift, keyedShin)), t, firm) > k.comAhead) lo = mid;
       else hi = mid;
     }
     return (lo + hi) / 2;
@@ -207,11 +221,12 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const target = mild('comAhead');
   const depthKnee = hip + mild('lumbarFlex') - (c.trunkOverShin ?? 0) * (1 + (c.trunkOverShinGain ?? 0) * effort.scale);
   const balanceShin = (extra: number, tailLift: number): number => {
-    let lo = minShinAngle(EQUIPMENT);
+    // The cuff stops the shin on the boot, which pitches with the ski.
+    let lo = minShinAngle(EQUIPMENT) - pitch;
     let hi = SHIN_MAX;
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
-      if (balanceAhead(segmentMatrices(base(depthKnee, extra, tailLift, mid)), t) < target) lo = mid;
+      if (balanceAhead(segmentMatrices(base(depthKnee, extra, tailLift, mid)), t, firm) < target) lo = mid;
       else hi = mid;
     }
     return (lo + hi) / 2;
@@ -225,7 +240,8 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
     else knee = balance(inside.extra, inside.tailLift);
     inside = insideLeg(knee, shin);
   }
-  const legs = base(knee, inside.extra, inside.tailLift, shin);
+  const solved = base(knee, inside.extra, inside.tailLift, shin);
+  const legs = firm ? { ...solved, rise: riseOf(solved, mild('skiClearance')) } : solved;
   if (legs.poleTouch === 0) return legs;
   const reach = Math.abs(legs.poleTouch) * solveReach(legs, c.scapularRhythm, poleSize(CAPSULE_ARM, c.poleTrim).basket);
   const reaching = { ...girdle, protraction: girdle.protraction + c.scapularRhythm * reach };

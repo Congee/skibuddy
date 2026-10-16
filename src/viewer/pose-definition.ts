@@ -40,6 +40,8 @@ export interface PoseKey {
   readonly comAhead: number;
   /** Both skis pitched tip-up about the boots; negative, tip-down. Absent, flat. */
   readonly skiPitch?: number;
+  /** Metres the boots clear the snow, legs retracted; absent, on it. Only with `firmSnow`. */
+  readonly skiClearance?: number;
 }
 
 /** A smooth 0..1..0 window through the turn: up around `up`, down around `down`, each over `ramp` either side. */
@@ -110,6 +112,8 @@ export interface PoseConstraints {
   readonly head?: HeadRule;
   /** Radians both arms are abducted; absent, ARM_ABDUCTION. */
   readonly armAbduction?: number;
+  /** The skis stay on top of firm snow: a tip-down tip lifts the boots onto it; absent, they pivot at the boots, as in powder. */
+  readonly firmSnow?: boolean;
   /** Per key field, how much more a dynamic turn takes (and a gentle one less), as a share per step of effort. */
   readonly gains: Readonly<Partial<Record<Exclude<keyof PoseKey, 't'>, number>>>;
 }
@@ -164,6 +168,7 @@ const FIELDS: ReadonlyArray<KeyField> = [
   'insideTailLift',
   'comAhead',
   'skiPitch',
+  'skiClearance',
 ];
 
 /** Fields that lean or turn toward the inside: the next turn, mirrored, takes them with the other sign. */
@@ -180,7 +185,7 @@ export const keyValuesAt = (keys: ReadonlyArray<PoseKey>, t: number): KeyValues 
   const at = (i: number): Knot => {
     const key = sorted[((i % n) + n) % n];
     if (key === undefined) throw new Error('no key poses');
-    const k: Required<PoseKey> = { ...key, hipUnder: key.hipUnder ?? key.hip, skiPitch: key.skiPitch ?? 0 };
+    const k: Required<PoseKey> = { ...key, hipUnder: key.hipUnder ?? key.hip, skiPitch: key.skiPitch ?? 0, skiClearance: key.skiClearance ?? 0 };
     const turn = Math.floor(i / n);
     const flipped = turn % 2 === 0 ? k : { ...k, ...Object.fromEntries([...ODD].map((f) => [f, -k[f]])) };
     return { ...flipped, time: k.t + turn };

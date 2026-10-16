@@ -69,12 +69,14 @@ export interface TurnStyle {
   readonly armAbduction?: number;
   /** A two-footed pop through the switch in place of the shared hip curve; absent, none. */
   readonly rebound?: Rebound;
+  /** Skis on top of firm snow, lifting off it only by `rebound.clearance`; absent, they pivot at the boots as in powder. */
+  readonly firmSnow?: boolean;
 }
 
 /** Values at each phase key, then at the switch keys 1/12 and 11/12. */
 export type ReboundValues = readonly [...PhaseValues, number, number];
 
-/** Legs loaded through the finish and extended to their longest at the switch, the skis pitching as they rise and sink. */
+/** Both legs' depth and both skis' pitch through the switch, the skis pitching as the legs rise or retract. */
 export interface Rebound {
   /** Outside hip depth, 0 most open to 1 deepest. */
   readonly hip: ReboundValues;
@@ -82,6 +84,10 @@ export interface Rebound {
   readonly pitch: ReboundValues;
   /** Share the pitch grows per step of intensity. */
   readonly pitchGain: number;
+  /** Mass ahead of the outside mid-foot at the switch keys, metres; absent, the phase keys' curve. */
+  readonly comAhead?: readonly [number, number];
+  /** Metres the boots clear firm snow at moderate, the tips over it; absent, none. */
+  readonly clearance?: ReboundValues;
 }
 
 /** One value per phase key, in PHASES order. */
@@ -389,6 +395,58 @@ export const CLOSED_STANCE: TurnStyle = {
   armAbduction: HANDS_IN,
 };
 
+/**
+ * The dolphin turn's fore-aft cycle on firm snow (content/movements/dolphin-turn.yaml). Through the finish the ankles
+ * open and the feet slide ahead, the mass behind mid-foot over the loaded tails (lemaster-2010 p81; lind-sanders-2004
+ * pp69-70, 146); the tips lift. In the transition both legs retract under the hips and the tips point down
+ * (iasi-2021 p174, lind-sanders-2004 p120), the skis just off the snow; they land tip first on the new edges, the
+ * forebody engaged and the mass ahead of mid-foot. Tips-up pitch inferred: the tail's reverse bend under the boot
+ * plus the boot tipped back on the spoiler; 8-16 deg lifts a forebody 0.85 m long 12-23 cm off the snow, the rigid
+ * tail drawn under it for the bend.
+ */
+const DOLPHIN_POP = {
+  hip: [1, 0.3, 0, 0.08, 0.35, 0.75, 0.55],
+  pitch: [-6, 0, 0, 1, 6, -3, 12],
+  pitchGain: 1 / 3,
+  comAhead: [0.06, -0.12],
+  clearance: [0.13, 0, 0, 0, 0, 0, 0],
+} as const satisfies Rebound;
+
+/** Dolphin turns: medium-radius turns working the fore-aft range. Scenarios as content/drills/dolphin-turns.yaml. */
+export const DOLPHIN: TurnStyle = {
+  scenarios: {
+    gentle: { speedMps: 8, radiusM: 12, slopeDeg: 14 },
+    moderate: { speedMps: 10, radiusM: 14, slopeDeg: 17 },
+    dynamic: { speedMps: 12, radiusM: 16, slopeDeg: 20 },
+  },
+  // About 60-75 % on the outside foot through shaping (heinrich-2022).
+  outsideShare: [0.6, 0.75],
+  // Deepest in the retraction, near 90 deg at hip and knee (seifert-2023); inferred.
+  hip: [50, 85],
+  hipStep: 5,
+  hipSpread: 0,
+  angulation: 8,
+  // Slight.
+  counter: 8,
+  twist: 2,
+  counterCurve: FOLLOW,
+  bend: 3,
+  spineFlex: 21,
+  narrow: 0,
+  kneesIn: 0,
+  // Forebody at initiation, centred by shaping, the tails in the finish (lind-sanders-2004 pp69-70); inferred.
+  comAhead: [0.04, 0.06, 0.02, 0, -0.08],
+  trunkOverShin: 6,
+  early: 0.6,
+  // A flexion transition: the legs retract under the mass (seifert-2023, lemaster-2010 pp152-154).
+  crossUnder: [1, 1, 1],
+  polePlant: true,
+  poleTrim: 0,
+  head: NEXT_APEX,
+  rebound: DOLPHIN_POP,
+  firmSnow: true,
+};
+
 export const isRegularTurn = (id: string): id is RegularTurn => Object.hasOwn(TURN_STYLES, id);
 
 /** The regular turn shown for a turning drill without its own pose. */
@@ -424,6 +482,8 @@ const SWITCH: ReadonlyArray<Pick<Phase, 't' | 'hip' | 'under'>> = [
 const INSIDE_ANKLE_SHARE = 0.3;
 // A harder turn leans the trunk further over the shin; inferred.
 const TRUNK_OVER_SHIN_GAIN = 0.4;
+// A faster retraction lifts the skis higher; inferred.
+const CLEARANCE_GAIN = 0.4;
 
 /** The kind's two-footed turn as a pose definition: both skis on the snow, the inside leg shorter. */
 export const regularTurn = (style: TurnStyle): PoseDefinition => {
@@ -432,8 +492,17 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
   const spread = style.hipSpread;
   const load = (i: Intensity): number => arcLoad(style.scenarios[i]);
   const pop = style.rebound;
-  const popped = (i: number): Partial<PoseKey> =>
-    pop === undefined ? {} : { hip: pop.hip[i] ?? 0, hipUnder: pop.hip[i] ?? 0, skiPitch: (pop.pitch[i] ?? 0) * DEG };
+  const popped = (i: number): Partial<PoseKey> => {
+    if (pop === undefined) return {};
+    const ahead = pop.comAhead?.[i - PHASES.length];
+    return {
+      hip: pop.hip[i] ?? 0,
+      hipUnder: pop.hip[i] ?? 0,
+      skiPitch: (pop.pitch[i] ?? 0) * DEG,
+      ...(ahead === undefined ? {} : { comAhead: ahead }),
+      ...(pop.clearance === undefined ? {} : { skiClearance: pop.clearance[i] ?? 0 }),
+    };
+  };
   const keys = PHASES.map((p, i): PoseKey => {
     const share = p.share ?? style.early;
     return {
@@ -482,7 +551,19 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       poleTrim: style.poleTrim,
       ...(style.head === undefined ? {} : { head: style.head }),
       ...(style.armAbduction === undefined ? {} : { armAbduction: style.armAbduction * DEG }),
-      gains: { comAhead: 0.4, lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1, skiPitch: pop?.pitchGain ?? 0 },
+      ...(style.firmSnow === true ? { firmSnow: true } : {}),
+      gains: {
+        comAhead: 0.4,
+        lumbarFlex: 0.1,
+        angulation: 0.15,
+        eversion: 0.15,
+        pelvisList: 0.4,
+        counter: 0.15,
+        spineBend: 0.15,
+        spineTwist: 0.1,
+        skiPitch: pop?.pitchGain ?? 0,
+        skiClearance: CLEARANCE_GAIN,
+      },
     },
   };
 };

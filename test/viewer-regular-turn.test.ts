@@ -5,7 +5,7 @@ import { gazeHeading } from '../src/viewer/gaze';
 import { segmentIndex } from '../src/viewer/figure';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
-import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
+import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
 import { solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
@@ -476,11 +476,78 @@ describe('powder pop', () => {
   });
 
   it('keeps every other kind and drill flat, only the stork tail lifting', () => {
-    for (const drill of Object.keys(POSE_DEFINITIONS).filter((d) => d !== POWDER))
+    for (const drill of Object.keys(POSE_DEFINITIONS).filter((d) => d !== POWDER && d !== DOLPHIN))
       for (const i of INTENSITIES)
         for (const p of poseTable(drill, i)) {
           assert.strictEqual(p.outside.tailLift, 0, `${drill} ${i}`);
           assert.isAtLeast(p.inside.tailLift, 0, `${drill} ${i}`);
         }
+  });
+});
+
+const DOLPHIN = 'dolphin-turns';
+const dolphin = (i: Intensity, t: number): ReturnType<typeof samplePose> => samplePose(poseTable(DOLPHIN, i), t);
+// Centre of mass ahead of the outside mid-foot along the snow, metres.
+const aheadOnSnow = (p: ReturnType<typeof samplePose>): number => {
+  const w = segmentMatrices(p);
+  return centreOfMass(w)[2] - transformPoint(w[segmentIndex('right-boot')] ?? identity(), MID_FOOT)[2];
+};
+// The lower ski tip's height over the snow.
+const tipHeight = (p: ReturnType<typeof samplePose>): number => {
+  const w = segmentMatrices(p);
+  return Math.min(...['right-ski', 'left-ski'].map((s) => transformPoint(w[segmentIndex(s)] ?? identity(), SKI_TIP)[1]));
+};
+const FINISH = Array.from({ length: SAMPLES / 6 }, (_, k) => 5 / 6 + k / SAMPLES);
+
+describe('dolphin turn', () => {
+  it('has its own pose', () => {
+    assert.strictEqual(motionFor(DOLPHIN, true), DOLPHIN);
+  });
+
+  it('lifts both tips clearly through the finish, more at dynamic', () => {
+    const least = { gentle: 7, moderate: 10, dynamic: 14 } as const;
+    const peak = (i: Intensity): number => Math.max(...FINISH.map((t) => pitch(dolphin(i, t))[0]));
+    for (const i of INTENSITIES) {
+      assert.isAtLeast(peak(i), least[i], i);
+      const p = pitch(dolphin(i, 11 / 12));
+      assert.closeTo(p[1], p[0], 1e-3, i);
+    }
+    assert.isAbove(peak(Intensity.Dynamic), peak(Intensity.Gentle) + 4);
+  });
+
+  it('points the tips down off the snow in the transition and lands them first', () => {
+    for (const i of INTENSITIES) {
+      assert.isBelow(pitch(dolphin(i, 0))[0], -3, i);
+      assert.isAbove(tipHeight(dolphin(i, 0)), 0.015, `${i} skis off the snow`);
+      // Tips down at the landing, the tails still up.
+      assert.isBelow(pitch(dolphin(i, 1 / 12))[0], -1, i);
+      for (let k = 0; k < SAMPLES; k++) assert.isAtLeast(tipHeight(dolphin(i, k / SAMPLES)), -1e-3, `${i} tip in the snow at ${k}`);
+      assert.closeTo(dolphin(i, 1 / 2).rise, 0, 1e-3, `${i} on the snow at shaping`);
+    }
+    assert.isAbove(tipHeight(dolphin(Intensity.Dynamic, 0)), tipHeight(dolphin(Intensity.Gentle, 0)) + 0.02);
+  });
+
+  it('sits back over the tails at the finish and ahead at initiation', () => {
+    for (const i of INTENSITIES) {
+      assert.isBelow(aheadOnSnow(dolphin(i, 11 / 12)), -0.05, `${i} finish`);
+      assert.isBelow(aheadOnSnow(dolphin(i, 5 / 6)), -0.03, `${i} finish`);
+      assert.isAbove(aheadOnSnow(dolphin(i, 1 / 6)), 0.03, `${i} initiation`);
+    }
+    assert.isBelow(aheadOnSnow(dolphin(Intensity.Dynamic, 11 / 12)), aheadOnSnow(dolphin(Intensity.Gentle, 11 / 12)) - 0.04);
+  });
+
+  it('carries through the switch into the mirrored turn', () => {
+    for (const i of INTENSITIES) {
+      const table = poseTable(DOLPHIN, i);
+      const seq = [...table, mirrorPose(table[0] ?? dolphin(i, 0))].map((p) => [aheadOnSnow(p), pitch(p)[0] / 100, pitch(p)[1] / 100, p.rise, extension(p)]);
+      const steps = seq.slice(1).map((v, j) => Math.max(...v.map((x, n) => Math.abs(x - (seq[j]?.[n] ?? x)))));
+      assert.isAtMost(steps.at(-1) ?? 0, Math.max(...steps.slice(0, -1)), i);
+      assert.isBelow(Math.max(...steps), 0.05, i);
+    }
+  });
+
+  it('keeps every other drill on the snow', () => {
+    for (const drill of Object.keys(POSE_DEFINITIONS).filter((d) => d !== DOLPHIN))
+      for (const i of INTENSITIES) for (const p of poseTable(drill, i)) assert.strictEqual(p.rise, 0, `${drill} ${i}`);
   });
 });
