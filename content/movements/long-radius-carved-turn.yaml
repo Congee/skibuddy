@@ -37,22 +37,24 @@ dof_matrix:
     side: outside
     cells:
       initiation:
-        action: Dorsiflexes as the feet are drawn back and the shins move into the tongues while the body crosses over the skis, so the new turn starts on the shovels
+        action: Dorsiflexes as the feet are drawn back and the shins move into the tongues while the body crosses over the skis, so the new turn starts on the shovels; instructors' posture moved forward at every initiation measured
         contraction: concentric
         cue: Pull the feet back and the toes up as the edges change
         confidence: medium
         sources:
+          - debertin-2022
           - { source: lemaster-2010, pages: "79-81, 133-134, 182-183" }
           - { source: iasi-2021, pages: 33 }
           - { source: cross-raschner-2023, pages: 14 }
       shaping:
-        action: Held flexed against the rising load and the boot's flex to the fall line, then opens a little as the foot starts forward; more flexed the harder the turn
+        action: Held flexed against the rising load and the boot's flex to the fall line, then opens a little as the foot starts forward and the body shifts slightly back; more flexed the harder the turn
         moment: Plantarflexion, up to about 0.85 Nm/kg in the muscles and 1.16 Nm/kg in the boot shaft in the modelled turn
         contraction: isometric
         cue: Keep the shin on the tongue as the turn loads
         confidence: medium
         sources:
           - heinrich-2022
+          - debertin-2022
           - { source: lemaster-2010, pages: "79, 85-86" }
       finish:
         action: Opens progressively as the foot slides forward under the body, still flexed past upright; pressure moves from the ball of the foot toward the heel

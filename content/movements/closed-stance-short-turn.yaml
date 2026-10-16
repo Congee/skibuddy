@@ -14,6 +14,10 @@ name: Closed-stance short turns, both legs swivelling together under a still, sq
 # - Rhythm: quick, mostly brushed turns with a light edge set. Freestyle mogul skiers had the fastest knee
 #   movements of any discipline and, unlike the alpine events, no predominance of eccentric over concentric
 #   knee-extensor work (berg-1999, abstract; in bumps, so on a groomer it is an upper bound).
+# - Fore-aft: the stance is deep, so the ankles stay more closed than in open short turns to keep the mass over
+#   the feet rather than the hips sitting back (lemaster-2010 pp57-59). They close most at the transition and
+#   edge set and open a little as the legs lengthen: a damped version of a mogul skier's absorption, whose ankle
+#   spanned about 35° in the boot (arndt-1992 p67). Our inference, low confidence.
 #
 # Intensity (the drill's scenarios). Lind & Sanders eq 4.9 (p 103), snow force over body weight at the fall
 # line: about 1.13 gentle (5 m/s, R 4.5 m, 14°), 1.26 moderate (6 m/s, R 4.5 m, 17°), 1.37 dynamic (7 m/s,
@@ -24,31 +28,31 @@ dof_matrix:
     side: outside
     cells:
       initiation:
-        action: Dorsiflexes as the feet are drawn back under the body after the release, so the shin meets the tongue and the new tips bite
+        action: At its most closed through the transition, the feet pulled back under the body in the deep stance so the mass stays over them and the new tips bite
         contraction: concentric
         cue: Pull the feet back as the edges change
         confidence: medium
         sources:
-          - { source: lemaster-2010, pages: "79-81, 85-86" }
+          - { source: lemaster-2010, pages: "57-59, 79-81, 85-86" }
           - { source: iasi-2021, pages: 33 }
           - psia-c-performance-short-turns
       shaping:
-        action: Held flexed against the rising load, shin on the tongue, a little more flexed the harder the turn
+        action: Opens a few degrees as the legs lengthen through the fall line, still closed well past an open-stance short turn, shin on the tongue
         moment: Plantarflexion, shared with the boot shaft
         contraction: isometric
         cue: Keep the shin on the tongue
-        confidence: medium
+        confidence: low
         sources:
           - heinrich-2022
           - hintermeister-1997
           - { source: cross-raschner-2023, pages: 14 }
       finish:
-        action: Held closed through the edge set, shin on the tongue and pressure mid-foot; opens only slightly after the set as the legs release
-        contraction: isometric
+        action: Closes again as the legs flex into the edge set, drawing the feet back so the hips do not sit behind the boots
+        contraction: concentric
         cue: Stay over the feet as you set the edges
-        confidence: medium
+        confidence: low
         sources:
-          - { source: lemaster-2010, pages: "81, 85" }
+          - { source: lemaster-2010, pages: "57-59, 81, 85" }
           - { source: iasi-2021, pages: "33, 66" }
           - falda-buscaiot-2017
   - dof: ankle.flexion

@@ -344,6 +344,11 @@
   citation: FIS. Freestyle Skiing Judging Handbook, edition July 2025 (pages dated October 2025). Moguls - JH 6204 Judging Criteria, pp 25-30.
   url: https://assets.fis-ski.com/f/252177/x/5ee5340522/freestyle-skiing-judging-handbook.pdf
   read: full
+- id: arndt-1992
+  type: article
+  citation: Arndt AN. A three-dimensional kinematic analysis of Alpine skiing in moguls. MSc thesis, University of Wollongong; 1992.
+  url: https://ro.uow.edu.au/articles/thesis/A_three-dimensional_kinematic_analysis_of_Alpine_skiing_in_moguls/27649476
+  read: full
 
 # Association task pages
 - id: psia-c-stork-turns

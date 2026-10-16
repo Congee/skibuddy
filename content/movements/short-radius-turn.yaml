@@ -55,13 +55,14 @@ dof_matrix:
           - { source: iasi-2021, pages: 33 }
           - psia-c-performance-short-turns
       shaping:
-        action: Held flexed against the rising load, shin on the tongue, a little more flexed the harder the turn
+        action: Opens a few degrees from its initiation peak as the body shifts slightly back toward mid-foot, still flexed with the shin on the tongue against the rising load
         moment: Plantarflexion, shared with the boot shaft
         contraction: isometric
         cue: Keep the shin on the tongue
         confidence: medium
         sources:
           - heinrich-2022
+          - debertin-2022
           - hintermeister-1997
           - { source: cross-raschner-2023, pages: 14 }
       finish:
