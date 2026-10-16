@@ -6,7 +6,7 @@ import { ancestorsOf, familyOf } from './muscle-groups';
 
 export type TurnSide = typeof Side.Outside | typeof Side.Inside;
 
-/** Outside = the figure's right side until turns alternate. */
+/** Outside is the figure's right side; the other turn mirrors the whole figure, so the outside meshes cross with it. */
 export const turnSideOf = (side: typeof BodySide.Right | typeof BodySide.Left): TurnSide =>
   side === BodySide.Right ? Side.Outside : Side.Inside;
 

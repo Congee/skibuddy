@@ -16,9 +16,19 @@ describe('headingAt', () => {
     close(headingAt(0.999999, path), most, 1e-5);
   });
 
-  it('turns steadily toward the inside', () => {
-    const ts = Array.from({ length: 21 }, (_, i) => i / 20);
-    for (let i = 1; i < ts.length - 1; i++) close(headingAt(ts[i] ?? 0, path) - headingAt(ts[i - 1] ?? 0, path), transitionHeading(path) / 10, 1e-9);
+  it('turns toward the inside, fastest at the fall line', () => {
+    const step = (t: number): number => headingAt(t + 0.01, path) - headingAt(t, path);
+    for (let k = 0; k < 99; k++) assert.isAbove(step(k / 100), 0, `${k}/100`);
+    assert.isAbove(step(0.495), step(0.2));
+    assert.isAbove(step(0.2), step(0));
+  });
+
+  it('runs on into the mirrored next turn with no jump or kink', () => {
+    // The next turn is drawn mirrored, so its heading on the slope is the negative of its own.
+    const world = (t: number): number => (t < 1 ? headingAt(t, path) : -headingAt(t - 1, path));
+    const e = 1e-4;
+    close(world(1 - e), world(1 + e), 1e-6);
+    close(world(1 - e) - world(1 - 2 * e), world(1 + 2 * e) - world(1 + e), 1e-6);
   });
 
   it('wraps turn time', () => {

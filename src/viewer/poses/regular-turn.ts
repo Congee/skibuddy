@@ -71,9 +71,9 @@ const SHORT_COUNTER = 35;
 // fall line, so pelvis counter is the skis' heading off it with no spine twist.
 // An arc of radius r from the fall line across half a corridor w heads acos(1 - w/2r) off it, up to the hips' rotation range.
 const fallLineHeading = (r: number, w: number): number => Math.min(45, Math.acos(1 - w / (2 * r)) / DEG);
-// Constant turn rate: the heading grows as t / (5/6) to the finish key.
-// Signed, counter would start at -max, but the loop replays one right turn unmirrored: -max would whip from +max in 1/6 turn.
-const HEADING: PhaseValues = [0, 0.2, 0.6, 0.78, 1];
+// Signed, as headingAt in turn-heading.ts: -max at the transition, 0 at the fall line, max into the next transition.
+const heading = (t: number): number => -Math.cos(Math.PI * t);
+const HEADING: PhaseValues = [heading(0), heading(1 / 6), heading(1 / 2), heading(0.65), heading(5 / 6)];
 
 const SHORT: TurnScenarios = {
   gentle: { speedMps: 6, radiusM: 6, slopeDeg: 12 },

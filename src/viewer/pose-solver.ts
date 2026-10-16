@@ -4,10 +4,10 @@ import type { DrillScenario } from '../physics/turn';
 import { EQUIPMENT, shinAngle } from './equipment';
 import { BodySide, SEGMENTS, SegmentKind } from './figure';
 import { identity, transformPoint } from './mat4';
-import type { Vec3 } from './mat4';
-import { touchShare, windowShare } from './pose-definition';
+import type { Mat4, Vec3 } from './mat4';
+import { touchShare, windowShare, wrapTime } from './pose-definition';
 import type { PoseDefinition, PoseKey } from './pose-definition';
-import { CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, comAhead, poleDirection, poleSize, segmentMatrices, skiIndex } from './pose';
+import { CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, centreOfMass, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
 import type { Pose } from './pose';
 
 type KeyField = Exclude<keyof PoseKey, 't'>;
@@ -32,7 +32,13 @@ const FIELDS: ReadonlyArray<KeyField> = [
 
 const DEG = Math.PI / 180;
 
-/** Periodic monotone cubic Hermite through the keys, so nothing overshoots a key: no counter into the new turn. */
+/** Fields that lean or turn toward the inside: the next turn, mirrored, takes them with the other sign. */
+const ODD: ReadonlySet<KeyField> = new Set(['angulation', 'pelvisList', 'spineBend', 'spineTwist', 'counter', 'eversion']);
+
+/**
+ * Monotone cubic Hermite through the keys, so nothing overshoots a key: no counter into the new turn. Turns
+ * alternate, so the keys before and after this turn's are its own with the odd fields' signs flipped.
+ */
 export const keyValuesAt = (keys: ReadonlyArray<PoseKey>, t: number): KeyValues => {
   const u = ((t % 1) + 1) % 1;
   const sorted = keys.toSorted((a, b) => a.t - b.t);
@@ -40,7 +46,9 @@ export const keyValuesAt = (keys: ReadonlyArray<PoseKey>, t: number): KeyValues 
   const at = (i: number): PoseKey & { readonly time: number } => {
     const k = sorted[((i % n) + n) % n];
     if (k === undefined) throw new Error('no key poses');
-    return { ...k, time: k.t + Math.floor(i / n) };
+    const turn = Math.floor(i / n);
+    const flipped = turn % 2 === 0 ? k : { ...k, ...Object.fromEntries([...ODD].map((f) => [f, -k[f]])) };
+    return { ...flipped, time: k.t + turn };
   };
   let i = n - 1;
   while (i > 0 && at(i).time > u) i--;
@@ -113,15 +121,26 @@ const insideTipHeight = (pose: Pose): number => transformPoint(segmentMatrices(p
 
 const segmentOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 
-/** How far ahead of the inside ankle a full touch lands. */
+/**
+ * The centre of mass ahead of the outside mid-foot; near the transition, where the outside foot changes, ahead of
+ * a point between both, so a turn's end balances as the mirrored next turn's start.
+ */
+const balanceAhead = (world: ReadonlyArray<Mat4>, t: number): number => {
+  const w = 0.5 * (1 - turnDepth(t)) ** 8;
+  const foot = (side: BodySide): number => transformPoint(world[segmentOf(SegmentKind.Boot, side)] ?? identity(), MID_FOOT)[2];
+  return centreOfMass(world)[2] - ((1 - w) * foot(BodySide.Right) + w * foot(BodySide.Left));
+};
+
+/** How far ahead of its own ankle the touching pole's full touch lands. */
 const touchAhead = (pose: Pose, basket: number): number => {
   const world = segmentMatrices(pose);
-  const at = (kind: SegmentKind, p: Vec3): Vec3 => transformPoint(world[segmentOf(kind, BodySide.Left)] ?? identity(), p);
+  const side = touchSide(pose);
+  const at = (kind: SegmentKind, p: Vec3): Vec3 => transformPoint(world[segmentOf(kind, side)] ?? identity(), p);
   const grip = at(SegmentKind.Forearm, CAPSULE_GRIP);
   const ankle = at(SegmentKind.Boot, [0, 0, 0]);
   const elbow = at(SegmentKind.Forearm, [0, 0, 0]);
   const forearm: Vec3 = [grip[0] - elbow[0], grip[1] - elbow[1], grip[2] - elbow[2]];
-  return grip[2] + poleDirection(grip, BodySide.Left, 1, ankle, basket, forearm)[2] * basket - ankle[2];
+  return grip[2] + poleDirection(grip, side, 1, ankle, basket, forearm)[2] * basket - ankle[2];
 };
 
 /**
@@ -144,7 +163,8 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const lifted = windowShare(c.tailLift, t);
   const fullLift = Math.max(0, mild('insideTailLift')) * lifted;
   const femurRotation = c.femurRotation * angulation;
-  const poleTouch = touchShare(c.poleTouch, t);
+  // Past mid-turn the touch is the next turn's, made by this turn's outside arm.
+  const poleTouch = touchShare(c.poleTouch, t) * (wrapTime(t) < 0.5 ? 1 : -1);
   const girdle = { protraction: k.protraction, elevation: k.elevation };
   const insideAnkle = (tailLift: number): number => shinAngle(dorsiflexion + (k.insideDorsiflexion - dorsiflexion) * lifted, EQUIPMENT) + tailLift;
   const base = (knee: number, extra: number, tailLift = fullLift): Pose => {
@@ -160,7 +180,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       spineBend: mild('spineBend'),
       spineTwist: mild('spineTwist'),
       poleTouch,
-      insideReach: 0,
+      reach: 0,
       outside: { hipFlex, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: 0, adduction: c.stance },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
@@ -208,7 +228,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
     let hi = 120 * DEG;
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
-      if (comAhead(segmentMatrices(base(mid, extra, tailLift))) > k.comAhead) lo = mid;
+      if (balanceAhead(segmentMatrices(base(mid, extra, tailLift)), t) > k.comAhead) lo = mid;
       else hi = mid;
     }
     return (lo + hi) / 2;
@@ -221,9 +241,10 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
     inside = insideLeg(knee);
   }
   const legs = base(knee, inside.extra, inside.tailLift);
-  if (legs.poleTouch <= 0) return legs;
-  const reach = legs.poleTouch * solveReach(legs, c.scapularRhythm, poleSize(CAPSULE_ARM, c.poleTrim).basket);
-  return { ...legs, insideReach: reach, insideGirdle: { ...girdle, protraction: girdle.protraction + c.scapularRhythm * reach } };
+  if (legs.poleTouch === 0) return legs;
+  const reach = Math.abs(legs.poleTouch) * solveReach(legs, c.scapularRhythm, poleSize(CAPSULE_ARM, c.poleTrim).basket);
+  const reaching = { ...girdle, protraction: girdle.protraction + c.scapularRhythm * reach };
+  return { ...legs, reach, ...(legs.poleTouch > 0 ? { insideGirdle: reaching } : { outsideGirdle: reaching }) };
 };
 
 /** Shoulder flexion, with the shoulder blade's share, that lands the touch PLANT_AHEAD in front of the ankle; mirrored in build_anatomy.py. */
@@ -232,8 +253,9 @@ const solveReach = (pose: Pose, rhythm: number, basket: number): number => {
   let hi = 0.8;
   for (let i = 0; i < 20; i++) {
     const mid = (lo + hi) / 2;
-    const girdle = { ...pose.insideGirdle, protraction: pose.insideGirdle.protraction + rhythm * mid };
-    if (touchAhead({ ...pose, insideReach: mid, insideGirdle: girdle }, basket) < PLANT_AHEAD) lo = mid;
+    const key = touchSide(pose) === BodySide.Left ? 'insideGirdle' : 'outsideGirdle';
+    const girdle = { ...pose[key], protraction: pose[key].protraction + rhythm * mid };
+    if (touchAhead({ ...pose, reach: mid, [key]: girdle }, basket) < PLANT_AHEAD) lo = mid;
     else hi = mid;
   }
   return (lo + hi) / 2;

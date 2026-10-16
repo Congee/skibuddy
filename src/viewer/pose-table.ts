@@ -1,5 +1,5 @@
 import type { Intensity } from '../content/schema';
-import { POSE_CHANNELS, poseFromChannels, poseToChannels } from './pose';
+import { POSE_CHANNELS, mirrorPose, poseFromChannels, poseToChannels } from './pose';
 import type { Pose } from './pose';
 import TABLES from './poses/tables.json';
 
@@ -72,7 +72,7 @@ export const hasTable = (drill: string, tables: PoseTables = stored): boolean =>
 
 const mix = (a: number, b: number, f: number): number => a + (b - a) * f;
 
-/** The pose at turn time `t`, interpolated between the table's samples. */
+/** The pose at turn time `t`, interpolated between the table's samples; the turn ends on the mirror of its start. */
 export const samplePose = (table: PoseTable, t: number): Pose => {
   const first = table[0];
   if (first === undefined) throw new Error('empty pose table');
@@ -83,7 +83,7 @@ export const samplePose = (table: PoseTable, t: number): Pose => {
   const i = Math.abs(u - near) < 1e-9 ? near : Math.floor(u);
   const f = Math.max(0, u - i);
   const a = table[i % table.length];
-  const b = table[(i + 1) % table.length];
+  const b = i + 1 === table.length ? mirrorPose(first) : table[i + 1];
   if (a === undefined || b === undefined) throw new Error('empty pose table');
   if (f < 1e-9) return a;
   const ca = poseToChannels(a);

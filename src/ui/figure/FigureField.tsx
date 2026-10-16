@@ -3,6 +3,7 @@ import { Show, Suspense, createMemo, createSignal, lazy, onCleanup, onMount } fr
 import type { JSX } from 'solid-js';
 import type { Activation, Intensity, Movement } from '../../content/schema';
 import { Emphasis, focusAtom, highlight, sameHighlight } from '../../state/focus';
+import { turnDirectionAtom, turnNote } from '../../state/playback';
 import type { MuscleAnchor } from '../../viewer/anchors';
 import type { FigureHighlight } from '../../viewer/highlight';
 import type { GearMode } from '../../viewer/gear-mode';
@@ -23,11 +24,14 @@ const themeColour = (token: string): string => {
   return name === undefined ? '' : getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 };
 
-export const Caption = (): JSX.Element => (
-  <>
-    Outside ski = skier's right. <a href="#credits">Credits</a>
-  </>
-);
+export const Caption = (): JSX.Element => {
+  const direction = useAtomValue(() => turnDirectionAtom);
+  return (
+    <>
+      {turnNote(direction())} <a href="#credits">Credits</a>
+    </>
+  );
+};
 
 export const FigureField = (props: {
   readonly movement: Movement;

@@ -5,7 +5,7 @@ import type { MuscleLevel } from '../content/activation';
 import { MAX_EFFORT, effortAt } from '../content/effort';
 import { Intensity } from '../content/schema';
 import type { Movement } from '../content/schema';
-import { playingAtom, turnTimeAtom } from '../state/playback';
+import { isMirrored, playingAtom, turnDirectionAtom, turnNote, turnTimeAtom } from '../state/playback';
 import type { AnchorsListener } from './anchors';
 import { GearMode } from './gear-mode';
 import type { FigureHighlight } from './highlight';
@@ -61,7 +61,7 @@ export const Viewer = (props: {
   readonly ground?: string;
   /** The muscle the board singles out, if any. */
   readonly highlight?: FigureHighlight | null;
-  /** Caption under the figure; the default names the outside ski. */
+  /** Caption under the figure; the default names the turn and its outside ski. */
   readonly caption?: JSX.Element;
   /** A tap on the figure: the content muscle and side under it, or null off any muscle. */
   readonly onPick?: (pick: MusclePick | null) => void;
@@ -79,6 +79,7 @@ export const Viewer = (props: {
   readonly fallback?: (message: string) => JSX.Element;
 }): JSX.Element => {
   const t = useAtomValue(() => turnTimeAtom);
+  const direction = useAtomValue(() => turnDirectionAtom);
   const playing = useAtomValue(() => playingAtom);
   const [error, setError] = createSignal<string | null>(null);
   const [shown, setShown] = createSignal<FigureKind | null>(null);
@@ -162,7 +163,8 @@ export const Viewer = (props: {
 
   createEffect(() => {
     const at = t();
-    if (shown() !== null) viewer?.setTime(at);
+    const mirrored = isMirrored(direction());
+    if (shown() !== null) viewer?.setTime(at, mirrored);
   });
 
   createEffect(() => {
@@ -234,7 +236,7 @@ export const Viewer = (props: {
       <Show when={error()}>{(message) => props.fallback?.(message()) ?? <ViewerError message={message()} />}</Show>
       <figcaption class="muted">
         {shown() === 'capsule' ? 'Placeholder figure. ' : ''}
-        {props.caption ?? "Outside ski = skier's right."}
+        {props.caption ?? turnNote(direction())}
         <Show when={!hasPose(props.drill)}>
           <span class="viewer-note"> This drill's motion isn't modelled yet; the figure holds a neutral stance.</span>
         </Show>

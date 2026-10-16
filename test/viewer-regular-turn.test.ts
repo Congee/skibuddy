@@ -71,7 +71,8 @@ describe('regular turn', () => {
     // Crest at the transition: ankles closed, feet pulled back; trough at the fall line: legs long, tips down.
     const mogul = (t: number): ReturnType<typeof poseAngles> => angles(RegularTurn.Moguls, Intensity.Moderate, t);
     assert.isAbove(mogul(0).dorsiflexion.right, mogul(1 / 2).dorsiflexion.right + 12);
-    assert.isAbove(mogul(0).comAhead, mogul(1 / 2).comAhead + 0.08);
+    // At the transition the balance is over both feet, the countered outside one trailing.
+    assert.isAbove(mogul(0).comAhead - mogul(0).lead / 2, mogul(1 / 2).comAhead + 0.05);
     assert.isAbove(mogul(0).knee.right, mogul(1 / 2).knee.right + 25);
     assert.isAbove(range(RegularTurn.Moguls, (a) => a.dorsiflexion.right), 2 * range(RegularTurn.Carving, (a) => a.dorsiflexion.right));
   });
@@ -79,7 +80,8 @@ describe('regular turn', () => {
   it('keeps the closed-stance hips near the boots in the deep stance', () => {
     for (let k = 0; k < 24; k++) {
       const a = poseAngles(samplePose(poseTable('closed-stance-short-turns', Intensity.Moderate), k / 24));
-      assert.isAbove(a.hipsAhead, -0.1, `${k}/24`);
+      // Near the outside boot, or at the transition, where the countered outside foot trails, between both.
+      assert.isAbove(Math.max(a.hipsAhead, a.hipsAhead - a.lead / 2), -0.1, `${k}/24`);
     }
   });
 
@@ -115,10 +117,13 @@ describe('regular turn', () => {
   it('counters little when carving and tracks the skis off the fall line in moguls', () => {
     const at = (drill: string, t: number): number => poseAngles(samplePose(poseTable(drill, Intensity.Moderate), t)).counter;
     for (let k = 0; k < 24; k++) assert.isBelow(Math.abs(at(RegularTurn.Carving, k / 24)), 8, `${k}/24`);
+    // Signed: facing the last turn's outside at the transition, square on the fall line, the most into the next.
     for (const drill of [RegularTurn.Moguls, 'closed-stance-short-turns']) {
-      assert.isBelow(Math.abs(at(drill, 0)), 5, drill);
+      assert.isBelow(at(drill, 0), -30, drill);
+      assert.isBelow(Math.abs(at(drill, 1 / 2)), 1, drill);
       assert.isAbove(at(drill, 5 / 6), 25, drill);
-      assert.isAbove(at(drill, 5 / 6), at(drill, 1 / 2), drill);
+      assert.isAbove(at(drill, 0.999), 30, drill);
+      for (let k = 1; k < 24; k++) assert.isAbove(at(drill, k / 24), at(drill, (k - 1) / 24), `${drill} ${k}/24`);
     }
   });
 
@@ -130,7 +135,7 @@ describe('regular turn', () => {
       // While counter builds, twist builds no sooner; as it unwinds the chest may hold.
       const top = def.keys.findIndex((k) => k.counter === counter);
       for (const [i, k] of def.keys.entries()) {
-        assert.isAtMost(k.spineTwist, k.counter + 1e-9, `${drill} ${k.t}`);
+        assert.isAtMost(Math.abs(k.spineTwist), Math.abs(k.counter) + 1e-9, `${drill} ${k.t}`);
         if (twist > 0 && i <= top) assert.isAtMost(k.spineTwist / twist, k.counter / counter + 1e-9, `${drill} ${k.t}`);
       }
     }

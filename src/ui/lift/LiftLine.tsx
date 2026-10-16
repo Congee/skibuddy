@@ -5,7 +5,7 @@ import type { Accessor, JSX } from 'solid-js';
 import { PHASES } from '../../content/schema';
 import type { Phase } from '../../content/schema';
 import { MIN_VISIBLE_FRACTION, createAutoPause } from '../../state/auto-pause';
-import { PLAYBACK_FPS, TURN_SECONDS, phaseAt, phaseCentre, pinsAtom, playingAtom, turnTimeAtom, wrapTurn } from '../../state/playback';
+import { PLAYBACK_FPS, TURN_SECONDS, otherTurn, phaseAt, phaseCentre, pinsAtom, playingAtom, turnDirectionAtom, turnTimeAtom, wrapTurn } from '../../state/playback';
 import { createTicker } from '../../state/ticker';
 import { phaseLabel } from '../board/marks';
 import { IconButton } from '../components/IconButton';
@@ -25,12 +25,18 @@ const isPhase = (v: string): v is Phase => (PHASES as ReadonlyArray<string>).inc
  */
 export const usePlayback = (reducedMotion: Accessor<boolean>, figure: Accessor<Element | undefined>): void => {
   const [playing, setPlaying] = useAtom(() => playingAtom);
-  const [, setT] = useAtom(() => turnTimeAtom);
+  const [t, setT] = useAtom(() => turnTimeAtom);
+  const [, setDirection] = useAtom(() => turnDirectionAtom);
   createEffect(() => {
     if (reducedMotion()) setPlaying(false);
   });
 
-  const ticker = createTicker((seconds) => setT((prev) => wrapTurn(prev + seconds / TURN_SECONDS)), PLAYBACK_FPS);
+  // Each wrap starts the next turn, the other way.
+  const ticker = createTicker((seconds) => {
+    const next = t() + seconds / TURN_SECONDS;
+    if (Math.floor(next) % 2 === 1) setDirection(otherTurn);
+    setT(wrapTurn(next));
+  }, PLAYBACK_FPS);
   createEffect(() => {
     if (playing()) ticker.start();
     else ticker.stop();

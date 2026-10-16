@@ -28,10 +28,10 @@ export interface Pose {
   readonly spineBend: number;
   /** Trunk turned toward the outside of the turn beyond the pelvis. */
   readonly spineTwist: number;
-  /** 0..1: the inside pole swings forward and plants at 1. */
+  /** 0..1: the inside pole swings forward and plants at 1; negative, the outside pole does, for the next turn. */
   readonly poleTouch: number;
-  /** Extra inside-shoulder flexion that brings the touch beside the ski; solved per figure. */
-  readonly insideReach: number;
+  /** Extra shoulder flexion of the touching arm that brings the touch beside the ski; solved per figure. */
+  readonly reach: number;
   readonly outside: LegPose;
   readonly inside: LegPose;
   readonly outsideGirdle: GirdlePose;
@@ -71,7 +71,7 @@ export const POSE_CHANNELS = [
   'spineBend',
   'spineTwist',
   'poleTouch',
-  'insideReach',
+  'reach',
   'outside.hipFlex',
   'outside.ankleFlex',
   'outside.femurRotation',
@@ -99,7 +99,7 @@ export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
   p.spineBend,
   p.spineTwist,
   p.poleTouch,
-  p.insideReach,
+  p.reach,
   p.outside.hipFlex,
   p.outside.ankleFlex,
   p.outside.femurRotation,
@@ -130,7 +130,7 @@ export const poseFromChannels = (c: ArrayLike<number>, at = 0): Pose => {
     spineBend: v(7),
     spineTwist: v(8),
     poleTouch: v(9),
-    insideReach: v(10),
+    reach: v(10),
     outside: { hipFlex: v(11), ankleFlex: v(12), femurRotation: v(13), tailLift: v(14), adduction: v(15) },
     inside: { hipFlex: v(16), ankleFlex: v(17), femurRotation: v(18), tailLift: v(19), adduction: v(20) },
     outsideGirdle: { protraction: v(21), elevation: v(22) },
@@ -155,9 +155,40 @@ export const ARM_LEAN_SHOULDER = 0.5;
 export const ARM_REACH_ELBOW = 0.5;
 const armLean = (pose: Pose): number => pose.pelvisPitch + pose.spineFlex - ARM_LEAN;
 
-// Outside = the figure's right leg until turns alternate sides.
+// Outside is the figure's right leg; the other turn is drawn mirrored (mirrorPose, MIRROR).
 const legPose = (pose: Pose, side: BodySide): LegPose => (side === BodySide.Right ? pose.outside : pose.inside);
 const girdlePose = (pose: Pose, side: BodySide): GirdlePose => (side === BodySide.Right ? pose.outsideGirdle : pose.insideGirdle);
+
+/** The arm that swings to the touch: the inside one, or the outside one ahead of the next turn. */
+export const touchSide = (pose: Pose): typeof BodySide.Left | typeof BodySide.Right => (pose.poleTouch < 0 ? BodySide.Right : BodySide.Left);
+
+/** The touch share of the pole on `side`. */
+export const poleTouchOf = (pose: Pose, side: BodySide): number => (side === touchSide(pose) ? Math.abs(pose.poleTouch) : 0);
+
+const mirrorLeg = (leg: LegPose): LegPose => ({ ...leg, femurRotation: -leg.femurRotation });
+
+/**
+ * The same body reflected left for right, in this turn's terms: the legs and shoulder girdles swap and every
+ * roll and yaw toward the inside changes sign. A turn ends on the mirror of its start, the next turn's start.
+ */
+export const mirrorPose = (p: Pose): Pose => ({
+  ...p,
+  lean: -p.lean,
+  hipAngulation: -p.hipAngulation,
+  eversion: -p.eversion,
+  pelvisList: -p.pelvisList,
+  counter: -p.counter,
+  spineBend: -p.spineBend,
+  spineTwist: -p.spineTwist,
+  poleTouch: -p.poleTouch,
+  outside: mirrorLeg(p.inside),
+  inside: mirrorLeg(p.outside),
+  outsideGirdle: p.insideGirdle,
+  insideGirdle: p.outsideGirdle,
+});
+
+/** Reflects the figure's root across its midline: the other turn, its right leg on the inside. */
+export const MIRROR: Mat4 = new Float32Array([-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 
 /** The pelvis in the body frame: counter, then the outward tip, then the fold at the hips. */
 const pelvisRotation = (pose: Pose): Mat4 => compose(rotationY(-pose.counter), rotationZ(pose.pelvisList), rotationX(pose.pelvisPitch));
@@ -190,11 +221,11 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
       return compose(
         rotationY(out * g.protraction),
         rotationZ(out * ARM_ABDUCTION),
-        rotationX(-ARM_FLEXION - ARM_LEAN_SHOULDER * armLean(pose) - (segment.side === BodySide.Left ? pose.insideReach : 0)),
+        rotationX(-ARM_FLEXION - ARM_LEAN_SHOULDER * armLean(pose) - (segment.side === touchSide(pose) ? pose.reach : 0)),
       );
     }
     case SegmentKind.Forearm:
-      return rotationX(-FOREARM_FLEXION - (1 - ARM_LEAN_SHOULDER) * armLean(pose) + (segment.side === BodySide.Left ? ARM_REACH_ELBOW * pose.insideReach : 0));
+      return rotationX(-FOREARM_FLEXION - (1 - ARM_LEAN_SHOULDER) * armLean(pose) + (segment.side === touchSide(pose) ? ARM_REACH_ELBOW * pose.reach : 0));
     case SegmentKind.Thigh:
       // Set in the body frame, so the pelvis's counter and tip are rotation and abduction in the hip.
       return compose(inverseRotation(pelvisRotation(pose)), rotationZ(-pose.hipAngulation - out * leg.adduction), rotationX(-leg.hipFlex), rotationY(leg.femurRotation));

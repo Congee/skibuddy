@@ -88,19 +88,19 @@ const smoothstep = (a: number, b: number, x: number): number => {
   return u * u * (3 - 2 * u);
 };
 
-const wrap = (t: number): number => ((t % 1) + 1) % 1;
+export const wrapTime = (t: number): number => ((t % 1) + 1) % 1;
 
 /** Share of the window at turn time `t`. */
 export const windowShare = (w: Window | null, t: number): number => {
   if (w === null) return 0;
-  const u = wrap(t);
+  const u = wrapTime(t);
   return smoothstep(w.up - w.ramp, w.up + w.ramp, u) * (1 - smoothstep(w.down - w.ramp, w.down + w.ramp, u));
 };
 
 /** 1 while the basket is planted, easing to 0 over the swing either side. */
 export const touchShare = (touch: PoleTouch | null, t: number): number => {
   if (touch === null) return 0;
-  const u = wrap(t - touch.t);
+  const u = wrapTime(t - touch.t);
   const d = Math.min(u, 1 - u) - touch.hold;
   if (d <= 0) return 1;
   if (d >= touch.swing) return 0;

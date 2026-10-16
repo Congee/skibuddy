@@ -31,7 +31,7 @@ import type { Gear, LegSide } from './gear';
 import { bootFitFrom, parseGearFit, standingArm } from './gear-fit';
 import type { BootFit, RawFit } from './gear-fit';
 import type { GearMode } from './gear-mode';
-import { CAPSULE_ARM, poleDirection, poleSize } from './pose';
+import { CAPSULE_ARM, poleDirection, poleSize, poleTouchOf } from './pose';
 import type { StandingArm } from './pose';
 import { poleTrimOf } from './poses';
 import { poseTable, samplePose } from './pose-table';
@@ -291,7 +291,7 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
   // Poles hang from the figure's root, so they are placed in its frame, not the world's.
   const placePoles = (t: number): void => {
     if (kit === null) return;
-    const touch = samplePose(poses, t).poleTouch;
+    const pose = samplePose(poses, t);
     toRoot.copy(rig.matrixWorld).invert();
     for (const { side, hand, forearm, foot, local } of fists) {
       const pole = kit.poles.find((p) => p.side === side);
@@ -300,7 +300,7 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
       foot.getWorldPosition(ankle).applyMatrix4(toRoot);
       hand.getWorldPosition(wrist).applyMatrix4(toRoot).sub(forearm.getWorldPosition(elbow).applyMatrix4(toRoot));
       const grip: Vec3 = [fist.x, fist.y, fist.z];
-      placePole(pole.mesh, grip, poleDirection(grip, side, side === BodySide.Left ? touch : 0, [ankle.x, ankle.y, ankle.z], size.basket, [wrist.x, wrist.y, wrist.z]));
+      placePole(pole.mesh, grip, poleDirection(grip, side, poleTouchOf(pose, side), [ankle.x, ankle.y, ankle.z], size.basket, [wrist.x, wrist.y, wrist.z]));
     }
   };
 

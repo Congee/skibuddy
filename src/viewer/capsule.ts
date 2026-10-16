@@ -44,7 +44,7 @@ import type { LegSide } from './gear';
 import { CAPSULE_BOOT, coveredByBoot } from './gear-fit';
 import { GearMode } from './gear-mode';
 import { compose, transformPoint, translation } from './mat4';
-import { CAPSULE_ARM, CAPSULE_GRIP, poleDirection, poleSize, segmentMatrices } from './pose';
+import { CAPSULE_ARM, CAPSULE_GRIP, poleDirection, poleSize, poleTouchOf, segmentMatrices } from './pose';
 import { poleTrimOf } from './poses';
 import { poseTable, samplePose } from './pose-table';
 import { markChanges } from './highlight';
@@ -275,7 +275,7 @@ export const createCapsuleFigure = (parent: Object3D, table: SlotTable, muscles:
         const ankle = transformPoint(world[segmentOf(SegmentKind.Boot, side)] ?? forearm, [0, 0, 0]);
         const elbow = transformPoint(forearm, [0, 0, 0]);
         const axis: Vec3 = [grip[0] - elbow[0], grip[1] - elbow[1], grip[2] - elbow[2]];
-        const direction = poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0, ankle, size.basket, axis);
+        const direction = poleDirection(grip, side, poleTouchOf(pose, side), ankle, size.basket, axis);
         const pole = gear.poles.find((g) => g.side === side);
         if (pole !== undefined) placePole(pole.mesh, grip, direction);
         // The fist closes round the grip, its fingers along the forearm.

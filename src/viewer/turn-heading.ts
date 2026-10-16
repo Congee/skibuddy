@@ -15,11 +15,11 @@ export interface TurnPath {
 export const transitionHeading = ({ radius, corridor }: TurnPath): number => Math.acos(Math.max(-1, 1 - corridor / (2 * radius)));
 
 /**
- * The skis' heading off the fall line at turn time t, radians from downhill toward the turn's inside (+x).
- * Arcs of constant radius at constant speed: the heading turns steadily from the outside at the transition
- * (t = 0), through the fall line mid-turn, to the inside at the next transition (t = 1).
+ * The skis' heading off the fall line at turn time t, radians from downhill toward the turn's inside (+x): an
+ * S-path, from the outside at the transition (t = 0), through the fall line mid-turn, to the inside at the next
+ * transition (t = 1), where the mirrored next turn takes over with the opposite sign and no kink.
  */
-export const headingAt = (t: number, path: TurnPath): number => transitionHeading(path) * (2 * (((t % 1) + 1) % 1) - 1);
+export const headingAt = (t: number, path: TurnPath): number => -transitionHeading(path) * Math.cos(Math.PI * (((t % 1) + 1) % 1));
 
 /** Corridor as a share of the radius where none is known: a round turn, 60° off the fall line at the transition. */
 const CORRIDOR_SHARE = 1;

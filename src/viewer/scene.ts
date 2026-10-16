@@ -82,8 +82,8 @@ export interface Viewer {
   readonly setGround: (css: string) => void;
   /** Each muscle's level through the turn, such as another drill's; draws a frame. */
   readonly setLevels: (levels: (t: number) => ReadonlyArray<MuscleLevel>) => void;
-  /** Position through the turn; draws a frame when it changed. */
-  readonly setTime: (t: number) => void;
+  /** Position through the turn, and whether the turn is drawn mirrored; draws a frame when either changed. */
+  readonly setTime: (t: number, mirrored?: boolean) => void;
   /** Playback draws at a lower pixel ratio. */
   readonly setPlaying: (on: boolean) => void;
   /** Pin anchors are projected only while pins show. */
@@ -120,6 +120,7 @@ const MAX_INSET = 0.6;
 const OFF_BODY_DISTANCE = 2.2;
 const GROUND_RADIUS = 6.5;
 const IDENTITY = new Matrix4().elements;
+const MIRROR = new Matrix4().makeScale(-1, 1, 1);
 
 export const createViewer = async (
   canvas: HTMLCanvasElement,
@@ -199,6 +200,8 @@ export const createViewer = async (
   // Inputs to the next frame; a draw runs only when one of them changed.
   let time = 0;
   let posedAt = Number.NaN;
+  let mirrored = false;
+  let posedMirrored = false;
   let levels = options.levels;
   let playing = false;
   let pins = options.onAnchors !== undefined;
@@ -261,9 +264,12 @@ export const createViewer = async (
     const seconds = lastDraw === 0 ? 0 : (now - lastDraw) / 1000;
     lastDraw = now;
     let moving = false;
-    if (time !== posedAt) {
+    if (time !== posedAt || mirrored !== posedMirrored) {
       posedAt = time;
+      posedMirrored = mirrored;
       rig.matrix.fromArray(rootAt(time));
+      // The other turn is this one reflected: outside and inside keep their meshes, so levels and slots hold.
+      if (mirrored) rig.matrix.premultiply(MIRROR);
       rig.updateMatrixWorld(true);
       figure.update(time, levels(time));
     }
@@ -500,9 +506,10 @@ export const createViewer = async (
       posedAt = Number.NaN;
       invalidate();
     },
-    setTime: (t) => {
-      if (t === time) return;
+    setTime: (t, flip = false) => {
+      if (t === time && flip === mirrored) return;
       time = t;
+      mirrored = flip;
       invalidate();
     },
     setPlaying: (on) => {

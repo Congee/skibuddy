@@ -177,7 +177,6 @@ export const Figure = (props: {
           onAnchors={setAnchors}
           onReady={() => setReady(true)}
           onError={() => setFailed(true)}
-          caption={<>Outside ski is the skier's right.</>}
         />
       </Suspense>
       <Show when={!ready() && !failed()}>

@@ -362,8 +362,14 @@ BOOT_SOLE = 0.03
 SUBTALAR_BELOW, SUBTALAR_BEHIND = 0.015, 0.01
 
 
+def touch_side(p):
+    """The arm swinging to the touch, as touchSide in pose.ts: the outside one ahead of the next turn."""
+    return 'R' if p['poleTouch'] < 0 else 'L'
+
+
 def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
     """Mirrors localRotation in src/viewer/pose.ts; the trunk's rotation is split over lumbar and chest."""
+    reacher = touch_side(p)
     pelvis = rot_y3(-p['counter']) @ rot_z3(p['pelvisList']) @ rot_x(p['pelvisPitch'])
     half = rot_y3(-p['spineTwist'] / 2) @ rot_z3(p['spineBend'] / 2) @ rot_x(p['spineFlex'] / 2)
     roll = HEAD_LEVEL * (p['pelvisList'] - p['lean'] + p['spineBend'])
@@ -379,12 +385,12 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
         R[f'thigh.{s}'] = (pelvis.inverted() @ rot_z3(-p['hipAngulation'] - sign * leg.get('adduction', 0.0)) @ rot_x(-hip)
                            @ Matrix.Rotation(leg['femurRotation'], 4, rest['femur'][s]))
         R[f'shin.{s}'] = rot_x(hip + ankle)
-        flex = ARMS['flexion'] + ARMS['leanShoulder'] * lean + (reach if s == 'L' else 0.0)
+        flex = ARMS['flexion'] + ARMS['leanShoulder'] * lean + (reach if s == reacher else 0.0)
         girdle = p['outsideGirdle'] if s == 'R' else p['insideGirdle']
         R[f'scapula.{s}'] = rot_y3(-sign * girdle['protraction']) @ rot_z3(sign * girdle['elevation'])
         R[f'upper_arm.{s}'] = (rot_y3(sign * girdle['protraction']) @ rot_z3(sign * ARMS['abduction']) @ rot_x(-flex)
                                @ rot_z3(-rest['abduction'][s]))
-        R[f'forearm.{s}'] = rot_x(-ARMS['forearmFlexion'] - (1 - ARMS['leanShoulder']) * lean + (ARMS['reachElbow'] * reach if s == 'L' else 0.0))
+        R[f'forearm.{s}'] = rot_x(-ARMS['forearmFlexion'] - (1 - ARMS['leanShoulder']) * lean + (ARMS['reachElbow'] * reach if s == reacher else 0.0))
         hand = rest['hands'][s]
         R[f'hand.{s}'] = hand['twist']
         R[f'fingers.{s}'] = hand['curl'][0]
@@ -461,12 +467,12 @@ def pole_direction(grip, s, touch, ankle, forearm):
     return Vector((out * math.sin(heading) * flat / b, -math.cos(heading) * flat / b, -drop / b))
 
 
-def touch_ahead(D, rest):
-    """How far ahead of the inside ankle a full touch lands."""
-    grip = D['hand.L'] @ rest['grip']['L']
-    ankle = D['foot.L'] @ rest['ankle']['L']
-    forearm = D['forearm.L'].to_3x3() @ rest['hands']['L']['axis']
-    return -(grip + pole_direction(grip, 'L', 1, ankle, forearm) * POLE['basket'] - ankle).y
+def touch_ahead(D, rest, s):
+    """How far ahead of its own ankle the touching pole's full touch lands."""
+    grip = D[f'hand.{s}'] @ rest['grip'][s]
+    ankle = D[f'foot.{s}'] @ rest['ankle'][s]
+    forearm = D[f'forearm.{s}'].to_3x3() @ rest['hands'][s]['axis']
+    return -(grip + pole_direction(grip, s, 1, ankle, forearm) * POLE['basket'] - ankle).y
 
 
 # Per clip: the largest wrist angle, hand axis to forearm axis, and what the plain swing onto the pole gave, degrees.
@@ -496,7 +502,7 @@ def posed(bones, order, p, rest, flex, reach, ski_pivot, clip=None):
             grip = D[f'hand.{s}'] @ rest['grip'][s]
             ankle = D[f'foot.{s}'] @ rest['ankle'][s]
             hand = rest['hands'][s]
-            d = pole_direction(grip, s, p['poleTouch'] if s == 'L' else 0, ankle, D[f'forearm.{s}'].to_3x3() @ hand['axis'])
+            d = pole_direction(grip, s, abs(p['poleTouch']) if s == touch_side(p) else 0, ankle, D[f'forearm.{s}'].to_3x3() @ hand['axis'])
             want = (D[f'forearm.{s}'].to_3x3() @ hand['twist'].to_3x3()).inverted() @ -d
             turn, bend, swung = grip_turn(hand['row'], hand['along'], hand['axis'], want)
             R[f'hand.{s}'] = hand['twist'] @ turn
@@ -509,12 +515,12 @@ def posed(bones, order, p, rest, flex, reach, ski_pivot, clip=None):
 
 
 def solve_reach(bones, order, p, rest, flex, ski_pivot):
-    """Inside-shoulder flexion that lands the touch PLANT_AHEAD in front of the ankle, as solveReach in pose.ts."""
+    """Touching-shoulder flexion that lands the touch PLANT_AHEAD in front of the ankle, as solveReach in pose.ts."""
     lo, hi = -0.5, 0.8
     for _ in range(20):
         mid = (lo + hi) / 2
         D = posed(bones, order, p, rest, flex, mid, ski_pivot)
-        if touch_ahead(D, rest) < POLE['plantAhead']:
+        if touch_ahead(D, rest, touch_side(p)) < POLE['plantAhead']:
             lo = mid
         else:
             hi = mid
@@ -546,7 +552,7 @@ def bake(rig, ski_pivot, inside_tip, track, rest, name='stork-turn'):
             else:
                 lo = mid
         flex = (lo + hi) / 2
-        reach = p['poleTouch'] * solve_reach(bones, order, p, rest, flex, ski_pivot) if p['poleTouch'] > 0 else 0.0
+        reach = abs(p['poleTouch']) * solve_reach(bones, order, p, rest, flex, ski_pivot) if p['poleTouch'] != 0 else 0.0
         D = posed(bones, order, p, rest, flex, reach, ski_pivot, clip)
         for bone in order:
             b = bones[bone]
