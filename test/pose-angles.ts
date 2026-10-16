@@ -45,6 +45,8 @@ export interface PoseAngles {
   readonly spineFlex: number;
   /** Trunk forward of the slope normal, in the skis' pitch plane. */
   readonly trunkForward: number;
+  /** Shin forward of the slope normal, as trunkForward. */
+  readonly shinForward: Readonly<Record<LegSide, number>>;
   /** Shoulders tipped up on the inside. */
   readonly shoulderList: number;
   /** Inside ski tail and tip heights above the snow, metres. */
@@ -136,6 +138,7 @@ export const poseAngles = (pose: Pose, brake = 0): PoseAngles => {
     counter: Math.atan2(bx[2], Math.hypot(bx[0], bx[1])) * DEG,
     spineFlex: Math.atan2(dot(trunkUp, pz), dot(trunkUp, py)) * DEG,
     trunkForward: Math.atan2(trunkUp[2], trunkUp[1]) * DEG,
+    shinForward: perLeg((side) => Math.atan2(shinUp(side)[2], shinUp(side)[1]) * DEG),
     shoulderList: Math.atan2(shoulders[1], Math.hypot(shoulders[0], shoulders[2])) * DEG,
     insideTail: transformPoint(ski(BodySide.Left), SKI_TAIL)[1],
     insideTip: transformPoint(ski(BodySide.Left), SKI_TIP)[1],

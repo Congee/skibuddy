@@ -203,6 +203,8 @@ const SQUEEZE_FROM = 60 * DEG;
 
 /** Over this either side of the cuff the shin eases onto it on bumps; inferred. */
 const CUFF_EASE = 3 * DEG;
+/** The trunk stands up off the shin by at most this, radians; inferred. */
+const UPRIGHT_MAX = 20 * DEG;
 
 /** `x` held in [lo, hi], easing quadratically onto each end from `w` inside it to `w` beyond; hi - lo > 2w. */
 const softClamp = (x: number, lo: number, hi: number, w: number): number => {
@@ -227,12 +229,11 @@ const solveRidden = (
 ): { readonly pose: Pose; readonly warm: Warm | null } => {
   if (surface === null || surface.kind !== SurfaceKind.Moguls) return { pose: solveOn(def, t, scenario, surface, FLAT_RIDE, null, false), warm: null };
   const c = def.constraints;
-  // The height is read before the knee folds for balance, so the absorbing knee moves smoothly where the cuff stops the shin.
-  const ridden = (hip: number | null, ride: Ride, fold = hip === null): { readonly pose: Pose; readonly ride: Ride } => {
-    const pose = solveOn(def, t, scenario, surface, ride, hip, true, fold);
+  const ridden = (hip: number | null, ride: Ride): { readonly pose: Pose; readonly ride: Ride } => {
+    const pose = solveOn(def, t, scenario, surface, ride, hip, true);
     return { pose, ride: rideOf(surface, t, pose) };
   };
-  const settle = (hip: number | null, ride: Ride): Pose => solveOn(def, t, scenario, surface, ridden(hip, ride, true).ride, hip, true);
+  const settle = (hip: number | null, ride: Ride): Pose => solveOn(def, t, scenario, surface, ridden(hip, ride).ride, hip, true);
   if (c.absorb === undefined) return { pose: settle(null, ridden(null, ridden(null, FLAT_RIDE).ride).ride), warm: null };
   const [lo, hi] = absorbRange(def, scenario);
   const level = levelOf(def, scenario, surface);
@@ -241,7 +242,7 @@ const solveRidden = (
   const w = ABSORB_EASE;
   const held = (hip: number): number => softClamp(hip, lo, hi, w);
   const guess = warm?.hip ?? null;
-  let ride = warm?.ride ?? rideOf(surface, t, solveOn(def, t, scenario, surface, FLAT_RIDE, held(lo), true, false));
+  let ride = warm?.ride ?? rideOf(surface, t, solveOn(def, t, scenario, surface, FLAT_RIDE, held(lo), true));
   // The mass's height over the level with the unclamped knee held in range by its ease.
   const above = (knee: number): number => {
     const next = ridden(held(knee), ride);
@@ -268,7 +269,7 @@ const solveRidden = (
   }
   const slope = b !== a && fb !== fa ? (fb - fa) / (b - a) : (warm?.slope ?? 0);
   // The legs' balancing fold changes the skis' pitch, so the ride settles once more.
-  return { pose: settle(held(b), ridden(held(b), ride, true).ride), warm: slope === 0 ? null : { hip: b, ride, slope } };
+  return { pose: settle(held(b), ridden(held(b), ride).ride), warm: slope === 0 ? null : { hip: b, ride, slope } };
 };
 
 /** The outside knee from open to its absorbing ceiling, radians, a hair inside, which the knee keeps. */
@@ -290,8 +291,8 @@ const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: S
   const [lo, hi] = absorbRange(def, scenario);
   const at = (t: number, hip: number): number => {
     let ride = FLAT_RIDE;
-    for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, surface, ride, hip, true, false));
-    return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, surface, ride, hip, true, false)))[1];
+    for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, surface, ride, hip, true));
+    return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, surface, ride, hip, true)))[1];
   };
   const level = (at(surface.crest, hi) + at(surface.trough, lo)) / 2;
   const map = levels.get(def) ?? new Map<string, number>();
@@ -309,7 +310,6 @@ const solveOn = (
   ride: Ride,
   absorbKnee: number | null,
   bumps: boolean,
-  fold = true,
 ): Pose => {
   const c = def.constraints;
   const k = keyValuesAt(def.keys, t);
@@ -353,10 +353,12 @@ const solveOn = (
   let tip = 0;
   // On bumps the hip folds with a balancing knee, so the trunk keeps its lean on the shin.
   let folded = false;
+  // On bumps with `absorb`, radians the trunk stands up off its lean on the shin as the hips drive forward.
+  let upright = 0;
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
-    const pelvisPitch = (folded ? hip + knee - depthKnee : hip) - hipFlex;
+    const pelvisPitch = (folded ? hip + knee - depthKnee : hip - upright) - hipFlex;
     // A folding hip turns the thighs' draw forward, so absorbing legs squeeze harder to keep the boots together.
     const adduction = c.stance * (c.absorb === undefined ? 1 : 1 + STANCE_SQUEEZE * Math.max(0, knee - SQUEEZE_FROM));
     const insideExtra = (1 - split) * extra;
@@ -443,6 +445,17 @@ const solveOn = (
     }
     return (lo + hi) / 2;
   };
+  // The hip opens until the mass sits back at the target; standing up moves it back.
+  const standUp = (extra: number, tailLift: number, shin: number): number => {
+    let lo = 0;
+    let hi = UPRIGHT_MAX;
+    for (let i = 0; i < 24; i++) {
+      upright = (lo + hi) / 2;
+      if (balanceAhead(segmentMatrices(base(depthKnee, extra, tailLift, shin)), t, alongSnow, brake) > target) lo = upright;
+      else hi = upright;
+    }
+    return (lo + hi) / 2;
+  };
   // Hip angulation answers a fold turned toward the inside: as the lean builds, the spine tips the trunk outward until
   // the fold moves the mass no further inside the snow's force than a square fold would (lemaster-2010 pp70-71, 126).
   // At the switch the anticipated fold still leads the mass into the new turn.
@@ -469,14 +482,18 @@ const solveOn = (
   for (let round = 0; round < 2; round++) {
     if (turning) tip = squareFold(knee, inside.extra, inside.tailLift, shin);
     if (shinFirst) {
+      upright = 0;
       shin = balanceShin(inside.extra, inside.tailLift);
       knee = depthKnee;
-      // Down a bump's face the cuff holds the shin forward, easing on; the legs fold to bring the mass back.
-      if (bumps && fold && shin < cuff + CUFF_EASE) {
+      // Down a bump's face the cuff holds the shin forward, easing on; the mass comes back by the legs folding or, absorbing,
+      // by the trunk standing up as the hips drive forward, so the legs keep the mass level (gellie-2019-moguls-forward 06:00).
+      if (bumps && shin < cuff + CUFF_EASE) {
         shin = softClamp(shin, cuff, SHIN_MAX + CUFF_EASE, CUFF_EASE);
         if (balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow, brake) > target) {
-          folded = true;
-          knee = balance(inside.extra, inside.tailLift, shin, target);
+          if (c.absorb === undefined) {
+            folded = true;
+            knee = balance(inside.extra, inside.tailLift, shin, target);
+          } else upright = standUp(inside.extra, inside.tailLift, shin);
         }
       }
     } else knee = balance(inside.extra, inside.tailLift);
