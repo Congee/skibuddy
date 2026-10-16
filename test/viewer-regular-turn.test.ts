@@ -149,7 +149,11 @@ describe('regular turn', () => {
   it('balances further forward at initiation than at the finish in every kind', () => {
     // Shorter path at the transition, tips into the control phase, feet ahead by the finish (lemaster-2010 pp81, 85-86).
     for (const kind of KINDS)
-      for (const i of INTENSITIES) assert.isAbove(angles(kind, i, 1 / 12).comAhead, angles(kind, i, 5 / 6).comAhead + 0.01, `${kind} ${i}`);
+      for (const i of INTENSITIES) {
+        // Ahead of the feet's midpoint: counter staggers them, the outside foot leading after the switch.
+        const ahead = (t: number): number => angles(kind, i, t).comAhead - angles(kind, i, t).lead / 2;
+        assert.isAbove(ahead(1 / 12), ahead(5 / 6) + 0.01, `${kind} ${i}`);
+      }
   });
 
   it('moves the feet under the hips with the ankle, not by pitching the trunk', () => {
@@ -180,7 +184,8 @@ describe('regular turn', () => {
         const steps = seq.slice(1).map((v, j) => Math.max(...v.map((x, n) => Math.abs(x - (seq[j]?.[n] ?? x)))));
         const wrap = steps.at(-1) ?? 0;
         assert.isAtMost(wrap, Math.max(...steps.slice(0, -1)), `${kind} ${i}`);
-        assert.isBelow(Math.max(...steps), 0.025, `${kind} ${i}`);
+        // A trunk folded toward the fall line tips fast as the lean builds after an anticipated switch.
+        assert.isBelow(Math.max(...steps), 0.03, `${kind} ${i}`);
       }
   });
 
@@ -254,6 +259,27 @@ describe('regular turn', () => {
     }
   });
 
+  it('anticipates short turns and steeps: the chest near the fall line at the switch, the head inside its cap', () => {
+    const chestOffFallLine = (kind: RegularTurn, i: Intensity, t: number): number => {
+      const p = samplePose(poseTable(kind, i), t);
+      return (p.counter + p.spineTwist - headingAt(t, turnPath(kind, i))) * DEG;
+    };
+    for (const kind of [RegularTurn.ShortTurns, RegularTurn.Steeps])
+      for (const i of INTENSITIES) {
+        assert.isAtMost(Math.abs(chestOffFallLine(kind, i, 0)), i === Intensity.Gentle ? 25 : 20, `${kind} ${i}`);
+        assert.isBelow(Math.abs(samplePose(poseTable(kind, i), 0).headYaw) * DEG, 25, `${kind} ${i}`);
+        // Signed through the switch into the mirrored turn, square to the skis on the fall line.
+        const at = (t: number): number => angles(kind, i, t).counter;
+        assert.isBelow(at(0), -25, `${kind} ${i}`);
+        assert.closeTo(at(0.999), -at(0), 1, `${kind} ${i}`);
+        assert.isBelow(Math.abs(at(1 / 2)), 1, `${kind} ${i}`);
+        for (let k = 1; k < 24; k++) assert.isAbove(at(k / 24), at((k - 1) / 24), `${kind} ${i} ${k}/24`);
+      }
+    const peak = (kind: RegularTurn): number => Math.abs(angles(kind, Intensity.Moderate, 0).counter);
+    assert.isAbove(peak(RegularTurn.Steeps), peak(RegularTurn.ShortTurns));
+    assert.isBelow(peak(RegularTurn.Powder), peak(RegularTurn.ShortTurns) - 5);
+  });
+
   it('never lets the spine twist lead the pelvis: the hips drive the shoulders', () => {
     for (const [drill, def] of Object.entries(POSE_DEFINITIONS)) {
       const peak = (f: (k: (typeof def.keys)[number]) => number): number => Math.max(...def.keys.map(f));
@@ -271,7 +297,7 @@ describe('regular turn', () => {
   it('differs between kinds', () => {
     const shaping = KINDS.map((k) => poseToChannels(samplePose(poseTable(k, Intensity.Moderate), 1 / 2)).join());
     assert.strictEqual(new Set(shaping).size, KINDS.length);
-    const counter = (k: RegularTurn): number => angles(k, Intensity.Moderate, 1 / 2).counter;
+    const counter = (k: RegularTurn): number => Math.max(...Array.from({ length: 24 }, (_, j) => Math.abs(angles(k, Intensity.Moderate, j / 24).counter)));
     assert.isAbove(counter(RegularTurn.Steeps), counter(RegularTurn.Carving));
     assert.isAbove(counter(RegularTurn.ShortTurns), counter(RegularTurn.Cruising));
     assert.isAbove(poseTable(RegularTurn.Steeps, Intensity.Moderate).reduce((m, p) => Math.max(m, p.poleTouch), 0), 0.99);

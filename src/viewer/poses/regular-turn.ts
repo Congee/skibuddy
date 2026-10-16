@@ -80,10 +80,6 @@ const LONG: TurnScenarios = {
 };
 // The trunk follows the skis: counter builds to late shaping and eases off through completion (lemaster-2010 p128).
 const FOLLOW: PhaseValues = [0, 0.5, 0.9, 1, 0.4];
-// The trunk faces the fall line, so counter tracks the skis' heading off it: most at the edge set (lemaster-2010 pp74, 128).
-const SWIVEL: PhaseValues = [0, 0.3, 0.8, 0.94, 1];
-// Pelvis counter at the finish: short turns 30-40 deg, low confidence (biomechanics.md D12); the spine adds 5-8 (sporri-2016).
-const SHORT_COUNTER = 35;
 // In moguls the hips (user's rule) and the head and chest (fis-freestyle-judging-2025 p29, dipiro-2005 p32) face the
 // fall line, so pelvis counter is the skis' heading off it with no spine twist.
 // Mogul lines, and the closed-stance drill's terrain, run in a corridor about 2 m wide.
@@ -99,8 +95,17 @@ const NEXT_APEX: HeadRule = { aim: HeadAim.Arc, lead: 1, early: 1 };
 const DOWN_THE_LINE: HeadRule = { aim: HeadAim.Line, turns: 2 };
 // Hands in front of the body (fis-freestyle-judging-2025 p29), not out wide; amount inferred.
 const HANDS_IN = 10;
-// An arc of radius r from the fall line across half a corridor w heads acos(1 - w/2r) off it, up to the hips' rotation range.
-const fallLineHeading = (r: number, w: number): number => Math.min(45, Math.acos(1 - w / (2 * r)) / DEG);
+// An arc of radius r from the fall line across half a corridor w heads acos(1 - w/2r) off it.
+const pathHeading = (r: number, w: number): number => Math.acos(1 - w / (2 * r)) / DEG;
+// The hips' rotation range.
+const HIP_TURN = 45;
+const fallLineHeading = (r: number, w: number): number => Math.min(HIP_TURN, pathHeading(r, w));
+/** Corridor as a share of the radius where none is known: a round turn, 60° off the fall line at the transition. */
+export const CORRIDOR_SHARE = 1;
+// Pelvis counter at the switch: a share of the skis' heading off the fall line, so the trunk is biased downhill, facing
+// it fully only in passing, more on steeper hills (kipp-2024; lemaster-2010 pp74, 128); the spine adds 5-8 (sporri-2016).
+const anticipation = (scenarios: TurnScenarios, share: number): number =>
+  Math.min(HIP_TURN, share * pathHeading(scenarios.moderate.radiusM, CORRIDOR_SHARE * scenarios.moderate.radiusM));
 // Signed, as headingAt in turn-heading.ts: -max at the transition, 0 at the fall line, max into the next transition.
 const heading = (t: number): number => -Math.cos(Math.PI * t);
 const HEADING: PhaseValues = [heading(0), heading(1 / 6), heading(1 / 2), heading(0.65), heading(5 / 6)];
@@ -113,6 +118,16 @@ const SHORT: TurnScenarios = {
   gentle: { speedMps: 6, radiusM: 6, slopeDeg: 12 },
   moderate: { speedMps: 7, radiusM: 6, slopeDeg: 15 },
   dynamic: { speedMps: 9, radiusM: 7, slopeDeg: 20 },
+};
+const STEEP: TurnScenarios = {
+  gentle: { speedMps: 5, radiusM: 6, slopeDeg: 25 },
+  moderate: { speedMps: 6, radiusM: 6, slopeDeg: 30 },
+  dynamic: { speedMps: 7, radiusM: 6, slopeDeg: 35 },
+};
+const POWDER: TurnScenarios = {
+  gentle: { speedMps: 8, radiusM: 14, slopeDeg: 16 },
+  moderate: { speedMps: 8.5, radiusM: 13, slopeDeg: 22 },
+  dynamic: { speedMps: 10, radiusM: 12, slopeDeg: 26 },
 };
 
 /**
@@ -194,7 +209,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     poleTrim: 0,
     head: ALONG_ARC,
   },
-  // Legs flex and extend under a quiet trunk square to the fall line.
+  // Legs flex and extend under a quiet trunk biased down the fall line.
   [RegularTurn.ShortTurns]: {
     scenarios: SHORT,
     outsideShare: [0.62, 0.85],
@@ -202,9 +217,10 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hipStep: 4,
     hipSpread: 0,
     angulation: 9,
-    counter: SHORT_COUNTER,
-    twist: 5,
-    counterCurve: SWIVEL,
+    // 36 deg at the switch: pelvis counter 30-40 deg, low confidence (biomechanics.md D12); share inferred.
+    counter: anticipation(SHORT, 0.6),
+    twist: 6,
+    counterCurve: HEADING,
     bend: 5,
     spineFlex: 22,
     narrow: 0,
@@ -257,20 +273,16 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   },
   // Strong counter and angulation, a firm pole plant.
   [RegularTurn.Steeps]: {
-    scenarios: {
-      gentle: { speedMps: 5, radiusM: 6, slopeDeg: 25 },
-      moderate: { speedMps: 6, radiusM: 6, slopeDeg: 30 },
-      dynamic: { speedMps: 7, radiusM: 6, slopeDeg: 35 },
-    },
+    scenarios: STEEP,
     outsideShare: [0.65, 0.85],
     hip: [36, 50],
     hipStep: 4,
     hipSpread: 0,
     angulation: 14,
-    // Pivoted, so near short turns; inferred.
-    counter: 30,
-    twist: 6,
-    counterCurve: SWIVEL,
+    // Further down the fall line than short turns (skimag-steeps-2018, kipp-2024); share inferred.
+    counter: anticipation(STEEP, 0.65),
+    twist: 7,
+    counterCurve: HEADING,
     bend: 9,
     spineFlex: 24,
     narrow: 0,
@@ -287,20 +299,16 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   },
   // Near even weighting, a narrow stance and more up and down.
   [RegularTurn.Powder]: {
-    scenarios: {
-      gentle: { speedMps: 8, radiusM: 14, slopeDeg: 16 },
-      moderate: { speedMps: 8.5, radiusM: 13, slopeDeg: 22 },
-      dynamic: { speedMps: 10, radiusM: 12, slopeDeg: 26 },
-    },
+    scenarios: POWDER,
     outsideShare: [0.52, 0.6],
     hip: [28, 46],
     hipStep: 4,
     hipSpread: 0,
     angulation: 4,
-    // Rhythmic fall-line turns, rounder than short turns; inferred.
-    counter: 20,
+    // Rounder, flowing turns: the trunk follows the skis more than in short turns; share inferred.
+    counter: anticipation(POWDER, 0.45),
     twist: 3,
-    counterCurve: SWIVEL,
+    counterCurve: HEADING,
     bend: 2,
     spineFlex: 19,
     narrow: 2,

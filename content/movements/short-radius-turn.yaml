@@ -29,10 +29,11 @@ name: Short-radius turns, legs turning under a pelvis that faces down the hill
 # holds steady for only about 17 % of a slalom turn, the hip 11-34 % in technical events: alhammoud-2020,
 # cross-raschner-2023 pp 12-13), then absorbing through the finish's edge set. The rhythm is faster than in long
 # turns, so the same joints work through more cycles per minute; that, not a deeper bend, is what tires the legs.
-# Counter: the pelvis and chest face down the fall line while the legs turn under them, so counter to the skis
-# grows through shaping to the most at the finish (about 30-40°) and unwinds as the edges release
-# (biomechanics.md 2.0; LeMaster pp 74, 109-110, 128). It comes from the femurs turning in the hips, not the
-# spine (fujii-2007; sacrum-to-sternum torsion about 5° in slalom, sporri-2016).
+# Counter: the pelvis and chest face most of the way down the fall line while the legs turn under them, so counter
+# to the skis passes square on the fall line, grows to the most through the finish and switch (about 30-40°) and
+# unwinds through the next initiation (biomechanics.md 2.0; LeMaster pp 74, 109-110, 128; kipp-2024). It comes
+# from the femurs turning in the hips, not the spine (fujii-2007; sacrum-to-sternum torsion about 5° in slalom,
+# sporri-2016).
 # Edging: early and progressive, but compressed: the new edges engage right after the release and the edge
 # angle builds through late shaping into the edge set, then releases right after the set (reid-2020;
 # LeMaster p 128).
@@ -500,7 +501,7 @@ dof_matrix:
           - hintermeister-1997
           - { source: lemaster-2010, pages: "74, 109-110" }
       shaping:
-        action: Still facing down the hill; counter to the skis grows to about 25° as they turn across
+        action: Still facing down the hill; square to the skis as they point down the fall line, countering again as they turn across
         moment: Resisting the reaction torque of the turning legs
         contraction: isometric
         cue: Upper body quiet, legs turning
