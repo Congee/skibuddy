@@ -809,10 +809,10 @@ activations:
     contraction: { initiation: concentric, shaping: concentric, finish: isometric }
     role: Turn the bent thigh inward to steer and edge, the strongest rotators of a flexed leg, and stiffen the hip against the abductors
     confidence: medium
-    basis: The adductors averaged above 50 % MVC in short-radius turns, recorded as a group on one leg through both turns; that they drive the steering is mechanics of the bent leg. Lower settings by inference
+    basis: The adductors averaged above 50 % MVC in short-radius turns, recorded as a group on one leg through both turns; that they drive the steering is mechanics of the bent leg. In short turns LeMaster has the leg's rotation blend into knee angulation as the early edge. Lower settings by inference
     sources:
       - hintermeister-1997
-      - { source: lemaster-2010, pages: "108, 124-125" }
+      - { source: lemaster-2010, pages: "53, 108, 124-125, 128" }
   - muscle: adductor-magnus
     side: outside
     serves: [hip.flexion, hip.abduction]
@@ -880,12 +880,12 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Pulls the feet back at every edge change, many times a minute, then co-contracts to keep the shin on the tongue and the ankle closed through the edge set
     confidence: high
-    basis: Averaged above 50 % MVC in short-radius parallel turns (hintermeister-1997, abstract only; 1997 straight skis; one leg through both turns), and highly activated in racing turns for fore-aft and edge control (cross-raschner-2023 p 14). The quick rhythm repeats the pull every second or so; the shaping moment is plantarflexion, so its later work is co-contraction. Lower settings by inference
+    basis: Averaged above 50 % MVC in short-radius parallel turns (hintermeister-1997, abstract only; 1997 straight skis; one leg through both turns), and highly activated in racing turns for fore-aft and edge control (cross-raschner-2023 p 14). The quick rhythm repeats the pull every second or so; the shaping moment is plantarflexion, so its later work is co-contraction. LeMaster pairs the early ankle bend with the knee turning in as early edging. Lower settings by inference
     sources:
       - hintermeister-1997
       - heinrich-2022
       - { source: cross-raschner-2023, pages: 14 }
-      - { source: lemaster-2010, pages: "79-81" }
+      - { source: lemaster-2010, pages: "53, 79-81" }
   - muscle: toe-extensors
     side: outside
     serves: [ankle.flexion]
@@ -906,19 +906,26 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
     role: Yields as the shin presses into the tongue, then holds the ankle against the rising load and through the edge set with the boot shaft
     confidence: medium
-    basis: Ankle moments modelled in carving put about 0.85 Nm/kg in the muscles and 1.16 Nm/kg in the boot shaft; with the knee bent the soleus, not the gastrocnemius, does the ankle work. Scaled with load by inference
+    basis: Ankle moments modelled in carving put about 0.85 Nm/kg in the muscles and 1.16 Nm/kg in the boot shaft; with the knee bent the soleus, not the gastrocnemius, does the ankle work. Pressure ahead of the ankle makes the net ankle moment plantarflexor (our reading of Lind and Sanders). Scaled with load by inference
     sources:
       - heinrich-2022
       - { source: lemaster-2010, pages: 81 }
+      - { source: lind-sanders-2004, pages: "54, 69-70" }
   - muscle: gastrocnemius
     side: outside
     serves: [ankle.flexion, knee.flexion]
-    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    intensity:
+      initiation: 1
+      shaping: { gentle: 1, moderate: 1, dynamic: 2 }
+      finish: { gentle: 1, moderate: 1, dynamic: 2 }
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
-    role: Adds a little ankle stiffness; slack with the knee bent
+    role: Stiffens the closed ankle against the boot under load and through the edge set; slack with the knee bent
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from the plantarflexor ankle moment of a modelled carved turn, where the medial head averaged above 50 % MVC in GS. Short turns bend the knee deeper, so less of its pull reaches the ankle; the dynamic edge set is our inference
+    sources:
+      - heinrich-2022
+      - hintermeister-1997
+      - { source: lind-sanders-2004, pages: "54, 69-70" }
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -929,21 +936,23 @@ activations:
     contraction: { initiation: concentric, shaping: concentric, finish: eccentric }
     role: Roll the foot quickly onto the new big-toe edge, build it into late shaping, then let it go
     confidence: medium
-    basis: Peroneus longus is highly active in turns, attributed to edge control; the boot shell carries most of the edging moment. The quick edge changes repeat this every turn
+    basis: Peroneus longus is highly active in turns, attributed to edge control; the boot shell carries most of the edging moment. Tipping is quick foot and lower-leg work that the upper body is too slow to lead, and the quick edge changes repeat it every turn
     sources:
       - louie-1984
       - { source: cross-raschner-2023, pages: 14 }
-      - { source: lemaster-2010, pages: 127 }
-      - { source: lind-sanders-2004, pages: "54-55, 139" }
+      - { source: lemaster-2010, pages: "53, 127" }
+      - { source: lind-sanders-2004, pages: "54-55, 95, 139" }
   - muscle: tibialis-posterior
     side: outside
     serves: [foot.arch, ankle.inversion]
     intensity: { initiation: 1, shaping: 1, finish: 1 }
-    contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
-    role: Holds the arch up and co-contracts with the peroneals
+    contraction: { initiation: eccentric, shaping: isometric, finish: concentric }
+    role: Yields as the foot rolls onto the big-toe edge, holds the arch up against the peroneals through the set, then helps roll the foot flat at the release
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the mechanics of tipping inside the boot; the medial arch takes the lateral load. Not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: "95, 139" }
+      - { source: lemaster-2010, pages: 139 }
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -1089,8 +1098,20 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Rolls the inside ski onto its little-toe edge and lets it go
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the mechanics of tipping inside the boot; not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: "95, 139" }
+  - muscle: peroneals
+    side: inside
+    serves: [ankle.inversion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: eccentric, shaping: isometric, finish: concentric }
+    role: Control the inside foot's roll onto its little-toe edge, then roll it flat toward its new big-toe edge at the release
+    confidence: low
+    basis: Inferred from anatomy and the mechanics of tipping inside the boot; the inside foot becomes the next outside foot within a second. Not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: "95, 139" }
+      - { source: lemaster-2010, pages: 127 }
   - muscle: soleus
     side: inside
     serves: [ankle.flexion]
@@ -1098,7 +1119,18 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
     role: Shares the inside ankle's plantarflexion moment with the boot
     confidence: medium
-    basis: The modelled inside ankle moment was about 45 % lower than the outside one
+    basis: The modelled inside ankle moment was about 45 % lower than the outside one. LeMaster's ankle cues are for both feet
+    sources:
+      - heinrich-2022
+      - { source: lemaster-2010, pages: "79, 81" }
+  - muscle: gastrocnemius
+    side: inside
+    serves: [ankle.flexion, knee.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Adds a little stiffness to the inside ankle; the deeper-bent inside knee leaves it slack
+    confidence: low
+    basis: Inferred from the smaller modelled inside ankle moment and the inside knee's deeper bend; not measured on the inside leg
     sources: [heinrich-2022]
   - muscle: foot-intrinsics
     side: inside
