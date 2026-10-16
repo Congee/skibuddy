@@ -31,8 +31,6 @@ export interface TurnStyle {
   readonly hipSpread: number;
   /** Degrees the deep end deepens further at dynamic only: a lower cross-under. */
   readonly dynamicDeep?: number;
-  /** Degrees both ankles close further at the deepest cross-under. */
-  readonly underAnkle?: number;
   /** Peak hip angulation and the outside femur's rotation into the turn. */
   readonly angulation: number;
   /** Degrees both femurs turn further into the turn: edge from the knees, the pelvis left level. */
@@ -44,17 +42,18 @@ export interface TurnStyle {
   readonly counterCurve: PhaseValues;
   /** Trunk bent toward the outside ski at shaping. */
   readonly bend: number;
-  /** Ankle dorsiflexion at each phase key: closed draws the feet back, opened pushes them ahead (lemaster-2010 p81). */
-  readonly ankle: PhaseValues;
-  /** Share the ankle closes further per step of intensity, and opens at gentle. */
-  readonly ankleGain: number;
+  /** Degrees the trunk leans further forward than the outside shin; the ankle, solved, sets fore-aft (lemaster-2010 p81). */
+  readonly trunkOverShin: number;
   /** Low back flexed on the pelvis at moderate intensity; racers measure 11-27 deg (sporri-2016). */
   readonly spineFlex: number;
   /** Thighs drawn toward each other: a narrower stance than hip width. */
   readonly narrow: number;
   /** Both femurs turned inward, so the knees meet while the boots stay apart. */
   readonly kneesIn: number;
-  /** Mass ahead of the outside mid-foot at each phase key, metres; 10 deg of ankle moves it about 15 cm (lemaster-2010 p81). */
+  /**
+   * Mass ahead of the outside mid-foot at each phase key, metres: forward into the control phase, back to the middle
+   * or tail by the completion, the range an inch or two in free skiing and more when aggressive (lemaster-2010 p85).
+   */
   readonly comAhead: PhaseValues;
   /** Share of the peak angulation already in at the initiation key: feet and knees tip the new edges early. */
   readonly early: number;
@@ -122,8 +121,8 @@ const SHORT: TurnScenarios = {
  * ceiling: a GS instructor's 56-80 (heinrich-2022), elite moguls little past 100 (arndt-1992 p85).
  */
 export const OUTSIDE_KNEE_MAX: Readonly<Record<RegularTurn, Readonly<Record<Intensity, number>>>> = {
-  [RegularTurn.Cruising]: { gentle: 50, moderate: 50, dynamic: 80 },
-  [RegularTurn.Carving]: { gentle: 50, moderate: 50, dynamic: 80 },
+  [RegularTurn.Cruising]: { gentle: 55, moderate: 55, dynamic: 80 },
+  [RegularTurn.Carving]: { gentle: 58, moderate: 58, dynamic: 85 },
   [RegularTurn.ShortTurns]: { gentle: 65, moderate: 65, dynamic: 80 },
   [RegularTurn.Moguls]: { gentle: 80, moderate: 90, dynamic: 100 },
   [RegularTurn.Steeps]: { gentle: 65, moderate: 65, dynamic: 80 },
@@ -152,13 +151,12 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 2,
     counterCurve: FOLLOW,
     bend: 2,
-    // Forward at initiation, slightly back while steering (debertin-2022); skidded turns lean back less than carving.
-    ankle: [13.5, 15.8, 15, 14, 13.2],
-    ankleGain: 0,
     spineFlex: 20,
     narrow: 0,
     kneesIn: 0,
-    comAhead: [0.05, 0.1, 0.07, 0.05, 0.04],
+    // Free skiing's small range (lemaster-2010 p85), forward at initiation (debertin-2022); values inferred.
+    comAhead: [0.015, 0.045, 0.02, 0.01, 0],
+    trunkOverShin: 4,
     early: 0.4,
     // Cross-over: the mass moves across the skis into the new turn (iasi-2021 p46, lemaster-2010 pp144-148).
     crossUnder: [0, 0, 0],
@@ -179,14 +177,12 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 1,
     counterCurve: FOLLOW,
     bend: 6,
-    // Ankles close and the mass moves forward at initiation, then the feet slide ahead to the finish (debertin-2022,
-    // falda-buscaiot-2017, lemaster-2010 p79). A GS instructor's reach 18-27 deg (heinrich-2022): dynamic only.
-    ankle: [13, 20, 16, 15, 12],
-    ankleGain: 0.18,
     spineFlex: 21,
     narrow: 0,
     kneesIn: 0,
-    comAhead: [0.05, 0.13, 0.08, 0.05, 0.02],
+    // Tip pressure into the control phase, then the feet slide ahead to the finish (lemaster-2010 pp79-81, 85); inferred.
+    comAhead: [0.015, 0.045, 0.02, 0.005, -0.02],
+    trunkOverShin: 3,
     early: 0.65,
     // Cross-over at gentle and moderate; at dynamic the legs flex and retract so the skis stay on the snow
     // (lemaster-2010 p154, komissarov-2022b, seifert-2023).
@@ -194,7 +190,6 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Outside knee about 72 deg and trunk about 41 deg at the switch: toward seifert-2023's 90 deg flexion transition,
     // within heinrich-2022's GS knee 56-80 and ankle 18-27 deg.
     dynamicDeep: 25,
-    underAnkle: 6,
     polePlant: false,
     poleTrim: 0,
     head: ALONG_ARC,
@@ -203,7 +198,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   [RegularTurn.ShortTurns]: {
     scenarios: SHORT,
     outsideShare: [0.62, 0.85],
-    hip: [32, 56],
+    hip: [32, 46],
     hipStep: 4,
     hipSpread: 0,
     angulation: 9,
@@ -211,13 +206,12 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 5,
     counterCurve: SWIVEL,
     bend: 5,
-    // Feet drawn back through the transition, forward into the new turn, centred by the edge set (lemaster-2010 p86).
-    ankle: [19, 23, 18, 16, 16],
-    ankleGain: 0,
     spineFlex: 22,
     narrow: 0,
     kneesIn: 0,
-    comAhead: [0.06, 0.12, 0.09, 0.06, 0.04],
+    // Feet drawn back through the transition, forward into the new turn, centred by the edge set (lemaster-2010 p86); inferred.
+    comAhead: [0.02, 0.055, 0.03, 0.01, -0.01],
+    trunkOverShin: 10,
     early: 0.6,
     // Cross-under: the edges release as the legs flex back toward the mass (iasi-2021 p63, lemaster-2010 p152).
     crossUnder: [1, 1, 1],
@@ -234,7 +228,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     },
     outsideShare: [0.6, 0.75],
     // Elite mogul skiers fold the hip much deeper over the bump than the knee (arndt-1992 p85); the range widens with intensity.
-    hip: [30, 90],
+    hip: [30, 72],
     hipStep: 5,
     hipSpread: 3,
     angulation: 6,
@@ -244,16 +238,14 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 0,
     counterCurve: HEADING,
     bend: 3,
-    // Crest at the transition: ankles, knees and hips fold and the feet are pulled back; into the trough the legs
-    // extend and the tips are pushed down. Elite ankles span about 35 deg (arndt-1992 p67); about half that at
-    // gentle, nearer it at dynamic, inferred. The shell stops the shin in the trough.
-    ankle: [31, 25, 12, 12, 22],
-    ankleGain: 0.16,
     spineFlex: 24,
     // Legs together (fis-freestyle-judging-2025 p26), as the closed stance.
     narrow: 7,
     kneesIn: 10,
-    comAhead: [0.12, 0.08, 0.01, 0.01, 0.06],
+    // Feet pushed ahead into the bump, pulled back over the crest, pressing forward into the trough (lemaster-2010
+    // p78, p89); inferred. The legs fold up under a trunk that stays over the feet (fis-freestyle-judging-2025 p26).
+    comAhead: [0.06, 0.05, 0.01, 0, -0.01],
+    trunkOverShin: 12,
     early: 0.4,
     // Cross-under: the legs retract over the crest so the mass travels straight (lind-sanders-2004 pp114-115).
     crossUnder: [1, 1, 1],
@@ -271,7 +263,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
       dynamic: { speedMps: 7, radiusM: 6, slopeDeg: 35 },
     },
     outsideShare: [0.65, 0.85],
-    hip: [36, 56],
+    hip: [36, 50],
     hipStep: 4,
     hipSpread: 0,
     angulation: 14,
@@ -280,13 +272,12 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 6,
     counterCurve: SWIVEL,
     bend: 9,
-    // Forward relative to the feet as the slope steepens (lemaster-2010 pp83-84), low and over the feet (p200); values inferred.
-    ankle: [18, 24, 19, 17, 17],
-    ankleGain: 0,
     spineFlex: 24,
     narrow: 0,
     kneesIn: 0,
-    comAhead: [0.06, 0.12, 0.09, 0.07, 0.05],
+    // The balance axis stays square to the skis, so forward of gravity, not of the feet (lemaster-2010 p84); inferred.
+    comAhead: [0.02, 0.05, 0.03, 0.01, -0.01],
+    trunkOverShin: 10,
     early: 0.6,
     // Cross-under: flexing and relaxing the downhill leg, on a solid pole plant (lemaster-2010 pp151-156).
     crossUnder: [1, 1, 1],
@@ -302,7 +293,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
       dynamic: { speedMps: 10, radiusM: 12, slopeDeg: 26 },
     },
     outsideShare: [0.52, 0.6],
-    hip: [28, 54],
+    hip: [28, 46],
     hipStep: 4,
     hipSpread: 0,
     angulation: 4,
@@ -311,13 +302,12 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     twist: 3,
     counterCurve: SWIVEL,
     bend: 2,
-    // Onto the balls of the feet into the turn, feet slightly forward near the bottom, never sitting back (lemaster-2010 pp193-199).
-    ankle: [15, 19, 16, 14, 13],
-    ankleGain: 0,
     spineFlex: 19,
     narrow: 2,
     kneesIn: 0,
-    comAhead: [0.05, 0.1, 0.08, 0.05, 0.03],
+    // Never sitting back (lemaster-2010 pp193-199); inferred.
+    comAhead: [0.015, 0.045, 0.03, 0.01, -0.005],
+    trunkOverShin: 6,
     early: 0.5,
     // A two-footed rebound: both legs flex through the finish and extend through the switch, kept small
     // (iasi-2021 p88, lemaster-2010 pp193-199).
@@ -349,13 +339,12 @@ export const CLOSED_STANCE: TurnStyle = {
   twist: 0,
   counterCurve: HEADING,
   bend: 1,
-  // The moguls' pattern, damped: closed ankles keep the mass over the feet in the deep stance; inferred.
-  ankle: [25, 23, 22, 21, 24],
-  ankleGain: 0,
   spineFlex: 22,
   narrow: 7,
   kneesIn: 10,
-  comAhead: [0.11, 0.11, 0.1, 0.09, 0.1],
+  // Centred, little fore-aft in the narrow stance; inferred.
+  comAhead: [0.015, 0.04, 0.02, 0, -0.01],
+  trunkOverShin: 6,
   early: 0.6,
   // Cross-under: the legs swivel under a level trunk.
   crossUnder: [1, 1, 1],
@@ -396,6 +385,11 @@ const SWITCH: ReadonlyArray<Pick<Phase, 't' | 'hip' | 'under'>> = [
   { t: 11 / 12, hip: 1, under: 0.9 },
 ];
 
+// The inside boot lets its ankle flex a little, so most of the inside leg's extra flex leads its foot (lemaster-2010 p61); inferred.
+const INSIDE_ANKLE_SHARE = 0.3;
+// A harder turn leans the trunk further over the shin; inferred.
+const TRUNK_OVER_SHIN_GAIN = 0.4;
+
 /** The kind's two-footed turn as a pose definition: both skis on the snow, the inside leg shorter. */
 export const regularTurn = (style: TurnStyle): PoseDefinition => {
   const [open, deep] = style.hip;
@@ -404,7 +398,6 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
   const load = (i: Intensity): number => arcLoad(style.scenarios[i]);
   const keys = PHASES.map((p, i): PoseKey => {
     const share = p.share ?? style.early;
-    const ankle = (style.ankle[i] ?? 0) * DEG;
     return {
       t: p.t,
       angulation: share,
@@ -415,8 +408,9 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       spineBend: style.bend * share * DEG,
       spineTwist: style.twist * (style.counterCurve[i] ?? 0) * DEG,
       counter: style.counter * (style.counterCurve[i] ?? 0) * DEG,
-      dorsiflexion: ankle,
-      insideDorsiflexion: ankle,
+      // Solved from the balance.
+      dorsiflexion: 0,
+      insideDorsiflexion: 0,
       // The feet tip first, the hips follow.
       eversion: 0.2 * style.angulation * Math.sqrt(share) * DEG,
       protraction: 6 * DEG,
@@ -439,7 +433,9 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       insideKneeMax: 120 * DEG,
       tailLift: null,
       crossUnder: style.crossUnder,
-      underAnkle: (style.underAnkle ?? 0) * DEG,
+      trunkOverShin: style.trunkOverShin * DEG,
+      trunkOverShinGain: TRUNK_OVER_SHIN_GAIN,
+      insideAnkleShare: INSIDE_ANKLE_SHARE,
       poleTouch: style.polePlant ? { t: 1 / 24, hold: 0.02, swing: 0.11 } : null,
       scapularRhythm: 0.3,
       stance: style.narrow * DEG,
@@ -447,7 +443,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       poleTrim: style.poleTrim,
       ...(style.head === undefined ? {} : { head: style.head }),
       ...(style.armAbduction === undefined ? {} : { armAbduction: style.armAbduction * DEG }),
-      gains: { dorsiflexion: style.ankleGain, lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1 },
+      gains: { comAhead: 0.4, lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1 },
     },
   };
 };

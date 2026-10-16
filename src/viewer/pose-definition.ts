@@ -95,6 +95,15 @@ export interface PoseConstraints {
   readonly crossUnder?: readonly [number, number, number];
   /** Radians both ankles close further in a full cross-under, timed by `hipUnder`. */
   readonly underAnkle?: number;
+  /**
+   * Radians the trunk leans further forward than the outside shin. Present, the knee follows the hip's depth and the
+   * ankle alone moves the mass fore and aft (lemaster-2010 p81); absent, the knee does.
+   */
+  readonly trunkOverShin?: number;
+  /** Fraction `trunkOverShin` grows per unit of effort scale, so a harder turn leans the trunk more. */
+  readonly trunkOverShinGain?: number;
+  /** Share of the inside leg's extra flexion its ankle takes, so its foot leads less. */
+  readonly insideAnkleShare?: number;
   /** Where the head looks; absent, with the chest. */
   readonly head?: HeadRule;
   /** Radians both arms are abducted; absent, ARM_ABDUCTION. */
