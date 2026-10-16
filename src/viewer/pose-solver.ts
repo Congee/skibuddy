@@ -489,7 +489,7 @@ const solveOn = (
   const braking = brakingTiltAt(scenario, surface, t);
   const brake = Math.tan(forceTiltAt(scenario, surface, t));
   const onAxis = turning && c.balanced !== false ? balanceShare(lean, scenario) : 0;
-  const angulation = mild('angulation');
+  const angulation = mild('angulation') + k.angulationStep * effort.scale;
   const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];
   const under = Math.min(1, Math.max(0, effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale));
   const dorsiflexion = mild('dorsiflexion') + (c.underAnkle ?? 0) * under * k.hipUnder;

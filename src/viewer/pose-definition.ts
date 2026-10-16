@@ -10,6 +10,8 @@ export interface PoseKey {
   readonly t: number;
   /** Share of the peak angulation: hip angulation and femur rotation. */
   readonly angulation: number;
+  /** `angulation` added per intensity step from moderate; absent, none. */
+  readonly angulationStep?: number;
   /** Outside hip flexion between its most open (0) and its deepest (1); the knee follows from balance. */
   readonly hip: number;
   /** `hip` in a cross-under transition, where the constraints call for one; else `hip`. */
@@ -162,6 +164,7 @@ type Knot = Required<PoseKey> & { readonly time: number };
 
 const FIELDS: ReadonlyArray<KeyField> = [
   'angulation',
+  'angulationStep',
   'hip',
   'hipUnder',
   'pelvisList',
@@ -181,7 +184,7 @@ const FIELDS: ReadonlyArray<KeyField> = [
 ];
 
 /** Fields that lean or turn toward the inside: the next turn, mirrored, takes them with the other sign. */
-const ODD: ReadonlySet<KeyField> = new Set(['angulation', 'pelvisList', 'spineBend', 'spineTwist', 'counter', 'eversion']);
+const ODD: ReadonlySet<KeyField> = new Set(['angulation', 'angulationStep', 'pelvisList', 'spineBend', 'spineTwist', 'counter', 'eversion']);
 
 /**
  * Monotone cubic Hermite through the keys, so nothing overshoots a key: no counter into the new turn. Turns
@@ -194,7 +197,7 @@ export const keyValuesAt = (keys: ReadonlyArray<PoseKey>, t: number): KeyValues 
   const at = (i: number): Knot => {
     const key = sorted[((i % n) + n) % n];
     if (key === undefined) throw new Error('no key poses');
-    const k: Required<PoseKey> = { ...key, hipUnder: key.hipUnder ?? key.hip, skiPitch: key.skiPitch ?? 0, skiClearance: key.skiClearance ?? 0 };
+    const k: Required<PoseKey> = { ...key, angulationStep: key.angulationStep ?? 0, hipUnder: key.hipUnder ?? key.hip, skiPitch: key.skiPitch ?? 0, skiClearance: key.skiClearance ?? 0 };
     const turn = Math.floor(i / n);
     const flipped = turn % 2 === 0 ? k : { ...k, ...Object.fromEntries([...ODD].map((f) => [f, -k[f]])) };
     return { ...flipped, time: k.t + turn };

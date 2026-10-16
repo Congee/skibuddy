@@ -266,10 +266,10 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     // Tip pressure into the control phase, then the feet slide ahead to the finish (lemaster-2010 pp79-81, 85); inferred.
     // Mass toward the ball of the foot so the chest stays over the outside knee (lemaster-2010 pp57, 182-183); inferred.
-    comAhead: [0.065, 0.095, 0.06, 0.045, 0.039],
+    comAhead: [0.065, 0.1, 0.06, 0.045, 0.034],
     comAheadGain: 0.2,
     trunkOverShin: 10,
-    trunkOverShinGain: 0,
+    trunkOverShinGain: -0.15, // Stands up with intensity: chest over the knee at a dynamic initiation; inferred.
     early: 0.65,
     // Cross-over at gentle and moderate; at dynamic the legs flex and retract so the skis stay on the snow
     // (lemaster-2010 p154, komissarov-2022b, seifert-2023).
@@ -303,7 +303,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     comAhead: [0.08, 0.08, 0.035, 0.05, 0.035],
     comAheadGain: 0,
     trunkOverShin: 14,
-    trunkOverShinGain: 0.4,
+    trunkOverShinGain: 0.3, // Trunk within 40 deg at dynamic; inferred.
     early: 0.6,
     // Cross-under: the edges release as the legs flex back toward the mass (iasi-2021 p63, lemaster-2010 p152).
     crossUnder: [1, 1, 1],
@@ -597,6 +597,15 @@ const PHASES: ReadonlyArray<Phase> = [
   { t: 0.65, share: 1, hip: 0.08, under: 0.08 },
   { t: 5 / 6, share: 0.4, hip: 0.7, under: 0.55 },
 ];
+/**
+ * Where the mass rides the skis' arc, angulation leads the edge: tipped early, most just before the fall line, then
+ * handing over to the inclination as the load peaks (carv-ligety-2024, reid-2020 Fig 4); shares at the phase keys.
+ */
+const ARC_SHARES: PhaseValues = [0, 0.3, 0.85, 0.5, 0.5];
+/** Initiation angulation added per intensity step: a harder turn tips sooner; inferred. */
+const ARC_STEPS: PhaseValues = [0, 0.2, 0, 0, 0];
+/** The angulation's own key, at its peak. */
+const ARC_LEAD_T = 0.375;
 /** Hip-only keys either side of the switch; every other field keeps the phase keys' curve. */
 const SWITCH: ReadonlyArray<Pick<Phase, 't' | 'hip' | 'under'>> = [
   { t: 1 / 12, hip: 0.5, under: 0.9 },
@@ -626,24 +635,29 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       ...(pop.clearance === undefined ? {} : { skiClearance: pop.clearance[i] ?? 0 }),
     };
   };
+  const arc = style.scenarios.moderate.comRadiusM === undefined;
+  const angulated = (share: number): Pick<PoseKey, 'angulation' | 'pelvisList' | 'spineBend' | 'eversion'> => ({
+    angulation: share,
+    pelvisList: 1.2 * style.angulation * share * DEG,
+    spineBend: style.bend * share * DEG,
+    // The feet tip first, the hips follow.
+    eversion: 0.2 * style.angulation * Math.sqrt(share) * DEG,
+  });
   const keys = PHASES.map((p, i): PoseKey => {
-    const share = style.edgeCurve?.[i] ?? p.share ?? style.early;
+    const share = style.edgeCurve?.[i] ?? (arc ? (ARC_SHARES[i] ?? 0) : (p.share ?? style.early));
     return {
       t: p.t,
-      angulation: share,
+      ...angulated(share),
+      ...(arc ? { angulationStep: ARC_STEPS[i] ?? 0 } : {}),
       hip: p.hip,
       hipUnder: p.under,
       ...popped(i),
-      pelvisList: 1.2 * style.angulation * share * DEG,
       lumbarFlex: style.spineFlex * DEG,
-      spineBend: style.bend * share * DEG,
       spineTwist: style.twist * (style.counterCurve[i] ?? 0) * DEG,
       counter: style.counter * (style.counterCurve[i] ?? 0) * DEG,
       // Solved from the balance.
       dorsiflexion: 0,
       insideDorsiflexion: 0,
-      // The feet tip first, the hips follow.
-      eversion: 0.2 * style.angulation * Math.sqrt(share) * DEG,
       protraction: 6 * DEG,
       elevation: 0,
       insideTailLift: 0,
@@ -651,7 +665,11 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
     };
   });
   return {
-    keys: [...keys, ...SWITCH.map((k, i): PoseKey => ({ ...keyValuesAt(keys, k.t), t: k.t, hip: k.hip, hipUnder: k.under, ...popped(PHASES.length + i) }))],
+    keys: [
+      ...keys,
+      ...(arc ? [{ ...keyValuesAt(keys, ARC_LEAD_T), t: ARC_LEAD_T, ...angulated(1) }] : []),
+      ...SWITCH.map((k, i): PoseKey => ({ ...keyValuesAt(keys, k.t), t: k.t, hip: k.hip, hipUnder: k.under, ...popped(PHASES.length + i) })),
+    ],
     constraints: {
       hipAngulation: style.angulation * DEG,
       femurRotation: (0.5 * style.angulation + (style.kneeAngulation ?? 0)) * DEG,

@@ -80,7 +80,7 @@ export const STORK_TURNS: PoseDefinition = {
       lumbarFlex: 11.5 * DEG,
       spineBend: 6 * DEG,
       spineTwist: 3 * DEG,
-      counter: 7 * DEG,
+      counter: 9 * DEG, // Held to the edge peak, so the lifted tip leads on past the fall line; inferred.
       dorsiflexion: 20.8 * DEG,
       insideDorsiflexion: 18.2 * DEG,
       eversion: 2.2 * DEG,

@@ -19,7 +19,7 @@ describe('Lind & Sanders eq 4.9', () => {
     assert.closeTo(p.finish.tilt / DEG, 35, 0.5);
   });
 
-  it('peaks the load below the fall line at every setting', () => {
+  it('peaks the load past the fall line at every setting', () => {
     const peaks = { gentle: 1.09, moderate: 1.2, dynamic: 1.33 } as const;
     for (const i of INTENSITIES) {
       const s = SCENARIOS[i];
@@ -29,11 +29,12 @@ describe('Lind & Sanders eq 4.9', () => {
         const { load } = turnForcesAt(s, t);
         if (load > best.load) best = { t, load };
       }
-      // Late shaping or early finish, not across the hill at the end of the turn.
+      // Least radius in COM direction change II, 62-83 % (sporri-2016-sidecut Fig 4); Ligety's pressure peak about 70 % (carv-ligety-2024); the model's 0.61 inferred.
+      assert.closeTo(best.load, peaks[i], 0.01, i);
       assert.isAbove(best.t, PHASE_T.shaping, i);
-      assert.isAtMost(best.t, PHASE_T.finish + 1e-9, i);
-      assert.closeTo(headingAt(best.t) ?? Number.NaN, (3 * Math.PI) / 4, 0.05, i);
+      assert.isAtMost(best.t, PHASE_T.finish, i);
     }
+    assert.isNull(headingAt(0.95));
   });
 
   it('matches the worked numbers at 45 and 135 deg and on a blue run', () => {
@@ -66,22 +67,27 @@ describe('turn time', () => {
     assert.isNull(headingAt(0.95));
   });
 
-  it('rises through the arc and eases flat through the transition', () => {
+
+  it('tips from flat at the switch to its peak and eases flat again, joining the mirrored turn smoothly', () => {
+    const h = 1e-6;
     for (const i of INTENSITIES) {
       const s = SCENARIOS[i];
       assert.strictEqual(turnForcesAt(s, 0).tilt, 0, i);
       assert.closeTo(turnForcesAt(s, 0).load, Math.cos(s.slopeDeg * DEG), 1e-12, i);
-      let last = -Infinity;
-      for (let t = PHASE_T.initiation; t <= PHASE_T.finish; t += 0.01) {
-        const { tilt } = turnForcesAt(s, t);
-        assert.isAtLeast(tilt, last - 1e-12, `${i} at t=${t}`);
-        last = tilt;
-      }
-      // Continuous where the arc meets the transition.
-      for (const t of [PHASE_T.initiation, PHASE_T.finish]) {
-        assert.closeTo(turnForcesAt(s, t - 1e-6).tilt, turnForcesAt(s, t + 1e-6).tilt, 1e-5, `${i} at t=${t}`);
-      }
-      // Wraps.
+      const tilts = Array.from({ length: 241 }, (_, k) => turnForcesAt(s, k / 240).tilt);
+      const top = tilts.indexOf(Math.max(...tilts));
+      // Edge angle up from the switch and down to it with no plateau at the ends (sporri-2016-sidecut Fig 4, reid-2020 Fig 4).
+      tilts.forEach((v, k) => {
+        if (k > 0 && k <= top) assert.isAbove(v, tilts[k - 1] ?? v, `${i} rising ${k}/240`);
+        if (k > top) assert.isBelow(v, tilts[k - 1] ?? v, `${i} easing ${k}/240`);
+      });
+      // C1 at the switch: the release rate equals the next turn's tipping rate.
+      const out = (turnForcesAt(s, 1 - h).tilt - turnForcesAt(s, 1 - 2 * h).tilt) / h;
+      const into = (turnForcesAt(s, 2 * h).tilt - turnForcesAt(s, h).tilt) / h;
+      assert.closeTo(-out, into, 1e-3 * into, i);
+      // No kink at the old initiation key.
+      const at = (t: number): number => (turnForcesAt(s, t + h).tilt - turnForcesAt(s, t - h).tilt) / (2 * h);
+      assert.closeTo(at(PHASE_T.initiation - 1e-3), at(PHASE_T.initiation + 1e-3), 0.02 * at(PHASE_T.initiation), i);
       assert.closeTo(turnForcesAt(s, 1.3).tilt, turnForcesAt(s, 0.3).tilt, 1e-12);
     }
   });
@@ -108,7 +114,11 @@ describe('outside-leg share', () => {
   });
 
   it('puts the whole stork-turn load on the outside leg in the fall line', () => {
-    assert.closeTo(outsideLoadAt(moderate, STORK_DRILL, PHASE_T.shaping, 1), 1.12, 0.01);
-    assert.closeTo(outsideLoadAt(moderate, { outsideShare: 0.6, liftsInside: false }, PHASE_T.shaping, 1), 0.67, 0.01);
+    const load = turnForcesAt(moderate, PHASE_T.shaping).load;
+    assert.strictEqual(outsideLoadAt(moderate, STORK_DRILL, PHASE_T.shaping, 1), load);
+    assert.closeTo(outsideLoadAt(moderate, { outsideShare: 0.6, liftsInside: false }, PHASE_T.shaping, 1), 0.6 * load, 1e-12);
+    // Still building in the fall line, below the peak past it (carv-ligety-2024 pressure chart, sporri-2016-sidecut Fig 4).
+    assert.isAbove(load, phaseForces(moderate).shaping.load - 0.01);
+    assert.isBelow(load, phaseForces(moderate).finish.load);
   });
 });
