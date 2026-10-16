@@ -165,7 +165,8 @@ describe('segmentMatrices', () => {
       const pelvis = point(0.5, SegmentKind.Pelvis, BodySide.Center, [0, 0, 0]);
       const hand = point(0.5, SegmentKind.Forearm, side, [0, -0.28, 0]);
       assert.isAbove(hand[2], pelvis[2] + 0.25, side);
-      assert.isAbove(Math.abs(hand[0] - pelvis[0]), 0.22, side);
+      // Less than the keyed carriage, the body rolled back upright onto the balance axis.
+      assert.isAbove(Math.abs(hand[0] - pelvis[0]), 0.2, side);
       assert.isAbove(hand[1], pelvis[1] - 0.05, side);
       assert.isBelow(hand[1], pelvis[1] + 0.45, side);
     }
@@ -208,8 +209,8 @@ describe('poseAt', () => {
         table.forEach((m, k) => {
           const p = transformPoint(m, [0, 0.3, 0]);
           const q = transformPoint(solved[k] ?? m, [0, 0.3, 0]);
-          // The tilt swings fastest through the transition.
-          assert.isBelow(Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]), 4e-3, `${name} at t=${t}, segment ${k}`);
+          // The tilt and the balance roll swing fastest through the release and transition.
+          assert.isBelow(Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]), 5e-3, `${name} at t=${t}, segment ${k}`);
         });
         const m = table[ski];
         if (m === undefined) throw new Error('no inside ski');
@@ -420,7 +421,8 @@ const mechanics = (name: string, s: TurnScenario): void => {
     it('builds the edge angle into shaping and releases it through the finish', () => {
       assert.isAbove(edge(PHASES.shaping), edge(PHASES.initiation) + 8);
       const peak = Math.max(...TIMES.map(edge));
-      assert.isBelow(edge(PHASES.finish), peak - 3);
+      // The lean peaks late, so the balance roll gives back less edge at the finish.
+      assert.isBelow(edge(PHASES.finish), peak - 2);
       for (const t of TURNING) {
         const a = at(t);
         const angulation = a.edge[BodySide.Right] - lean(t);

@@ -117,6 +117,8 @@ export const STORK_TURNS: PoseDefinition = {
     femurRotation: 4.5 * DEG,
     // More would evert the lifted foot.
     insideFemurShare: 0.3,
+    // Its edge minus tilt is read against the unrolled body; on the balance axis it would need retuning.
+    balanced: false,
     // Inference, near the low end of heinrich-2022's GS 50-81 deg; the knee is whatever balances the centre of mass.
     hipByLoad: [
       [1.06, 48, 62],

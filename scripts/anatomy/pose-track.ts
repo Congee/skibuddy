@@ -4,7 +4,7 @@ import { INTENSITIES } from '../../src/content/schema';
 import { NEUTRAL_CLIP, motionClipName } from '../../src/viewer/anatomy-names';
 import { EQUIPMENT, deltaAngle, stackHeight } from '../../src/viewer/equipment';
 import { HEEL_ROOM, TOE_ROOM } from '../../src/viewer/gear-fit';
-import { ARM_ABDUCTION, ARM_FLEXION, ARM_LEAN, ARM_LEAN_SHOULDER, ARM_REACH_ELBOW, CARRY_HEADING, CARRY_TRAIL, FOREARM_FLEXION, PLANT_AHEAD, PLANT_SIDE, POLE, mirrorPose } from '../../src/viewer/pose';
+import { ARM_ABDUCTION, ARM_FLEXION, ARM_LEAN, ARM_LEAN_SHOULDER, ARM_REACH_ELBOW, CARRY_HEADING, CARRY_TRAIL, FOREARM_FLEXION, PLANT_AHEAD, PLANT_SIDE, POLE, balanceRoll, mirrorPose } from '../../src/viewer/pose';
 import type { Pose } from '../../src/viewer/pose';
 import { hasTable, poseTable, samplePose } from '../../src/viewer/pose-table';
 import { POSE_DEFINITIONS, poleTrimOf } from '../../src/viewer/poses';
@@ -25,13 +25,15 @@ const arms = { abduction: ARM_ABDUCTION, flexion: ARM_FLEXION, forearmFlexion: F
 const drills = Object.keys(POSE_DEFINITIONS);
 const trim = Object.fromEntries(drills.flatMap((d) => INTENSITIES.map((i) => [motionClipName(d, i), poleTrimOf(d)])));
 const pole = { basketUp: POLE.basketUp, carry: POLE.carry, carryHeading: CARRY_HEADING, carryTrail: CARRY_TRAIL, plantSide: PLANT_SIDE, plantAhead: PLANT_AHEAD, trim };
-type Frame = Pose & { readonly insideTip?: number };
+type Frame = Pose & { readonly roll: number; readonly insideTip?: number };
 const track = (drill: string | null, i: (typeof INTENSITIES)[number]): ReadonlyArray<Frame> => {
   const table = poseTable(drill, i);
   const surface = drill === null ? null : surfaceFor(drill, i);
   // On moguls the inside tip stands over the outside one by the snow between them.
-  const ridden = (pose: Pose, t: number, sign: number): Frame =>
-    surface?.kind === SurfaceKind.Moguls ? { ...pose, insideTip: sign * rideOf(surface, t, samplePose(table, t)).insideTip } : pose;
+  const ridden = (pose: Pose, t: number, sign: number): Frame => {
+    const rolled = { ...pose, roll: balanceRoll(pose) };
+    return surface?.kind === SurfaceKind.Moguls ? { ...rolled, insideTip: sign * rideOf(surface, t, samplePose(table, t)).insideTip } : rolled;
+  };
   // The last frame is the next turn's first, mirrored.
   return Array.from({ length: frames + 1 }, (_, f) =>
     f === frames ? ridden(mirrorPose(samplePose(table, 0)), 0, -1) : ridden(samplePose(table, f / frames), f / frames, 1),

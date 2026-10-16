@@ -1,6 +1,6 @@
 // Build time only: scripts/anatomy/pose-tables.ts solves every definition into src/viewer/poses/tables.json.
 import { arcLoad, isTurn, turnForcesAt } from '../physics/turn';
-import type { DrillScenario } from '../physics/turn';
+import type { DrillScenario, TurnScenario } from '../physics/turn';
 import { EQUIPMENT, minShinAngle, shinAngle } from './equipment';
 import { BodySide, SEGMENTS, SegmentKind } from './figure';
 import { compose, identity, inverseRotation, rotationX, rotationY, rotationZ, transformPoint } from './mat4';
@@ -20,6 +20,24 @@ const SHIN_MAX = 50 * DEG;
 /** Lean by which a fold turned toward the inside is fully answered by hip angulation; inferred. */
 const FOLD_HANDOVER = 20 * DEG;
 const smooth = (u: number): number => u * u * (3 - 2 * u);
+/** The body rolls onto the balance axis as the lean builds past BALANCE_FROM, or nears its turn's peak; inferred. */
+const BALANCE_FROM = 15 * DEG;
+const BALANCE_BY = 20 * DEG;
+const BALANCE_PEAK = 0.9;
+const peaks = new WeakMap<TurnScenario, number>();
+const peakLean = (s: TurnScenario): number => {
+  const known = peaks.get(s);
+  if (known !== undefined) return known;
+  const peak = Math.max(...Array.from({ length: 48 }, (_, k) => Math.abs(turnForcesAt(s, k / 48).tilt)));
+  peaks.set(s, peak);
+  return peak;
+};
+const fade = (u: number): number => smooth(Math.min(1, Math.max(0, u)));
+// Nil at the switch, so the mass still leads into the new turn there; either fade, kink-free, as tables interpolate.
+const balanceShare = (lean: number, s: TurnScenario): number => {
+  const a = Math.abs(lean);
+  return 1 - (1 - fade((a - BALANCE_FROM) / (BALANCE_BY - BALANCE_FROM))) * (1 - fade(a / (BALANCE_PEAK * peakLean(s))));
+};
 import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
 import type { Pose } from './pose';
 
@@ -116,9 +134,9 @@ const spineTipped = (pelvis: Mat4, spine: Spine, outward: number): Spine => {
   return { spineTwist: -Math.atan2(-(m[2] ?? 0), m[0] ?? 1), spineBend: Math.asin(m[1] ?? 0), spineFlex: Math.atan2(-(m[9] ?? 0), m[5] ?? 1) };
 };
 
-/** The centre of mass toward the inside of the snow's force line through the skis, which tilts by the lean. */
+/** The centre of mass toward the inside of the snow's force line through the skis, before the balance roll takes it out. */
 const inwardOfForce = (pose: Pose): number => {
-  const world = segmentMatrices(pose);
+  const world = segmentMatrices(pose, false);
   const o = outsideWeight(pose.lean);
   const right = transformPoint(world[skiIndex(BodySide.Right)] ?? identity(), [0, SKI_TIP[1], 0]);
   const left = transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), [0, SKI_TIP[1], 0]);
@@ -269,6 +287,7 @@ const solveOn = (
   const mild = (f: KeyField): number => k[f] * (1 + (c.gains[f] ?? 0) * effort.scale);
   const turning = scenario !== null && isTurn(scenario);
   const lean = turning ? turnForcesAt(scenario, t).tilt : 0;
+  const onAxis = turning && c.balanced !== false ? balanceShare(lean, scenario) : 0;
   const angulation = mild('angulation');
   const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];
   const under = Math.min(1, Math.max(0, effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale));
@@ -319,6 +338,7 @@ const solveOn = (
       poleTouch,
       reach: 0,
       rise: 0,
+      balance: onAxis,
       outside: { hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch - ride.outside, adduction },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
@@ -427,11 +447,13 @@ const solveOn = (
   const solved = base(knee, inside.extra, inside.tailLift, shin);
   // The head moves no mass to speak of, so it turns only once the trunk is set.
   const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist) };
-  const legs = firm ? { ...turned, rise: riseOf(turned, mild('skiClearance')) } : turned;
+  const rested = (p: Pose): Pose => (firm ? { ...p, rise: riseOf(p, mild('skiClearance')) } : p);
+  const legs = rested(turned);
   if (legs.poleTouch === 0) return legs;
   const reach = Math.abs(legs.poleTouch) * solveReach(legs, c.scapularRhythm, poleSize(CAPSULE_ARM, c.poleTrim).basket);
   const reaching = { ...girdle, protraction: girdle.protraction + c.scapularRhythm * reach };
-  return { ...legs, reach, ...(legs.poleTouch > 0 ? { insideGirdle: reaching } : { outsideGirdle: reaching }) };
+  // Again, as the arm moves the mass and so the balance roll.
+  return rested({ ...legs, reach, ...(legs.poleTouch > 0 ? { insideGirdle: reaching } : { outsideGirdle: reaching }) });
 };
 
 /** Shoulder flexion, with the shoulder blade's share, that lands the touch PLANT_AHEAD in front of the ankle; mirrored in build_anatomy.py. */

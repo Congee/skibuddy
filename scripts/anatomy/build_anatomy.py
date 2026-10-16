@@ -362,6 +362,11 @@ BOOT_SOLE = 0.03
 SUBTALAR_BELOW, SUBTALAR_BEHIND = 0.015, 0.01
 
 
+def body_lean(p):
+    """The body frame's lean: the lean less the balance roll that pose-track.ts bakes from balanceRoll."""
+    return p['lean'] - p.get('roll', 0.0)
+
+
 def touch_side(p):
     """The arm swinging to the touch, as touchSide in pose.ts: the outside one ahead of the next turn."""
     return 'R' if p['poleTouch'] < 0 else 'L'
@@ -372,7 +377,7 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
     reacher = touch_side(p)
     pelvis = rot_y3(-p['counter']) @ rot_z3(p['pelvisList']) @ rot_x(p['pelvisPitch'])
     half = rot_y3(-p['spineTwist'] / 2) @ rot_z3(p['spineBend'] / 2) @ rot_x(p['spineFlex'] / 2)
-    roll = HEAD_LEVEL * (p['pelvisList'] - p['lean'] + p['spineBend'])
+    roll = HEAD_LEVEL * (p['pelvisList'] - body_lean(p) + p['spineBend'])
     lift = rot_y3(-p.get('headYaw', 0.0) / 2) @ rot_z3(-roll / 2) @ rot_x(-HEAD_LIFT * (p['pelvisPitch'] + p['spineFlex']) / 2)
     R = {'pelvis': pelvis, 'lumbar': half, 'chest': half, 'neck': lift, 'head': lift}
     # As armLean in pose.ts: past ARMS['lean'] the shoulder and elbow flex further, keeping the forearm's pitch.
@@ -419,7 +424,8 @@ def foot_rotation(p, s, rest, shins):
     outside = outside_weight(p['lean'])
     edge = outside * shin_tilt(shins['R']) + (1 - outside) * shin_tilt(shins['L']) + p['eversion']
     tail = (p['outside'] if s == 'R' else p['inside'])['tailLift']
-    return rot_z3(p['lean']) @ rot_x(tail) @ rot_z3(-p['lean'] - edge) @ rot_x(rest['ramp'])
+    lean = body_lean(p)
+    return rot_z3(lean) @ rot_x(tail) @ rot_z3(-lean - edge) @ rot_x(rest['ramp'])
 
 
 def subtalar_roll(shin, foot):
@@ -450,10 +456,11 @@ def world_pose(bones, order, R, ski_pivot, p, rest):
         else:
             r = R[name]
         D[name] = parent @ Matrix.Translation(j) @ r @ Matrix.Translation(-j)
-    # As segmentMatrices in pose.ts: about the outside ski, near the switch about a point between both, raised by the rise.
+    # As segmentMatrices in pose.ts: about the outside ski, near the switch about a point between both, raised by the rise,
+    # rolled back out by the balance roll.
     o = outside_weight(p['lean'])
     c = o * (D['foot.R'] @ Vector(ski_pivot['R'])) + (1 - o) * (D['foot.L'] @ Vector(ski_pivot['L']))
-    tilt = Matrix.Translation((c.x, c.y, p.get('rise', 0.0))) @ Matrix.Rotation(p['lean'], 4, 'Y') @ Matrix.Translation(-c)
+    tilt = Matrix.Translation((c.x, c.y, p.get('rise', 0.0))) @ Matrix.Rotation(body_lean(p), 4, 'Y') @ Matrix.Translation(-c)
     return {k: tilt @ m for k, m in D.items()}
 
 

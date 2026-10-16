@@ -1,7 +1,7 @@
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
-import { MID_FOOT, SKI_TIP, centreOfMass, comAhead, segmentMatrices } from '../src/viewer/pose';
+import { MID_FOOT, SKI_TIP, centreOfMass, balanceRoll, comAhead, segmentMatrices } from '../src/viewer/pose';
 import type { Pose } from '../src/viewer/pose';
 
 export type LegSide = typeof BodySide.Right | typeof BodySide.Left;
@@ -90,7 +90,8 @@ export const poseAngles = (pose: Pose): PoseAngles => {
   const trunkUp = axis(trunk, [0, 1, 0]);
   const pelvisList = Math.atan2(px[1], Math.hypot(px[0], px[2]));
   // In the body frame, so the lean does not read as counter or pitch.
-  const unlean = ([x, y, z]: Vec3): Vec3 => [x * Math.cos(pose.lean) - y * Math.sin(pose.lean), x * Math.sin(pose.lean) + y * Math.cos(pose.lean), z];
+  const body = pose.lean - balanceRoll(pose);
+  const unlean = ([x, y, z]: Vec3): Vec3 => [x * Math.cos(body) - y * Math.sin(body), x * Math.sin(body) + y * Math.cos(body), z];
   const by = unlean(py);
   const bx = unlean(px);
   return {

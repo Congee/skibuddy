@@ -366,7 +366,8 @@ describe('regular turn', () => {
         assert.isAtLeast(tilt * DEG, 8, i);
       }
     const mogul = angles(RegularTurn.Moguls, Intensity.Moderate, 1 / 2);
-    assert.isAbove(mogul.edge.right, turnForcesAt(TURN_STYLES[RegularTurn.Moguls].scenarios.moderate, 1 / 2).tilt * DEG + 10);
+    // The mass rides the force line, so the legs make the whole margin.
+    assert.isAbove(mogul.edge.right, turnForcesAt(TURN_STYLES[RegularTurn.Moguls].scenarios.moderate, 1 / 2).tilt * DEG + 8);
   });
 
   it('plants the mogul pole lightly, both hands in front of the chest', () => {
@@ -460,6 +461,8 @@ const FRONTAL_KINDS = [...KINDS, 'closed-stance-short-turns'] as const;
 const SETTLED = 20;
 // Metres the mass may sit past the inside ski; steeps reaches 5 cm early in the fold.
 const COM_SLACK = 0.055;
+// Metres the mass may sit off the force line once settled.
+const COM_LINE = 0.02;
 
 describe('angulation', () => {
   it('angulates rather than banks: the trunk tilts in no further than the legs once the turn is edged', () => {
@@ -482,7 +485,7 @@ describe('angulation', () => {
         for (const p of poseTable(kind, i)) {
           const f = frontal(p);
           if (Math.abs(f.lean) < SETTLED) continue;
-          assert.isAtLeast(f.com, -0.01, `${kind} ${i}`);
+          assert.isAtMost(Math.abs(f.com), COM_LINE, `${kind} ${i} lean ${f.lean.toFixed(1)}`);
           assert.isAtMost(f.com, f.insideFoot + COM_SLACK, `${kind} ${i} lean ${f.lean.toFixed(1)}`);
         }
   });

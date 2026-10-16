@@ -282,9 +282,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hip: [30, 72],
     hipStep: 5,
     hipSpread: 3,
-    angulation: 6,
+    angulation: 1,
     // Angulation of the lower leg sets the radius (fis-freestyle-judging-2025 p26); amount inferred.
-    kneeAngulation: 10,
+    kneeAngulation: 34,
     counter: fallLineHeading(5, CORRIDOR),
     twist: 0,
     counterCurve: HEADING,
@@ -381,6 +381,8 @@ export const CLOSED_STANCE: TurnStyle = {
   hipStep: 3,
   hipSpread: 0,
   angulation: 3,
+  // Edged from the knees, the legs together; amount inferred.
+  kneeAngulation: 10,
   counter: fallLineHeading(4.5, CORRIDOR),
   twist: 0,
   counterCurve: HEADING,

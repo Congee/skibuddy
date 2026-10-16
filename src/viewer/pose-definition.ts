@@ -79,6 +79,8 @@ export interface PoseConstraints {
   readonly femurRotation: number;
   /** Share of the outside femur's rotation the inside one takes. */
   readonly insideFemurShare: number;
+  /** False keeps the mass off the balance axis, the body unrolled; the stork's angulation is keyed so. */
+  readonly balanced?: boolean;
   /** Outside hip flexion by fall-line load: [load, most open, deepest], degrees; the middle row is moderate. */
   readonly hipByLoad: ReadonlyArray<readonly [number, number, number]>;
   /** The lifted inside knee stops here; past it the tail lifts less instead. */

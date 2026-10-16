@@ -38,6 +38,8 @@ export interface Pose {
   readonly reach: number;
   /** Metres the whole figure stands above its outside ski's contact: a tip-down ski's tip on or over the snow. */
   readonly rise: number;
+  /** 0..1: share of the mass's offset from the balance axis the body rolls out about the contact; nil at the switch, where the mass leads. */
+  readonly balance: number;
   readonly outside: LegPose;
   readonly inside: LegPose;
   readonly outsideGirdle: GirdlePose;
@@ -95,6 +97,7 @@ export const POSE_CHANNELS = [
   'headYaw',
   'armAbduction',
   'rise',
+  'balance',
 ] as const;
 
 export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
@@ -126,6 +129,7 @@ export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
   p.headYaw,
   p.armAbduction,
   p.rise,
+  p.balance,
 ];
 
 /** The inverse of `poseToChannels`, reading `channels` from `at`. */
@@ -150,6 +154,7 @@ export const poseFromChannels = (c: ArrayLike<number>, at = 0): Pose => {
     headYaw: v(25),
     armAbduction: v(26),
     rise: v(27),
+    balance: v(28),
   };
 };
 
@@ -213,7 +218,7 @@ const pelvisOf = (pose: Pose): Mat4 => pelvisRotation(pose.counter, pose.pelvisL
 /** Share of the trunk's roll the head takes back out, so the eyes stay near level, tipped slightly outside (lemaster-2010 p72). */
 const HEAD_LEVEL = 0.7;
 
-const localRotation = (segment: Segment, pose: Pose): Mat4 => {
+const localRotation = (segment: Segment, pose: Pose, lean: number): Mat4 => {
   const leg = legPose(pose, segment.side);
   const out = segment.side === BodySide.Right ? -1 : 1;
   switch (segment.kind) {
@@ -225,7 +230,7 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
       // Eyes ahead, not at the snow.
       return compose(
         rotationY(-pose.headYaw),
-        rotationZ(-HEAD_LEVEL * (pose.pelvisList - pose.lean + pose.spineBend)),
+        rotationZ(-HEAD_LEVEL * (pose.pelvisList - lean + pose.spineBend)),
         rotationX(-HEAD_LIFT * (pose.pelvisPitch + pose.spineFlex)),
       );
     case SegmentKind.Girdle: {
@@ -276,8 +281,8 @@ const shinTilt = (shin: Mat4): number => {
  * up; the foot sits heel-up on its ski by the total ramp.
  * Mirrored in build_anatomy.py.
  */
-const bootRotation = (segment: Segment, pose: Pose, edge: number): Mat4 =>
-  compose(rotationZ(pose.lean), rotationX(legPose(pose, segment.side).tailLift), rotationZ(-pose.lean - edge), rotationX(RAMP));
+const bootRotation = (segment: Segment, pose: Pose, edge: number, lean: number): Mat4 =>
+  compose(rotationZ(lean), rotationX(legPose(pose, segment.side).tailLift), rotationZ(-lean - edge), rotationX(RAMP));
 
 /** Share of the torso's pitch the neck takes back out. */
 export const HEAD_LIFT = 0.6;
@@ -291,6 +296,7 @@ export const SKI_TIP: Vec3 = [0, SKI_BASE, 0.85];
 export const SKI_TAIL: Vec3 = [0, SKI_BASE, -0.75];
 
 const FOOT_KINDS: ReadonlySet<SegmentKind> = new Set([SegmentKind.Boot, SegmentKind.Ski]);
+const isFoot = (kind: SegmentKind): boolean => FOOT_KINDS.has(kind);
 const SHINS = [BodySide.Right, BodySide.Left].map((side) => SEGMENTS.findIndex((s) => s.kind === SegmentKind.Shin && s.side === side));
 /** Lean by which the outside shin alone sets the edge. */
 const EDGE_HANDOVER = (10 * Math.PI) / 180;
@@ -308,29 +314,48 @@ const edgeOf = (world: ReadonlyArray<Mat4>, pose: Pose): number => {
 };
 
 /**
- * World matrix per segment: the outside ski base rests on y = `rise` and the whole figure leans toward the inside of
- * the turn about that contact; near the switch about a point between both skis, so the mass rolls across smoothly.
+ * The figure leaned toward the inside about the outside ski base, which rests on y = `rise`; near the switch about a
+ * point between both skis, so the mass rolls across smoothly. Balanced, the body first rolls out about that contact
+ * by `balance` of the mass's offset, so the line from the contact through the mass tilts by the lean.
  */
-export const segmentMatrices = (pose: Pose): ReadonlyArray<Mat4> => {
+const placed = (pose: Pose, balanced: boolean): { readonly world: ReadonlyArray<Mat4>; readonly roll: number } => {
   const world: Array<Mat4> = [];
-  const place = (feet: boolean, edge: number): void =>
+  const place = (kinds: (kind: SegmentKind) => boolean, edge: number, lean: number): void =>
     SEGMENTS.forEach((segment, i) => {
-      if (FOOT_KINDS.has(segment.kind) !== feet) return;
+      if (!kinds(segment.kind)) return;
       const parent = segment.parent === null ? identity() : (world[segment.parent] ?? identity());
-      const local = segment.kind === SegmentKind.Boot ? compose(inverseRotation(parent), bootRotation(segment, pose, edge)) : localRotation(segment, pose);
+      const local = segment.kind === SegmentKind.Boot ? compose(inverseRotation(parent), bootRotation(segment, pose, edge, lean)) : localRotation(segment, pose, lean);
       world[i] = compose(parent, translation(segment.joint), local);
     });
-  // The boots wait for both shins.
-  place(false, 0);
-  place(true, edgeOf(world, pose));
   const o = outsideWeight(pose.lean);
-  const [rx, ry, rz] = transformPoint(world[skiIndex(BodySide.Right)] ?? identity(), [0, SKI_BASE, 0]);
-  const [lx, ly, lz] = transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), [0, SKI_BASE, 0]);
-  const [cx, cy, cz] = [o * rx + (1 - o) * lx, o * ry + (1 - o) * ly, o * rz + (1 - o) * lz];
+  const pivot = (): Vec3 => {
+    const [rx, ry, rz] = transformPoint(world[skiIndex(BodySide.Right)] ?? identity(), [0, SKI_BASE, 0]);
+    const [lx, ly, lz] = transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), [0, SKI_BASE, 0]);
+    return [o * rx + (1 - o) * lx, o * ry + (1 - o) * ly, o * rz + (1 - o) * lz];
+  };
+  // The boots wait for both shins.
+  place((kind) => !isFoot(kind), 0, pose.lean);
+  const edge = edgeOf(world, pose);
+  place(isFoot, edge, pose.lean);
+  let [cx, cy, cz] = pivot();
+  let roll = 0;
+  if (balanced && pose.balance !== 0) {
+    const com = centreOfMass(world);
+    roll = pose.balance * Math.atan2(com[0] - cx, com[1] - cy);
+    // The head levels and the skis lie flat ahead against the rolled body; neither moves the mass to speak of.
+    place((kind) => kind === SegmentKind.Head || isFoot(kind), edge, pose.lean - roll);
+    [cx, cy, cz] = pivot();
+  }
   // Negative z rotation tips the figure toward +x, the inside (left) side.
-  const lean = compose(translation([cx, pose.rise, cz]), rotationZ(-pose.lean), translation([-cx, -cy, -cz]));
-  return world.map((m) => compose(lean, m));
+  const lean = compose(translation([cx, pose.rise, cz]), rotationZ(roll - pose.lean), translation([-cx, -cy, -cz]));
+  return { world: world.map((m) => compose(lean, m)), roll };
 };
+
+/** World matrix per segment; `balanced` false leaves the body frame unrolled, the mass off the balance axis. */
+export const segmentMatrices = (pose: Pose, balanced = true): ReadonlyArray<Mat4> => placed(pose, balanced).world;
+
+/** How far the body frame rolls out about the contact to bring the mass onto the balance axis, radians. */
+export const balanceRoll = (pose: Pose): number => placed(pose, true).roll;
 
 export const skiIndex = (side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === SegmentKind.Ski && s.side === side);
 
