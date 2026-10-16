@@ -1,0 +1,31 @@
+id: round-line
+name: Round line
+# No movement of its own yet: it shares the closed-stance short turn's.
+movement: closed-stance-short-turn
+summary: The line to learn first through moguls (jds-bumps-style 1:11). The skis take a wide path round the side of each bump, high on its wall, and keep out of the troughs between the bumps (jds-bumps-style 1:20-2:00). Each turn finishes across the hill like a hockey stop, the skis steered a little past the line and set on edge together, the edge set landing on the uphill face of the next bump just below its crest, not on the very top and not on its back (jds-bumps-style 2:12-2:37, dipiro-2005 pp28, 32, 60-61, campbell-rogan-2001), the pole planted downhill as the edges release. The skis then pivot over the bump's shoulder, flat and tall pointing down the fall line, and tip onto the new edges just after they are flat, moving down the backside, a blend of steering and edging (jds-bumps-style 5:11-7:22). Fore-aft, the feet go a little ahead into the face, come back under the body at the top and press the tips down the backside; the legs are shortest on top as the turn releases and reach long into the next trough (jds-bumps-style 2:37-5:07). Hands wide and forward, the upper body facing down the hill (jds-bumps-style). The zipper (see Moguls) runs in the ruts instead.
+terrain: A natural mogul field on a blue, bumps about half a metre high and a little over three metres apart; dynamic on a steeper, bigger field
+# Turn times 1.1-1.3 s at moderate, as JDS's measured follow-cam turns (jds-bumps-style 1:56-2:01); speeds, radii and slopes inferred.
+# A quarter of gravity's pull along the line is braked fore-aft at the feet, as the tops line; inferred.
+# The mass runs nearly straight while the legs swing under it: its path about 4x the skis' arc, inferred.
+scenarios:
+  gentle: { speed_mps: 3.8, radius_m: 3, com_radius_m: 12, slope_deg: 15, braking_share: 0.25 }
+  moderate: { speed_mps: 4.3, radius_m: 3, com_radius_m: 12, slope_deg: 18, braking_share: 0.25 }
+  dynamic: { speed_mps: 5.2, radius_m: 3, com_radius_m: 12, slope_deg: 22, braking_share: 0.25 }
+equipment: Efforts assume recreational skis of about 12-15 m sidecut and boots with about 15° of cuff lean. Softer, narrower skis and shorter poles make the bumps easier (lemaster-2010 p185).
+cautions:
+  - "Common mistake: dropping into the trough. Keep the skis high on the bump's wall, round its side, and skirt the trough's upper edge (jds-bumps-style 1:20-1:55)."
+  - "Common mistake: setting the edges on top of the bump or on its back. Set them as the turned skis meet the uphill face, just below the crest (dipiro-2005 pp28, 60-61)."
+  - "Common mistake: leaving the feet ahead over the top. Bring the heels back under you at the top, then let the tips drop down the backside (jds-bumps-style 2:37-3:57)."
+  - Practise the finish as hockey stops and the edging as railroad tracks on easy snow first (jds-bumps-style 2:12, 7:00).
+sources:
+  - jds-bumps-style
+  - { source: dipiro-2005, pages: "28, 30, 32, 60-61" }
+  - campbell-rogan-2001
+  - lemaster-2010
+primitives:
+  - { primitive: flexion-transition, modifier: "shortest on top as the turn releases, long into the trough" }
+  - { primitive: leg-rotation, modifier: "a pivot over the bump's shoulder, the skis steered slightly past the line at the finish" }
+  - { primitive: tipping, modifier: "early, just after the skis are flat on the backside, from the feet and the thighs" }
+  - { primitive: counter, modifier: "the upper body facing down the hill throughout" }
+  - { primitive: pole-touch, modifier: "downhill on the bump's top or shoulder as the edges release" }
+reviewed_by: []
