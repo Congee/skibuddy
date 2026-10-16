@@ -1,4 +1,5 @@
 import type { Vec3 } from './mat4';
+import type { StandingArm } from './pose';
 
 /**
  * Boot shape in the boot frame, in metres: origin at the ankle joint, +y up,
@@ -53,6 +54,9 @@ export interface RawFit {
   readonly footX: readonly [number, number];
   readonly shinX: readonly [number, number];
   readonly shinZ: readonly [number, number];
+  /** Arm joints standing; older models lack them. */
+  readonly shoulder?: Vec3;
+  readonly elbow?: Vec3;
 }
 
 const isVec = (v: unknown, n: number): boolean => Array.isArray(v) && v.length === n && v.every((x) => typeof x === 'number' && Number.isFinite(x));
@@ -64,7 +68,8 @@ const isRawFit = (v: unknown): v is RawFit => {
     isVec(r['ankle'], 3) &&
     isVec(r['grip'], 3) &&
     ['sole', 'toe', 'heel'].every((k) => typeof r[k] === 'number') &&
-    ['footX', 'shinX', 'shinZ'].every((k) => isVec(r[k], 2))
+    ['footX', 'shinX', 'shinZ'].every((k) => isVec(r[k], 2)) &&
+    ['shoulder', 'elbow'].every((k) => r[k] === undefined || isVec(r[k], 3))
   );
 };
 
@@ -109,4 +114,12 @@ export const coveredByBoot = (fit: BootFit, ankle: Vec3, p: Vec3): boolean => {
   const y = p[1] - ankle[1];
   const z = p[2] - ankle[2];
   return y < fit.cuffTop + 0.03 && Math.abs(x - fit.cuffX) < Math.max(fit.cuffRx, fit.halfWidth) + 0.03 && z > fit.heel - 0.03 && z < fit.toe + 0.03;
+};
+
+/** The baked figure's arm standing in its boots; null without arm joints. */
+export const standingArm = (raw: RawFit): StandingArm | null => {
+  const { shoulder, elbow } = raw;
+  if (shoulder === undefined || elbow === undefined) return null;
+  // Thumb up on the grip, the fist's centre lies on the forearm's line.
+  return { shoulder: shoulder[1] - raw.sole, upperArm: Math.hypot(shoulder[0] - elbow[0], shoulder[1] - elbow[1], shoulder[2] - elbow[2]), fist: 0 };
 };

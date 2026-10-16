@@ -4,8 +4,9 @@ import { Vector3 } from 'three';
 import type { Mesh, Object3D } from 'three';
 import { BodySide } from '../../src/viewer/figure';
 import type { LegSide } from '../../src/viewer/gear';
-import { parseGearFit } from '../../src/viewer/gear-fit';
+import { parseGearFit, standingArm } from '../../src/viewer/gear-fit';
 import type { Vec3 } from '../../src/viewer/mat4';
+import type { StandingArm } from '../../src/viewer/pose';
 import { loadAnatomy } from './model';
 import type { AnatomyModel } from './model';
 
@@ -23,6 +24,8 @@ export interface ProbeFrame {
 export interface ProbeFixture {
   /** The drill scenarios the model's clips were solved for, as the bake stored them. */
   readonly scenarios: unknown;
+  /** The arm the poles are sized from. */
+  readonly arm: StandingArm;
   readonly samples: number;
   readonly frames: ReadonlyArray<ProbeFrame>;
 }
@@ -43,6 +46,8 @@ const baseOf = (end: ReadonlyArray<Vector3>): Vector3 => {
 export const probeFixture = (model: AnatomyModel): ProbeFixture => {
   const raw = parseGearFit(model.root.getObjectByName('bones')?.userData['gear_fit']);
   if (raw === null) throw new Error('anatomy model has no gear fit');
+  const arm = standingArm(raw.left);
+  if (arm === null) throw new Error('anatomy model has no arm joints');
   // Ski ends at the rest pose, from the ski mesh itself.
   const skiEnds = (side: LegSide): { readonly tip: () => Vector3; readonly tail: () => Vector3 } => {
     let mesh: Mesh | undefined;
@@ -75,7 +80,7 @@ export const probeFixture = (model: AnatomyModel): ProbeFixture => {
   });
   const stored = model.root.getObjectByName('bones')?.userData['scenarios'];
   if (typeof stored !== 'string') throw new Error('anatomy model has no scenarios');
-  return { scenarios: JSON.parse(stored), samples: PROBE_SAMPLES, frames };
+  return { scenarios: JSON.parse(stored), arm, samples: PROBE_SAMPLES, frames };
 };
 
 if (import.meta.main) {

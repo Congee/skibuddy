@@ -24,8 +24,8 @@ describe('pose tables', () => {
     assert.isFalse(hasPose('no-such-drill'));
   });
 
-  it('match a fresh solve of each definition and the content scenarios; run `bun run poses` if not', () => {
-    for (const [drill, def] of Object.entries(POSE_DEFINITIONS)) {
+  for (const [drill, def] of Object.entries(POSE_DEFINITIONS))
+    it(`match a fresh solve of ${drill} and its scenarios; run \`bun run poses\` if not`, () => {
       const scenarios = drillScenarios(drill);
       for (const i of INTENSITIES) {
         const fresh = solveTable(def, scenarios[i]);
@@ -33,7 +33,9 @@ describe('pose tables', () => {
         assert.strictEqual(stored.length, fresh.length);
         fresh.forEach((p, k) => close(poseToChannels(stored[k] ?? p), poseToChannels(p), `${drill} ${i} sample ${k}`));
       }
-    }
+    });
+
+  it('match a fresh solve of the neutral stance', () => {
     close(poseToChannels(poseTable(null, Intensity.Moderate)[0] ?? NEUTRAL_POSE), poseToChannels(NEUTRAL_POSE), 'neutral');
   });
 

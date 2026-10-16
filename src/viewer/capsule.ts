@@ -44,7 +44,8 @@ import type { LegSide } from './gear';
 import { CAPSULE_BOOT, coveredByBoot } from './gear-fit';
 import { GearMode } from './gear-mode';
 import { compose, transformPoint, translation } from './mat4';
-import { CAPSULE_GRIP, poleDirection, segmentMatrices } from './pose';
+import { CAPSULE_ARM, CAPSULE_GRIP, poleDirection, poleSize, segmentMatrices } from './pose';
+import { poleTrimOf } from './poses';
 import { poseTable, samplePose } from './pose-table';
 import { markChanges } from './highlight';
 import { fillSlotLevels, musclePartAt } from './slots';
@@ -237,12 +238,15 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
   const n = new Vector3();
   let marked: ReadonlyArray<number> = [];
   let poses = poseTable(null, Intensity.Moderate);
+  let size = poleSize(CAPSULE_ARM);
   // The box foot reads as a block through the translucent shell, so the boot stands in for it.
   let footShown = false;
 
   return {
     setMotion: (drill: string | null, intensity: Intensity) => {
       poses = poseTable(drill, intensity);
+      size = poleSize(CAPSULE_ARM, poleTrimOf(drill));
+      gear.setPole(size);
     },
     update: (t: number, levels: ReadonlyArray<MuscleLevel>) => {
       const pose = samplePose(poses, t);
@@ -268,7 +272,7 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         if (forearm === undefined) continue;
         const grip = transformPoint(forearm, CAPSULE_GRIP);
         const ankle = transformPoint(world[segmentOf(SegmentKind.Boot, side)] ?? forearm, [0, 0, 0]);
-        const direction = poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0, ankle);
+        const direction = poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0, ankle, size.basket);
         const pole = gear.poles.find((g) => g.side === side);
         if (pole !== undefined) placePole(pole.mesh, grip, direction);
         // The fist closes round the grip, its fingers along the forearm.

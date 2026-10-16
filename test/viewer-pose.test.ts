@@ -161,8 +161,9 @@ describe('segmentMatrices', () => {
     for (const side of SIDES) {
       // Elbows bent about 75 deg (lemaster-2010 p142).
       assert.closeTo(FOREARM_FLEXION / DEG, 75, 5);
-      const pelvis = point(0, SegmentKind.Pelvis, BodySide.Center, [0, 0, 0]);
-      const hand = point(0, SegmentKind.Forearm, side, [0, -0.28, 0]);
+      // Mid-turn, carried: at the transition the inside hand reaches for the touch.
+      const pelvis = point(0.5, SegmentKind.Pelvis, BodySide.Center, [0, 0, 0]);
+      const hand = point(0.5, SegmentKind.Forearm, side, [0, -0.28, 0]);
       assert.isAbove(hand[2], pelvis[2] + 0.25, side);
       assert.isAbove(Math.abs(hand[0] - pelvis[0]), 0.22, side);
       assert.isAbove(hand[1], pelvis[1] - 0.05, side);

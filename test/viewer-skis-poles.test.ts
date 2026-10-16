@@ -1,7 +1,7 @@
 import { assert, describe, it } from '@effect/vitest';
 import { BodySide } from '../src/viewer/figure';
 import type { Vec3 } from '../src/viewer/mat4';
-import { POLE, poleDirection } from '../src/viewer/pose';
+import { poleDirection } from '../src/viewer/pose';
 import { touchShare } from '../src/viewer/pose-definition';
 import { STORK_TURNS } from '../src/viewer/poses/stork-turns';
 import { anatomyProbe, capsuleProbe } from './figure-probes';
@@ -21,8 +21,9 @@ const heading = (ski: { readonly tip: Vec3; readonly tail: Vec3 }): number => Ma
 const basket = (probe: FigureProbe, t: number, side: LegSide): { readonly grip: Vec3; readonly basket: Vec3 } => {
   const at = probe.at(t);
   const grip = at.grip(side);
-  const d = poleDirection(grip, side, side === BodySide.Left ? poleTouchAt(t) : 0, at.ankle(side));
-  return { grip, basket: [grip[0] + d[0] * POLE.basket, grip[1] + d[1] * POLE.basket, grip[2] + d[2] * POLE.basket] };
+  const b = probe.basket;
+  const d = poleDirection(grip, side, side === BodySide.Left ? poleTouchAt(t) : 0, at.ankle(side), b);
+  return { grip, basket: [grip[0] + d[0] * b, grip[1] + d[1] * b, grip[2] + d[2] * b] };
 };
 
 const invariants = (load: () => Promise<FigureProbe>): void => {

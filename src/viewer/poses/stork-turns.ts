@@ -131,6 +131,8 @@ export const STORK_TURNS: PoseDefinition = {
     // The transition, just before the tail lifts (psia-c-stork-turns, lemaster-2010 p39).
     poleTouch: { t: 1 / 24, hold: 0.02, swing: 0.11 },
     scapularRhythm: 0.3,
+    stance: 0,
+    poleTrim: 0,
     // Inference: deeper, more dynamic turns flex, lift and counter a little more. Near constant
     // low back: a harder turn folds more at the hips, not the low back.
     gains: {

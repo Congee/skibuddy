@@ -7,7 +7,7 @@ import { HEEL_ROOM, TOE_ROOM } from '../../src/viewer/gear-fit';
 import { ARM_ABDUCTION, ARM_FLEXION, CARRY_HEADING, FOREARM_FLEXION, PLANT_AHEAD, PLANT_SIDE, POLE } from '../../src/viewer/pose';
 import type { Pose } from '../../src/viewer/pose';
 import { hasTable, poseTable, samplePose } from '../../src/viewer/pose-table';
-import { POSE_DEFINITIONS } from '../../src/viewer/poses';
+import { POSE_DEFINITIONS, poleTrimOf } from '../../src/viewer/poses';
 import { drillScenarios } from './drill-scenarios';
 
 const frames = Number(process.argv[2] ?? 24);
@@ -20,12 +20,13 @@ const binding = {
   toeRoom: TOE_ROOM,
 };
 const arms = { abduction: ARM_ABDUCTION, flexion: ARM_FLEXION, forearmFlexion: FOREARM_FLEXION };
-const pole = { basket: POLE.basket, carry: POLE.carry, carryHeading: CARRY_HEADING, plantSide: PLANT_SIDE, plantAhead: PLANT_AHEAD };
+const drills = Object.keys(POSE_DEFINITIONS);
+const trim = Object.fromEntries(drills.flatMap((d) => INTENSITIES.map((i) => [motionClipName(d, i), poleTrimOf(d)])));
+const pole = { basketUp: POLE.basketUp, carry: POLE.carry, carryHeading: CARRY_HEADING, plantSide: PLANT_SIDE, plantAhead: PLANT_AHEAD, trim };
 const track = (drill: string | null, i: (typeof INTENSITIES)[number]): ReadonlyArray<Pose> => {
   const table = poseTable(drill, i);
   return Array.from({ length: frames + 1 }, (_, f) => samplePose(table, f / frames));
 };
-const drills = Object.keys(POSE_DEFINITIONS);
 for (const d of drills) if (!hasTable(d)) throw new Error(`${d} has no pose table; run \`bun run poses\``);
 const tracks: Record<string, ReadonlyArray<Pose>> = { [NEUTRAL_CLIP]: track(null, 'moderate') };
 for (const d of drills) for (const i of INTENSITIES) tracks[motionClipName(d, i)] = track(d, i);

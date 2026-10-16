@@ -2,7 +2,7 @@ import type { ProbeFrame } from '../scripts/anatomy/probe-fixture';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
-import { CAPSULE_GRIP, SKI_TIP, segmentMatrices } from '../src/viewer/pose';
+import { CAPSULE_ARM, CAPSULE_GRIP, SKI_TIP, poleSize, segmentMatrices } from '../src/viewer/pose';
 import { poseAt } from './stork-poses';
 import fixture from './anatomy-probe.json';
 
@@ -11,6 +11,8 @@ export type LegSide = typeof BodySide.Left | typeof BodySide.Right;
 /** Where a figure's fists, ankles and skis are at turn time `t`, in world space. */
 export interface FigureProbe {
   readonly name: string;
+  /** Fist to basket. */
+  readonly basket: number;
   readonly at: (t: number) => {
     readonly grip: (side: LegSide) => Vec3;
     readonly ankle: (side: LegSide) => Vec3;
@@ -27,6 +29,7 @@ const segment = (world: ReadonlyArray<Mat4>, kind: SegmentKind, side: LegSide): 
 
 export const capsuleProbe: FigureProbe = {
   name: 'capsule',
+  basket: poleSize(CAPSULE_ARM).basket,
   at: (t) => {
     const world = segmentMatrices(poseAt(t));
     return {
@@ -56,6 +59,7 @@ export const anatomyProbe = (): FigureProbe => {
   if (frames.length !== fixture.samples) throw new Error('anatomy probe fixture is malformed');
   return {
     name: 'anatomy',
+    basket: poleSize(fixture.arm).basket,
     at: (t) => {
       const u = (((t % 1) + 1) % 1) * fixture.samples;
       const frame = Math.abs(u - Math.round(u)) < 1e-9 ? frames[Math.round(u) % fixture.samples] : undefined;

@@ -7,7 +7,8 @@ import { BodySide } from './figure';
 import type { BootFit } from './gear-fit';
 import { GearMode } from './gear-mode';
 import type { Vec3 } from './mat4';
-import { POLE } from './pose';
+import { CAPSULE_ARM, poleSize } from './pose';
+import type { PoleSize } from './pose';
 
 export type LegSide = typeof BodySide.Left | typeof BodySide.Right;
 
@@ -172,17 +173,17 @@ const mergeOrThrow = (parts: ReadonlyArray<BufferGeometry>, groups = false): Buf
 };
 
 /** One pole in its own frame: fist at the origin, shaft down -y to the spike. */
-export const poleGeometry = (): BufferGeometry => {
-  const shaftEnd = POLE.reach - 0.03;
+export const poleGeometry = (size: PoleSize): BufferGeometry => {
+  const shaftEnd = size.reach - 0.03;
   const shaft = plain(new CylinderGeometry(0.009, 0.0065, shaftEnd - 0.08, 8, 1, true));
   shaft.translate(0, -(0.08 + shaftEnd) / 2, 0);
   // Reaches above the fist, where the thumb wraps it.
   const grip = plain(new CylinderGeometry(0.019, 0.016, 0.16, 12));
   grip.translate(0, 0.025, 0);
   const basket = plain(new CylinderGeometry(0.045, 0.04, 0.008, 18));
-  basket.translate(0, -POLE.basket, 0);
+  basket.translate(0, -size.basket, 0);
   const spike = plain(new CylinderGeometry(0.0065, 0.002, 0.03, 8));
-  spike.translate(0, -POLE.reach + 0.015, 0);
+  spike.translate(0, -size.reach + 0.015, 0);
   return mergeOrThrow([shaft, mergeOrThrow([grip, basket, spike])], true);
 };
 
@@ -220,6 +221,8 @@ export interface Gear {
   /** Toe and heel pieces in the binding frame. */
   readonly bindings: ReadonlyArray<GearPart>;
   readonly poles: ReadonlyArray<GearPart>;
+  /** Resizes both poles, as each kind of skiing carries its own. */
+  readonly setPole: (size: PoleSize) => void;
   readonly setMode: (mode: GearMode) => void;
   /** Brightens the translucent edges over a dark field. */
   readonly setDark: (dark: boolean) => void;
@@ -235,7 +238,7 @@ const slot = (g: BufferGeometry, material: number): BufferGeometry => {
 };
 
 /** Boots, bindings and poles, unparented; each figure places them. */
-export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, eq: Equipment = EQUIPMENT): Gear => {
+export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, size: PoleSize = poleSize(CAPSULE_ARM), eq: Equipment = EQUIPMENT): Gear => {
   const backdrop: Backdrop = { edge: uniform(new Color(EDGE.light)), gain: uniform(0.65) };
   const glass = [translucent(SHELL, 0.16, backdrop), translucent(TRIM, 0.45, backdrop), translucent(METAL, 0.45, backdrop)] as const;
   // The cuff's lower band lies over the shell; fading it keeps one layer of plastic there, not a dark double band.
@@ -257,7 +260,8 @@ export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, eq: Equipm
   const mounts = SIDES.map((side) => ({ side, parts: bindingGeometry(boots[side], eq) }));
   const plates = mounts.map(({ side, parts }) => make(slot(parts.stack, 1), side, ORDER.shell));
   const bindings = mounts.map(({ side, parts }) => make(slot(parts.binding, 2), side, ORDER.shell));
-  const pole = poleGeometry();
+  let pole = poleGeometry(size);
+  let reach = size.reach;
   const poles = SIDES.map((side) => make(pole, side, ORDER.pole));
   const all = [...shells, ...soles, ...cuffs, ...plates, ...bindings, ...poles];
   const kept = [...soles, ...plates];
@@ -268,6 +272,14 @@ export const createGear = (boots: Readonly<Record<LegSide, BootFit>>, eq: Equipm
     plates,
     bindings,
     poles,
+    setPole: (next) => {
+      if (Math.abs(next.reach - reach) < 1e-6) return;
+      const old = pole;
+      pole = poleGeometry(next);
+      reach = next.reach;
+      for (const { mesh } of poles) mesh.geometry = pole;
+      old.dispose();
+    },
     setMode: (mode) => {
       for (const { mesh } of all) {
         mesh.visible = mode !== GearMode.Off;

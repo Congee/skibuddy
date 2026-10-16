@@ -5,6 +5,7 @@ import { INTENSITIES } from '../../src/content/schema';
 import type { Intensity } from '../../src/content/schema';
 import { isTurn } from '../../src/physics/turn';
 import type { DrillScenario, TurnScenario, TurnScenarios } from '../../src/physics/turn';
+import { TURN_STYLES, isRegularTurn } from '../../src/viewer/poses/regular-turn';
 
 export const drillFile = (drill: string): URL => new URL(`../../content/drills/${drill}.yaml`, import.meta.url);
 
@@ -23,7 +24,9 @@ const scenarioOf = (raw: unknown, where: string): DrillScenario => {
   return out as unknown as DrillScenario;
 };
 
+/** A kind of skiing's regular turn carries its own scenarios; a drill's come from its content. */
 export const drillScenarios = (drill = 'stork-turns'): Readonly<Record<Intensity, DrillScenario>> => {
+  if (isRegularTurn(drill)) return TURN_STYLES[drill].scenarios;
   const raw: unknown = parse(readFileSync(drillFile(drill), 'utf8'));
   const scenarios = typeof raw === 'object' && raw !== null && 'scenarios' in raw ? raw.scenarios : undefined;
   if (typeof scenarios !== 'object' || scenarios === null) throw new Error(`${drill}: no scenarios`);

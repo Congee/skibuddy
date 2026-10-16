@@ -68,6 +68,10 @@ export interface PoseConstraints {
   readonly poleTouch: PoleTouch | null;
   /** Share of the inside arm's reach the shoulder blade takes (scapulohumeral rhythm). */
   readonly scapularRhythm: number;
+  /** Both thighs drawn toward each other: a stance narrower than hip width. */
+  readonly stance: number;
+  /** Poles this many metres shorter than the figure's regular length. */
+  readonly poleTrim: number;
   /** Per key field, how much more a dynamic turn takes (and a gentle one less), as a share per step of effort. */
   readonly gains: Readonly<Partial<Record<Exclude<keyof PoseKey, 't'>, number>>>;
 }

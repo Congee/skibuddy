@@ -35,6 +35,8 @@ export const NEUTRAL: PoseDefinition = {
     tailLift: null,
     poleTouch: null,
     scapularRhythm: 0,
+    stance: 0,
+    poleTrim: 0,
     gains: {},
   },
 };

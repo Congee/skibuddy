@@ -7,7 +7,7 @@ import { identity, transformPoint } from './mat4';
 import type { Vec3 } from './mat4';
 import { touchShare, windowShare } from './pose-definition';
 import type { PoseDefinition, PoseKey } from './pose-definition';
-import { CAPSULE_GRIP, PLANT_AHEAD, POLE, SKI_TIP, comAhead, poleDirection, segmentMatrices, skiIndex } from './pose';
+import { CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, comAhead, poleDirection, poleSize, segmentMatrices, skiIndex } from './pose';
 import type { Pose } from './pose';
 
 type KeyField = Exclude<keyof PoseKey, 't'>;
@@ -114,12 +114,12 @@ const insideTipHeight = (pose: Pose): number => transformPoint(segmentMatrices(p
 const segmentOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 
 /** How far ahead of the inside ankle a full touch lands. */
-const touchAhead = (pose: Pose): number => {
+const touchAhead = (pose: Pose, basket: number): number => {
   const world = segmentMatrices(pose);
   const at = (kind: SegmentKind, p: Vec3): Vec3 => transformPoint(world[segmentOf(kind, BodySide.Left)] ?? identity(), p);
   const grip = at(SegmentKind.Forearm, CAPSULE_GRIP);
   const ankle = at(SegmentKind.Boot, [0, 0, 0]);
-  return grip[2] + poleDirection(grip, BodySide.Left, 1, ankle)[2] * POLE.basket - ankle[2];
+  return grip[2] + poleDirection(grip, BodySide.Left, 1, ankle, basket)[2] * basket - ankle[2];
 };
 
 /**
@@ -159,7 +159,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       spineTwist: mild('spineTwist'),
       poleTouch,
       insideReach: 0,
-      outside: { hipFlex, ankleFlex, femurRotation, tailLift: 0, adduction: 0 },
+      outside: { hipFlex, ankleFlex, femurRotation, tailLift: 0, adduction: c.stance },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
       inside: {
@@ -167,8 +167,7 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
         ankleFlex: insideAnkle(tailLift),
         femurRotation: c.insideFemurShare * femurRotation,
         tailLift,
-        // At hip width, as the outside thigh.
-        adduction: 0,
+        adduction: c.stance,
       },
       outsideGirdle: girdle,
       insideGirdle: girdle,
@@ -221,18 +220,18 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   }
   const legs = base(knee, inside.extra, inside.tailLift);
   if (legs.poleTouch <= 0) return legs;
-  const reach = legs.poleTouch * solveReach(legs, c.scapularRhythm);
+  const reach = legs.poleTouch * solveReach(legs, c.scapularRhythm, poleSize(CAPSULE_ARM, c.poleTrim).basket);
   return { ...legs, insideReach: reach, insideGirdle: { ...girdle, protraction: girdle.protraction + c.scapularRhythm * reach } };
 };
 
 /** Shoulder flexion, with the shoulder blade's share, that lands the touch PLANT_AHEAD in front of the ankle; mirrored in build_anatomy.py. */
-const solveReach = (pose: Pose, rhythm: number): number => {
+const solveReach = (pose: Pose, rhythm: number, basket: number): number => {
   let lo = -0.5;
   let hi = 0.8;
   for (let i = 0; i < 20; i++) {
     const mid = (lo + hi) / 2;
     const girdle = { ...pose.insideGirdle, protraction: pose.insideGirdle.protraction + rhythm * mid };
-    if (touchAhead({ ...pose, insideReach: mid, insideGirdle: girdle }) < PLANT_AHEAD) lo = mid;
+    if (touchAhead({ ...pose, insideReach: mid, insideGirdle: girdle }, basket) < PLANT_AHEAD) lo = mid;
     else hi = mid;
   }
   return (lo + hi) / 2;

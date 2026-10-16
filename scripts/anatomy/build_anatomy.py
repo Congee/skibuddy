@@ -347,7 +347,8 @@ def rot_y3(a):
 HEAD_LIFT, HEAD_LEVEL = 0.6, 0.7  # as in src/viewer/pose.ts
 # Arm angles come from src/viewer/pose.ts through the pose track; see main.
 ARMS = {}
-# Pole from src/viewer/pose.ts through the pose track: basket length, carry height and heading, and where the touch lands.
+# Pole from src/viewer/pose.ts through the pose track: basket height, carry height and heading, where the touch lands, and
+# each clip's trim; main sets the clip's basket length.
 POLE = {}
 # Knuckles and fingertips sit this far from the grip's axis; the grip is about 18 mm in radius.
 GRIP_R, TIP_R = 0.025, 0.028
@@ -736,6 +737,7 @@ def boot_fit(J, cloud):
         shin = leg[(leg[:, 2] > a[2] + 0.02) & (leg[:, 2] < a[2] + 0.22) & (np.abs(leg[:, 1] - a[1]) < 0.12)]
         fit[s] = dict(
             ankle=to_gltf(a), knee=to_gltf(j['knee']), grip=to_gltf(grip_point(j, s)),
+            shoulder=to_gltf(j['shoulder']), elbow=to_gltf(j['elbow']),
             sole=float(j['sole'] - BOOT_SOLE), toe=float(-foot[:, 1].min()), heel=float(-foot[:, 1].max()),
             footX=[float(foot[:, 0].min()), float(foot[:, 0].max())],
             shinX=[float(shin[:, 0].min()), float(shin[:, 0].max())],
@@ -955,7 +957,12 @@ def main():
     rest['grip'] = {s: Vector(grip_point(J[s], s).tolist()) for s in ('R', 'L')}
     rest['ankle'] = {s: Vector(J[s]['ankle'].tolist()) for s in ('R', 'L')}
     # One clip per posed drill and intensity, named as motionClipName in src/viewer/anatomy-names.ts; the neutral stance stays active.
+    # Fist to tip as regularPoleReach and standingArm in src/viewer: standing in boots, upper arm hanging, forearm level.
+    l = J['L']
+    snow = l['sole'] - BOOT_SOLE
+    reach = l['shoulder'][2] - snow - float(np.linalg.norm(l['elbow'] - l['shoulder']))
     for name in sorted(tracks, key=lambda n: n == 'neutral'):
+        POLE['basket'] = reach - POLE['trim'].get(name, 0.0) - POLE['basketUp']
         action = bake(rig, ski_pivot, inside_tip, tracks[name], rest, name)
         strip = rig.animation_data.nla_tracks.new()
         strip.name = name

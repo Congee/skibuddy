@@ -289,13 +289,34 @@ export const comAhead = (world: ReadonlyArray<Mat4>): number => centreOfMass(wor
 
 /** Pole measured from the centre of the fist. */
 export const POLE = {
-  /** Fist to the spike's point. */
-  reach: 1.17,
-  /** Fist to the basket. */
-  basket: 1.09,
+  /** Basket above the spike's point. */
+  basketUp: 0.08,
   /** Basket height while carried: trailing just clear of the snow, so the shaft hangs steeply from the fist. */
   carry: 0.12,
 } as const;
+
+/** The arm standing in boots, as poles are sized: shoulder height above the snow, upper-arm length, and the fist above the forearm's axis held level. */
+export interface StandingArm {
+  readonly shoulder: number;
+  readonly upperArm: number;
+  readonly fist: number;
+}
+
+/** Regular pole, fist to tip: standing, upper arm hanging, forearm level, the tip just on the snow. */
+export const regularPoleReach = (arm: StandingArm): number => arm.shoulder - arm.upperArm + arm.fist;
+
+export interface PoleSize {
+  /** Fist to the spike's point. */
+  readonly reach: number;
+  /** Fist to the basket. */
+  readonly basket: number;
+}
+
+/** The arm's pole, `trim` metres shorter than regular. */
+export const poleSize = (arm: StandingArm, trim = 0): PoleSize => {
+  const reach = regularPoleReach(arm) - trim;
+  return { reach, basket: reach - POLE.basketUp };
+};
 
 /** Heading of the carried shaft from +z (forward) toward the pole's own side. */
 export const CARRY_HEADING = Math.PI - 0.3;
@@ -306,12 +327,11 @@ export const PLANT_AHEAD = 0.3;
 /**
  * Unit shaft direction, fist to tip, in world space. The pitch is solved so the
  * basket hangs at the carry height, or reaches the snow at a full touch beside
- * the ski at `ankle`, behind the fist; the heading eases between the two, so the
+ * the ski at `ankle`, behind the fist, for a basket `b` from the fist; the heading eases between the two, so the
  * swing stays back and close to the hand.
  */
-export const poleDirection = (grip: Vec3, side: typeof BodySide.Left | typeof BodySide.Right, touch: number, ankle: Vec3): Vec3 => {
+export const poleDirection = (grip: Vec3, side: typeof BodySide.Left | typeof BodySide.Right, touch: number, ankle: Vec3, b: number): Vec3 => {
   const out = side === BodySide.Left ? 1 : -1;
-  const b = POLE.basket;
   const dx = ankle[0] + out * PLANT_SIDE - grip[0];
   const dz = -Math.sqrt(Math.max(0, b ** 2 - grip[1] ** 2 - dx ** 2));
   // Turn the short way from the carry heading.
@@ -324,3 +344,14 @@ export const poleDirection = (grip: Vec3, side: typeof BodySide.Left | typeof Bo
 
 /** The capsule figure's fist, in its forearm frame. */
 export const CAPSULE_GRIP: Vec3 = [0, -0.3, 0.01];
+
+const UPPER_ARM = SEGMENTS.findIndex((s) => s.kind === SegmentKind.UpperArm && s.side === BodySide.Left);
+const FOREARM = SEGMENTS.findIndex((s) => s.kind === SegmentKind.Forearm && s.side === BodySide.Left);
+
+/** The capsule figure's arm, measured standing with every joint angle at zero; its boot soles sit the stand height over the ski bases. */
+export const CAPSULE_ARM: StandingArm = {
+  shoulder: transformPoint(segmentMatrices(poseFromChannels(POSE_CHANNELS.map(() => 0)))[UPPER_ARM] ?? identity(), [0, 0, 0])[1] - EQUIPMENT.standHeight,
+  upperArm: Math.hypot(...(SEGMENTS[FOREARM]?.joint ?? [0, 0, 0])),
+  // Level, the forearm's frame turns its +z up.
+  fist: CAPSULE_GRIP[2],
+};

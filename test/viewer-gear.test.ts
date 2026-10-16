@@ -7,7 +7,7 @@ import { CUFF_BOTTOM, CUFF_FADE_TOP, bindingGeometry, createGear, cuffGeometry, 
 import { CAPSULE_BOOT, bootFitFrom, coveredByBoot, parseGearFit } from '../src/viewer/gear-fit';
 import type { RawFit } from '../src/viewer/gear-fit';
 import { GearMode, isGearMode } from '../src/viewer/gear-mode';
-import { POLE } from '../src/viewer/pose';
+import { CAPSULE_ARM, poleSize } from '../src/viewer/pose';
 
 const RAW: RawFit = {
   ankle: [0.07, 0.066, -0.035],
@@ -68,7 +68,7 @@ describe('gear geometry', () => {
   });
 
   it('gives the pole a material group over all its triangles', () => {
-    const g = poleGeometry();
+    const g = poleGeometry(poleSize(CAPSULE_ARM));
     const covered = g.groups.reduce((sum, group) => sum + group.count, 0);
     assert.strictEqual(covered, g.index?.count);
   });
@@ -87,9 +87,10 @@ describe('gear geometry', () => {
   });
 
   it('runs the pole from the grip down to the spike', () => {
-    const g = poleGeometry();
+    const size = poleSize(CAPSULE_ARM);
+    const g = poleGeometry(size);
     g.computeBoundingBox();
-    assert.closeTo(g.boundingBox?.min.y ?? 0, -POLE.reach, 1e-6);
+    assert.closeTo(g.boundingBox?.min.y ?? 0, -size.reach, 1e-6);
     assert.isAbove(g.boundingBox?.max.y ?? 0, 0.05);
     assert.strictEqual(g.groups.length, 2);
   });

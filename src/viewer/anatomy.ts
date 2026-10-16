@@ -28,10 +28,12 @@ import type { Mat4, Vec3 } from './mat4';
 import { BodySide } from './figure';
 import { createGear, placePole } from './gear';
 import type { Gear, LegSide } from './gear';
-import { bootFitFrom, parseGearFit } from './gear-fit';
+import { bootFitFrom, parseGearFit, standingArm } from './gear-fit';
 import type { BootFit, RawFit } from './gear-fit';
 import type { GearMode } from './gear-mode';
-import { poleDirection } from './pose';
+import { CAPSULE_ARM, poleDirection, poleSize } from './pose';
+import type { StandingArm } from './pose';
+import { poleTrimOf } from './poses';
 import { poseTable, samplePose } from './pose-table';
 import type { PoseTable } from './pose-table';
 import { NEUTRAL_CLIP, NodeKind, motionClipName, nodeOf } from './anatomy-names';
@@ -139,6 +141,7 @@ interface Fitting {
   readonly fit: BootFit;
   readonly ankle: Vec3;
   readonly grip: Vec3;
+  readonly arm: StandingArm;
 }
 
 const own = (parts: ReadonlyArray<{ readonly mesh: Object3D; readonly side: LegSide }>, side: LegSide): Object3D | undefined =>
@@ -147,7 +150,7 @@ const own = (parts: ReadonlyArray<{ readonly mesh: Object3D; readonly side: LegS
 /** Bone names lose their dots in three's loader. */
 const boneName = (part: string, side: LegSide): string => PropertyBinding.sanitizeNodeName(`${part}.${side === BodySide.Right ? 'R' : 'L'}`);
 
-const fitting = (side: LegSide, r: RawFit): Fitting => ({ side, fit: bootFitFrom(r), ankle: r.ankle, grip: r.grip });
+const fitting = (side: LegSide, r: RawFit): Fitting => ({ side, fit: bootFitFrom(r), ankle: r.ankle, grip: r.grip, arm: standingArm(r) ?? CAPSULE_ARM });
 
 const fittings = (root: Object3D): Readonly<Record<LegSide, Fitting>> | null => {
   const raw = parseGearFit(root.getObjectByName('bones')?.userData['gear_fit']);
@@ -291,7 +294,7 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
       fist.copy(local).applyMatrix4(hand.matrixWorld);
       foot.getWorldPosition(ankle);
       const grip: Vec3 = [fist.x, fist.y, fist.z];
-      placePole(pole.mesh, grip, poleDirection(grip, side, side === BodySide.Left ? touch : 0, [ankle.x, ankle.y, ankle.z]));
+      placePole(pole.mesh, grip, poleDirection(grip, side, side === BodySide.Left ? touch : 0, [ankle.x, ankle.y, ankle.z], size.basket));
     }
   };
 
@@ -300,7 +303,7 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
     root.traverse(dress);
     // Older models without the bake's fit carry no gear.
     if (fitted !== null) {
-      kit = createGear({ [BodySide.Right]: fitted.right.fit, [BodySide.Left]: fitted.left.fit });
+      kit = createGear({ [BodySide.Right]: fitted.right.fit, [BodySide.Left]: fitted.left.fit }, poleSize(fitted.left.arm));
       fitGear(kit, fitted);
     }
     clip = gltf.animations.find((a) => a.name === NEUTRAL_CLIP) ?? gltf.animations[0];
@@ -328,6 +331,9 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
   let playing = actionFor(NEUTRAL_CLIP);
   playing.action.play();
   let poses: PoseTable = poseTable(null, Intensity.Moderate);
+  // Mirrors the bake's poles, sized from the left arm.
+  const arm = fitted?.left.arm ?? CAPSULE_ARM;
+  let size = poleSize(arm);
 
   const limbs = LIMBS.flatMap(([from, to, radius]) => {
     const a = root.getObjectByName(PropertyBinding.sanitizeNodeName(from));
@@ -429,6 +435,8 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
       const next = actionFor(gltf.animations.some((a) => a.name === named) ? named : NEUTRAL_CLIP);
       // The poles' touch must match the clip, so a drill the model has no clip for stands still.
       poses = next.clip.name === named ? poseTable(drill, i) : poseTable(null, i);
+      size = poleSize(arm, next.clip.name === named ? poleTrimOf(drill) : 0);
+      kit?.setPole(size);
       if (next === playing) return;
       playing.action.stop();
       next.action.play();

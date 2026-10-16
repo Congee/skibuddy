@@ -11,10 +11,10 @@ import { NEUTRAL_CLIP, motionClipName, nodeOf } from '../../src/viewer/anatomy-n
 import { pickOfName } from '../../src/viewer/pick';
 import { EQUIPMENT, bindingInFoot, shellInFoot, totalRamp } from '../../src/viewer/equipment';
 import { BodySide } from '../../src/viewer/figure';
-import { bootFitFrom, parseGearFit } from '../../src/viewer/gear-fit';
+import { bootFitFrom, parseGearFit, standingArm } from '../../src/viewer/gear-fit';
 import { transformPoint } from '../../src/viewer/mat4';
 import type { Vec3 } from '../../src/viewer/mat4';
-import { poleDirection } from '../../src/viewer/pose';
+import { poleDirection, poleSize } from '../../src/viewer/pose';
 import { touchShare } from '../../src/viewer/pose-definition';
 import { STORK_TURNS } from '../../src/viewer/poses/stork-turns';
 import fixture from '../anatomy-probe.json';
@@ -107,6 +107,9 @@ describe('anatomy hands on the grips', () => {
     });
     const raw = parseGearFit(model.root.getObjectByName('bones')?.userData['gear_fit']);
     if (bones === undefined || raw === null) throw new Error('no bones or gear fit');
+    const arm = standingArm(raw.left);
+    if (arm === null) throw new Error('no arm joints');
+    const { basket } = poleSize(arm);
     const mesh = bones;
     const index = mesh.geometry.getAttribute('skinIndex');
     const weight = mesh.geometry.getAttribute('skinWeight');
@@ -136,7 +139,7 @@ describe('anatomy hands on the grips', () => {
       for (const { side, letter, grip, fingers, palm, thumb } of hands) {
         const g = grip();
         const ankle = model.bone(`foot.${letter}`).getWorldPosition(new Vector3());
-        const d = new Vector3(...poleDirection([g.x, g.y, g.z], side, side === BodySide.Left ? poleTouchAt(t) : 0, [ankle.x, ankle.y, ankle.z]));
+        const d = new Vector3(...poleDirection([g.x, g.y, g.z], side, side === BodySide.Left ? poleTouchAt(t) : 0, [ankle.x, ankle.y, ankle.z], basket));
         const e1 = new Vector3(0, 1, 0).cross(d).normalize();
         const e2 = d.clone().cross(e1);
         // Radius and angle about the pole's axis.
