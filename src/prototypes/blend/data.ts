@@ -1,6 +1,7 @@
 import { Schema } from 'effect';
 import { Drill, Exercise, INTENSITIES, Movement, MovementId, Muscle, PHASES, Phase, Source, levelAt } from '../../content/schema';
 import type { Activation, EffortLevel, Intensity, LevelBySetting } from '../../content/schema';
+import { RegularTurn } from '../../viewer/poses/regular-turn';
 
 export interface BlendDrill extends Drill {
   readonly draft: boolean;
@@ -56,6 +57,8 @@ export interface Kind {
   /** Present on placeholders authored here; absent on kinds with real (draft) content. */
   readonly shift?: Shift;
   readonly drill: string;
+  /** The figure's turn for this kind. */
+  readonly pose: RegularTurn;
 }
 
 const LEGS = new Set(['vasti', 'rectus-femoris', 'gluteus-maximus', 'biceps-femoris', 'medial-hamstrings', 'soleus', 'gastrocnemius']);
@@ -63,14 +66,15 @@ const TRUNK = new Set(['rectus-abdominis', 'transversus-abdominis', 'external-ob
 const FOOT = new Set(['tibialis-anterior', 'toe-extensors', 'peroneals', 'tibialis-posterior', 'foot-intrinsics']);
 
 export const KINDS: ReadonlyArray<Kind> = [
-  { id: KindId.Cruising, name: 'Cruising', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns', shift: () => -1 },
-  { id: KindId.Carving, name: 'Carving', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns' },
-  { id: KindId.ShortTurns, name: 'Short turns', base: 'short-radius-turn', drill: 'short-radius-turns' },
+  { id: KindId.Cruising, name: 'Cruising', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns', pose: RegularTurn.Cruising, shift: () => -1 },
+  { id: KindId.Carving, name: 'Carving', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns', pose: RegularTurn.Carving },
+  { id: KindId.ShortTurns, name: 'Short turns', base: 'short-radius-turn', drill: 'short-radius-turns', pose: RegularTurn.ShortTurns },
   {
     id: KindId.Moguls,
     name: 'Moguls',
     base: 'short-radius-turn',
     drill: 'short-radius-turns',
+    pose: RegularTurn.Moguls,
     // Absorbing each bump: legs work harder through finish into initiation; the trunk steadies the absorption.
     shift: (a, p) => ((LEGS.has(a.muscle) && p !== Phase.Shaping) || (TRUNK.has(a.muscle) && p === Phase.Finish) ? 1 : 0),
   },
@@ -79,6 +83,7 @@ export const KINDS: ReadonlyArray<Kind> = [
     name: 'Steeps',
     base: 'short-radius-turn',
     drill: 'short-radius-turns',
+    pose: RegularTurn.Steeps,
     // Edge set at the finish loads the outside leg; the trunk holds square to the fall line.
     shift: (a, p) => ((a.side === 'outside' && LEGS.has(a.muscle) && p === Phase.Finish) || (TRUNK.has(a.muscle) && p === Phase.Initiation) ? 1 : 0),
   },
@@ -87,6 +92,7 @@ export const KINDS: ReadonlyArray<Kind> = [
     name: 'Powder',
     base: 'long-radius-carved-turn',
     drill: 'long-radius-carved-turns',
+    pose: RegularTurn.Powder,
     // Two-footed platform: the inside leg shares the load, edging muscles ease.
     shift: (a) => (a.side === 'inside' && LEGS.has(a.muscle) ? 1 : FOOT.has(a.muscle) ? -1 : 0),
   },

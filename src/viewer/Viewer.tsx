@@ -54,7 +54,7 @@ export const Viewer = (props: {
   readonly gear?: GearMode;
   /** How hard the turn is skied; moderate by default. */
   readonly intensity?: Intensity;
-  /** The drill shown; one without a pose stands in a neutral stance. */
+  /** The motion shown: a drill or a kind's regular turn, by pose id; one without a pose stands in a neutral stance. */
   readonly drill: string;
   /** CSS colour of the ground under the figure. */
   readonly ground?: string;

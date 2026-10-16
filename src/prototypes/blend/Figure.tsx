@@ -79,6 +79,8 @@ export const Figure = (props: {
   readonly muscles: ReadonlyArray<string>;
   readonly order: ReadonlyArray<Activation>;
   readonly intensity: Intensity;
+  /** The figure's motion: a kind's regular turn, or a drill's id. */
+  readonly pose: string;
   readonly selected: string | null;
   readonly ramp: EffortRamp;
   /** The muscles to train, drawn as exercise tags; fixed for a kind and setting. */
@@ -160,8 +162,7 @@ export const Figure = (props: {
           movement={props.movement}
           muscles={props.muscles}
           intensity={props.intensity}
-          // Only the stork turn has a pose bake; every kind borrows it for now.
-          drill="stork-turns"
+          drill={props.pose}
           ground={GROUND[props.theme]}
           highlight={highlight()}
           skeleton={highlight() !== null}

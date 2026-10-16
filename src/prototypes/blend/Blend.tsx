@@ -2,10 +2,11 @@ import { useAtom } from '@effect/atom-solid';
 import { For, Match, Show, Switch, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { steadyOrder } from '../../content/effort';
-import { INTENSITIES, Intensity } from '../../content/schema';
+import { INTENSITIES, Intensity, isTurnScenarios } from '../../content/schema';
 import { phaseAt, playingAtom, turnTimeAtom, wrapTurn } from '../../state/playback';
 import { usePlayback } from '../../ui/lift/LiftLine';
 import { REDUCED_MOTION, createMedia } from '../../ui/media';
+import { motionFor } from '../../viewer/poses';
 import { KINDS, KIND_DRILLS, KindId, kindMovement } from './data';
 import type { BlendData } from './data';
 import { drillsLike, keyOf, trainThese } from './detail';
@@ -143,6 +144,12 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
     const s = source();
     const id = 'drill' in s ? s.drill : kind()?.drill;
     return data.drills.find((d) => d.id === id) ?? data.drills[0];
+  });
+  const pose = createMemo((): string => {
+    const k = kind();
+    const d = drill();
+    if (k !== undefined) return k.pose;
+    return d === undefined ? '' : (motionFor(d.id, isTurnScenarios(d.scenarios)) ?? d.id);
   });
   const movement = createMemo(() => {
     const k = kind();
@@ -332,7 +339,6 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
           <div id="settings" class="settings" role="group" aria-label="Settings">
             <Segmented label="How hard it is skied" options={INTENSITIES} value={intensity()} onChange={setIntensity} />
             <Segmented label="Theme" options={[ThemeChoice.System, ThemeChoice.Light, ThemeChoice.Dark]} value={choice()} onChange={setChoice} />
-            <p class="muted small">Every kind shows the stork-turn pose for now; the colours follow the kind you pick.</p>
             <p class="muted small">
               Not medical advice. Not affiliated with any instructor association. Anatomy:{' '}
               <a href="https://www.z-anatomy.com/" target="_blank" rel="noreferrer">
@@ -353,6 +359,7 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
               muscles={muscleIds}
               order={order()}
               intensity={intensity()}
+              pose={pose()}
               selected={selected()}
               ramp={ramp()}
               tags={tags()}
@@ -363,7 +370,6 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
             />
           )}
         </Show>
-        <p class="pose-note">Stork-turn pose for every kind for now.</p>
         <Show when={hint()}>
           <p class="hint" role="note">
             Tap a muscle to see it work. Pinch to zoom.

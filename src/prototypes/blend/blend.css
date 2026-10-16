@@ -359,14 +359,6 @@ p {
   color: var(--ink-2);
 }
 
-.pose-note {
-  position: absolute;
-  top: calc(var(--top-h) + 2px);
-  left: 16px;
-  font-size: 13px;
-  color: var(--ink-3);
-}
-
 .pins,
 .leaders {
   position: absolute;
