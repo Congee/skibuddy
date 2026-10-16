@@ -8,9 +8,9 @@ terrain: An easy, soft mogul field on a blue, bumps about half a metre high, in 
 # A quarter of gravity's pull along the line is braked fore-aft at the feet: most mogul braking is lateral edge skid, which tilts the balance line sideways, not fore-aft; inferred.
 # The mass runs nearly straight while the legs swing under it: its path about 4x the skis' arc, inferred.
 scenarios:
-  gentle: { speed_mps: 5, radius_m: 5, com_radius_m: 20, slope_deg: 15, braking_share: 0.25 }
-  moderate: { speed_mps: 6, radius_m: 5, com_radius_m: 20, slope_deg: 18, braking_share: 0.25 }
-  dynamic: { speed_mps: 7.5, radius_m: 5.5, com_radius_m: 22, slope_deg: 22, braking_share: 0.25 }
+  gentle: { speed_mps: 5, radius_m: 5, com_radius_m: 15, slope_deg: 15, braking_share: 0.25 }
+  moderate: { speed_mps: 6, radius_m: 5, com_radius_m: 15, slope_deg: 18, braking_share: 0.25 }
+  dynamic: { speed_mps: 7.5, radius_m: 5.5, com_radius_m: 16.5, slope_deg: 22, braking_share: 0.25 }
 equipment: Efforts assume recreational skis of about 12-15 m sidecut and boots with about 15° of cuff lean. Softer, narrower skis and shorter poles make the bumps easier (lemaster-2010 p185).
 cautions:
   - "Common mistake: staying low the whole turn. Stand taller as the skis slide down into the trough, then fold again for the next bump (lemaster-2010 p191)."

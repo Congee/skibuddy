@@ -131,20 +131,20 @@ const kindOf = (pose: string): SurfaceKind =>
 
 const PROFILE_SAMPLES = 64;
 
+/** The tops field's own path: the bumps are spaced as a turn swinging across 2 m, whatever line is skied over them. */
+const TOPS_FIELD_CORRIDOR = 2;
+
 /** The snow a pose's turn is skied on at this intensity. */
 export const surfaceFor = (pose: string, intensity: Intensity): Surface => {
   const path = turnPath(pose, intensity);
   const kind = kindOf(pose);
   const line = kind === SurfaceKind.Moguls ? lineOf(pose) : null;
-  const { xs, zs } = tableFor(transitionHeading(path), path.phase);
-  // Steady speed that reaches the corridor's edge on the fall line, as turnPath's corridor says.
-  const edge = path.phase === undefined ? -(xs[SAMPLES / 2] ?? 0) : Math.max(...xs.map(Math.abs));
-  const speed = edge > 1e-9 ? path.corridor / 2 / edge : 0;
+  const { spacing, speed } = line === MogulLine.Tops ? overField(path, { ...path, corridor: TOPS_FIELD_CORRIDOR }) : overField(path, path);
   const surface: Surface = {
     kind,
     line,
     path,
-    spacing: speed * (zs[SAMPLES] ?? 0),
+    spacing,
     columns: line === MogulLine.Zipper ? ZIPPER.pitch : line === MogulLine.Round ? ROUND_FIELD.pitch : MOGUL_COLUMNS,
     relief: line === MogulLine.Zipper ? ZIPPER.height : kind === SurfaceKind.Moguls ? MOGUL_RELIEF[intensity] : 0,
     depth: kind === SurfaceKind.Powder ? POWDER_DEPTH[intensity] : 0,
@@ -163,6 +163,16 @@ const roundExtremes = (s: Surface): { readonly crest: number; readonly trough: n
     return heightAt(s, x, z);
   });
   return { crest: hs.indexOf(Math.max(...hs)) / PROFILE_SAMPLES, trough: hs.indexOf(Math.min(...hs)) / PROFILE_SAMPLES };
+};
+
+/** Spacing as `field` sets it, and the steady speed that carries `path` one spacing per turn. */
+const overField = (path: TurnPath, field: TurnPath): { readonly spacing: number; readonly speed: number } => {
+  const { xs, zs } = tableFor(transitionHeading(field), field.phase);
+  // Steady speed that reaches the corridor's edge on the fall line, as turnPath's corridor says.
+  const edge = field.phase === undefined ? -(xs[SAMPLES / 2] ?? 0) : Math.max(...xs.map(Math.abs));
+  const spacing = edge > 1e-9 ? ((field.corridor / 2) * (zs[SAMPLES] ?? 0)) / edge : 0;
+  const along = tableFor(transitionHeading(path), path.phase).zs[SAMPLES] ?? 0;
+  return { spacing, speed: along > 1e-9 ? spacing / along : 0 };
 };
 
 /** Turn times of the highest and lowest snow along the skis' track. */

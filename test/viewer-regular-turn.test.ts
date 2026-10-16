@@ -142,7 +142,8 @@ describe('regular turn', () => {
       for (const i of INTENSITIES) {
         const knees = Array.from({ length: 24 }, (_, k) => anglesOf(drill, i, k / 24).knee);
         const v = knees.map((k) => k.right);
-        assert.isAtMost(Math.min(...v), drill === TOPS_POSE ? 28 : 40, `${drill} ${i} trough`);
+        // The tops line's long leg in the trough (duncan-smith-2021 4:34-4:40), on the saddle shoulder; amount inferred.
+        assert.isAtMost(Math.min(...v), drill === TOPS_POSE ? 35 : 40, `${drill} ${i} trough`);
         assert.isAtLeast(Math.max(...v), Math.min(...v) + 35, `${drill} ${i} crest`);
         if (drill === RegularTurn.Moguls) assert.isAtLeast(Math.min(...knees.map((k) => Math.min(k.left, k.right))), 15, `${i} never straight`);
       }

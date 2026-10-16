@@ -133,6 +133,19 @@ const FOLLOW: PhaseValues = [0, 0.5, 0.9, 1, 0.4];
 // fall line, so pelvis counter is the skis' heading off it with no spine twist.
 // The tops line, and the closed-stance drill's terrain, run in a corridor about 2 m wide.
 const CORRIDOR = 2;
+/**
+ * The tops line comes round to 50 deg off the fall line over each crest, finishing across the hill as in duncan-smith-2021
+ * 1:28-1:32, wider than its field's 2 m corridor so mid-turn it rides the saddle's shoulder (campbell-rogan-2001); inferred.
+ */
+export const TOPS_CORRIDOR_SHARE = 2 * (1 - Math.cos(50 * DEG));
+// The tops line's mass swings less straight than the zipper's, so the body inclines as in duncan-smith-2021 1:28-1:32; inferred.
+const TOPS_COM = 3;
+/** Share of the edge already in at 1/6 of the tops turn; inferred from duncan-smith-2021. */
+export const TOPS_EARLY = 0.7;
+/** Turn time of the tops plant: at the release, just before the crest. */
+export const TOPS_PLANT = 0.9;
+// Hands wide and forward, the poles out to the side (duncan-smith-2021 1:28-1:32, 4:26).
+const HANDS_WIDE = 30;
 /** The zipper line swings about a rut's width across, between two mogul columns; inferred. */
 export const ZIPPER_CORRIDOR = 1.1;
 // The head stays still, facing downhill (fis-freestyle-judging-2025 p29).
@@ -463,15 +476,20 @@ export const TOPS: TurnStyle = {
   ...TURN_STYLES[RegularTurn.Moguls],
   // As content/drills/turns-on-the-tops.yaml: a recreational field; a quarter of the braking fore-aft, as the zipper.
   scenarios: {
-    gentle: { speedMps: 5, radiusM: 5, slopeDeg: 15, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
-    moderate: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
-    dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22, comRadiusM: MOGUL_COM * 5.5, brakingShare: 0.25 },
+    gentle: { speedMps: 5, radiusM: 5, slopeDeg: 15, comRadiusM: TOPS_COM * 5, brakingShare: 0.25 },
+    moderate: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: TOPS_COM * 5, brakingShare: 0.25 },
+    dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22, comRadiusM: TOPS_COM * 5.5, brakingShare: 0.25 },
   },
-  counter: fallLineHeading(5, CORRIDOR),
+  counter: fallLineHeading(5, TOPS_CORRIDOR_SHARE * 5),
   counterGain: COUNTER_GAIN,
+  // Tipped early once flat on the backside (duncan-smith-2021 5:26-6:14), edged by the fall line (1:28-1:32).
+  early: TOPS_EARLY,
   trunkOverShin: 12,
   trunkOverShinGain: TRUNK_OVER_SHIN_GAIN,
-  head: DOWNHILL,
+  // Planted downhill at the release, on the bump's top (duncan-smith-2021 1:31, campbell-rogan-2001).
+  poleTouchAt: TOPS_PLANT,
+  head: { ...DOWNHILL, corridor: TOPS_CORRIDOR_SHARE * 5 },
+  armAbduction: HANDS_WIDE,
 };
 
 /** The round line swings wider than the tops line's corridor (jds-bumps-style 2:00); inferred. */

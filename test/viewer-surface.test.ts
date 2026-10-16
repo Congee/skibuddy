@@ -61,11 +61,14 @@ describe('heightAt', () => {
     }
   });
 
-  it('crests on the tops line at each switch and sits a quarter relief down mid-turn', () => {
+  it('crests on the tops line at each switch and rides the saddle shoulder mid-turn', () => {
     close(heightAt(tops, 0, 0), tops.relief / 2);
     close(heightAt(tops, 0, tops.spacing), tops.relief / 2);
+    // The field stays spaced for a 2 m corridor while the line swings wider over it.
+    close(tops.spacing, 4.6, 0.01);
     const mid = pathAt(tops, 0.5);
-    close(heightAt(tops, mid.x, mid.z), -tops.relief / 4, 1e-3);
+    // Inferred: at least 0.4 of the relief up (campbell-rogan-2001).
+    assert.isAtLeast(heightAt(tops, mid.x, mid.z), -0.1 * tops.relief);
     // The columns either side crest between the line's crests.
     close(heightAt(tops, tops.columns, tops.spacing / 2), tops.relief / 2);
     assert.strictEqual(tops.crest, 0);
