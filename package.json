@@ -11,7 +11,7 @@
     "content": "bun scripts/build-content.ts",
     "poses": "bun scripts/anatomy/pose-tables.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "lint": "oxlint",
+    "lint": "oxlint --ignore-pattern '.claude/**'",
     "test": "vitest run",
     "test:model": "vitest run --config vitest.model.config.ts",
     "check": "bun run typecheck && bun run lint && bun run test"
