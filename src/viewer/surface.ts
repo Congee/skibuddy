@@ -12,9 +12,9 @@ export const SurfaceKind = { Groomed: 'groomed', Moguls: 'moguls', Powder: 'powd
 export type SurfaceKind = (typeof SurfaceKind)[keyof typeof SurfaceKind];
 
 /**
- * The line through moguls: the zipper runs in the ruts between two columns, the tips meeting each mogul's face
- * mid-turn (fis-freestyle-judging-2025 p26); the tops line turns over each crest at the switch, as a drill; the round
- * line skis round each bump high on its wall (jds-bumps-style 1:20-1:55).
+ * The line through moguls: the zipper tops each mogul down one line at the switch, briefly in the rut between, the tips
+ * meeting the next face mid-turn (fis-freestyle-judging-2025 pp26, 28); the tops line turns over each crest, as a drill;
+ * the round line skis round each bump high on its wall (jds-bumps-style 1:20-1:55).
  */
 export const MogulLine = { Round: 'round', Zipper: 'zipper', Tops: 'tops' } as const;
 export type MogulLine = (typeof MogulLine)[keyof typeof MogulLine];
@@ -46,21 +46,22 @@ const MOGUL_COLUMNS = 3;
 /**
  * The zipper's competition course: moguls 3.5 m apart along the line, alternating sides, so each column repeats every
  * 7 m (kurpiers-2010 p10, abom-mogul-construction), crests 0.8-1.2 m high (kurpiers-2010 p10), the same at every
- * intensity. Inferred: the 1 m pick over the saddle, the column pitch, the raised-cosine footprint, the four columns
- * either side of the line (a symmetric strip, as the mirrored next turn needs) and the skied-in rut, flat-floored,
- * deepest in the bowl at the foot of each face, shallow over the shoulders.
+ * intensity. Inferred: the 1 m pick over the trough, the stagger, the lines' pitch, the raised-cosine footprint, the
+ * five lines (a symmetric strip, as the mirrored next turn needs) and the skied-in rut, flat-floored, deepest in the
+ * trough and shallow over each top, where the turn switches (fis-freestyle-judging-2025 p28).
  */
 const ZIPPER = {
   height: 1,
-  pitch: 3.4,
-  columns: 4,
-  reach: 3.2,
-  crestAt: 0.26,
-  floor: 0.32,
-  wall: 1,
-  deep: 0.25,
-  shallow: 0.1,
-  rutAt: 0.6,
+  pitch: 3.5,
+  columns: 5,
+  stagger: 0.3,
+  reach: 2.0,
+  crestAt: 0.1,
+  floor: 0.25,
+  wall: 0.8,
+  deep: 0.15,
+  shallow: 0.05,
+  rutAt: 0.45,
   trackShare: 1.4,
 } as const;
 /**
@@ -272,30 +273,32 @@ const roundSlopes = (s: Surface, x: number, z: number): { readonly dx: number; r
 const trackX = (s: Surface, z: number): number => (-ZIPPER.trackShare * s.path.corridor * Math.sin((Math.PI * z) / s.spacing)) / 2;
 
 /**
- * The course's moguls without the rut, unit crests: raised-cosine bumps in a diamond lattice, the columns half a pitch
- * either side of the line, a column's moguls every second spacing, the next column's offset by one.
+ * The course's moguls without the rut, unit crests: raised-cosine bumps in lines a pitch apart, one mogul per spacing
+ * down each line, alternating a stagger either side of it, so each line's moguls repeat every second spacing.
  */
 const bumps = (s: Surface, x: number, z: number): number => {
   let h = 0;
   const z0 = z - ZIPPER.crestAt * s.spacing;
   const first = Math.floor((z0 - ZIPPER.reach) / s.spacing);
   const last = Math.ceil((z0 + ZIPPER.reach) / s.spacing);
-  for (let m = -ZIPPER.columns / 2; m < ZIPPER.columns / 2; m++)
-    for (let k = first; k <= last; k++) {
-      // Abreast of each switch, on the side the turn before swung toward (fis-freestyle-judging-2025 pp25-28).
-      if ((m + k) % 2 !== 0) continue;
-      const r = Math.hypot(x - (m + 0.5) * ZIPPER.pitch, z0 - k * s.spacing);
+  const half = (ZIPPER.columns - 1) / 2;
+  for (let k = first; k <= last; k++) {
+    // The mogul a turn ends on sits a stagger back toward where the turn swung, so its top passes just before the switch.
+    const side = k % 2 === 0 ? ZIPPER.stagger : -ZIPPER.stagger;
+    for (let m = -half; m <= half; m++) {
+      const r = Math.hypot(x - side - m * ZIPPER.pitch, z0 - k * s.spacing);
       if (r < ZIPPER.reach) h += Math.cos((Math.PI * r) / (2 * ZIPPER.reach)) ** 2;
     }
+  }
   return h;
 };
 
-/** Metres per unit crest, so a crest stands the course's height over the saddle between diagonal neighbours. */
+/** Metres per unit crest, so a crest stands the course's height over the trough between it and the next down the line. */
 const scales = new Map<number, number>();
 const scaleOf = (s: Surface): number => {
   let k = scales.get(s.spacing);
   if (k === undefined) {
-    k = ZIPPER.height / (bumps(s, ZIPPER.pitch / 2, ZIPPER.crestAt * s.spacing) - bumps(s, 0, (0.5 + ZIPPER.crestAt) * s.spacing));
+    k = ZIPPER.height / (bumps(s, ZIPPER.stagger, ZIPPER.crestAt * s.spacing) - bumps(s, 0, (0.5 + ZIPPER.crestAt) * s.spacing));
     scales.set(s.spacing, k);
   }
   return k;
@@ -399,7 +402,7 @@ export const skiRest = (s: Surface, t: number, at: readonly [number, number], ah
   const under = (along: number): number => underFoot(s, t, [at[0], at[1] + along]).support;
   // The ends' reach over the snow shortens as the ski pitches.
   let slope = 0;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     const c = Math.cos(Math.atan(slope));
     slope = (under(ahead * c) - under(-behind * c)) / ((ahead + behind) * c);
   }

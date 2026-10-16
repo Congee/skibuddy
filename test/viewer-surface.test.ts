@@ -12,6 +12,7 @@ import {
   supportAt,
   surfaceFor,
   SurfaceKind,
+  trackRest,
   underFoot,
 } from '../src/viewer/surface';
 import { CLOSED_STANCE_POSE, TOPS_POSE } from '../src/viewer/turn-heading';
@@ -90,23 +91,18 @@ describe('heightAt', () => {
     }
   });
 
-  it('keeps the zipper path in the ruts, clear of every crest', () => {
+  it('tops a mogul at each switch and drops into the rut mid-turn (fis-freestyle-judging-2025 p26, p28)', () => {
+    // p28: absorb up to the top, extend right after it; p26: the feet go into the rut only briefly. Shares inferred.
     for (const i of INTENSITIES) {
       const s = surfaceFor(RegularTurn.Moguls, i);
-      // Crests: the field's local maxima on a grid around the turn, above the rut floor's own high points.
-      const step = 0.05;
-      const crests: Array<readonly [number, number]> = [];
-      for (let x = -2; x <= 2; x += step)
-        for (let z = -s.spacing; z <= 2 * s.spacing; z += step) {
-          const h = heightAt(s, x, z);
-          const around = [-step, 0, step].flatMap((dx) => [-step, 0, step].map((dz) => heightAt(s, x + dx, z + dz)));
-          if (h > s.relief / 2 && around.every((v) => v <= h)) crests.push([x, z]);
-        }
-      assert.isNotEmpty(crests, i);
-      for (let k = 0; k < 48; k++) {
-        const p = pathAt(s, k / 48);
-        for (const [x, z] of crests) assert.isAbove(Math.hypot(p.x - x, p.z - z), 0.9, `${i} ${k}/48`);
-      }
+      const base = Array.from({ length: 48 }, (_, k) => trackRest(s, k / 48, 1, 0.7).base);
+      const lo = Math.min(...base);
+      const share = (k: number): number => ((base[k % 48] ?? 0) - lo) / (Math.max(...base) - lo);
+      for (const k of [46, 47, 0, 1, 2, 3]) assert.isAbove(share(k), 0.85, `${i} top ${k}/48`);
+      // Down the backside by t 0.4, the brief floor between t 0.4 and 0.65, up the face by t 0.9.
+      assert.isBelow(share(19), 0.4, `${i} backside`);
+      for (let k = 20; k <= 30; k++) assert.isBelow(share(k), 0.15, `${i} rut ${k}/48`);
+      assert.isAbove(share(43), 0.7, `${i} face`);
     }
   });
 
@@ -121,33 +117,32 @@ describe('heightAt', () => {
     }
   });
 
-  it('crests the zipper columns either side of the line, alternating sides, a relief over the saddle between them', () => {
+  it('lines the zipper moguls a spacing apart, alternating a stagger either side, a relief over the trough between', () => {
     const s = moguls;
-    // The highest snow within a pitch of a point, by a coarse then fine grid search.
+    // The highest snow near a point, by a coarse then fine grid search.
     const top = (x0: number, z0: number): readonly [number, number, number] => {
       let best: [number, number, number] = [x0, z0, -Infinity];
-      for (const step of [0.05, 0.002]) {
+      for (const step of [0.02, 0.002]) {
         const [cx, cz] = best;
-        for (let i = -30; i <= 30; i++)
-          for (let j = -30; j <= 30; j++) {
-            const x = (step === 0.05 ? x0 : cx) + i * step;
-            const z = (step === 0.05 ? z0 : cz) + j * step;
+        for (let i = -20; i <= 20; i++)
+          for (let j = -20; j <= 20; j++) {
+            const x = (step === 0.02 ? x0 : cx) + i * step;
+            const z = (step === 0.02 ? z0 : cz) + j * step;
             const h = heightAt(s, x, z);
             if (h > best[2]) best = [x, z, h];
           }
       }
       return best;
     };
-    const right = top(s.columns / 2, 0.5);
-    const left = top(-s.columns / 2, s.spacing + 0.5);
-    close(right[0], s.columns / 2, 0.01);
-    close(left[0], -s.columns / 2, 0.01);
-    close(left[1] - right[1], s.spacing, 0.01);
-    // Each column repeats every second spacing.
-    close(heightAt(s, right[0], right[1] + 2 * s.spacing), right[2], 1e-9);
-    const saddle = heightAt(s, 0, (right[1] + left[1]) / 2);
-    // The rut's rim grazes the saddle.
-    close(right[2] - saddle, s.relief, 0.1);
+    const here = top(0, 0.3);
+    const next = top(0, s.spacing + 0.3);
+    close(next[1] - here[1], s.spacing, 0.05);
+    // Either side of the line, a few decimetres; inferred.
+    assert.isAbove(here[0] * next[0], -0.25);
+    assert.isBelow(here[0] * next[0], 0);
+    close(heightAt(s, here[0], here[1] + 2 * s.spacing), here[2], 1e-9);
+    // Crests 0.8-1.2 m (kurpiers-2010 p10) over the trough on the line.
+    close(here[2] - heightAt(s, 0, here[1] + s.spacing / 2), s.relief, 0.2);
   });
 
   it('lowers the zipper snow toward mid-turn and raises it again toward the switch', () => {
