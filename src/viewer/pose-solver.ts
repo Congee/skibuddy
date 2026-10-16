@@ -104,15 +104,9 @@ const insideTipLead = (pose: Pose): number => {
   return aheadOnSki(world, transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), SKI_TIP), transformPoint(outside, SKI_TIP));
 };
 
-/** Boot centres apart across the outside ski. */
-const stanceWidth = (pose: Pose): number => {
-  const world = segmentMatrices(pose);
-  const ski = world[skiIndex(BodySide.Right)] ?? identity();
-  const [o, x] = [transformPoint(ski, [0, 0, 0]), transformPoint(ski, [1, 0, 0])];
-  const boot = (side: BodySide): Vec3 => transformPoint(world[SEGMENTS.findIndex((g) => g.kind === SegmentKind.Boot && g.side === side)] ?? identity(), MID_FOOT);
-  const [a, b] = [boot(BodySide.Left), boot(BodySide.Right)];
-  return Math.abs((a[0] - b[0]) * (x[0] - o[0]) + (a[1] - b[1]) * (x[1] - o[1]) + (a[2] - b[2]) * (x[2] - o[2]));
-};
+/** Hip joints apart, metres: countered hips set the lead from these, not the boots. */
+const hipX = (side: BodySide): number => SEGMENTS.find((g) => g.kind === SegmentKind.Thigh && g.side === side)?.joint[0] ?? 0;
+const HIP_SPACING = Math.abs(hipX(BodySide.Left) - hipX(BodySide.Right));
 
 /** Metres the old inside tip still leads at the switch; observed within a few cm of level. */
 const SWITCH_LEAD = 0.02;
@@ -512,13 +506,13 @@ const solveOn = (
   let unflex = 0;
   // Radians the legs scissor about the hips, the knees held: the inside forward, the outside back, half each.
   let swing = 0;
-  // Square boots under countered hips lead by the stance width times the sine of the counter; about the edge change the
+  // Square boots under countered hips lead by the hip spacing times the sine of the counter; about the edge change the
   // new inside foot slides forward to within SWITCH_LEAD of level, not behind (observed side-on in Olivia Giaccio's closed-stance turns).
   const u = wrapTime(t);
   const rise = smooth(Math.min(1, u / 0.2));
-  const fall = smooth(Math.max(0, (u - 0.75) / 0.25));
+  const fall = smooth(Math.max(0, (u - 0.875) / 0.125));
   const scissor = SWITCH_LEAD * (fall - (1 - rise));
-  const lead = c.scissor === true ? (pose: Pose): number => Math.min(LEAD_MAX, Math.max(scissor, stanceWidth(pose) * Math.sin(pose.counter) * (1 - fall))) : null;
+  const lead = c.scissor === true ? (pose: Pose): number => Math.min(LEAD_MAX, Math.max(scissor, HIP_SPACING * Math.sin(pose.counter) * (1 - fall))) : null;
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
