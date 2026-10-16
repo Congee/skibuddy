@@ -6,7 +6,9 @@ import { INTENSITIES, Intensity, isTurnScenarios } from '../../content/schema';
 import { phaseAt, playingAtom, turnTimeAtom, wrapTurn } from '../../state/playback';
 import { usePlayback } from '../../ui/lift/LiftLine';
 import { REDUCED_MOTION, createMedia } from '../../ui/media';
+import { ViewLock } from '../../viewer/hip-lock';
 import { motionFor } from '../../viewer/poses';
+import { RegularTurn } from '../../viewer/poses/regular-turn';
 import { KINDS, KIND_DRILLS, KindId, kindMovement } from './data';
 import type { BlendData } from './data';
 import { drillsLike, keyOf, trainThese } from './detail';
@@ -25,6 +27,10 @@ type Mode = (typeof Mode)[keyof typeof Mode];
 const DESKTOP = '(min-width: 900px)';
 const PHASE_NAMES = { initiation: 'Initiation', shaping: 'Shaping', finish: 'Finish' } as const;
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+const VIEW_LOCKS = [ViewLock.SkisFixed, ViewLock.HipsFixed, ViewLock.SlopeFixed] as const;
+const VIEW_LOCK_NAMES: Readonly<Record<ViewLock, string>> = { [ViewLock.SkisFixed]: 'Skis fixed', [ViewLock.HipsFixed]: 'Hips fixed', [ViewLock.SlopeFixed]: 'Slope fixed' };
+/** Mogul motions, seen as their hips hold the fall line. */
+const HIPS_FIXED_POSES: ReadonlySet<string> = new Set([RegularTurn.Moguls, 'closed-stance-short-turns']);
 
 /** Rail under the figure: play one turn, or drag through it. */
 const Rail = (props: { readonly reducedMotion: boolean }): JSX.Element => {
@@ -95,6 +101,7 @@ const Segmented = <T extends string>(props: {
   readonly options: ReadonlyArray<T>;
   readonly value: T;
   readonly onChange: (v: T) => void;
+  readonly names?: Readonly<Record<T, string>>;
 }): JSX.Element => (
   <fieldset class="segmented">
     <legend>{props.label}</legend>
@@ -102,7 +109,7 @@ const Segmented = <T extends string>(props: {
       <For each={props.options}>
         {(o) => (
           <button type="button" aria-pressed={props.value === o} onClick={() => props.onChange(o)}>
-            {cap(o)}
+            {props.names?.[o] ?? cap(o)}
           </button>
         )}
       </For>
@@ -151,6 +158,9 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
     if (k !== undefined) return k.pose;
     return d === undefined ? '' : (motionFor(d.id, isTurnScenarios(d.scenarios)) ?? d.id);
   });
+  // The pose's own view until one is chosen.
+  const [viewChoice, setViewChoice] = createSignal<ViewLock | null>(null);
+  const viewLock = (): ViewLock => viewChoice() ?? (HIPS_FIXED_POSES.has(pose()) ? ViewLock.HipsFixed : ViewLock.SkisFixed);
   const movement = createMemo(() => {
     const k = kind();
     const d = drill();
@@ -338,6 +348,7 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
         <Show when={settings()}>
           <div id="settings" class="settings" role="group" aria-label="Settings">
             <Segmented label="How hard it is skied" options={INTENSITIES} value={intensity()} onChange={setIntensity} />
+            <Segmented label="View" options={VIEW_LOCKS} names={VIEW_LOCK_NAMES} value={viewLock()} onChange={setViewChoice} />
             <Segmented label="Theme" options={[ThemeChoice.System, ThemeChoice.Light, ThemeChoice.Dark]} value={choice()} onChange={setChoice} />
             <p class="muted small">
               Not medical advice. Not affiliated with any instructor association. Anatomy:{' '}
@@ -360,6 +371,7 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
               order={order()}
               intensity={intensity()}
               pose={pose()}
+              viewLock={viewLock()}
               selected={selected()}
               ramp={ramp()}
               tags={tags()}

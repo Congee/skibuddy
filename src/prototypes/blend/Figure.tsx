@@ -7,6 +7,7 @@ import type { Activation, Intensity, Movement } from '../../content/schema';
 import { phaseAt, turnTimeAtom } from '../../state/playback';
 import type { MuscleAnchor } from '../../viewer/anchors';
 import type { FigureHighlight } from '../../viewer/highlight';
+import type { ViewLock } from '../../viewer/hip-lock';
 import { keyOf } from './detail';
 import type { TrainTag } from './detail';
 import { Glyph } from './glyphs';
@@ -81,6 +82,8 @@ export const Figure = (props: {
   readonly intensity: Intensity;
   /** The figure's motion: a kind's regular turn, or a drill's id. */
   readonly pose: string;
+  /** Skis, hips or slope held still on screen. */
+  readonly viewLock: ViewLock;
   readonly selected: string | null;
   readonly ramp: EffortRamp;
   /** The muscles to train, drawn as exercise tags; fixed for a kind and setting. */
@@ -163,6 +166,7 @@ export const Figure = (props: {
           muscles={props.muscles}
           intensity={props.intensity}
           drill={props.pose}
+          viewLock={props.viewLock}
           ground={GROUND[props.theme]}
           highlight={highlight()}
           skeleton={highlight() !== null}
