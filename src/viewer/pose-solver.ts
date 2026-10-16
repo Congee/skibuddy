@@ -38,7 +38,7 @@ const balanceShare = (lean: number, s: TurnScenario): number => {
   const a = Math.abs(lean);
   return 1 - (1 - fade((a - BALANCE_FROM) / (BALANCE_BY - BALANCE_FROM))) * (1 - fade(a / (BALANCE_PEAK * peakLean(s))));
 };
-import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TAIL, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
+import { ARM_ABDUCTION, ARM_FLEXION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TAIL, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
 import type { Pose } from './pose';
 
 /** How hard the drill is skied, from its physics. */
@@ -551,6 +551,7 @@ const solveOn = (
       ...trunk,
       headYaw: 0,
       armAbduction: c.armAbduction ?? ARM_ABDUCTION,
+      armFlexion: c.armFlexion ?? ARM_FLEXION,
       poleTouch,
       reach: 0,
       rise: 0,

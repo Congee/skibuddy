@@ -1,15 +1,17 @@
 import { assert, describe, it } from '@effect/vitest';
-import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
+import { drillScenarios, turnScenarios } from '../scripts/anatomy/drill-scenarios';
+import { turnForcesAt } from '../src/physics/turn';
 import { INTENSITIES } from '../src/content/schema';
 import type { Intensity } from '../src/content/schema';
 import { BodySide } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
-import { segmentMatrices, skiIndex } from '../src/viewer/pose';
+import { ARM_FLEXION, segmentMatrices, skiIndex } from '../src/viewer/pose';
 import { forceTiltAt } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS } from '../src/viewer/poses';
 import { rideOf } from '../src/viewer/ride';
 import { heightAt, pathAt, surfaceFor } from '../src/viewer/surface';
+import { TOPS_PLANT } from '../src/viewer/poses/regular-turn';
 import { TOPS_POSE } from '../src/viewer/turn-heading';
 import { poseAngles } from './pose-angles';
 
@@ -27,8 +29,9 @@ const edgeAt = (i: Intensity, t: number): number => {
   const a = transformPoint(ski, [1, 0, 0]);
   return Math.abs((Math.asin(a[1] - o[1]) - rideOf(s, t, pose).outsideBank) * DEG);
 };
-const kneeAt = (i: Intensity, t: number): number =>
-  poseAngles(samplePose(poseTable(TOPS_POSE, i), t), forceTiltAt(drillScenarios(TOPS_POSE)[i], surfaceFor(TOPS_POSE, i), t)).knee.right;
+const anglesAt = (i: Intensity, t: number) =>
+  poseAngles(samplePose(poseTable(TOPS_POSE, i), t), forceTiltAt(drillScenarios(TOPS_POSE)[i], surfaceFor(TOPS_POSE, i), t));
+const kneeAt = (i: Intensity, t: number): number => anglesAt(i, t).knee.right;
 /** Snow under the skis' centre as a share of the relief above the troughs. */
 const snowShare = (i: Intensity, t: number): number => {
   const s = surfaceFor(TOPS_POSE, i);
@@ -88,5 +91,50 @@ describe('turns on the tops', () => {
     assert.isAtLeast((c?.armAbduction ?? 0) * DEG, 25);
     const plant = c?.poleTouch?.t ?? 0;
     assert.isTrue(plant > 5 / 6 && plant < 1, `plant at t ${plant}`);
+  });
+
+  it('folds compact on the crest, the hips low and the trunk with the shin', () => {
+    // Smallest on top (duncan-smith-2021 4:24-5:07, 4:26), trunk along the shin (gellie-2019-moguls-forward), not
+    // broken at the waist (fis-freestyle-judging-2025 p29); bands inferred.
+    for (const i of INTENSITIES) {
+      const a = anglesAt(i, 0);
+      assert.isAtLeast(a.hip.right, 70, `${i} hip`);
+      assert.isAtMost(a.spineFlex, 21, `${i} low back`);
+      assert.approximately(a.trunkForward - a.shinForward.right, -7, 8, `${i} trunk on shin`);
+    }
+  });
+
+  it('holds the hands forward at chest height, other drills keep the default', () => {
+    // Hands wide and in front (duncan-smith-2021 1:28-1:32, 4:26); amount inferred.
+    assert.isAtLeast(samplePose(poseTable(TOPS_POSE, 'moderate'), 0.5).armFlexion * DEG, 40);
+    assert.strictEqual(samplePose(poseTable('regular-moguls', 'moderate'), 0.5).armFlexion, ARM_FLEXION);
+  });
+
+  it('is centred on top, on the tips down the backside and on the tails into the face', () => {
+    // Seesaw top centred, tip pressure down the backside, heel and tail into the face (duncan-smith-2021 2:37-3:57);
+    // mass along the ski, bands inferred.
+    const along = (i: Intensity, from: number, to: number): ReadonlyArray<number> =>
+      TIMES.filter((t) => t >= from && t <= to).map((t) => anglesAt(i, t).comAhead);
+    for (const i of INTENSITIES) {
+      assert.approximately(anglesAt(i, 0).comAhead, 0, 0.03, `${i} top`);
+      assert.isAtLeast(Math.max(...along(i, 1 / 12, 1 / 2)), 0.1, `${i} backside`);
+      assert.isAtMost(Math.min(...along(i, 2 / 3, 11 / 12)), -0.02, `${i} face`);
+    }
+  });
+
+  it('inclines with the load through the fall line and up the face', () => {
+    // Strongly inclined at the fall line and max compression (duncan-smith-2021 1:28-1:32); the lean is the turn's load,
+    // its mass on a path twice the skis' arc (inferred).
+    for (const i of INTENSITIES) {
+      const s = turnScenarios(TOPS_POSE)[i];
+      assert.isAtLeast(turnForcesAt(s, 0.5).tilt * DEG, 14, `${i} fall line`);
+      assert.isAtLeast(turnForcesAt(s, 5 / 6).tilt * DEG, 18, `${i} face`);
+    }
+  });
+
+  it('plants the downhill pole', () => {
+    // The plant before the crest is the next turn's, the finishing turn's outside, downhill pole (duncan-smith-2021 1:31,
+    // 3:24, 4:25), the skis across the hill (as above).
+    for (const i of INTENSITIES) assert.isBelow(samplePose(poseTable(TOPS_POSE, i), TOPS_PLANT).poleTouch, -0.9, i);
   });
 });

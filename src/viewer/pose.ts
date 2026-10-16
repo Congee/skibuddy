@@ -32,6 +32,8 @@ export interface Pose {
   readonly headYaw: number;
   /** Both arms abducted at the shoulder, so the hands ride out to the sides. */
   readonly armAbduction: number;
+  /** Both upper arms flexed forward at the shoulder. */
+  readonly armFlexion: number;
   /** 0..1: the inside pole swings forward and plants at 1; negative, the outside pole does, for the next turn. */
   readonly poleTouch: number;
   /** Extra shoulder flexion of the touching arm that brings the touch beside the ski; solved per figure. */
@@ -98,6 +100,7 @@ export const POSE_CHANNELS = [
   'armAbduction',
   'rise',
   'balance',
+  'armFlexion',
 ] as const;
 
 export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
@@ -130,6 +133,7 @@ export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
   p.armAbduction,
   p.rise,
   p.balance,
+  p.armFlexion,
 ];
 
 /** The inverse of `poseToChannels`, reading `channels` from `at`. */
@@ -155,6 +159,7 @@ export const poseFromChannels = (c: ArrayLike<number>, at = 0): Pose => {
     armAbduction: v(26),
     rise: v(27),
     balance: v(28),
+    armFlexion: v(29),
   };
 };
 
@@ -244,7 +249,7 @@ const localRotation = (segment: Segment, pose: Pose, lean: number): Mat4 => {
       return compose(
         rotationY(out * g.protraction),
         rotationZ(out * pose.armAbduction),
-        rotationX(-ARM_FLEXION - ARM_LEAN_SHOULDER * armLean(pose) - (segment.side === touchSide(pose) ? pose.reach : 0)),
+        rotationX(-pose.armFlexion - ARM_LEAN_SHOULDER * armLean(pose) - (segment.side === touchSide(pose) ? pose.reach : 0)),
       );
     }
     case SegmentKind.Forearm:

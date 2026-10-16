@@ -390,7 +390,7 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
         R[f'thigh.{s}'] = (pelvis.inverted() @ rot_z3(-p['hipAngulation'] - sign * leg.get('adduction', 0.0)) @ rot_x(-hip)
                            @ Matrix.Rotation(leg['femurRotation'], 4, rest['femur'][s]))
         R[f'shin.{s}'] = rot_x(hip + ankle)
-        flex = ARMS['flexion'] + ARMS['leanShoulder'] * lean + (reach if s == reacher else 0.0)
+        flex = p.get('armFlexion', ARMS['flexion']) + ARMS['leanShoulder'] * lean + (reach if s == reacher else 0.0)
         girdle = p['outsideGirdle'] if s == 'R' else p['insideGirdle']
         R[f'scapula.{s}'] = rot_y3(-sign * girdle['protraction']) @ rot_z3(sign * girdle['elevation'])
         R[f'upper_arm.{s}'] = (rot_y3(sign * girdle['protraction']) @ rot_z3(sign * p.get('armAbduction', ARMS['abduction'])) @ rot_x(-flex)

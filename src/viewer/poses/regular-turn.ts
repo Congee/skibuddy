@@ -81,6 +81,8 @@ export interface TurnStyle {
   readonly head?: HeadRule;
   /** Arm abduction; absent, the figure's default, hands wide. */
   readonly armAbduction?: number;
+  /** Upper arm flexion forward; absent, the figure's default. */
+  readonly armFlexion?: number;
   /** A two-footed pop through the switch in place of the shared hip curve; absent, none. */
   readonly rebound?: Rebound;
   /** Skis on top of firm snow, lifting off it only by `rebound.clearance`; absent, they pivot at the boots as in powder. */
@@ -138,14 +140,16 @@ const CORRIDOR = 2;
  * 1:28-1:32, wider than its field's 2 m corridor so mid-turn it rides the saddle's shoulder (campbell-rogan-2001); inferred.
  */
 export const TOPS_CORRIDOR_SHARE = 2 * (1 - Math.cos(50 * DEG));
-// The tops line's mass swings less straight than the zipper's, so the body inclines as in duncan-smith-2021 1:28-1:32; inferred.
-const TOPS_COM = 3;
+// The tops line's mass follows the skis more than the zipper's, so the body inclines as in duncan-smith-2021 1:28-1:32; inferred.
+const TOPS_COM = 2;
 /** Share of the edge already in at 1/6 of the tops turn; inferred from duncan-smith-2021. */
 export const TOPS_EARLY = 0.7;
 /** Turn time of the tops plant: at the release, just before the crest. */
 export const TOPS_PLANT = 0.9;
 // Hands wide and forward, the poles out to the side (duncan-smith-2021 1:28-1:32, 4:26).
 const HANDS_WIDE = 30;
+// Upper arms forward, the hands at chest height (duncan-smith-2021 1:28-1:32, 4:26); inferred.
+const HANDS_FORWARD = 45;
 /** The zipper line swings about a rut's width across, between two mogul columns; inferred. */
 export const ZIPPER_CORRIDOR = 1.1;
 // The head stays still, facing downhill (fis-freestyle-judging-2025 p29).
@@ -484,12 +488,21 @@ export const TOPS: TurnStyle = {
   counterGain: COUNTER_GAIN,
   // Tipped early once flat on the backside (duncan-smith-2021 5:26-6:14), edged by the fall line (1:28-1:32).
   early: TOPS_EARLY,
+  // Smallest on top, the hips low and the trunk with the shin, not broken at the waist (duncan-smith-2021 4:24-5:07,
+  // gellie-2019-moguls-forward, fis-freestyle-judging-2025 p29); amounts inferred.
+  spineFlex: 18,
   trunkOverShin: 12,
-  trunkOverShinGain: TRUNK_OVER_SHIN_GAIN,
+  trunkOverShinGain: 0,
+  absorb: { open: 15, deep: { gentle: 88, moderate: 98, dynamic: 100 } },
+  // Along the snow, so the bumps' pitch sets the contact: centred on top, tip down the backside, feet ahead and tail
+  // into the face (duncan-smith-2021 2:37-3:57); amounts inferred.
+  comAhead: [0.05, 0.16, 0.09, -0.05, -0.16],
+  comAheadGain: 0,
   // Planted downhill at the release, on the bump's top (duncan-smith-2021 1:31, campbell-rogan-2001).
   poleTouchAt: TOPS_PLANT,
   head: { ...DOWNHILL, corridor: TOPS_CORRIDOR_SHARE * 5 },
   armAbduction: HANDS_WIDE,
+  armFlexion: HANDS_FORWARD,
 };
 
 /** The round line swings wider than the tops line's corridor (jds-bumps-style 2:00); inferred. */
@@ -714,6 +727,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       poleTrim: style.poleTrim,
       ...(style.head === undefined ? {} : { head: style.head }),
       ...(style.armAbduction === undefined ? {} : { armAbduction: style.armAbduction * DEG }),
+      ...(style.armFlexion === undefined ? {} : { armFlexion: style.armFlexion * DEG }),
       ...(style.firmSnow === true ? { firmSnow: true } : {}),
       ...(style.absorb === undefined ? {} : { absorb: { open: style.absorb.open * DEG, deep: [style.absorb.deep.gentle * DEG, style.absorb.deep.moderate * DEG, style.absorb.deep.dynamic * DEG] as const } }),
       gains: {

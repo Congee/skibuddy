@@ -120,6 +120,8 @@ export interface PoseConstraints {
   readonly head?: HeadRule;
   /** Radians both arms are abducted; absent, ARM_ABDUCTION. */
   readonly armAbduction?: number;
+  /** Radians both upper arms flex forward; absent, ARM_FLEXION. */
+  readonly armFlexion?: number;
   /** The skis stay on top of firm snow: a tip-down tip lifts the boots onto it; absent, they pivot at the boots, as in powder. */
   readonly firmSnow?: boolean;
   /**
