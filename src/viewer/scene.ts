@@ -22,8 +22,8 @@ import type { MusclePick } from './pick';
 import { pixelRatio } from './pixel-ratio';
 import { makeSlotTable } from './slots';
 import type { MusclePart } from './slots';
-import { FOLLOW_ORBIT, HOME_FRAME, HOME_ORBIT, SLOPE_ORBIT, clearSnow, dampFrame, panBy, surfaceDepth, turnAim, zoomAbout } from './view';
-import type { CameraFrame, GearStops, Lens } from './view';
+import { FOLLOW_ORBIT, HOME_FRAME, HOME_ORBIT, SLOPE_ORBIT, ballsOf, clearSnow, dampFrame, fitFrame, panBy, surfaceDepth, turnAim, zoomAbout } from './view';
+import type { Ball, CameraFrame, GearStops, Lens } from './view';
 
 export const FigureKind = { Capsule: 'capsule', Anatomy: 'anatomy' } as const;
 export type FigureKind = (typeof FigureKind)[keyof typeof FigureKind];
@@ -69,6 +69,14 @@ export interface ViewerOptions {
   readonly zoom?: boolean;
   /** Skis fixed by default. */
   readonly viewLock?: ViewLock;
+  /** CSS px along the canvas's edges that overlays cover; the fitted figure keeps out of them. */
+  readonly margin?: ViewMargin;
+}
+
+export interface ViewMargin {
+  readonly top: number;
+  readonly bottom: number;
+  readonly side: number;
 }
 
 export interface Viewer {
@@ -122,6 +130,10 @@ const MAX_INSET = 0.6;
 const OFF_BODY_DISTANCE = 2.2;
 const GROUND_RADIUS = 6.5;
 const IDENTITY = new Matrix4().elements;
+/** Poses per turn sampled for the fitted frame; the other turn is their mirror. */
+const FIT_SAMPLES = 24;
+/** A margin of `px` on a side `size` px long, in NDC; overlays never take most of the view. */
+const edge = (px: number, size: number): number => Math.min(0.8, (2 * px) / size);
 const MIRROR = new Matrix4().makeScale(-1, 1, 1);
 
 export const createViewer = async (
@@ -188,6 +200,13 @@ export const createViewer = async (
   // Gestures move `aim` and `frameAim`; the camera eases toward them and stops once there.
   let aim: Orbit = homeOrbit();
   let orbit: Orbit = aim;
+  // The whole figure through the two-turn cycle, fitted once per drill, intensity, view and view size.
+  let home: CameraFrame = HOME_FRAME;
+  let cycle: ReadonlyArray<Ball> | null = null;
+  let fitStale = true;
+  let fitted = false;
+  // A user zoom, pan or orbit holds until a reset.
+  let userMoved = false;
   let frameAim: CameraFrame = HOME_FRAME;
   let frame: CameraFrame = frameAim;
   let damping = DRAG_DAMPING;
@@ -249,7 +268,7 @@ export const createViewer = async (
     // Hidden from every side, such as between the legs: fade the muscles over it, as for a deep one.
     if (!view.seen && !revealsDeep(highlight)) figure.setHighlight?.(highlightSlots(table, highlight), highlightStrength(highlight), true);
     if (view.azimuth === null) return;
-    ({ orbit: aim, frame: frameAim } = turnAim(aim, frameAim, view.azimuth));
+    ({ orbit: aim, frame: frameAim } = turnAim(aim, frameAim, view.azimuth, home));
     damping = TURN_DAMPING;
   };
 
@@ -264,10 +283,47 @@ export const createViewer = async (
     }
   };
 
+  // Each pose of both turns, as balls round the body and gear in world space.
+  const sampleCycle = (): ReadonlyArray<Ball> => {
+    const balls: Array<Ball> = [];
+    for (let i = 0; i < FIT_SAMPLES; i++) {
+      const t = i / FIT_SAMPLES;
+      rig.matrix.fromArray(rootAt(t));
+      rig.updateMatrixWorld(true);
+      figure.update(t, levels(t));
+      const gear = figure.gearStops?.() ?? { capsules: [], boxes: [] };
+      balls.push(...ballsOf([...(figure.occluders?.() ?? []), ...gear.capsules], gear.boxes));
+    }
+    // The other turn is this one mirrored in x.
+    const mirror = balls.map(({ center: [x, y, z], radius }): Ball => ({ center: [-x, y, z], radius }));
+    posedAt = Number.NaN;
+    return [...balls, ...mirror];
+  };
+
+  const refit = (): void => {
+    if (width === 0 || height === 0) return;
+    cycle ??= sampleCycle();
+    fitStale = false;
+    const w = width;
+    const h = Math.max(1, height - insetAim);
+    const m = options.margin ?? { top: 0, bottom: 0, side: 0 };
+    const area = { left: -1 + edge(m.side, w), right: 1 - edge(m.side, w), bottom: -1 + edge(m.bottom, h), top: 1 - edge(m.top, h) };
+    home = fitFrame(cycle, homeOrbit(), { fov: MathUtils.degToRad(camera.fov), aspect: w / h }, area);
+    if (userMoved) return;
+    frameAim = home;
+    // The first fit shows the figure at once instead of easing in from the default frame.
+    if (!fitted) {
+      frame = home;
+      placeCamera();
+    }
+    fitted = true;
+  };
+
   const draw = (now: number): boolean => {
     const seconds = lastDraw === 0 ? 0 : (now - lastDraw) / 1000;
     lastDraw = now;
     let moving = false;
+    if (fitStale) refit();
     if (time !== posedAt || mirrored !== posedMirrored) {
       posedAt = time;
       posedMirrored = mirrored;
@@ -319,7 +375,8 @@ export const createViewer = async (
     const hit = surfaceDepth(frameAim, aim, at, lens(), [...body, ...gear.capsules], gear.boxes);
     // Off the body, zooming in stops while most of the figure is still in view, not in empty air.
     const step = hit === null && ratio < 1 ? Math.min(1, Math.max(ratio, OFF_BODY_DISTANCE / frameAim.distance)) : ratio;
-    frameAim = zoomAbout(frameAim, aim, at, step, lens(), hit);
+    frameAim = zoomAbout(frameAim, aim, at, step, lens(), hit, home);
+    userMoved = true;
   };
 
   // Pointers down on the canvas, in canvas px; one orbits, two pinch and pan.
@@ -347,8 +404,9 @@ export const createViewer = async (
   };
 
   const resetView = (): void => {
+    userMoved = false;
     aim = homeOrbit();
-    frameAim = HOME_FRAME;
+    frameAim = home;
     damping = TURN_DAMPING;
     invalidate();
   };
@@ -397,13 +455,14 @@ export const createViewer = async (
       if (a === undefined || b === undefined) return;
       const next = { span: span(a, b), mid: midpoint(a, b) };
       zoomAt(next.mid, pinchRatio(pinch.span, next.span));
-      frameAim = panBy(frameAim, aim, next.mid.x - pinch.mid.x, next.mid.y - pinch.mid.y, viewHeight(), lens());
+      frameAim = panBy(frameAim, aim, next.mid.x - pinch.mid.x, next.mid.y - pinch.mid.y, viewHeight(), lens(), home);
       pinch = next;
       invalidate();
       return;
     }
     if (pointers.size !== 1) return;
     if (gesture !== null) gesture.travel = Math.max(gesture.travel, Math.hypot(p.x - gesture.start.x, p.y - gesture.start.y));
+    if (gesture !== null && !isTap(gesture.travel, false)) userMoved = true;
     aim = clearSnow(frameAim, {
       azimuth: aim.azimuth - (p.x - before.x) * 0.01,
       elevation: Math.min(1.2, Math.max(-0.1, aim.elevation + (p.y - before.y) * 0.01)),
@@ -466,6 +525,7 @@ export const createViewer = async (
     renderer.setSize(w, h, false);
     insetAim = Math.min(insetWanted, h * MAX_INSET);
     inset = Math.min(inset, h * MAX_INSET);
+    fitStale = true;
     project();
     invalidate();
   };
@@ -487,6 +547,9 @@ export const createViewer = async (
     },
     setGear: (mode) => {
       figure.setGear?.(mode);
+      // Hidden poles leave the frame.
+      cycle = null;
+      fitStale = true;
       invalidate();
     },
     setMotion: (nextDrill, next) => {
@@ -495,6 +558,8 @@ export const createViewer = async (
       drill = nextDrill;
       figure.setMotion?.(nextDrill, next);
       posedAt = Number.NaN;
+      cycle = null;
+      fitStale = true;
       invalidate();
     },
     setGround: (css) => {
@@ -547,6 +612,8 @@ export const createViewer = async (
       if (next === lock) return;
       lock = next;
       posedAt = Number.NaN;
+      cycle = null;
+      refit();
       resetView();
     },
     setInset: (bottom) => {
@@ -554,6 +621,7 @@ export const createViewer = async (
       const next = height === 0 ? 0 : Math.min(insetWanted, height * MAX_INSET);
       if (next === insetAim) return;
       insetAim = next;
+      fitStale = true;
       invalidate();
     },
     resetView,

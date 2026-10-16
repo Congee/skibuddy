@@ -24,6 +24,8 @@ export const Cover = { Glance: 'glance', Half: 'half' } as const;
 export type Cover = (typeof Cover)[keyof typeof Cover];
 /** The half sheet's top as a share of the space below the header, as in blend.css. */
 const HALF_TOP = 0.42;
+/** The hint chip above, the caption and "Train for this" below, as in blend.css. */
+const MARGIN = { top: 64, bottom: 80, side: 16 } as const;
 
 const HALF = 22;
 const GAP = 46;
@@ -172,6 +174,7 @@ export const Figure = (props: {
           skeleton={highlight() !== null}
           onPick={props.onMuscle}
           inset={{ bottom: inset() }}
+          margin={MARGIN}
           zoom
           pins
           onAnchors={setAnchors}

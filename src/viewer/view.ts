@@ -24,31 +24,33 @@ export const PAN_MAX: Vec3 = [0.55, 1.65, 0.8];
 /** Metres; closer than this the frame snaps and stops. */
 const SETTLED = 1e-4;
 
-export const clampDistance = (d: number): number => Math.min(MAX_DISTANCE, Math.max(MIN_DISTANCE, d));
+/** The farthest out is the home frame's distance, which a fit sets. */
+export const clampDistance = (d: number, home: CameraFrame = HOME_FRAME): number => Math.min(Math.max(home.distance, MIN_DISTANCE), Math.max(MIN_DISTANCE, d));
 
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
 
 const vec = (f: (i: 0 | 1 | 2) => number): Vec3 => [f(0), f(1), f(2)];
 
 /** The pan box grows from the home point as the camera closes in, reaching full size halfway in. */
-export const clampTarget = (target: Vec3, distance: number): Vec3 => {
-  const reach = clamp((2 * (MAX_DISTANCE - distance)) / (MAX_DISTANCE - MIN_DISTANCE), 0, 1);
-  const home = HOME_FRAME.target;
+export const clampTarget = (target: Vec3, distance: number, home: CameraFrame = HOME_FRAME): Vec3 => {
+  const far = Math.max(home.distance, MIN_DISTANCE + 1e-6);
+  const reach = clamp((2 * (far - distance)) / (far - MIN_DISTANCE), 0, 1);
+  const at = home.target;
   const mix = (a: number, b: number): number => a * (1 - reach) + b * reach;
-  return vec((i) => clamp(target[i], mix(home[i], PAN_MIN[i]), mix(home[i], PAN_MAX[i])));
+  return vec((i) => clamp(target[i], mix(at[i], Math.min(PAN_MIN[i], at[i])), mix(at[i], Math.max(PAN_MAX[i], at[i]))));
 };
 
 /** A frame inside the clamps; a focus turn keeps the zoom and pan through this. */
-export const clampFrame = (frame: CameraFrame): CameraFrame => {
-  const distance = clampDistance(frame.distance);
-  const target = clampTarget(frame.target, distance);
+export const clampFrame = (frame: CameraFrame, home: CameraFrame = HOME_FRAME): CameraFrame => {
+  const distance = clampDistance(frame.distance, home);
+  const target = clampTarget(frame.target, distance, home);
   return distance === frame.distance && target.every((v, i) => v === frame.target[i]) ? frame : { distance, target };
 };
 
 /** The aim of a focus turn: only the azimuth changes. */
-export const turnAim = (aim: Orbit, frame: CameraFrame, azimuth: number): { readonly orbit: Orbit; readonly frame: CameraFrame } => ({
+export const turnAim = (aim: Orbit, frame: CameraFrame, azimuth: number, home: CameraFrame = HOME_FRAME): { readonly orbit: Orbit; readonly frame: CameraFrame } => ({
   orbit: { azimuth, elevation: aim.elevation },
-  frame: clampFrame(frame),
+  frame: clampFrame(frame, home),
 });
 
 /** The camera's right and up axes when it looks at the target from `orbit` (as in scene.ts). */
@@ -207,21 +209,29 @@ export const clearSnow = (frame: CameraFrame, orbit: Orbit): Orbit => {
  * The camera moves along that ray, so with `surface` (the depth of the body under
  * the cursor, as surfaceDepth) it stops MIN_DISTANCE short of it instead of flying through.
  */
-export const zoomAbout = (frame: CameraFrame, orbit: Orbit, ndc: readonly [number, number], ratio: number, lens: Lens, surface: number | null = null): CameraFrame => {
+export const zoomAbout = (
+  frame: CameraFrame,
+  orbit: Orbit,
+  ndc: readonly [number, number],
+  ratio: number,
+  lens: Lens,
+  surface: number | null = null,
+  home: CameraFrame = HOME_FRAME,
+): CameraFrame => {
   const wanted = frame.distance * ratio;
   const floor = surface === null ? MIN_DISTANCE : frame.distance - (surface - MIN_DISTANCE);
-  const distance = clampDistance(ratio < 1 ? Math.max(wanted, Math.min(frame.distance, floor)) : wanted);
+  const distance = clampDistance(ratio < 1 ? Math.max(wanted, Math.min(frame.distance, floor)) : wanted, home);
   const k = distance / frame.distance;
   const hh = frame.distance * Math.tan(lens.fov / 2);
   const target = shift(frame.target, orbit, ndc[0] * hh * lens.aspect * (1 - k), ndc[1] * hh * (1 - k));
-  return { distance, target: clampTarget(target, distance) };
+  return { distance, target: clampTarget(target, distance, home) };
 };
 
 /** Moves the target so the scene follows a drag of `dx`, `dy` CSS px on a view `height` px tall. */
-export const panBy = (frame: CameraFrame, orbit: Orbit, dx: number, dy: number, height: number, lens: Lens): CameraFrame => {
+export const panBy = (frame: CameraFrame, orbit: Orbit, dx: number, dy: number, height: number, lens: Lens, home: CameraFrame = HOME_FRAME): CameraFrame => {
   if (height <= 0) return frame;
   const perPx = (2 * frame.distance * Math.tan(lens.fov / 2)) / height;
-  return { distance: frame.distance, target: clampTarget(shift(frame.target, orbit, -dx * perPx, dy * perPx), frame.distance) };
+  return { distance: frame.distance, target: clampTarget(shift(frame.target, orbit, -dx * perPx, dy * perPx), frame.distance, home) };
 };
 
 /** Eases `current` toward `aim` like dampOrbit. */
@@ -236,4 +246,68 @@ export const dampFrame = (
   const target = vec((i) => current.target[i] + (aim.target[i] - current.target[i]) * k);
   const settled = Math.abs(aim.distance - distance) < SETTLED && [0, 1, 2].every((i) => Math.abs((aim.target[i] ?? 0) - (target[i] ?? 0)) < SETTLED);
   return { frame: settled ? aim : { distance, target }, settled };
+};
+
+/** A ball the figure fills part of; capsules are two, boxes eight of radius 0. */
+export interface Ball {
+  readonly center: Vec3;
+  readonly radius: number;
+}
+
+/** The balls that hold a capsule and a box: a capsule is the hull of its two end balls. */
+export const ballsOf = (capsules: ReadonlyArray<Capsule>, boxes: ReadonlyArray<Box>): ReadonlyArray<Ball> => [
+  ...capsules.flatMap(({ a, b, radius }) => [
+    { center: a, radius },
+    { center: b, radius },
+  ]),
+  ...boxes.flatMap(({ corner, edges: [u, v, w] }) =>
+    [0, 1].flatMap((i) => [0, 1].flatMap((j) => [0, 1].map((k) => ({ center: vec((n) => corner[n] + u[n] * i + v[n] * j + w[n] * k), radius: 0 })))),
+  ),
+];
+
+/** The usable part of the view in NDC, -1..1 on each axis, y up: what the overlays leave free. */
+export interface ViewArea {
+  readonly left: number;
+  readonly right: number;
+  readonly bottom: number;
+  readonly top: number;
+}
+
+export const FULL_VIEW: ViewArea = { left: -1, right: 1, bottom: -1, top: 1 };
+
+/**
+ * The nearest frame from `orbit` that shows every ball inside `area`, centred in it along the
+ * axis with room to spare. Each frustum side is a plane through the eye, so the fit is closed form.
+ */
+export const fitFrame = (balls: ReadonlyArray<Ball>, orbit: Orbit, lens: Lens, area: ViewArea = FULL_VIEW): CameraFrame => {
+  if (balls.length === 0) return HOME_FRAME;
+  const { right, up } = cameraAxes(orbit);
+  const ce = Math.cos(orbit.elevation);
+  const back: Vec3 = [ce * Math.sin(orbit.azimuth), Math.sin(orbit.elevation), ce * Math.cos(orbit.azimuth)];
+  const origin = vec((i) => balls.reduce((s, b) => s + b.center[i], 0) / balls.length);
+  const tv = Math.tan(lens.fov / 2);
+  const th = tv * lens.aspect;
+  // Per axis: how far the ball pushes each side's plane, as `offset + slope * d` of the eye's distance d.
+  const axis = (dir: Vec3, t: number, lo: number, hi: number): { readonly need: number; readonly span: readonly [number, number] } => {
+    const aHi = hi * t;
+    const aLo = -lo * t;
+    let pushHi = -Infinity;
+    let pushLo = -Infinity;
+    for (const { center, radius } of balls) {
+      const rel = vec((i) => center[i] - origin[i]);
+      const x = dot(rel, dir);
+      const z = dot(rel, back);
+      pushHi = Math.max(pushHi, x + aHi * z + radius * Math.hypot(1, aHi));
+      pushLo = Math.max(pushLo, -x + aLo * z + radius * Math.hypot(1, aLo));
+    }
+    return { need: (pushHi + pushLo) / Math.max(1e-9, aHi + aLo), span: [pushHi, pushLo] };
+  };
+  const across = axis(right, th, area.left, area.right);
+  const tall = axis(up, tv, area.bottom, area.top);
+  const distance = Math.max(across.need, tall.need, MIN_DISTANCE);
+  // The target's offset along the axis: the middle of what keeps both sides in.
+  const centre = (span: readonly [number, number], t: number, lo: number, hi: number): number => (span[0] - hi * t * distance + (-lo * t * distance - span[1])) / 2;
+  const cx = centre(across.span, th, area.left, area.right);
+  const cy = centre(tall.span, tv, area.bottom, area.top);
+  return { distance, target: vec((i) => origin[i] + right[i] * cx + up[i] * cy) };
 };

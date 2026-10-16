@@ -12,7 +12,7 @@ import type { FigureHighlight } from './highlight';
 import type { ViewLock } from './hip-lock';
 import type { MusclePick } from './pick';
 import { hasPose } from './poses';
-import type { FigureKind, Viewer as SceneViewer } from './scene';
+import type { FigureKind, Viewer as SceneViewer, ViewMargin } from './scene';
 
 const params = new URLSearchParams(window.location.search);
 // The capsule is the fallback when the anatomy model fails to load; ?figure=capsule forces it.
@@ -71,6 +71,8 @@ export const Viewer = (props: {
   readonly viewLock?: ViewLock;
   /** CSS px of the figure's bottom covered by a panel; the figure is framed in the rest. */
   readonly inset?: { readonly bottom: number };
+  /** CSS px along the edges that overlays cover; the figure is fitted inside them. */
+  readonly margin?: ViewMargin;
   /** Each change eases the camera back to the whole figure. */
   readonly resetView?: number;
   readonly onReady?: () => void;
@@ -125,6 +127,7 @@ export const Viewer = (props: {
           drill: props.drill,
           zoom: props.zoom ?? true,
           ...(props.viewLock === undefined ? {} : { viewLock: props.viewLock }),
+          ...(props.margin === undefined ? {} : { margin: props.margin }),
           onPick: (pick) => props.onPick?.(pick),
           ...(onAnchors === undefined ? {} : { onAnchors }),
         }),
