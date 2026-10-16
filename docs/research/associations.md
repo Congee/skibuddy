@@ -377,6 +377,10 @@ The SAJ site says "Copyright © 2026 SKI AND SNOWBOARD ASSOCIATION OF JAPAN All 
 
 | Generic drill | PSIA (national / divisions) | CSIA | BASI | NZSIA | APSI |
 |---|---|---|---|---|---|
+| Wedge turns | P: Wedge Turns, L1 Integrated; C: Wedge Turn, L1 Integrated | Wedge Turns, L2 tactic run | plough turn, Central Theme stage | Wedge Turn, L1 and L2 | none found |
+| Crab wedge turns | C: Crab Wedge Turn, L2 Individual, Edge/Pressure | none found | none found | none found | none found |
+| One-ski straight run | P: One-ski Straight Run, L1 Individual; C: One-Ski Straight Run, Pressure | none found (one-ski sliding is a learner tactic word only, no task page) | none found | none found | none found |
+| Carved J-turns | P: Carved uphill arc, L1 Individual; C: Carved Uphill Arc, Edge/Pressure | none found | none found | none found | none found |
 | Stork turns | P: Stork Turns, L2 Individual; C: same, Edge/Pressure | none found | none found | none found (related: "Lifting or Tapping the Inside Ski", manual) | none found |
 | Thousand steps | P: 1000 Steps, L2 Individual; NW: Thousand Steps | none found | none found | none found | none found |
 | Javelin turns | P: Javelin, L3 Individual; NW: Wedge Javelin Turns | none found | none found | Javelin turns, Trainer, Rotational | none found |
@@ -395,7 +399,7 @@ The SAJ site says "Copyright © 2026 SKI AND SNOWBOARD ASSOCIATION OF JAPAN All 
 | Medium-radius turns | C: Medium Radius Parallel Turns, L1 (not in national v1.2a) | Demonstration parallel (9 - 11m), L2; Demonstration Parallel Turns, L3 | none found | Dynamic Medium, L2 and L3 | none found by name |
 | Long-radius turns | P: Large Radius Parallel Turns, L1; Dynamic Large Radius Turns, L3 | Advanced Parallel Turns (approx. 2 to 3 cat tracks), L3 | Long Turns, L3/4 strand | none found (NZSIA tests medium radius) | none found |
 
-**IASI** (manual ch. 17, no levels given unless stated): Javelin Turns, p. 169 (javelin turns); White Pass Turn, p. 175 (whitepass turns); Braquage, p. 170 (nearest match to pivot slips); Side Slipping/edge set and Diagonal side slipping, p. 168 (side slips); Edged Garlands, p. 167 (garlands, edge-roll form); Hop Turns/Speiss, p. 171 (hop turns); falling leaf side slip and garlands, p. 48 (additional activities, not described). With no generic drill yet: Straight Running on one leg (nearest PSIA match: One-ski Straight Run); Edged J Turns (nearest: PSIA Carved uphill arc); TicTacs (an airborne edge-change drill); Dolphin Turns (Level 4 additional activity, p. 33). Stork turns: none found. Short turns and Carved turns are ch. 6 turn forms; the Level 4 criteria name short and medium/long turns as assessed runs.
+**IASI** (manual ch. 17, no levels given unless stated): Javelin Turns, p. 169 (javelin turns); White Pass Turn, p. 175 (whitepass turns); Braquage, p. 170 (nearest match to pivot slips); Side Slipping/edge set and Diagonal side slipping, p. 168 (side slips); Edged Garlands, p. 167 (garlands, edge-roll form); Hop Turns/Speiss, p. 171 (hop turns); falling leaf side slip and garlands, p. 48 (additional activities, not described). Straight Running on one leg, p. 167 (one-ski straight run); Edged J Turns, p. 167 (carved J-turns); TicTacs, pp. 172–173 (tic-tac turns); Dolphin Turns, p. 174, Level 4 additional activity, p. 33 (dolphin turns); Plough turning, p. 45, Core Skier Development (wedge turns). IASI pages print skills, not fundamentals, so IASI mappings carry none. Stork turns: none found. Short turns and Carved turns are ch. 6 turn forms; the Level 4 criteria name short and medium/long turns as assessed runs.
 
 ### Other associations
 

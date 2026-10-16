@@ -1,0 +1,7 @@
+association: iasi
+drill: tic-tac-turns
+task: TicTacs
+category: Drill
+# IASI pages print skills, not fundamentals, so none are mapped.
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=172
+reviewed_by: []

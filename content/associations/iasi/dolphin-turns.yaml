@@ -1,0 +1,9 @@
+association: iasi
+drill: dolphin-turns
+task: Dolphin Turns
+# The manual (p 33) names it a Level 4 additional activity; ch. 17 describes it (p 174).
+level: { label: Level 4, ordinal: 4 }
+category: Additional activity
+# IASI pages print skills, not fundamentals, so none are mapped.
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=174
+reviewed_by: []

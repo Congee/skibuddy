@@ -1,0 +1,10 @@
+association: psia
+drill: whitepass-turns
+# PSIA-C's spelling; the national activities list spells it "Whitepass" (v1.2a, p 48).
+task: White Pass Turn
+level: { label: Level 3, ordinal: 3 }
+category: Individual
+# The page joins the two with "and".
+fundamentals: { relation: and, ids: [edge-angles, ski-to-ski] }
+url: https://psia-c.org/education/alpine/alpine-resources/white-pass-turn/
+reviewed_by: []

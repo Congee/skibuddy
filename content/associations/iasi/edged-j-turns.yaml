@@ -1,0 +1,7 @@
+association: iasi
+drill: carved-j-turns
+task: Edged J Turns
+category: Drill
+# IASI pages print skills, not fundamentals, so none are mapped.
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=167
+reviewed_by: []

@@ -1,0 +1,33 @@
+id: whitepass-turns
+name: Whitepass turns
+movement: whitepass-turn
+summary: Linked medium-to-large carved turns skied mostly on one ski at a time. Out of each turn the inside ski is lifted and the outside ski alone finishes the turn, then changes edges on its own and starts the next turn as the inside ski, on its little-toe edge, with the new outside ski held up level beside it. Near the fall line the outside leg extends to set its ski down, both skis share the snow for a moment, and angulation hands the load to the outside ski. The body must commit inside the new turn; staying over a flat ski is the common failure.
+# PSIA-C puts it on blue to gentle black groomed terrain; smooth, edgeable snow is our wording.
+terrain: Blue to gentle black groomed slopes with smooth, edgeable snow; not ice or ruts
+# Speeds and radii are our inference, well under race levels. Loads follow Lind & Sanders eq 4.9, p 103,
+# peaking below the fall line, where the outside ski carries the turn alone.
+scenarios:
+  gentle: { speed_mps: 8, radius_m: 15, slope_deg: 14 }
+  moderate: { speed_mps: 10, radius_m: 16, slope_deg: 17 }
+  dynamic: { speed_mps: 12, radius_m: 17, slope_deg: 20 }
+equipment: Efforts assume carving skis with a sidecut radius of about 16-20 m, and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. A shorter sidecut tightens the arcs at the same speed; more lean or ramp deepens the knee; a higher stand height adds the edge leverage the little-toe edge needs but loads the knee.
+cautions:
+  - Learn it in parts on easy terrain first, one-ski traverses on either ski, then uphill arcs on the outside ski and downhill arcs on the inside ski, before linking turns.
+  - Set the outside ski down parallel, at hip width, already on its big-toe edge and with the leg bent; a wide, tip-out or straight-legged landing can catch.
+  - Stop the drill when tired; the single-leg finish is its highest load.
+sources:
+  - psia-c-white-pass-turn
+  - { source: iasi-2021, pages: "175-176" }
+  - { source: lind-sanders-2004, pages: "53, 103, 125" }
+  - { source: lemaster-2010, pages: "32-33, 131-132, 136, 164-167" }
+  - posch-2025
+  - ruedl-2022
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: "whole load on the outside ski from late shaping through the finish and transition" }
+  - { primitive: tipping, modifier: edge change made on the old outside ski alone }
+  - { primitive: ankle-flexion }
+  - { primitive: hip-angulation, modifier: "over each ski in turn, the pelvis held up over whichever leg stands" }
+  - { primitive: inside-leg-shortening, modifier: briefly while both skis share the snow }
+  - { primitive: inside-leg-lift, modifier: "whole ski, level to the snow, each ski in turn" }
+  - { primitive: counter, modifier: slight }
+reviewed_by: []

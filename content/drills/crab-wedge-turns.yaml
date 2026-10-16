@@ -1,0 +1,32 @@
+id: crab-wedge-turns
+name: Crab wedge turns
+movement: crab-wedge-turn
+summary: Linked wedge turns on gentle terrain where only the outside ski's edge angle rises. The wedge keeps its size; the outside ski is tipped up from the ankle and by turning the thigh in, bends and leaves a thin carved line, so the ski's sidecut makes the turn, while the flatter inside ski brushes. The upper body stays over the outside ski. There is no edge change; each ski stays on its big-toe edge and only its edge angle rises and falls.
+# Terrain and the drill's form from the PSIA-C page; speeds and radii are our inference.
+terrain: Gentle green groomed slopes with smooth, edgeable snow; not ice or ruts
+# Speeds, radii and pitches are our inference, at wedge speeds. Loads from Lind & Sanders eq 4.9 (p 103) stay
+# close to body weight; the demand is in the outside ski's edge angle, which the sidecut sets, not in the load.
+scenarios:
+  gentle: { speed_mps: 3.5, radius_m: 13.5, slope_deg: 6 }
+  moderate: { speed_mps: 4.5, radius_m: 13, slope_deg: 8 }
+  dynamic: { speed_mps: 5.5, radius_m: 12.75, slope_deg: 10 }
+equipment: Efforts assume recreational carving skis of about 13-15 m sidecut radius and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. The carved radius is set by sidecut and edge angle, so a deeper sidecut needs less edge for the same turn and a straighter ski needs more; more lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee.
+cautions:
+  - Tip the outside ski with the ankle and by turning the thigh in; never by letting the knee cave in over the foot.
+  - Keep the inside ski flat enough to brush. An inside edge that catches twists the knee inward, the classic wedge injury.
+  - Keep it slow and the wedge small; a wide wedge with the weight back loads the knees most.
+sources:
+  - psia-c-crab-wedge
+  - { source: lind-sanders-2004, pages: "65, 95-98, 103, 193" }
+  - { source: lemaster-2010, pages: "32-33, 124-125" }
+  - { source: iasi-2021, pages: "45, 61" }
+  - posch-2025
+  - ruedl-2022
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: "outside ski of a wedge, carving" }
+  - { primitive: inside-leg-shortening, modifier: "slight, the inside ski still loaded and brushing" }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: "outside ski only; no edge change, the inside ski flattens on its big-toe edge" }
+  - { primitive: leg-rotation, modifier: "outside thigh turned in to tip the ski, not to steer it" }
+  - { primitive: hip-angulation, modifier: "small, upper body over the outside ski" }
+reviewed_by: []

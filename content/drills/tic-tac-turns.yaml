@@ -1,0 +1,35 @@
+id: tic-tac-turns
+name: Tic-tac turns
+movement: tic-tac-turn
+summary: Short linked turns where the edge change is stepped. After a pole plant, the new outside ski is lifted and reached down onto its new edge a little out from under the body (tic), then the new inside ski is lifted and set on its new edge at hip width, not under the body (tac); both skis then finish the turn on their edges. Done slowly the two steps are separate; as the tempo rises they overlap until both skis are briefly in the air. Stepping onto the new edges lets the body fall into the turn and grip early, above the fall line.
+# The terrain progression is IASI's; the snow wording is our own.
+terrain: A very gentle groomed slope to start, then easy to moderate groomed pistes; firm, smooth snow, not ice, slush or ruts
+# Intensity is tempo, speed and pitch. Loads follow Lind & Sanders eq 4.9, p 103, for the arc and the unweighting
+# relations, pp 118-120, for the steps; speeds and radii are our inference, well under race levels.
+scenarios:
+  gentle: { speed_mps: 5, radius_m: 7, slope_deg: 8 }
+  moderate: { speed_mps: 7, radius_m: 8, slope_deg: 12 }
+  dynamic: { speed_mps: 8, radius_m: 9, slope_deg: 16 }
+equipment: Efforts assume recreational carving skis with a short-turn sidecut and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. More lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee; a deeper sidecut tightens the turn. A soft boot cuff lets a landing fall back onto the tails.
+cautions:
+  - Land each ski with the shin on the tongue and the knee bent, never back on the tail with the leg straight.
+  - Set the inside ski down on its little-toe edge at hip width; a ski set wide on its big-toe edge can catch in a wedge and twist the knee.
+  - Leave the airborne version until the separate steps are clean and the pitch allows it; stop when tired.
+sources:
+  - { source: iasi-2021, pages: "60, 91, 172-173" }
+  - { source: lind-sanders-2004, pages: "103, 117-120, 138" }
+  - { source: lemaster-2010, pages: "112-116, 152-156" }
+  - psia-c-1000-steps
+  - psia-c-dynamic-leapers
+primitives:
+  - { primitive: inside-leg-lift, modifier: "each leg in turn, briefly, at the edge change" }
+  - { primitive: extension-transition, modifier: each lifted leg reached down onto its new edge }
+  - { primitive: stance-leg-edge-hold, modifier: whole load on one leg at each placement }
+  - { primitive: inside-leg-shortening, modifier: once both skis are down }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: edges set in the air before each ski lands }
+  - { primitive: leg-rotation, modifier: "passive, from placing the skis on edge" }
+  - { primitive: counter, modifier: upper body faces down the hill }
+  - { primitive: hip-angulation }
+  - { primitive: pole-touch, modifier: a plant just before the first step }
+reviewed_by: []

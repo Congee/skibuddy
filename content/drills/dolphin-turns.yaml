@@ -1,0 +1,35 @@
+id: dolphin-turns
+name: Dolphin turns
+movement: dolphin-turn
+summary: Linked medium-radius turns that work the fore-aft range. Through the finish the ankles open and the feet slide ahead, so the pressure runs back to the tails; the tails bend and the tips lift off the snow. In the transition both legs pull up under the hips and the toes pull up, so the tips point down and land first on their new edges, and the new turn grips and bends from the forebody. Aft is a short moment at the end of each turn, never a position.
+# The terrain is our inference for a Level 4 drill; IASI names bumps, powder and variables as where the skill pays off.
+terrain: Groomed blue slopes with smooth, edgeable snow; not ice, ruts or crowded pistes, where a tail-heavy finish is hard to recover
+# Loads follow Lind & Sanders eq 4.9, p 103, peaking below the fall line where the tails load; the landing adds a brief
+# catch. Speeds, radii and pitches are our inference, well under race levels.
+scenarios:
+  gentle: { speed_mps: 8, radius_m: 12, slope_deg: 14 }
+  moderate: { speed_mps: 10, radius_m: 14, slope_deg: 17 }
+  dynamic: { speed_mps: 12, radius_m: 16, slope_deg: 20 }
+equipment: Efforts assume recreational carving skis of about 15 m sidecut with a little tip rocker, and boots with about 15° of cuff lean, a firm but progressive rear spoiler, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. A stiffer tail or a forward mount lifts the tips sooner; a centre mount or a short ski makes the fore-aft range harder to use; a very stiff spoiler hardens the push at the finish. More lean or ramp deepens the knee.
+cautions:
+  - Aft is a moment at the end of the turn, not a stance; if the hips stay behind the feet into the next turn, stop and start again from a centred straight run.
+  - Never land on the tails with straight legs; point the tips down and land on them with the legs bent.
+  - Keep the hips above the knees as the tails load; sitting low and back is the knee-injury position.
+  - Learn it slowly on a gentle blue with small tip lifts before adding speed.
+sources:
+  - { source: iasi-2021, pages: "33, 37, 92, 174" }
+  - { source: lemaster-2010, pages: "62, 79-81, 97-98, 154" }
+  - { source: lind-sanders-2004, pages: "54, 69-70, 103, 118-120, 192-193" }
+  - seifert-2023
+  - bere-2011
+primitives:
+  - { primitive: stance-leg-edge-hold }
+  - { primitive: inside-leg-shortening }
+  - { primitive: ankle-flexion, modifier: "opened at the finish, closed hard in the transition to point the tips down" }
+  - { primitive: flexion-transition, modifier: active retraction of both legs while the tips are in the air }
+  - { primitive: tipping, modifier: the tips land on the new edges }
+  - { primitive: leg-rotation, modifier: spread through the turn }
+  - { primitive: counter, modifier: slight }
+  - { primitive: hip-angulation }
+  - { primitive: pole-touch, modifier: a plant as the tips leave the snow }
+reviewed_by: []

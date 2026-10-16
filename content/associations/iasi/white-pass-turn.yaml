@@ -1,0 +1,8 @@
+association: iasi
+drill: whitepass-turns
+task: White Pass Turn
+category: Drill
+# IASI gives this drill no level.
+# IASI pages print skills, not fundamentals, so none are mapped.
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=175
+reviewed_by: []

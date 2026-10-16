@@ -167,4 +167,8 @@ describe('scenarioLine', () => {
     assert.include(scenarioLine(Intensity.Dynamic, { speedMps: 10, radiusM: 14, slopeDeg: 15 }), 'about 35 km/h');
     assert.include(scenarioLine(Intensity.Dynamic, { speedMps: 10, radiusM: 14, slopeDeg: 15 }), '1.3 × body weight');
   });
+
+  it('reads a straight run with no turn load', () => {
+    assert.strictEqual(scenarioLine(Intensity.Gentle, { speedMps: 3, slopeDeg: 5 }), 'Gentle: about 10 km/h straight down a 5° slope.');
+  });
 });

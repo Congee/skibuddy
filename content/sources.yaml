@@ -236,6 +236,31 @@
   citation: Fujimori T et al. Kinematics of the thoracic spine in trunk lateral bending - in vivo three-dimensional analysis. Spine J. 2014;14:1991-9.
   url: https://pubmed.ncbi.nlm.nih.gov/24333460/
   read: abstract
+- id: hermann-2023
+  type: article
+  citation: Hermann A et al. Muscular fatigue and quadriceps-to-hamstring ratio in alpine skiing in women over 40 years. Int J Environ Res Public Health. 2023;20:5486.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10138889/
+  read: full
+- id: debertin-2022
+  type: article
+  citation: Debertin D et al. Quantitative downhill skiing technique analysis according to ski instruction curricula. Front Bioeng Biotechnol. 2022;10:1003619.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9552888/
+  read: full
+- id: thorwartl-2023
+  type: article
+  citation: Thorwartl C et al. Technique-dependent relationship between local ski bending curvature, roll angle and radial force in alpine skiing. Sensors. 2023;23:3997.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10141132/
+  read: full
+- id: kurpiers-2024
+  type: article
+  citation: Kurpiers N et al. The influence of two teaching approaches on foot loading in skiing beginners. Sensors. 2024;24.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC11644853/
+  read: full
+- id: matsumura-2021
+  type: article
+  citation: Matsumura S et al. Comfortable and convenient turning skill assessment for alpine skiers using IMU and plantar pressure distribution sensors. Sensors. 2021;21.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7865744/
+  read: full
 
 # Books and manuals; citations to these give pages.
 - id: lemaster-2010
@@ -315,18 +340,43 @@
   citation: PSIA-AASI Central. 1000 Steps (alpine resources).
   url: https://psia-c.org/education/alpine/alpine-resources/1000-steps/
   read: full
-- id: hermann-2023
-  type: article
-  citation: Hermann A et al. Muscular fatigue and quadriceps-to-hamstring ratio in alpine skiing in women over 40 years. Int J Environ Res Public Health. 2023;20:5486.
-  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10138889/
-  read: full
-- id: kurpiers-2024
-  type: article
-  citation: Kurpiers N et al. The influence of two teaching approaches on foot loading in skiing beginners. Sensors. 2024;24.
-  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC11644853/
-  read: full
 - id: psia-c-step-turn-fall-line
   type: web
   citation: PSIA-AASI Central. Step Turn into Fall Line (skill-building tasks).
   url: https://psia-c.org/education/alpine/alpine-resources/step-turn-fall-line/
+  read: full
+- id: psia-c-wedge-turn
+  type: web
+  citation: PSIA-AASI Central. Wedge Turn (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/wedge-turn/
+  read: full
+- id: psia-c-crab-wedge
+  type: web
+  citation: PSIA-AASI Central. Crab Wedge Turn (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/crab-wedge-turn/
+  read: full
+- id: psia-c-white-pass-turn
+  type: web
+  citation: PSIA-AASI Central. White Pass Turn (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/white-pass-turn/
+  read: full
+- id: psia-c-carved-uphill-arc
+  type: web
+  citation: PSIA-AASI Central. Carved Uphill Arc (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/carved-uphill-arc-2/
+  read: full
+- id: psia-c-one-ski-straight-run
+  type: web
+  citation: PSIA-AASI Central. One-Ski Straight Run (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/one-ski-straight-run/
+  read: full
+- id: psia-c-dynamic-leapers
+  type: web
+  citation: PSIA-AASI Central. Dynamic Leapers (alpine resources, skill-building tasks).
+  url: https://psia-c.org/education/alpine/alpine-resources/dynamic-leapers/
+  read: full
+- id: psia-c-advanced-one-ski
+  type: web
+  citation: PSIA-AASI Central. Advanced One-Ski Activities (alpine resources, skill-building tasks).
+  url: https://psia-c.org/education/alpine/alpine-resources/advanced-one-ski-activities/
   read: full

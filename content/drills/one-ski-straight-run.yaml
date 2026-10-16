@@ -1,0 +1,31 @@
+id: one-ski-straight-run
+name: Straight run on one ski
+movement: one-ski-straight-run
+summary: A straight glide down the fall line on gentle terrain, balanced on one flat ski. The other ski's tail is held off the snow at a steady height with its tip resting on the snow and the ski parallel to the stance ski; some associations simply lift the foot. The stance ski stays flat, rolled onto neither edge, while the body stays centred over the middle of the foot and faces down the run. Repeat on the other leg.
+# Sources back gentle groomed terrain with a run-out; "not ice or ruts" is our own wording.
+terrain: Gentle, smooth groomed green terrain with a flat run-out; not ice or ruts
+# A straight run has no radius. The stance leg carries about body weight at every setting (W cos α); intensity
+# raises the speed, the pitch and the load swing over ripples (Lind & Sanders eq 5.1, p113). Speeds are our
+# inference, well within a beginner straight run's range.
+scenarios:
+  gentle: { speed_mps: 3, slope_deg: 4 }
+  moderate: { speed_mps: 5, slope_deg: 6 }
+  dynamic: { speed_mps: 7, slope_deg: 8 }
+equipment: Efforts assume recreational carving skis and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. Boot canting matters most in this drill, because a badly canted boot sets a flat ski on an edge that the ankle must then fight; more lean or ramp deepens the knee, and a higher stand height gives a tipped ski more leverage on the ankle.
+cautions:
+  - Choose a slope with a flat run-out; on one flat ski, a fall sideways comes quickly.
+  - Set the lifted ski down flat, parallel and at hip width, never angled into a wedge.
+  - Stop the drill when tired; balance corrections get late and large with fatigue.
+sources:
+  - { source: iasi-2021, pages: "44, 167, 208" }
+  - psia-c-one-ski-straight-run
+  - { source: lind-sanders-2004, pages: "86-91, 113, 125-126" }
+  - { source: lemaster-2010, pages: "15, 136, 168-169" }
+  - posch-2025
+  - ruedl-2022
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: "whole weight on one leg, ski held flat" }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: held at zero by small corrections }
+  - { primitive: inside-leg-lift, modifier: "tail only, tip resting on the snow" }
+reviewed_by: []

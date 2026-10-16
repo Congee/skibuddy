@@ -389,6 +389,21 @@ export type Scenario = typeof Scenario.Type;
 export const Scenarios = Schema.Struct({ gentle: Scenario, moderate: Scenario, dynamic: Scenario });
 export type Scenarios = typeof Scenarios.Type;
 
+/** How a drill that runs straight, with no turn, is skied at one setting: speed and slope. */
+export const RunScenario = Schema.Struct({
+  speedMps: Positive,
+  // A radius belongs to a turn; a run that gives one is a mistake, not a turn.
+  radiusM: Schema.optionalKey(Schema.Never),
+  slopeDeg: Schema.Number.check(Schema.isBetween({ minimum: 0, maximum: 45 })),
+}).pipe(Schema.encodeKeys({ speedMps: 'speed_mps', radiusM: 'radius_m', slopeDeg: 'slope_deg' }));
+export type RunScenario = typeof RunScenario.Type;
+
+export const RunScenarios = Schema.Struct({ gentle: RunScenario, moderate: RunScenario, dynamic: RunScenario });
+export type RunScenarios = typeof RunScenarios.Type;
+
+/** A turn drill's scenarios, as against a straight run's. */
+export const isTurnScenarios = (s: Scenarios | RunScenarios): s is Scenarios => 'radiusM' in s.gentle;
+
 export const DrillPrimitive = Schema.Struct({
   primitive: PrimitiveId,
   /** How the drill bends it, e.g. "tail only". */
@@ -405,8 +420,8 @@ export const Drill = Schema.Struct({
   /** Our own words. */
   summary: Text,
   terrain: Text,
-  /** The skiing each intensity setting stands for. */
-  scenarios: Scenarios,
+  /** The skiing each intensity setting stands for: turns, or a straight run. */
+  scenarios: Schema.Union([Scenarios, RunScenarios]),
   /** The kit the efforts assume, and what changes them. */
   equipment: Schema.optionalKey(Text),
   /** Safety points for the drill as a whole. */

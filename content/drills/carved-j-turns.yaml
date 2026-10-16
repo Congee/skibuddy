@@ -1,0 +1,33 @@
+id: carved-j-turns
+name: Carved J-turns
+movement: carved-j-turn
+summary: A single carved arc, then the same the other way. From a run in or near the fall line, both skis are tipped onto their edges from the feet, ankles and knees, early and progressively, so they bend from the centre and leave two clean parallel lines. The arc leaves the fall line, crosses the hill and climbs until the skier stops in balance, with angulation growing as speed falls. Skidded tails or a lean into the hill show the edge came from the body, not the legs.
+# Gentle green to blue groomed slopes, per the association pages; "not ice" is our own wording, as one carved
+# edge pair on hard morning groom chatters or lets go (L&S pp 25, 67).
+terrain: Gentle green to easy blue groomed slopes with a clear run-out across the hill; smooth, edgeable snow, not ice
+# Loads follow Lind & Sanders eq 4.9, p 103, with the speed carried through the arc; they peak around across the
+# hill, then fall as the arc climbs and speed bleeds off. Speeds and radii are our inference, well under race levels.
+scenarios:
+  gentle: { speed_mps: 5, radius_m: 14, slope_deg: 6 }
+  moderate: { speed_mps: 6.5, radius_m: 12, slope_deg: 8 }
+  dynamic: { speed_mps: 8, radius_m: 11, slope_deg: 10 }
+equipment: Efforts assume recreational carving skis of about 15 m sidecut radius and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. The arc's radius comes from the edge angle and the sidecut, so a deeper sidecut carves a tighter arc at the same edge; more lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee.
+cautions:
+  - Pick a slope with an empty run-out across and above you; the arc ends up the hill and other skiers come from above.
+  - Stop by holding the edge and letting the arc climb, not by sitting back; a back-weighted stop loads the knee through the boot.
+  - Keep both skis tipped; an uphill ski that catches and drifts out into a wedge twists the knee.
+sources:
+  - psia-c-carved-uphill-arc
+  - { source: iasi-2021, pages: 167 }
+  - { source: lind-sanders-2004, pages: "25, 65, 67, 103-106" }
+  - { source: lemaster-2010, pages: "32-33, 46-49, 131-132, 164-167" }
+  - posch-2025
+  - ruedl-2022
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: "about two thirds of the load, on a carving ski" }
+  - { primitive: inside-leg-shortening, modifier: uphill leg loaded and short through the carve }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: "from flat, early and progressive, no edge change" }
+  - { primitive: hip-angulation, modifier: grows as speed falls }
+  - { primitive: counter, modifier: slight and growing as the skis climb }
+reviewed_by: []

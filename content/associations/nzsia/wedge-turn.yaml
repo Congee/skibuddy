@@ -1,0 +1,7 @@
+association: nzsia
+drill: wedge-turns
+task: Wedge Turn
+# Also examined at Level 2 (Skiing Standards Doc 2019).
+level: { label: Level 1, ordinal: 1 }
+url: https://www.nzsia.org/wp-content/uploads/2019/05/Skiing-Standards-Doc-2019-.pdf
+reviewed_by: []

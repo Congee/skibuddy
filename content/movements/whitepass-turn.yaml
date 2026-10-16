@@ -1,0 +1,1422 @@
+id: whitepass-turn
+name: Turn started on the inside ski's little-toe edge, finished on the outside ski alone
+# No study has measured this drill: nothing is high confidence. Efforts are inferred from normal turns, the one-legged
+# racer (ishige-2021) and mechanics.
+# Phases: initiation = LeMaster's and IASI's initiation; shaping = LeMaster's control phase, IASI's fall line;
+# finish = completion. Their transition sits between our finish and the next initiation.
+# Sides are the current turn's. Each leg runs one cycle over two turns (psia-c-white-pass-turn, IASI pp 175-176):
+#   as the outside leg: held up through initiation; extends to set the ski down near the fall line (shaping); carries
+#   the whole load through the finish, and alone through the transition, where its edge changes and it becomes the
+#   next turn's inside leg;
+#   as the inside leg: stands alone on the little-toe edge through initiation; shares the load briefly and shortens
+#   as the outside ski takes over (shaping); lifted before the finish and held up through the transition, where it
+#   tips over to become the next turn's outside ski.
+# So the edge change is made on one ski, the old outside ski, rolling from its big-toe to its little-toe edge
+# Flattening the old outside ski removes its lateral support, as lifting it does in LeMaster pp 151-152, so the
+# body falls into the new turn.
+#
+# Intensity (the drill's scenarios). Load factor n, Lind & Sanders eq 4.9 (p 103), at the top, the fall line and
+# below it (heading 135°):
+#   gentle    8 m/s,  R 15 m, 14°:   about 0.99, 1.06, 1.14  (tilt about 11°, 24°, 32°)
+#   moderate 10 m/s,  R 16 m, 17°:   about 1.02, 1.15, 1.28  (tilt about 20°, 34°, 41°)
+#   dynamic  12 m/s,  R 17 m, 20°:   about 1.07, 1.28, 1.45  (tilt about 29°, 43°, 50°)
+# One ski carries it all except around the fall line: the inside ski at the top (about 1.0-1.07 W, the lightest
+# part of the turn, but on the weaker little-toe edge), the outside ski from late shaping (1.06-1.28 W) through the
+# finish (1.14-1.45 W), more than stork turns ask of it (1.09-1.33 W). Speeds and radii are our inference for a
+# carved drill on recreational carving skis, well under race levels.
+# Carve geometry (Lind & Sanders eq 3.7 p 65, Technote 5 pp 209-211): with an 18 m sidecut and the edge equal to the
+# tilt, the carve radius near the fall line is about 16 m gentle, 15 m moderate and 13 m dynamic, close to the
+# scenario radii; below the fall line the edge keeps growing and the arc tightens (LeMaster pp 33, 49). A pure carve
+# needs v <= sqrt(g Rsc), about 13 m/s on that ski, so the dynamic setting sits near the limit and needs angulation
+# for any edge beyond the tilt.
+# Edge angle: progressive, but on two skis in turn. The inside ski's little-toe edge builds from flat through
+# initiation (the IASI and PSIA point: commit the CoM inside, tipping from the lower leg); the outside ski, tipped in
+# the air in step, is set down on an edge already near the tilt, and its edge keeps building to a peak in late
+# shaping or early finish (IASI p 31: around or just after the apex), then releases through the transition on that
+# same ski.
+# Flexion pattern, per leg: the stance leg is most flexed in the transition, as in any turn, extends a little
+# through initiation and stays quasi-isometric to the fall line (LeMaster pp 40-42, P&T p 27); there it yields and
+# shortens while the outside ski takes over, then lifts. The outside leg differs from a normal turn: held up and
+# folded through initiation, it extends to reach the snow near the fall line (the only real extension of the turn,
+# IASI p 37: most extension with most edge), is quasi-isometric briefly, then absorbs through the finish into the
+# next transition.
+# Per-setting angles are our inference: outside knee about 58°, 64°, 70° in late shaping and 66°, 72°, 79° at the
+# transition; outside hip about 50°, 57°, 64° and 60°, 68°, 76°; chest 20-33° forward of vertical. Race reference:
+# heinrich-2022's GS outside knee 56-80°, hip 50-81°.
+# The balance stabilisers change little with intensity: they answer balance on one edge, not the turn force.
+#
+# Equipment assumed: carving skis with a longer sidecut radius, about 16-20 m (18 m in the numbers above), as a
+# Level 3 drill on blue to gentle black terrain calls for; boots with about 15° cuff lean, about 0.9° binding ramp
+# (4.7 mm) and about 42 mm stand height. A shorter sidecut tightens every arc at the same speed (LeMaster pp 32-33,
+# L&S p 53); more lean or ramp deepens the knee (posch-2025, LeMaster pp 164-167); a higher stand height adds edge
+# leverage, which the little-toe edge needs most, but loads the knee (ruedl-2022, LeMaster pp 131-132).
+# Book citations give printed page numbers; for the IASI manual, the PDF page.
+dof_matrix:
+  - dof: ankle.flexion
+    side: outside
+    cells:
+      initiation:
+        action: Held up with the ski about level to the snow, the shin kept on the tongue so the boot carries the ski's weight and the forebody does not drop
+        moment: Dorsiflexion, holding the lifted ski's forebody up
+        contraction: isometric
+        cue: Shin on the tongue, lifted ski level
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: lind-sanders-2004, pages: 47 }
+      shaping:
+        action: The toes are pulled up and the foot drawn back as the ski is set down, so the forebody engages first; then held flexed against the load coming onto it
+        moment: Plantarflexion once the ski carries load, shared with the boot shaft
+        contraction: concentric
+        cue: Pull the foot back as the ski touches down
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: lemaster-2010, pages: "79-81" }
+          - { source: iasi-2021, pages: 33 }
+      finish:
+        action: Opens progressively as the foot slides forward under the body, still flexed past upright; pressure moves toward the heel and stays there into the transition
+        contraction: concentric
+        cue: Let the foot slide ahead as the turn ends, shin still on the tongue
+        confidence: medium
+        sources:
+          - { source: lemaster-2010, pages: "38, 81, 182-183" }
+          - falda-buscaiot-2017
+  - dof: ankle.flexion
+    side: inside
+    cells:
+      initiation:
+        action: Closes from the transition, the foot drawn back so the one ski's forebody engages on its little-toe edge; held flexed as the load builds
+        moment: Plantarflexion as the load comes on, shared with the boot shaft
+        contraction: concentric
+        cue: Pull the toes up and the foot back on the stance ski
+        confidence: medium
+        sources:
+          - { source: lemaster-2010, pages: "79-81, 182-183" }
+          - { source: cross-raschner-2023, pages: 14 }
+          - psia-c-white-pass-turn
+      shaping:
+        action: Held flexed, shin on the tongue, while the outside ski takes over the load
+        contraction: isometric
+        cue: Keep the shin on the tongue as the other ski lands
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "61-62, 81" }
+      finish:
+        action: Stays closed as the ski is lifted, the shin carrying the ski level through the boot
+        moment: Dorsiflexion, holding the lifted ski's forebody up
+        contraction: isometric
+        cue: Shin on the tongue as the ski comes up
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: lind-sanders-2004, pages: 47 }
+  - dof: ankle.inversion
+    side: outside
+    cells:
+      initiation:
+        action: In the air, the foot everts so the lifted ski tips onto its big-toe edge in step with the stance ski's tilt
+        contraction: concentric
+        cue: Tip the lifted ski the same way as the stance ski
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: iasi-2021, pages: 189 }
+      shaping:
+        action: Set down already on its big-toe edge near the body's tilt; eversion keeps building as the ski takes the load, to its most in late shaping
+        moment: Eversion
+        contraction: concentric
+        cue: Land on the big-toe edge and keep rolling onto it
+        confidence: medium
+        sources:
+          - psia-c-white-pass-turn
+          - { source: lemaster-2010, pages: "123-124, 127-128" }
+          - { source: cross-raschner-2023, pages: 14 }
+      finish:
+        action: Held near its peak on one edge with constant small corrections, then released toward flat at the end of the finish, so the same ski can roll onto its other edge in the transition
+        moment: Eversion, falling
+        contraction: eccentric
+        cue: Hold the edge, then let it go on the same ski
+        confidence: medium
+        sources:
+          - { source: lemaster-2010, pages: "38, 128" }
+          - { source: lind-sanders-2004, pages: "54-55, 137" }
+          - { source: iasi-2021, pages: 31 }
+  - dof: ankle.inversion
+    side: inside
+    cells:
+      initiation:
+        action: The stance foot inverts inside the boot so the one ski rolls from flat onto its little-toe edge, the edge building progressively as the body inclines into the turn
+        moment: Inversion, against a snow force on the lateral edge that would flatten the ski
+        contraction: concentric
+        cue: Roll the stance ski onto its little-toe edge early, from the foot
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: iasi-2021, pages: "175-176" }
+          - { source: lind-sanders-2004, pages: "54-55, 125" }
+      shaping:
+        action: Edge held as the outside ski lands, then eased as that ski takes the load
+        contraction: eccentric
+        cue: Keep the little-toe edge until the other ski has it
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "137-139" }
+      finish:
+        action: The lifted ski stays tilted on its little-toe edge, in step with the stance ski, until it tips over in the transition
+        contraction: isometric
+        cue: Keep the lifted ski tilted with the turn
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+  - dof: foot.arch
+    side: outside
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: A quiet foot in the lifted boot, confidence: low, sources: [] }
+      shaping:
+        action: Arch held up as the foot takes the load, pressure spread over heel and both balls of the foot
+        contraction: isometric
+        cue: Land on the whole foot, arch up
+        confidence: low
+        sources:
+          - { source: iasi-2021, pages: 190 }
+          - { source: lemaster-2010, pages: 139 }
+      finish:
+        action: Arch held up under the peak load on one ski, pressure moving to the heel
+        contraction: isometric
+        cue: Keep the arch from collapsing as the load peaks
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "139, 161-162" }
+  - dof: foot.arch
+    side: inside
+    cells:
+      initiation:
+        action: The foot balances the whole load on its outer border, which is not built for it; the arch and toes grip to spread the pressure toward the heel and little-toe ball
+        contraction: isometric
+        cue: Stand on the heel and the little-toe ball, toes quiet
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "137-139" }
+          - { source: iasi-2021, pages: 190 }
+      shaping:
+        action: Held as the load leaves the foot
+        contraction: isometric
+        cue: Keep the foot quiet as the other ski lands
+        confidence: low
+        sources: []
+      finish: { neutral: true, contraction: isometric, cue: A quiet foot in the lifted boot, confidence: low, sources: [] }
+  - dof: knee.flexion
+    side: outside
+    cells:
+      initiation:
+        action: Held bent, more than the stance knee, with the heel drawn up so the lifted ski stays level
+        moment: Flexion, holding the shank, boot and ski up
+        contraction: isometric
+        cue: Heel up, ski level
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: lemaster-2010, pages: 55 }
+      shaping:
+        action: "Two sub-phases: first the lifted leg is lowered to reach the snow near the fall line, the knee extending under a flexion moment, so the hamstrings yield (eccentric); then, once the ski carries load, the knee keeps lengthening against it as the ski bends from its centre (concentric vasti, the dominant work), to its longest in late shaping, about 58° gentle, 64° moderate, 70° dynamic (our inference; heinrich-2022 GS 56-80°)"
+        moment: Flexion while the unloaded leg is lowered; extension once the ski carries load
+        contraction: concentric
+        cue: Extend the outside leg to put the ski down and stand on it
+        confidence: medium
+        sources:
+          - psia-c-white-pass-turn
+          - { source: iasi-2021, pages: "37, 175-176" }
+          - { source: bacharach-cross-2023, pages: 27 }
+          - heinrich-2022
+      finish:
+        action: Flexes, absorbing the load as it peaks below the fall line with no help from the other leg, into its deepest bend in the transition, about 66° gentle, 72° moderate, 79° dynamic (our inference)
+        contraction: eccentric
+        cue: Flex under control as the turn ends, still on one ski
+        confidence: medium
+        sources:
+          - { source: lemaster-2010, pages: "40-42, 90" }
+          - { source: iasi-2021, pages: "65-66" }
+          - { source: bacharach-cross-2023, pages: 27 }
+          - falda-buscaiot-2017
+  - dof: knee.flexion
+    side: inside
+    cells:
+      initiation:
+        action: Lengthens a little from its deepest bend in the transition as the body inclines, then held quasi-isometric on the one ski
+        moment: Extension
+        contraction: concentric
+        cue: Grow tall enough to balance on the little-toe edge
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "40-42" }
+          - ishige-2021
+      shaping:
+        action: Yields and shortens as the outside ski lands and takes over, so the inside leg ends shorter than the outside one
+        moment: Extension, falling
+        contraction: eccentric
+        cue: Let the inside leg shorten as you move onto the outside ski
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "55, 61-62" }
+          - { source: iasi-2021, pages: 65 }
+      finish:
+        action: Flexes to lift the ski before the finish, then held bent with the heel drawn up
+        moment: Flexion, holding the shank, boot and ski up
+        contraction: concentric
+        cue: Lift the inside ski, heel toward your seat
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+  - dof: knee.rotation
+    side: outside
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: Lifted knee points where the ski points, confidence: low, sources: [] }
+      shaping: { neutral: true, moment: Resisting the twist the snow force invites as the ski lands, contraction: isometric, cue: "Turn the thigh, not the knee", confidence: medium, sources: [zorko-2020, heinrich-2023] }
+      finish: { neutral: true, moment: Resisting the twist the snow force invites, contraction: isometric, cue: "Turn the thigh, not the knee", confidence: medium, sources: [zorko-2020, heinrich-2023] }
+  - dof: knee.rotation
+    side: inside
+    cells:
+      initiation: { neutral: true, moment: Resisting the twist the edged load invites, contraction: isometric, cue: "Turn the thigh, not the knee", confidence: low, sources: [{ source: iasi-2021, pages: 191 }] }
+      shaping: { neutral: true, contraction: isometric, cue: "Turn the thigh, not the knee", confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: Lifted knee points where the ski points, confidence: low, sources: [] }
+  - dof: knee.valgus
+    side: outside
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: Lifted knee in line with the foot, confidence: low, sources: [] }
+      shaping: { neutral: true, moment: Resisting the inward collapse the edged load invites, contraction: isometric, cue: "Land with the knee over the foot, not caving in", confidence: medium, sources: [zorko-2020, heinrich-2023] }
+      finish: { neutral: true, moment: Resisting the inward collapse the edged load invites, contraction: isometric, cue: "Knee stays over the foot, not caving in", confidence: medium, sources: [zorko-2020, heinrich-2023] }
+  - dof: knee.valgus
+    side: inside
+    cells:
+      initiation:
+        neutral: true
+        moment: Resisting the knee bowing outward, varus, that standing on the little-toe edge invites
+        contraction: isometric
+        cue: Knee stays over the foot, not bowing out
+        confidence: low
+        sources:
+          - { source: lind-sanders-2004, pages: 125 }
+      shaping: { neutral: true, contraction: isometric, cue: Knee over the foot, confidence: low, sources: [] }
+      finish: { neutral: true, contraction: isometric, cue: Lifted knee in line with the foot, confidence: low, sources: [] }
+  - dof: hip.flexion
+    side: outside
+    cells:
+      initiation:
+        action: Held flexed, more than the stance hip, so the lifted ski rides level beside the stance boot with no tip support
+        moment: Flexion, holding the leg, boot and ski up
+        contraction: isometric
+        cue: Thigh up, ski level beside the other boot
+        confidence: medium
+        sources:
+          - kroll-2010
+          - psia-c-white-pass-turn
+          - { source: lemaster-2010, pages: "61-62" }
+      shaping:
+        action: "Two sub-phases: first the thigh is lowered to set the ski down, the hip extending under a flexion moment, so iliopsoas yields (eccentric); then, once loaded, the hip opens as the leg lengthens against the load (concentric extensors, the dominant work), to its most open in late shaping, about 50° gentle, 57° moderate, 64° dynamic (our inference; heinrich-2022 GS 50-81°)"
+        moment: Flexion while lowering, extension once loaded
+        contraction: concentric
+        cue: Reach the outside ski to the snow and stand on it
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - heinrich-2022
+          - { source: lemaster-2010, pages: "73-74" }
+      finish:
+        action: Folds further with the knee, absorbing the load on one leg, into the transition, about 60° gentle, 68° moderate, 76° dynamic (our inference)
+        moment: Extension, about 1.3 Nm/kg in a modelled carved turn and more here with no inside support
+        contraction: eccentric
+        cue: Fold at the hips, not the waist, as the turn ends
+        confidence: medium
+        sources:
+          - heinrich-2022
+          - { source: lemaster-2010, pages: "40-42" }
+  - dof: hip.flexion
+    side: inside
+    cells:
+      initiation:
+        action: Opens a little with the knee from the transition, then held, the hip hinge carrying the forward fold over the one ski
+        moment: Extension
+        contraction: concentric
+        cue: Fold at the hip over the stance ski
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "40-42, 62-63" }
+          - ishige-2021
+      shaping:
+        action: Flexes as the leg shortens and the outside ski takes over, more flexed than the outside hip
+        moment: Extension, falling
+        contraction: eccentric
+        cue: Inside hip and knee bend as the outside ski lands
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "55, 61-62" }
+          - heinrich-2022
+      finish:
+        action: Flexes to lift the thigh and ski before the finish, then held up through the finish
+        moment: Flexion, holding the leg, boot and ski up
+        contraction: concentric
+        cue: Lift the inside thigh, ski level
+        confidence: medium
+        sources:
+          - kroll-2010
+          - psia-c-white-pass-turn
+          - { source: cross-raschner-2023, pages: 14 }
+  - dof: hip.abduction
+    side: outside
+    cells:
+      initiation:
+        action: The lifted thigh held beside the stance leg at about hip width, neither crossing nor swinging wide; with the free leg off the snow the net moment is small
+        contraction: isometric
+        cue: Lifted boot at hip width
+        confidence: low
+        sources: []
+      shaping:
+        action: The ski is set down at hip width; as it loads, the pelvis tips over the new stance thigh so the inside half rises, the outside abductors hiking it, pelvis on femur; hip angulation builds with the edge to its most in late shaping
+        moment: Abduction
+        contraction: concentric
+        cue: Land at hip width and get over the outside hip
+        confidence: medium
+        sources:
+          - { source: lemaster-2010, pages: "70-71, 128, 140" }
+          - moore-2020
+          - psia-c-white-pass-turn
+      finish:
+        action: Held under the peak load with the inside ski lifted, carrying the unsupported inside half of the pelvis, and held into the transition
+        moment: Abduction
+        contraction: isometric
+        cue: Stay strong over the outside hip with the inside ski up
+        confidence: medium
+        sources:
+          - { source: lemaster-2010, pages: "70-71, 140" }
+          - moore-2020
+          - ganderton-2017
+  - dof: hip.abduction
+    side: inside
+    cells:
+      initiation:
+        action: The stance femur tips into the turn under a pelvis kept closer to level, so the hip sits adducted while its abductors hold up the unsupported outside half of the pelvis, pelvis on femur
+        moment: Abduction
+        contraction: concentric
+        cue: Keep the lifted side of your hips up
+        confidence: medium
+        sources:
+          - { source: lemaster-2010, pages: "70-71, 140" }
+          - moore-2020
+          - ganderton-2017
+      shaping:
+        action: Releases the pelvic hold as the outside ski lands and takes the load; the thigh then held adducted beside the outside leg
+        moment: Abduction, falling to small
+        contraction: eccentric
+        cue: Hand the hips over to the outside leg
+        confidence: low
+        sources:
+          - heinrich-2023
+      finish:
+        action: The lifted thigh held beside the stance leg at about hip width
+        contraction: isometric
+        cue: Lifted boot at hip width
+        confidence: low
+        sources: []
+  - dof: hip.rotation
+    side: outside
+    cells:
+      initiation:
+        action: Turns inward in the air with the stance ski so the lifted ski stays parallel and pointed along the new arc
+        contraction: concentric
+        cue: Keep the lifted ski parallel to the stance ski
+        confidence: low
+        sources: [delp-1999]
+      shaping:
+        action: Lands turned in under the pelvis and held as the ski carves
+        moment: Small and mostly external (braking) in a carved turn, extrapolated from a modelled GS turn
+        contraction: isometric
+        cue: Knee over the foot as the ski carves
+        confidence: low
+        sources: [heinrich-2023]
+      finish:
+        action: Turns further inward relative to the pelvis as the ski carves across under a quieter upper body, the turn braked by the external rotators
+        moment: External, braking
+        contraction: eccentric
+        cue: Let the ski turn under you; don't twist it
+        confidence: low
+        sources:
+          - heinrich-2023
+          - { source: lemaster-2010, pages: "73-74" }
+  - dof: hip.rotation
+    side: inside
+    cells:
+      initiation:
+        action: Starts turned in under a pelvis that still faces down the hill from the last turn, then turns outward as the carving ski comes round toward the fall line under it, the windup releasing
+        contraction: concentric
+        cue: Let the stance ski turn under a quiet pelvis
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "107, 109-110" }
+          - { source: iasi-2021, pages: 64 }
+      shaping:
+        action: Held turned out as the outside ski takes over
+        moment: Internal, holding the femur against turning out further (modelled on the inside leg)
+        contraction: isometric
+        cue: Inside knee points where the ski points
+        confidence: low
+        sources: [heinrich-2022]
+      finish:
+        action: Held turned out so the lifted ski stays parallel; the tip must not drift onto the stance ski
+        contraction: isometric
+        cue: Keep the lifted tip from crossing
+        confidence: low
+        sources: []
+  - dof: pelvis.tilt
+    side: trunk
+    cells:
+      initiation:
+        action: Comes up a little from the transition's hip hinge with the stance leg, the low back slightly flattened from standing, never arched or slumped
+        contraction: concentric
+        cue: Rise with the leg; the hinge stays at the hips
+        confidence: medium
+        sources:
+          - heinrich-2022
+          - { source: lemaster-2010, pages: "40-42, 62-63" }
+      shaping:
+        action: Hinge held at its most open over the lengthening outside leg, more tilted the harder the turn; tilting further than the balance needs, so the low back arches, is a fault
+        contraction: isometric
+        cue: Hinged at the hips, low back slightly flattened, never arched or slumped
+        confidence: medium
+        sources:
+          - heinrich-2022
+          - { source: lemaster-2010, pages: "62-63" }
+          - { source: iasi-2021, pages: 194 }
+      finish:
+        action: Tilts forward again with the hip hinge as the outside leg flexes into the transition
+        contraction: eccentric
+        cue: Fold at the hips as the leg flexes
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "40-42, 62-63" }
+  - dof: pelvis.list
+    side: trunk
+    cells:
+      initiation:
+        action: "Reversed here: the half held up is the outside half, not the inside half as in other turns, because the stance leg is the inside leg. Standing on it, the pelvis's outside half has no support; it is held up by the inside hip's abductors while the stance leg tips into the turn"
+        contraction: concentric
+        cue: Keep the lifted side of your hips up
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "70-71" }
+          - psia-c-advanced-one-ski
+      shaping:
+        action: Passes through level as both skis are briefly on the snow, then the inside half rises over the outside hip as the outside ski takes the load
+        contraction: concentric
+        cue: Inside hip up as you move onto the outside ski
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "70-71, 128, 140" }
+      finish:
+        action: Inside half held up with no support from the lifted inside ski, to the end of the finish and into the transition
+        contraction: isometric
+        cue: Don't let the inside hip drop with the ski up
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "70-71, 140" }
+  - dof: pelvis.rotation
+    side: trunk
+    cells:
+      initiation:
+        action: Faces down the hill from the last turn while the stance ski turns toward the fall line under it, so the angle between pelvis and ski closes
+        contraction: isometric
+        cue: Upper body faces the fall line; let the ski come round to it
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: lemaster-2010, pages: "109-110" }
+      shaping:
+        action: Close to square with the skis at the fall line, then a slight counter forms as the outside ski carves on
+        contraction: isometric
+        cue: Belt buckle a little toward the outside of the turn
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: 73 }
+          - { source: iasi-2021, pages: 64 }
+      finish:
+        action: Counter grows as the ski carves across under a pelvis that stays facing down the hill, ready for the next turn
+        contraction: isometric
+        cue: Keep facing the fall line as the ski turns across
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: lemaster-2010, pages: "73-74" }
+  - dof: lumbar.flexion
+    side: trunk
+    cells:
+      initiation:
+        action: Low back slightly flattened from standing, never arched or slumped, and nearly constant through the turn; the fold is made at the hips
+        contraction: isometric
+        cue: Low back slightly flattened, never arched or slumped; fold at the hips
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "62-63" }
+      shaping:
+        action: Held slightly flattened from standing under the load, never arched or slumped
+        moment: Extension, against the forward fold
+        contraction: isometric
+        cue: Low back slightly flattened, never arched or slumped
+        confidence: medium
+        sources:
+          - heinrich-2022
+          - { source: lemaster-2010, pages: "62-63" }
+      finish:
+        action: Held slightly flattened from standing under the peak load on one leg, never arched or slumped; a harder turn folds more at the hips, not the low back
+        moment: Extension, against the forward fold
+        contraction: isometric
+        cue: Low back slightly flattened; fold at the hips
+        confidence: medium
+        sources:
+          - heinrich-2022
+          - { source: lemaster-2010, pages: "62-63" }
+  - dof: lumbar.side-bend
+    side: trunk
+    cells:
+      initiation:
+        action: The body inclines into the turn over the inside ski while the low back bends a little back toward the outside, counterbalancing over the one edge; the inside quadratus lumborum and obliques lengthen to control it
+        contraction: eccentric
+        cue: Commit the hips inside; shoulders stay over the stance ski
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: iasi-2021, pages: "62-63, 175-176" }
+          - { source: lemaster-2010, pages: "70, 74" }
+      shaping:
+        action: Keeps building with the outside ski's edge to its most in late shaping, angulation moving the pressure onto the outside ski
+        contraction: eccentric
+        cue: Hips in, shoulders out, onto the outside ski
+        confidence: medium
+        sources:
+          - sporri-2016
+          - psia-c-white-pass-turn
+          - { source: lemaster-2010, pages: "74, 126, 128" }
+      finish:
+        action: Held through the finish on the one ski, then eases as the edge releases in the transition
+        contraction: isometric
+        cue: Stay over the outside ski
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: 128 }
+  - dof: lumbar.rotation
+    side: trunk
+    cells:
+      initiation: { neutral: true, contraction: isometric, cue: "Separation comes from the hip sockets, not the low back", confidence: low, sources: [{ source: lemaster-2010, pages: 73 }, fujii-2007] }
+      shaping: { neutral: true, contraction: isometric, cue: "Separation comes from the hip sockets, not the low back", confidence: low, sources: [{ source: lemaster-2010, pages: 73 }] }
+      finish: { neutral: true, contraction: isometric, cue: "Separation comes from the hip sockets, not the low back", confidence: low, sources: [{ source: lemaster-2010, pages: 73 }] }
+  - dof: thoracic.flexion
+    side: trunk
+    cells:
+      initiation:
+        action: Chest forward, about 20-33° from vertical through the turn, a little more the harder the turn; it rises a little with the hips as the stance leg lengthens
+        contraction: isometric
+        cue: Chest over the knees
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "182-183" }
+      shaping:
+        action: Slight forward flexion held
+        contraction: isometric
+        cue: Chest over the knees
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: 74 }
+      finish:
+        action: Slight forward flexion held
+        contraction: isometric
+        cue: Don't sit up as the turn ends
+        confidence: low
+        sources: []
+  - dof: thoracic.side-bend
+    side: trunk
+    cells:
+      initiation:
+        action: Tips back toward the outside a little more than the pelvis, the counterbalance that keeps the CoM over the inside ski's edge; too little and the skier falls inside, too much and the ski stands flat
+        contraction: eccentric
+        cue: Counterbalance with the shoulders over the stance ski
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: lemaster-2010, pages: 70 }
+          - fujimori-2014
+      shaping:
+        action: Keeps building with the outside ski's edge to its most in late shaping
+        contraction: eccentric
+        cue: Outside shoulder over the outside ski
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "70-72, 128" }
+      finish:
+        action: Held, then eases with the release in the transition
+        contraction: isometric
+        cue: Shoulders level with the slope
+        confidence: low
+        sources: []
+  - dof: thoracic.rotation
+    side: trunk
+    cells:
+      initiation:
+        action: Faces down the hill with the pelvis while the stance ski turns under them
+        contraction: isometric
+        cue: Chest to the fall line
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+          - { source: lemaster-2010, pages: 73 }
+      shaping:
+        action: Close to square at the fall line, then slight counter held against the legs' turning
+        contraction: isometric
+        cue: Quiet upper body while the skis turn
+        confidence: low
+        sources:
+          - { source: lemaster-2010, pages: "73, 107" }
+          - { source: iasi-2021, pages: 64 }
+      finish:
+        action: Counter held and growing as the ski carves across, the chest still toward the fall line
+        contraction: isometric
+        cue: Chest stays to the fall line
+        confidence: low
+        sources:
+          - psia-c-white-pass-turn
+  - dof: shoulder-girdle.protraction
+    side: both
+    cells:
+      initiation: { action: Shoulder blades slightly forward and level, contraction: isometric, cue: Hands forward and in view, confidence: low, sources: [{ source: lemaster-2010, pages: "142-143" }] }
+      shaping: { action: Shoulder blades slightly forward and level, contraction: isometric, cue: Hands forward and in view, confidence: low, sources: [] }
+      finish: { action: Shoulder blades slightly forward and level, contraction: isometric, cue: Hands forward and in view, confidence: low, sources: [] }
+  - dof: shoulder.flexion
+    side: both
+    cells:
+      initiation: { action: "Arms held forward, hands in view; no pole touch is needed and none is asked for", contraction: isometric, cue: Both hands forward, confidence: low, sources: [{ source: lemaster-2010, pages: "142-143" }, { source: lind-sanders-2004, pages: 127 }] }
+      shaping: { action: "Arms held forward, the inside hand up, not dropped", contraction: isometric, cue: Inside hand up and forward, confidence: low, sources: [{ source: lemaster-2010, pages: "71, 142" }] }
+      finish: { action: Arms held forward, contraction: isometric, cue: Hands forward, confidence: low, sources: [] }
+  - dof: shoulder.abduction
+    side: both
+    cells:
+      initiation: { action: "Hands wide for balance on one edge, raising the upper body's resistance to turning", contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [{ source: lind-sanders-2004, pages: "127-128" }] }
+      shaping: { action: Hands held wide, contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [] }
+      finish: { action: Hands held wide, contraction: isometric, cue: Hands wide and forward, confidence: low, sources: [] }
+  - dof: elbow.flexion
+    side: both
+    cells:
+      initiation: { action: Bent about 75° and held, contraction: isometric, cue: Forearms roughly parallel to the snow, confidence: low, sources: [{ source: lemaster-2010, pages: 142 }] }
+      shaping: { action: Bent about 75° and held, contraction: isometric, cue: Forearms roughly parallel to the snow, confidence: low, sources: [] }
+      finish: { action: Bent about 75° and held, contraction: isometric, cue: Forearms roughly parallel to the snow, confidence: low, sources: [] }
+  - dof: wrist.grip
+    side: both
+    cells:
+      initiation: { action: Light grip held, contraction: isometric, cue: Hold the poles lightly, confidence: low, sources: [] }
+      shaping: { action: Light grip held, contraction: isometric, cue: Hold the poles lightly, confidence: low, sources: [] }
+      finish: { action: Light grip held, contraction: isometric, cue: Hold the poles lightly, confidence: low, sources: [] }
+  - dof: neck.flexion
+    side: trunk
+    cells:
+      initiation: { action: Head held up with the eyes ahead down the hill, contraction: isometric, cue: Eyes ahead, confidence: low, sources: [{ source: lemaster-2010, pages: 64 }] }
+      shaping: { action: Head held steady, contraction: isometric, cue: A steady head, confidence: low, sources: [{ source: lemaster-2010, pages: 64 }] }
+      finish: { action: Head held steady, contraction: isometric, cue: A steady head, confidence: low, sources: [] }
+  - dof: neck.side-bend
+    side: trunk
+    cells:
+      initiation: { action: Head kept level as the body inclines; tipping it into the turn is banking, contraction: isometric, cue: Don't tip the head into the turn, confidence: low, sources: [{ source: lemaster-2010, pages: 72 }, { source: iasi-2021, pages: 61 }] }
+      shaping: { action: Head kept level, contraction: isometric, cue: Don't tip the head into the turn, confidence: low, sources: [{ source: lemaster-2010, pages: 72 }] }
+      finish: { action: Head kept level, contraction: isometric, cue: Level head, confidence: low, sources: [] }
+  - dof: neck.rotation
+    side: trunk
+    cells:
+      initiation: { action: "Head faces down the hill with the chest, eyes along the arc", contraction: isometric, cue: Look where you are going, confidence: low, sources: [] }
+      shaping: { action: Held with the chest, contraction: isometric, cue: Look where you are going, confidence: low, sources: [] }
+      finish: { action: Eyes move ahead to the next turn's path, contraction: concentric, cue: Look along the next turn, confidence: low, sources: [] }
+
+activations:
+  # Outside leg: lifted through initiation, set down in shaping, the whole load through the finish and transition.
+  - muscle: vasti
+    side: outside
+    serves: [knee.flexion]
+    intensity:
+      initiation: 0
+      shaping: { gentle: 2, moderate: 2, dynamic: 3 }
+      finish: { gentle: 2, moderate: 3, dynamic: 3 }
+    contraction: { initiation: null, shaping: concentric, finish: eccentric }
+    role: Idle while the leg is held up; extend the knee to set the ski down and stand on it, then hold and absorb the whole load through the finish
+    confidence: medium
+    basis: Measured in normal turns, where activity peaks in the steering phase at a steady knee bend. Here one leg carries the whole load from late shaping, about 1.1-1.5 times body weight below the fall line by Lind & Sanders eq 4.9, at a deeper bend as the turn gets harder; the per-setting values are our inference
+    sources:
+      - hintermeister-1997
+      - kroll-2010
+      - panizzolo-2013
+      - heinrich-2022
+      - { source: bacharach-cross-2023, pages: 27 }
+      - { source: lind-sanders-2004, pages: 103 }
+  - muscle: rectus-femoris
+    side: outside
+    serves: [hip.flexion, knee.flexion]
+    intensity:
+      initiation: 2
+      shaping: 2
+      finish: { gentle: 1, moderate: 2, dynamic: 2 }
+    contraction: { initiation: isometric, shaping: concentric, finish: eccentric }
+    role: Holds the lifted thigh up as a hip flexor, then works as a knee extensor once the ski is down
+    confidence: medium
+    basis: Measured as a hip flexor on the lightly loaded inside leg and a knee extensor on the outside leg in normal turns; this drill asks both of it in turn
+    sources: [kroll-2010, panizzolo-2013, seifert-2023]
+  - muscle: iliopsoas
+    side: outside
+    serves: [hip.flexion]
+    intensity: { initiation: 2, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: eccentric, finish: isometric }
+    role: Holds the lifted leg, boot and ski level with no tip support, lowers it to the snow, then co-contracts on the stance hip
+    confidence: low
+    basis: Inference; iliopsoas has not been measured on snow. Holding about 16 kg of leg, boot and ski level is a moderate hip-flexor effort, a little more than with a resting tip
+    sources:
+      - jiroumaru-2014
+      - juan-2024
+      - { source: lind-sanders-2004, pages: "70, 103" }
+  - muscle: gluteus-maximus
+    side: outside
+    serves: [hip.flexion, hip.rotation, hip.abduction]
+    intensity:
+      initiation: 1
+      shaping: { gentle: 1, moderate: 2, dynamic: 2 }
+      finish: { gentle: 2, moderate: 3, dynamic: 3 }
+    contraction: { initiation: isometric, shaping: concentric, finish: eccentric }
+    role: Opens the hip to set the ski down, then holds the folded hip under the whole load and brakes the thigh's inward turn as the ski carves
+    confidence: medium
+    basis: The hip extension moment is about 1.3 Nm/kg in a modelled carved turn with help from the inside leg; here none, so the finish is harder than a stork turn's. Per-setting values are inference
+    sources:
+      - hintermeister-1997
+      - heinrich-2022
+      - heinrich-2023
+      - distefano-2009
+      - { source: lemaster-2010, pages: "54, 73" }
+  - muscle: gluteus-medius
+    side: outside
+    serves: [hip.abduction, pelvis.list, hip.rotation]
+    intensity:
+      initiation: 1
+      shaping: 2
+      finish: { gentle: 2, moderate: 3, dynamic: 3 }
+    contraction: { initiation: isometric, shaping: concentric, finish: isometric }
+    role: Hikes the pelvis's inside half over the stance hip as the ski lands, then holds it up, unsupported, with the inside ski lifted
+    confidence: medium
+    basis: Measured on both legs in normal turns; the one-leg pelvic hold follows from mechanics and single-leg exercise data. Highest in the finish, where the load peaks and the inside ski is off the snow
+    sources:
+      - seifert-2023
+      - louie-1984
+      - moore-2020
+      - distefano-2009
+      - { source: lemaster-2010, pages: "70-71, 140" }
+  - muscle: gluteus-minimus
+    side: outside
+    serves: [hip.abduction, pelvis.list, hip.rotation]
+    intensity:
+      initiation: 1
+      shaping: 2
+      finish: { gentle: 2, moderate: 3, dynamic: 3 }
+    contraction: { initiation: isometric, shaping: concentric, finish: isometric }
+    role: Shares the pelvic hold with gluteus medius and steadies the head of the femur under the one-leg load
+    confidence: medium
+    basis: Inferred from single-leg exercise data; not measured on snow. Scaled as gluteus medius
+    sources: [moore-2020, ganderton-2017, uebayashi-2026, delp-1999]
+  - muscle: tensor-fasciae-latae
+    side: outside
+    serves: [hip.abduction, hip.flexion, pelvis.list]
+    intensity:
+      initiation: 1
+      shaping: 1
+      finish: { gentle: 1, moderate: 2, dynamic: 2 }
+    contraction: { initiation: isometric, shaping: concentric, finish: isometric }
+    role: Helps hold the lifted thigh up, then the pelvis over the stance hip
+    confidence: low
+    basis: Inferred from exercise data; not measured on snow
+    sources: [selkowitz-2024, andersson-1997]
+  - muscle: adductors
+    side: outside
+    serves: [hip.abduction, hip.rotation]
+    intensity:
+      initiation: 1
+      shaping: { gentle: 1, moderate: 2, dynamic: 2 }
+      finish: { gentle: 1, moderate: 2, dynamic: 2 }
+    contraction: { initiation: isometric, shaping: concentric, finish: isometric }
+    role: Keep the lifted thigh beside the stance leg, then turn the bent thigh inward to edge the landed ski and brace against the abductors
+    confidence: medium
+    basis: Measured in normal turns; the edging role is mechanics of the bent leg
+    sources:
+      - hintermeister-1997
+      - { source: lemaster-2010, pages: "108, 124-125" }
+  - muscle: adductor-magnus
+    side: outside
+    serves: [hip.flexion, hip.abduction]
+    intensity:
+      initiation: 0
+      shaping: 1
+      finish: { gentle: 1, moderate: 2, dynamic: 2 }
+    contraction: { initiation: null, shaping: concentric, finish: eccentric }
+    role: Shares the hip extension moment once the leg is loaded
+    confidence: low
+    basis: Anatomy and a modelled hip extension moment; not measured on snow
+    sources: [neumann-2010, heinrich-2022]
+  - muscle: biceps-femoris
+    side: outside
+    serves: [knee.flexion, hip.rotation, knee.rotation]
+    intensity:
+      initiation: 2
+      shaping: 1
+      finish: { gentle: 1, moderate: 2, dynamic: 2 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Holds the lifted knee bent with the heel drawn up, then co-contracts with the quadriceps to steady the loaded knee and brake the thigh's inward turn
+    confidence: medium
+    basis: Inside-leg hamstring activity and outside-leg co-contraction are measured in normal turns; holding the shank, boot and ski up with no tip support is a moderate effort
+    sources: [chollet-2025, hintermeister-1997, heinrich-2023, zorko-2020]
+  - muscle: medial-hamstrings
+    side: outside
+    serves: [knee.flexion, knee.rotation, knee.valgus]
+    intensity:
+      initiation: 1
+      shaping: 1
+      finish: { gentle: 1, moderate: 1, dynamic: 2 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Help hold the lifted knee bent, then resist the loaded knee twisting outward and caving in
+    confidence: medium
+    basis: Semitendinosus at 6-15 % of maximum in a simulated edged stance; low in normal turns
+    sources: [hintermeister-1997, zorko-2020, heinrich-2023]
+  - muscle: deep-hip-rotators
+    side: outside
+    serves: [hip.rotation]
+    intensity:
+      initiation: 1
+      shaping: 1
+      finish: { gentle: 1, moderate: 1, dynamic: 2 }
+    contraction: { initiation: isometric, shaping: isometric, finish: eccentric }
+    role: Steady the hip, then brake the thigh's inward turn as the ski carves across
+    confidence: low
+    basis: The carved turn's outside hip rotation moment is small and external, extrapolated from a model of a GS turn
+    sources: [heinrich-2023, delp-1999]
+  - muscle: popliteus
+    side: outside
+    serves: [knee.rotation]
+    intensity: { initiation: 0, shaping: 1, finish: 1 }
+    contraction: { initiation: null, shaping: isometric, finish: isometric }
+    role: Steadies the shin's rotation under the loaded bent knee
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: tibialis-anterior
+    side: outside
+    serves: [ankle.flexion]
+    intensity:
+      initiation: 1
+      shaping: { gentle: 1, moderate: 2, dynamic: 2 }
+      finish: 1
+    contraction: { initiation: isometric, shaping: concentric, finish: eccentric }
+    role: Keeps the lifted ski level with the shin on the tongue, pulls the foot back as the ski lands so the forebody engages, then only co-contracts under the load
+    confidence: medium
+    basis: Highly active in normal turns; active ankle flexion is a book technique point. The loaded ankle's net moment is plantarflexion, so its later work is co-contraction
+    sources:
+      - hintermeister-1997
+      - heinrich-2022
+      - { source: cross-raschner-2023, pages: 14 }
+      - { source: lemaster-2010, pages: "79-81" }
+  - muscle: toe-extensors
+    side: outside
+    serves: [ankle.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: concentric, finish: eccentric }
+    role: Pull the toes and foot up with tibialis anterior
+    confidence: low
+    basis: Anatomy and coaching cue; not measured on snow
+    sources:
+      - { source: lemaster-2010, pages: 81 }
+  - muscle: soleus
+    side: outside
+    serves: [ankle.flexion]
+    intensity:
+      initiation: 0
+      shaping: { gentle: 1, moderate: 1, dynamic: 2 }
+      finish: { gentle: 1, moderate: 2, dynamic: 2 }
+    contraction: { initiation: null, shaping: eccentric, finish: concentric }
+    role: Idle while the ski is up; yields as the shin presses into the tongue under the landing load, then opens the ankle to push the foot forward through the finish
+    confidence: medium
+    basis: Ankle moments modelled in carving put about 0.85 Nm/kg in the muscles and 1.16 Nm/kg in the boot shaft; with the knee bent the soleus does the ankle work. Scaled with load by inference
+    sources:
+      - heinrich-2022
+      - { source: lemaster-2010, pages: 81 }
+  - muscle: gastrocnemius
+    side: outside
+    serves: [knee.flexion, ankle.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Helps hold the lifted knee bent, then adds a little ankle stiffness
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: peroneals
+    side: outside
+    serves: [ankle.inversion]
+    intensity: { initiation: 1, shaping: 2, finish: 2 }
+    contraction: { initiation: concentric, shaping: concentric, finish: eccentric }
+    role: Tip the lifted ski to its big-toe edge in the air, build the edge as it lands, make the constant small corrections on one edge, then let it go
+    confidence: medium
+    basis: Highly active in turns, attributed to edge control; balancing on one ski adds continuous co-contraction. A balance effort, so it changes little with intensity; the boot shell carries most of the edging moment
+    sources:
+      - louie-1984
+      - { source: cross-raschner-2023, pages: 14 }
+      - { source: lemaster-2010, pages: 127 }
+      - { source: lind-sanders-2004, pages: "54-55, 137" }
+  - muscle: tibialis-posterior
+    side: outside
+    serves: [foot.arch, ankle.inversion]
+    intensity: { initiation: 0, shaping: 1, finish: 1 }
+    contraction: { initiation: null, shaping: isometric, finish: isometric }
+    role: Holds the arch up under the landed load and co-contracts with the peroneals for balance on one edge
+    confidence: low
+    basis: Anatomy and the mechanics of balancing on one ski; not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: 137 }
+  - muscle: foot-intrinsics
+    side: outside
+    serves: [foot.arch]
+    intensity: { initiation: 0, shaping: 1, finish: 1 }
+    contraction: { initiation: null, shaping: isometric, finish: isometric }
+    role: Spread the pressure over the sole and make fine balance corrections
+    confidence: low
+    basis: Anatomy and the mechanics of balancing on one ski; not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: 137 }
+  # Inside leg: alone on the little-toe edge through initiation, shortening as the outside ski lands, lifted before the finish.
+  - muscle: vasti
+    side: inside
+    serves: [knee.flexion]
+    intensity:
+      initiation: 2
+      shaping: 1
+      finish: 0
+    contraction: { initiation: concentric, shaping: eccentric, finish: null }
+    role: Lengthen the stance knee from the transition and hold it on the one ski, then let it shorten as the outside ski takes over; idle once the ski is lifted
+    confidence: medium
+    basis: Single-leg load at the top of the turn, about 1.0-1.1 times body weight, but on the weaker edge and through a deeper knee as the turn gets harder; measured as an outside-leg pattern in the one-legged racer's turns. The load is at or below stork turns' single-leg load, so it matches stork's stance-leg 2; the little-toe edge loads the ankle and hip rotators more than the knee extensors. Per-setting values are inference
+    sources:
+      - ishige-2021
+      - kroll-2010
+      - { source: lind-sanders-2004, pages: 103 }
+  - muscle: rectus-femoris
+    side: inside
+    serves: [knee.flexion, hip.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 2 }
+    contraction: { initiation: concentric, shaping: eccentric, finish: concentric }
+    role: A knee extensor on the stance leg, then a hip flexor that lifts the ski before the finish
+    confidence: medium
+    basis: Measured as a hip flexor on the lightly loaded inside leg in normal turns
+    sources: [kroll-2010, cuniberti-2026, seifert-2023]
+  - muscle: iliopsoas
+    side: inside
+    serves: [hip.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 2 }
+    contraction: { initiation: isometric, shaping: isometric, finish: concentric }
+    role: Co-contracts on the stance hip, then lifts the thigh, boot and ski and holds them level
+    confidence: low
+    basis: Inference; not measured on snow. The lift with no tip support is a moderate hip-flexor effort
+    sources: [jiroumaru-2014, juan-2024, andersson-1997]
+  - muscle: gluteus-maximus
+    side: inside
+    serves: [hip.flexion, hip.rotation]
+    intensity:
+      initiation: { gentle: 2, moderate: 2, dynamic: 3 }
+      shaping: 1
+      finish: 1
+    contraction: { initiation: concentric, shaping: eccentric, finish: isometric }
+    role: Holds the folded stance hip on one ski and turns the thigh out as the ski comes round, then keeps the lifted ski parallel
+    confidence: low
+    basis: Hip extension on a single stance leg is mechanics; the share on the little-toe edge is inferred from the one-legged racer's outside-edge turns
+    sources: [ishige-2021, heinrich-2022, delp-1999]
+  - muscle: gluteus-medius
+    side: inside
+    serves: [hip.abduction, pelvis.list]
+    intensity: { initiation: 2, shaping: 2, finish: 1 }
+    contraction: { initiation: concentric, shaping: eccentric, finish: isometric }
+    role: Holds up the unsupported outside half of the pelvis while the skier stands on the little-toe edge, then hands the hold to the outside hip and keeps the lifted thigh from falling in
+    confidence: medium
+    basis: The single-leg pelvic hold (hip hitch) ranks top for gluteus medius off snow; standing on the inside edge removes all support from the outside half. The hip's frontal lever is the same as on stork turns' stance leg, whose initiation is 2, at a similar load of about 1.0-1.1 W; the little-toe edge moves the reaction under the foot, not the hip, so it stays 2. A balance-and-posture effort, so it changes little with intensity
+    sources: [moore-2020, ganderton-2017, distefano-2009, seifert-2023]
+  - muscle: gluteus-minimus
+    side: inside
+    serves: [hip.abduction, pelvis.list]
+    intensity: { initiation: 2, shaping: 2, finish: 1 }
+    contraction: { initiation: concentric, shaping: eccentric, finish: isometric }
+    role: Shares the pelvic hold with gluteus medius and steadies the femoral head on the stance leg
+    confidence: medium
+    basis: Inferred from single-leg exercise data; not measured on snow. Matched to gluteus medius and to stork turns' stance leg at a similar load
+    sources: [moore-2020, ganderton-2017, uebayashi-2026]
+  - muscle: tensor-fasciae-latae
+    side: inside
+    serves: [hip.abduction, hip.flexion]
+    intensity: { initiation: 2, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: eccentric, finish: isometric }
+    role: Helps the pelvic hold on the stance leg, then helps hold the lifted thigh up
+    confidence: low
+    basis: The hip hike drove TFL to about 47 % of maximum off snow; not measured on snow
+    sources: [selkowitz-2024]
+  - muscle: adductors
+    side: inside
+    serves: [hip.abduction, hip.rotation]
+    intensity: { initiation: 2, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Brace the adducted stance hip against the abductors, then keep the lifted thigh beside the stance leg
+    confidence: low
+    basis: Inside adductor longus was a main contributor in a modelled carved turn; the stance role is mechanics
+    sources: [heinrich-2023, hintermeister-1997]
+  - muscle: adductor-magnus
+    side: inside
+    serves: [hip.flexion, hip.abduction]
+    intensity: { initiation: 1, shaping: 1, finish: 0 }
+    contraction: { initiation: isometric, shaping: eccentric, finish: null }
+    role: Shares the stance hip's extension moment
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: [neumann-2010]
+  - muscle: biceps-femoris
+    side: inside
+    serves: [knee.flexion, hip.rotation, knee.rotation]
+    intensity:
+      initiation: { gentle: 2, moderate: 2, dynamic: 3 }
+      shaping: 1
+      finish: 2
+    contraction: { initiation: isometric, shaping: isometric, finish: concentric }
+    role: Controls fore-aft and trunk pitch on the little-toe edge, then bends the knee to lift the ski; its short head is a pure knee bender
+    confidence: medium
+    basis: The one-legged racer's biceps femoris was much more active in the first half of his outside-edge turns, linked to forward trunk pitch, and hypertrophied; this is that edge, so it sits one step above stork turns' stance leg ({1, 2, 2}), reaching 3 only at the dynamic setting, nearest his race speeds. No %MVC was reported, so the 3 is inference. The lift is mechanics
+    sources: [ishige-2021, chollet-2025, cuniberti-2026]
+  - muscle: medial-hamstrings
+    side: inside
+    serves: [knee.flexion, knee.valgus]
+    intensity: { initiation: 2, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: concentric }
+    role: Co-contract on the stance knee, then help bend it to lift the ski
+    confidence: low
+    basis: Inside-leg hamstring activity measured in normal turns; the stance share is inferred from the one-legged racer
+    sources: [chollet-2025, ishige-2021]
+  - muscle: gastrocnemius
+    side: inside
+    serves: [knee.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: concentric }
+    role: Adds ankle stiffness on the stance leg, then helps bend the knee to lift the ski
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: sartorius
+    side: inside
+    serves: [hip.flexion, hip.rotation, knee.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: concentric }
+    role: Steadies the stance knee with the pes anserinus, then flexes the hip and knee and turns the thigh out to lift the ski
+    confidence: low
+    basis: Hip-flexor EMG off snow
+    sources: [andersson-1997]
+  - muscle: deep-hip-rotators
+    side: inside
+    serves: [hip.rotation]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: isometric }
+    role: Turn the stance thigh out as the ski comes round and steady the femoral head on one leg, then keep the lifted ski parallel
+    confidence: low
+    basis: Anatomy; with the hip flexed their external rotation moment arm shrinks, so gluteus maximus shares the work
+    sources: [delp-1999]
+  - muscle: tibialis-anterior
+    side: inside
+    serves: [ankle.flexion, ankle.inversion]
+    intensity: { initiation: 2, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: isometric }
+    role: Closes the stance ankle and helps invert the foot onto the little-toe edge, then keeps the lifted ski level with the shin on the tongue
+    confidence: medium
+    basis: Highly active in normal turns and the second most active inside-leg muscle in a modelled carved turn; here it also tips the ski onto the harder edge
+    sources:
+      - hintermeister-1997
+      - heinrich-2023
+      - { source: cross-raschner-2023, pages: 14 }
+  - muscle: toe-extensors
+    side: inside
+    serves: [ankle.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: isometric, finish: isometric }
+    role: Pull the toes and foot up with tibialis anterior
+    confidence: low
+    basis: Anatomy and coaching cue; not measured on snow
+    sources:
+      - { source: lemaster-2010, pages: 81 }
+  - muscle: tibialis-posterior
+    side: inside
+    serves: [ankle.inversion, foot.arch]
+    intensity: { initiation: 2, shaping: 1, finish: 1 }
+    contraction: { initiation: concentric, shaping: eccentric, finish: isometric }
+    role: Inverts the stance foot onto the little-toe edge and holds it against the snow force, then keeps the lifted ski tilted
+    confidence: low
+    basis: Anatomy and the mechanics of balancing on the lateral edge, which the foot is not built for; not measured on snow. A balance effort, so it changes little with intensity
+    sources:
+      - { source: lemaster-2010, pages: "137-139" }
+      - { source: lind-sanders-2004, pages: "125, 137" }
+  - muscle: peroneals
+    side: inside
+    serves: [ankle.inversion]
+    intensity: { initiation: 1, shaping: 1, finish: 0 }
+    contraction: { initiation: isometric, shaping: isometric, finish: null }
+    role: Co-contract against the inverters for balance on the little-toe edge
+    confidence: low
+    basis: Balancing on one edge needs both sides of the ankle; not measured on this edge
+    sources:
+      - { source: lind-sanders-2004, pages: 137 }
+  - muscle: soleus
+    side: inside
+    serves: [ankle.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 0 }
+    contraction: { initiation: eccentric, shaping: isometric, finish: null }
+    role: Yields as the stance shin presses into the tongue and holds it with the boot shaft; idle once the ski is lifted, as pointing the foot would drop the tip
+    confidence: low
+    basis: Modelled inside-ankle moments are about half the outside's in a normal turn; here the stance load is light, at the top of the turn
+    sources: [heinrich-2022]
+  - muscle: foot-intrinsics
+    side: inside
+    serves: [foot.arch]
+    intensity: { initiation: 1, shaping: 1, finish: 0 }
+    contraction: { initiation: isometric, shaping: isometric, finish: null }
+    role: Spread the pressure along the foot's outer border and make fine balance corrections
+    confidence: low
+    basis: Anatomy and the mechanics of balancing on one ski; not measured on snow
+    sources:
+      - { source: lemaster-2010, pages: 139 }
+  - muscle: popliteus
+    side: inside
+    serves: [knee.rotation]
+    intensity: { initiation: 1, shaping: 1, finish: 0 }
+    contraction: { initiation: isometric, shaping: isometric, finish: null }
+    role: Steadies the shin's rotation under the loaded stance knee
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  # Pelvis and trunk. The spine bends back toward the outside over whichever ski carries the load, so the inside side
+  # controls it lengthening.
+  - muscle: quadratus-lumborum
+    side: inside
+    serves: [lumbar.side-bend]
+    intensity:
+      initiation: 1
+      shaping: { gentle: 1, moderate: 2, dynamic: 2 }
+      finish: { gentle: 1, moderate: 2, dynamic: 2 }
+    contraction: { initiation: eccentric, shaping: eccentric, finish: isometric }
+    role: Controls the low back's bend back toward the outside, the counterbalance over each ski in turn
+    confidence: low
+    basis: EMG off snow; the role here is mechanics. The bend grows with the edge angle, so the effort rises with intensity by inference
+    sources:
+      - andersson-1996
+      - mcgill-1996
+      - { source: lemaster-2010, pages: "70-71" }
+  - muscle: quadratus-lumborum
+    side: outside
+    serves: [lumbar.side-bend]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Co-contracts with the inside side to steady the low back over the one edge
+    confidence: low
+    basis: EMG off snow
+    sources: [mcgill-1996]
+  - muscle: internal-oblique
+    side: inside
+    serves: [lumbar.side-bend, thoracic.side-bend]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: eccentric, shaping: eccentric, finish: isometric }
+    role: Helps the inside quadratus lumborum control the trunk's counterbalancing bend
+    confidence: low
+    basis: Internal oblique ranks high in a model of carving; this side-bend role is mechanics
+    sources: [heinrich-2023]
+  - muscle: internal-oblique
+    side: outside
+    serves: [pelvis.rotation, thoracic.rotation]
+    intensity: { initiation: 2, shaping: 1, finish: 2 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Holds the upper body facing the fall line while the skis turn under it, paired with the inside external oblique
+    confidence: medium
+    basis: Measured and modelled in normal turns; the drill asks for the chest to stay to the fall line
+    sources: [hintermeister-1997, heinrich-2023]
+  - muscle: external-oblique
+    side: inside
+    serves: [pelvis.rotation, thoracic.rotation]
+    intensity: { initiation: 2, shaping: 1, finish: 2 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Pairs with the outside internal oblique to hold the upper body to the fall line
+    confidence: medium
+    basis: Measured and modelled in normal turns
+    sources: [hintermeister-1997, heinrich-2023]
+  - muscle: external-oblique
+    side: outside
+    serves: [thoracic.rotation, lumbar.side-bend]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Steadies the trunk by co-contraction
+    confidence: low
+    basis: Mechanics of the counter pairing
+    sources: []
+  - muscle: rectus-abdominis
+    side: both
+    serves: [lumbar.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Balances the back extensors so the low back stays slightly flattened from standing, never arched or slumped, and the skier stays off the tails
+    confidence: medium
+    basis: Measured at low levels in normal turns
+    sources:
+      - hintermeister-1997
+      - { source: lemaster-2010, pages: "62-63" }
+  - muscle: erector-spinae
+    side: both
+    serves: [lumbar.flexion, thoracic.flexion, pelvis.tilt]
+    intensity:
+      initiation: 2
+      shaping: { gentle: 2, moderate: 2, dynamic: 3 }
+      finish: { gentle: 2, moderate: 3, dynamic: 3 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Hold the forward-folded trunk with the low back slightly flattened from standing, never arched or slumped; quiet, not rigid
+    confidence: medium
+    basis: Measured in normal turns; the low back carries a large combined load, highest here in the finish, where the load peaks
+    sources:
+      - hintermeister-1997
+      - zeglinski-1998
+      - heinrich-2022
+      - { source: cross-raschner-2023, pages: 12 }
+  - muscle: multifidus
+    side: both
+    serves: [lumbar.rotation, lumbar.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Steadies each segment of the low back against twist
+    confidence: low
+    basis: Linked to back complaints in racers; not measured in turns
+    sources:
+      - { source: jordan-sporri-taylor-2023, pages: 116 }
+  - muscle: transversus-abdominis
+    side: both
+    serves: [lumbar.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Stiffens the trunk so the upper body moves little when a ski is lifted
+    confidence: low
+    basis: Anatomy; the association page asks for a torso stabilised by the core while a ski is lifted
+    sources: [psia-c-white-pass-turn]
+  - muscle: neck-stabilisers
+    side: both
+    serves: [neck.flexion, neck.side-bend, neck.rotation]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Keep the head level and the eyes steady as the body inclines
+    confidence: low
+    basis: Book technique point; not measured on snow
+    sources:
+      - { source: lemaster-2010, pages: "64, 72" }
+  # Upper body: arms forward and wide for balance; no pole action is needed.
+  - muscle: anterior-deltoid
+    side: both
+    serves: [shoulder.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Holds the arms forward
+    confidence: low
+    basis: Book technique point; not measured on snow
+    sources:
+      - { source: lemaster-2010, pages: "142-143" }
+  - muscle: rotator-cuff
+    side: both
+    serves: [shoulder.flexion, shoulder.abduction]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Steadies the shoulder joints with the arms forward and the hands wide
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: serratus-anterior
+    side: both
+    serves: [shoulder-girdle.protraction]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Holds the shoulder blades forward with the hands
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: trapezius
+    side: both
+    serves: [shoulder-girdle.protraction]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Keeps the shoulders level
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: biceps-brachii
+    side: both
+    serves: [elbow.flexion]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Holds the elbows bent
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+  - muscle: forearm-flexors
+    side: both
+    serves: [wrist.grip]
+    intensity: { initiation: 1, shaping: 1, finish: 1 }
+    contraction: { initiation: isometric, shaping: isometric, finish: isometric }
+    role: Hold the poles
+    confidence: low
+    basis: Anatomy; not measured on snow
+    sources: []
+
+structures:
+  - structure: acl
+    side: outside
+    phases: [shaping, finish]
+    mechanism: Loaded if the ski is set down with the leg straight and the skier behind it, or later the skier falls back on the one ski and its inner edge catches while the knee straightens and turns in, the slip-catch seen in racing injuries
+    protected_by: [biceps-femoris, medial-hamstrings, gluteus-maximus, gluteus-medius, deep-hip-rotators]
+    confidence: medium
+    sources:
+      - bere-2011
+      - bere-2013
+      - heinrich-2023
+      - { source: jordan-sporri-taylor-2023, pages: "119-123" }
+  - structure: acl
+    side: outside
+    phases: [shaping]
+    mechanism: Our inference from the dynamic snowplow, which the sources describe on a re-landing inside ski; here the outside ski lands wide, tip out, and catches, twisting the knee inward
+    protected_by: [medial-hamstrings, biceps-femoris, gluteus-medius]
+    confidence: low
+    sources:
+      - bere-2011
+      - { source: jordan-sporri-taylor-2023, pages: 122 }
+      - { source: lind-sanders-2004, pages: 193 }
+  - structure: mcl
+    side: outside
+    phases: [shaping]
+    mechanism: Our inference from the same wide landing; the knee caving in opens its inner side
+    protected_by: [medial-hamstrings, gracilis, sartorius]
+    confidence: low
+    sources:
+      - { source: jordan-sporri-taylor-2023, pages: 122 }
+  - structure: patellar-tendon
+    side: outside
+    phases: [finish]
+    mechanism: Pulled hard through the long single-leg hold at a deep knee bend, the drill's highest load, more so at higher intensity
+    protected_by: [vasti]
+    confidence: low
+    sources: []
+  - structure: lumbar-discs
+    side: both
+    phases: [initiation, shaping, finish]
+    mechanism: Squeezed by forward flexion, side bend and twist combined under the turn load, with the side bend reversed in sense each time the stance changes ski
+    protected_by: [multifidus, erector-spinae, internal-oblique, external-oblique, rectus-abdominis]
+    confidence: medium
+    sources:
+      - sporri-2015
+      - sporri-2016
+      - { source: cross-raschner-2023, pages: 12 }
+
+reviewed_by: []

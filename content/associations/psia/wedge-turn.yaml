@@ -1,0 +1,8 @@
+association: psia
+drill: wedge-turns
+task: Wedge Turn
+level: { label: Level 1, ordinal: 1 }
+category: Integrated
+# The PSIA-C page names no Fundamental Focus for this activity; it also appears at Level 2 with a wider wedge.
+url: https://psia-c.org/education/alpine/alpine-resources/wedge-turn/
+reviewed_by: []

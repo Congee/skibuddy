@@ -1,0 +1,10 @@
+association: psia
+drill: carved-j-turns
+# The nearest PSIA match, and the same single carved arc; not "Outside ski J-turn", which is on one ski.
+task: Carved Uphill Arc
+level: { label: Level 1, ordinal: 1 }
+category: Individual
+# The page joins the two with "and/or".
+fundamentals: { relation: and/or, ids: [edge-angles, fore-aft] }
+url: https://psia-c.org/education/alpine/alpine-resources/carved-uphill-arc-2/
+reviewed_by: []

@@ -1,6 +1,6 @@
 import { effortAt, effortsFor, effortWord } from '../../content/effort';
 import { INTENSITIES, Intensity, PHASES } from '../../content/schema';
-import type { Activation, ActivationIntensity, Scenario } from '../../content/schema';
+import type { Activation, ActivationIntensity, RunScenario, Scenario } from '../../content/schema';
 import { phaseForces } from '../../physics/turn';
 
 export const INTENSITY_LABELS: Readonly<Record<Intensity, string>> = {
@@ -21,10 +21,17 @@ const kmh = (mps: number): number => mps * 3.6;
 /** Load builds past the fall line and peaks early in the finish, as the radius opens toward the traverse. */
 export const peakLoad = (s: Scenario): number => phaseForces(s).finish.load;
 
-/** "Moderate: about 30 km/h, 12 m turns on a 12° slope. Load on the outside leg peaks below the fall line, about 1.2 × body weight." */
-export const scenarioLine = (i: Intensity, s: Scenario): string =>
-  `${INTENSITY_LABELS[i]}: about ${roundTo(kmh(s.speedMps), 5)} km/h, ${Math.round(s.radiusM)} m turns on a ${Math.round(s.slopeDeg)}° slope. ` +
-  `Load on the outside leg peaks below the fall line, about ${peakLoad(s).toFixed(1)} × body weight.`;
+const isTurn = (s: Scenario | RunScenario): s is Scenario => s.radiusM !== undefined;
+
+/**
+ * "Moderate: about 30 km/h, 12 m turns on a 12° slope. Load on the outside leg peaks below the fall line, about 1.2 × body weight."
+ * A straight run has no turn, so no turn load: "Gentle: about 10 km/h straight down a 5° slope."
+ */
+export const scenarioLine = (i: Intensity, s: Scenario | RunScenario): string =>
+  isTurn(s)
+    ? `${INTENSITY_LABELS[i]}: about ${roundTo(kmh(s.speedMps), 5)} km/h, ${Math.round(s.radiusM)} m turns on a ${Math.round(s.slopeDeg)}° slope. ` +
+      `Load on the outside leg peaks below the fall line, about ${peakLoad(s).toFixed(1)} × body weight.`
+    : `${INTENSITY_LABELS[i]}: about ${roundTo(kmh(s.speedMps), 5)} km/h straight down a ${Math.round(s.slopeDeg)}° slope.`;
 
 /** "initiation Working, shaping Working, finish Hard" at setting `i`. */
 export const phaseWords = (a: Activation, i: Intensity): string => {

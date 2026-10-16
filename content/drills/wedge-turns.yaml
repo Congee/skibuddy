@@ -1,0 +1,29 @@
+id: wedge-turns
+name: Wedge turns
+movement: wedge-turn
+summary: Linked medium-radius turns in a gliding wedge, tips closer than tails, slow enough that a parallel turn would not come easily. Both legs turn in the hip sockets to steer, pivoting the skis under the feet rather than pushing the tails out. Both skis stay on their big-toe edges with no edge change; the outside ski is edged more and carries more weight, the inside ski goes a little flatter so it can steer. The body moves toward each new outside ski but stays between the feet, and the wedge keeps the same size all the way.
+# Sources back easy green groomed slopes and a pitch shallow enough to glide; the speeds and radii are our inference.
+terrain: Easy groomed green slopes, gentle enough to glide at a steady slow speed; not steep enough to force a big braking wedge
+# Loads follow Lind & Sanders eq 4.9 (p 103): about body weight at every setting (n 1.00-1.08). Intensity changes
+# the outside ski's share, its edge angle, the stance depth and the steering rate, not the total load.
+scenarios:
+  gentle: { speed_mps: 3, radius_m: 6, slope_deg: 6 }
+  moderate: { speed_mps: 4, radius_m: 7, slope_deg: 8 }
+  dynamic: { speed_mps: 5, radius_m: 8, slope_deg: 10 }
+equipment: Efforts assume recreational skis of any sidecut, since the wedge is steered rather than carved, and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. A boot with too little lean, or too stiff to flex, lets the shin stand upright and the skier sit back in the wedge, which loads the quadriceps and the knee.
+cautions:
+  - Keep the wedge small and the speed slow; a big wedge on steeper snow grips at the tails, stops the steering and invites sitting back.
+  - A caught inside edge twists the knee inward; keep the skis gliding on low edges and the knees over the feet.
+sources:
+  - psia-c-wedge-turn
+  - { source: iasi-2021, pages: "44-45" }
+  - { source: lind-sanders-2004, pages: "95-98, 103" }
+  - kurpiers-2024
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: on the big-toe edge of the wedge with the inside ski still loaded }
+  - { primitive: ankle-flexion }
+  - { primitive: tipping, modifier: "no edge change; the outside ski edges more, the inside ski flattens" }
+  - { primitive: leg-rotation, modifier: "both legs, from under the foot" }
+  - { primitive: inside-leg-shortening, modifier: slight }
+  - { primitive: hip-angulation, modifier: "small; the body stays between the feet" }
+reviewed_by: []

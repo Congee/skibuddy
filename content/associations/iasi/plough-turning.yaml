@@ -1,0 +1,7 @@
+association: iasi
+drill: wedge-turns
+task: Plough turning
+category: Core Skier Development
+# IASI pages print skills, not fundamentals, so none are mapped.
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=45
+reviewed_by: []

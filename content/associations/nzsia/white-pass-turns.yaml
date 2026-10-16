@@ -1,0 +1,8 @@
+association: nzsia
+drill: whitepass-turns
+# A Trainer skill drill in the lateral-movement group; NZSIA names no fundamentals per drill.
+task: White pass turns
+level: { label: Trainer }
+category: Lateral
+url: https://www.nzsia.org/wp-content/uploads/2018/07/NZSIA-Ski-Trainer-Certification-.pdf
+reviewed_by: []
