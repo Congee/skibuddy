@@ -644,7 +644,8 @@ describe('angulation', () => {
         const table = poseTable(kind, i);
         const seq = [...table, mirrorPose(table[0] ?? samplePose(table, 0))].map((p) => frontal(p).trunk);
         const steps = seq.slice(1).map((v, j) => Math.abs(v - (seq[j] ?? v)));
-        assert.isAtMost(Math.max(...steps), 6, `${kind} ${i}`);
+        // 7 relaxed from 6 for chest over the knees (user requirement).
+        assert.isAtMost(Math.max(...steps), 7, `${kind} ${i}`);
       }
   });
 });
