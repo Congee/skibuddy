@@ -272,7 +272,9 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         if (forearm === undefined) continue;
         const grip = transformPoint(forearm, CAPSULE_GRIP);
         const ankle = transformPoint(world[segmentOf(SegmentKind.Boot, side)] ?? forearm, [0, 0, 0]);
-        const direction = poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0, ankle, size.basket);
+        const elbow = transformPoint(forearm, [0, 0, 0]);
+        const axis: Vec3 = [grip[0] - elbow[0], grip[1] - elbow[1], grip[2] - elbow[2]];
+        const direction = poleDirection(grip, side, side === BodySide.Left ? pose.poleTouch : 0, ankle, size.basket, axis);
         const pole = gear.poles.find((g) => g.side === side);
         if (pole !== undefined) placePole(pole.mesh, grip, direction);
         // The fist closes round the grip, its fingers along the forearm.

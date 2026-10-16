@@ -139,7 +139,8 @@ describe('anatomy hands on the grips', () => {
       for (const { side, letter, grip, fingers, palm, thumb } of hands) {
         const g = grip();
         const ankle = model.bone(`foot.${letter}`).getWorldPosition(new Vector3());
-        const d = new Vector3(...poleDirection([g.x, g.y, g.z], side, side === BodySide.Left ? poleTouchAt(t) : 0, [ankle.x, ankle.y, ankle.z], basket));
+        const fore = model.bone(`hand.${letter}`).getWorldPosition(new Vector3()).sub(model.bone(`forearm.${letter}`).getWorldPosition(new Vector3()));
+        const d = new Vector3(...poleDirection([g.x, g.y, g.z], side, side === BodySide.Left ? poleTouchAt(t) : 0, [ankle.x, ankle.y, ankle.z], basket, [fore.x, fore.y, fore.z]));
         const e1 = new Vector3(0, 1, 0).cross(d).normalize();
         const e2 = d.clone().cross(e1);
         // Radius and angle about the pole's axis.

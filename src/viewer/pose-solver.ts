@@ -119,7 +119,9 @@ const touchAhead = (pose: Pose, basket: number): number => {
   const at = (kind: SegmentKind, p: Vec3): Vec3 => transformPoint(world[segmentOf(kind, BodySide.Left)] ?? identity(), p);
   const grip = at(SegmentKind.Forearm, CAPSULE_GRIP);
   const ankle = at(SegmentKind.Boot, [0, 0, 0]);
-  return grip[2] + poleDirection(grip, BodySide.Left, 1, ankle, basket)[2] * basket - ankle[2];
+  const elbow = at(SegmentKind.Forearm, [0, 0, 0]);
+  const forearm: Vec3 = [grip[0] - elbow[0], grip[1] - elbow[1], grip[2] - elbow[2]];
+  return grip[2] + poleDirection(grip, BodySide.Left, 1, ankle, basket, forearm)[2] * basket - ankle[2];
 };
 
 /**

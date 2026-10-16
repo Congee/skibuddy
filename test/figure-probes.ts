@@ -16,6 +16,8 @@ export interface FigureProbe {
   readonly at: (t: number) => {
     readonly grip: (side: LegSide) => Vec3;
     readonly ankle: (side: LegSide) => Vec3;
+    /** Elbow to wrist. */
+    readonly forearm: (side: LegSide) => Vec3;
     /** Base of the ski's tip and tail. */
     readonly ski: (side: LegSide) => { readonly tip: Vec3; readonly tail: Vec3 };
   };
@@ -35,6 +37,11 @@ export const capsuleProbe: FigureProbe = {
     return {
       grip: (side) => transformPoint(segment(world, SegmentKind.Forearm, side), CAPSULE_GRIP),
       ankle: (side) => transformPoint(segment(world, SegmentKind.Boot, side), [0, 0, 0]),
+      forearm: (side) => {
+        const grip = transformPoint(segment(world, SegmentKind.Forearm, side), CAPSULE_GRIP);
+        const elbow = transformPoint(segment(world, SegmentKind.Forearm, side), [0, 0, 0]);
+        return [grip[0] - elbow[0], grip[1] - elbow[1], grip[2] - elbow[2]];
+      },
       ski: (side) => ({
         tip: transformPoint(segment(world, SegmentKind.Ski, side), SKI_TIP),
         tail: transformPoint(segment(world, SegmentKind.Ski, side), [0, SKI_TIP[1], -0.7]),
@@ -47,7 +54,7 @@ const isVec3 = (v: unknown): v is Vec3 => Array.isArray(v) && v.length === 3 && 
 const isSided = (v: unknown): v is Readonly<Record<LegSide, Vec3>> =>
   typeof v === 'object' && v !== null && isVec3((v as Record<string, unknown>)[BodySide.Right]) && isVec3((v as Record<string, unknown>)[BodySide.Left]);
 const isFrame = (v: unknown): v is ProbeFrame =>
-  typeof v === 'object' && v !== null && ['grip', 'ankle', 'tip', 'tail'].every((k) => isSided((v as Record<string, unknown>)[k]));
+  typeof v === 'object' && v !== null && ['grip', 'ankle', 'forearm', 'tip', 'tail'].every((k) => isSided((v as Record<string, unknown>)[k]));
 
 /**
  * The baked anatomy model, sampled by scripts/anatomy/probe-fixture.ts when the model is built;
@@ -67,6 +74,7 @@ export const anatomyProbe = (): FigureProbe => {
       return {
         grip: (side) => frame.grip[side],
         ankle: (side) => frame.ankle[side],
+        forearm: (side) => frame.forearm[side],
         ski: (side) => ({ tip: frame.tip[side], tail: frame.tail[side] }),
       };
     },

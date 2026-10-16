@@ -255,7 +255,7 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
     if (found === undefined) throw new Error(`anatomy model has no ${part} bone`);
     return found;
   };
-  const fists: Array<{ readonly side: LegSide; readonly hand: Object3D; readonly foot: Object3D; readonly local: Vector3 }> = [];
+  const fists: Array<{ readonly side: LegSide; readonly hand: Object3D; readonly forearm: Object3D; readonly foot: Object3D; readonly local: Vector3 }> = [];
   // Geometry built about `origin` in rest-pose world space, in its `local` frame there, re-expressed in the bone's frame.
   const attach = (part: string, side: LegSide, mesh: Object3D, origin: Vec3, local?: Mat4): void => {
     const parent = joint(part, side);
@@ -280,21 +280,24 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
         if (mesh !== undefined) attach(part, f.side, mesh, f.ankle, local);
       }
       const hand = joint('hand', f.side);
-      fists.push({ side: f.side, hand, foot: joint('foot', f.side), local: hand.worldToLocal(new Vector3(...f.grip)) });
+      fists.push({ side: f.side, hand, forearm: joint('forearm', f.side), foot: joint('foot', f.side), local: hand.worldToLocal(new Vector3(...f.grip)) });
     }
   };
   const fist = new Vector3();
   const ankle = new Vector3();
+  const wrist = new Vector3();
+  const elbow = new Vector3();
   const placePoles = (t: number): void => {
     if (kit === null) return;
     const touch = samplePose(poses, t).poleTouch;
-    for (const { side, hand, foot, local } of fists) {
+    for (const { side, hand, forearm, foot, local } of fists) {
       const pole = kit.poles.find((p) => p.side === side);
       if (pole === undefined) continue;
       fist.copy(local).applyMatrix4(hand.matrixWorld);
       foot.getWorldPosition(ankle);
+      hand.getWorldPosition(wrist).sub(forearm.getWorldPosition(elbow));
       const grip: Vec3 = [fist.x, fist.y, fist.z];
-      placePole(pole.mesh, grip, poleDirection(grip, side, side === BodySide.Left ? touch : 0, [ankle.x, ankle.y, ankle.z], size.basket));
+      placePole(pole.mesh, grip, poleDirection(grip, side, side === BodySide.Left ? touch : 0, [ankle.x, ankle.y, ankle.z], size.basket, [wrist.x, wrist.y, wrist.z]));
     }
   };
 

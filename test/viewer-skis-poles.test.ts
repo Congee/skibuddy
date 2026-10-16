@@ -22,7 +22,7 @@ const basket = (probe: FigureProbe, t: number, side: LegSide): { readonly grip: 
   const at = probe.at(t);
   const grip = at.grip(side);
   const b = probe.basket;
-  const d = poleDirection(grip, side, side === BodySide.Left ? poleTouchAt(t) : 0, at.ankle(side), b);
+  const d = poleDirection(grip, side, side === BodySide.Left ? poleTouchAt(t) : 0, at.ankle(side), b, at.forearm(side));
   return { grip, basket: [grip[0] + d[0] * b, grip[1] + d[1] * b, grip[2] + d[2] * b] };
 };
 

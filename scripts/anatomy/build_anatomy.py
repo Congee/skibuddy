@@ -347,7 +347,7 @@ def rot_y3(a):
 HEAD_LIFT, HEAD_LEVEL = 0.6, 0.7  # as in src/viewer/pose.ts
 # Arm angles come from src/viewer/pose.ts through the pose track; see main.
 ARMS = {}
-# Pole from src/viewer/pose.ts through the pose track: basket height, carry height and heading, where the touch lands, and
+# Pole from src/viewer/pose.ts through the pose track: basket height, carry height, heading and trail, where the touch lands, and
 # each clip's trim; main sets the clip's basket length.
 POLE = {}
 # Knuckles and fingertips sit this far from the grip's axis; the grip is about 18 mm in radius.
@@ -369,7 +369,7 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
     roll = HEAD_LEVEL * (p['pelvisList'] - p['lean'] + p['spineBend'])
     lift = rot_z3(-roll / 2) @ rot_x(-HEAD_LIFT * (p['pelvisPitch'] + p['spineFlex']) / 2)
     R = {'pelvis': pelvis, 'lumbar': half, 'chest': half, 'neck': lift, 'head': lift}
-    # As armLean in pose.ts: past ARMS['lean'] the shoulder and elbow open, keeping the forearm's pitch.
+    # As armLean in pose.ts: past ARMS['lean'] the shoulder and elbow flex further, keeping the forearm's pitch.
     lean = p['pelvisPitch'] + p['spineFlex'] - ARMS['lean']
     for s, sign in (('R', -1), ('L', 1)):
         leg = p['outside'] if s == 'R' else p['inside']
@@ -379,12 +379,12 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
         R[f'thigh.{s}'] = (pelvis.inverted() @ rot_z3(-p['hipAngulation'] - sign * leg.get('adduction', 0.0)) @ rot_x(-hip)
                            @ Matrix.Rotation(leg['femurRotation'], 4, rest['femur'][s]))
         R[f'shin.{s}'] = rot_x(hip + ankle)
-        flex = ARMS['flexion'] - ARMS['leanShoulder'] * lean + (reach if s == 'L' else 0.0)
+        flex = ARMS['flexion'] + ARMS['leanShoulder'] * lean + (reach if s == 'L' else 0.0)
         girdle = p['outsideGirdle'] if s == 'R' else p['insideGirdle']
         R[f'scapula.{s}'] = rot_y3(-sign * girdle['protraction']) @ rot_z3(sign * girdle['elevation'])
         R[f'upper_arm.{s}'] = (rot_y3(sign * girdle['protraction']) @ rot_z3(sign * ARMS['abduction']) @ rot_x(-flex)
                                @ rot_z3(-rest['abduction'][s]))
-        R[f'forearm.{s}'] = rot_x(-ARMS['forearmFlexion'] + (1 - ARMS['leanShoulder']) * lean)
+        R[f'forearm.{s}'] = rot_x(-ARMS['forearmFlexion'] - (1 - ARMS['leanShoulder']) * lean + (ARMS['reachElbow'] * reach if s == 'L' else 0.0))
         hand = rest['hands'][s]
         R[f'hand.{s}'] = hand['twist']
         R[f'fingers.{s}'] = hand['curl'][0]
@@ -433,16 +433,30 @@ def world_pose(bones, order, R, ski_pivot, p, rest):
     return {k: tilt @ m for k, m in D.items()}
 
 
-def pole_direction(grip, s, touch, ankle):
-    """Unit shaft direction, fist to tip, in Blender space; mirrors poleDirection in pose.ts."""
-    g, a = to_gltf(grip), to_gltf(ankle)
+def trail_heading(heading, drop, out, forearm):
+    """trailHeading in pose.ts: `heading`, swung out until the shaft trails at most carryTrail behind square to the forearm."""
+    fx, fy, fz = forearm
+    n = math.sqrt(fx * fx + fy * fy + fz * fz)
+    level = math.sqrt(1 - drop ** 2) * math.hypot(fx, fz) / n
+    if level < 1e-9:
+        return heading
+    aim = math.atan2(out * fx, fz)
+    least = (drop * fy / n - math.sin(POLE['carryTrail'])) / level
+    if math.cos(heading - aim) >= least:
+        return heading
+    return aim + math.acos(min(1.0, max(-1.0, least)))
+
+
+def pole_direction(grip, s, touch, ankle, forearm):
+    """Unit shaft direction, fist to tip, in Blender space; mirrors poleDirection in pose.ts. `forearm` points elbow to wrist."""
+    g, a, f = to_gltf(grip), to_gltf(ankle), to_gltf(forearm)
     out = 1 if s == 'L' else -1
     b = POLE['basket']
     dx = a[0] + out * POLE['plantSide'] - g[0]
     dz = -math.sqrt(max(0.0, b ** 2 - g[1] ** 2 - dx ** 2))
-    turn = math.atan2(out * dx, dz) - POLE['carryHeading']
-    heading = POLE['carryHeading'] + math.atan2(math.sin(turn), math.cos(turn)) * touch
     drop = min(b, max(0.0, g[1] - POLE['carry'] * (1 - touch) ** 2))
+    turn = math.atan2(out * dx, dz) - POLE['carryHeading']
+    heading = trail_heading(POLE['carryHeading'] + math.atan2(math.sin(turn), math.cos(turn)) * touch, drop / b, out, f)
     flat = math.sqrt(b ** 2 - drop ** 2)
     return Vector((out * math.sin(heading) * flat / b, -math.cos(heading) * flat / b, -drop / b))
 
@@ -451,7 +465,8 @@ def touch_ahead(D, rest):
     """How far ahead of the inside ankle a full touch lands."""
     grip = D['hand.L'] @ rest['grip']['L']
     ankle = D['foot.L'] @ rest['ankle']['L']
-    return -(grip + pole_direction(grip, 'L', 1, ankle) * POLE['basket'] - ankle).y
+    forearm = D['forearm.L'].to_3x3() @ rest['hands']['L']['axis']
+    return -(grip + pole_direction(grip, 'L', 1, ankle, forearm) * POLE['basket'] - ankle).y
 
 
 # Per clip: the largest wrist angle, hand axis to forearm axis, and what the plain swing onto the pole gave, degrees.
@@ -480,8 +495,8 @@ def posed(bones, order, p, rest, flex, reach, ski_pivot, clip=None):
         for s in ('R', 'L'):
             grip = D[f'hand.{s}'] @ rest['grip'][s]
             ankle = D[f'foot.{s}'] @ rest['ankle'][s]
-            d = pole_direction(grip, s, p['poleTouch'] if s == 'L' else 0, ankle)
             hand = rest['hands'][s]
+            d = pole_direction(grip, s, p['poleTouch'] if s == 'L' else 0, ankle, D[f'forearm.{s}'].to_3x3() @ hand['axis'])
             want = (D[f'forearm.{s}'].to_3x3() @ hand['twist'].to_3x3()).inverted() @ -d
             turn, bend, swung = grip_turn(hand['row'], hand['along'], hand['axis'], want)
             R[f'hand.{s}'] = hand['twist'] @ turn
