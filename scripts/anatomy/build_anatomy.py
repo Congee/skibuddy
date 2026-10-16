@@ -393,9 +393,12 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
         flex = p.get('armFlexion', ARMS['flexion']) + ARMS['leanShoulder'] * lean + (reach if s == reacher else 0.0)
         girdle = p['outsideGirdle'] if s == 'R' else p['insideGirdle']
         R[f'scapula.{s}'] = rot_y3(-sign * girdle['protraction']) @ rot_z3(sign * girdle['elevation'])
+        hang = rest['hang'][s]
         R[f'upper_arm.{s}'] = (rot_y3(sign * girdle['protraction']) @ rot_z3(sign * p.get('armAbduction', ARMS['abduction'])) @ rot_x(-flex)
-                               @ rot_z3(-rest['abduction'][s]))
-        R[f'forearm.{s}'] = rot_x(-ARMS['forearmFlexion'] - (1 - ARMS['leanShoulder']) * lean + (ARMS['reachElbow'] * reach if s == reacher else 0.0))
+                               @ hang['upper'])
+        # Rest-frame rotation, so undo the upper arm's straightening before the hinge acts in its frame.
+        R[f'forearm.{s}'] = (hang['upper'].inverted() @ rot_x(-ARMS['forearmFlexion'] - (1 - ARMS['leanShoulder']) * lean
+                                                            + (ARMS['reachElbow'] * reach if s == reacher else 0.0)) @ hang['forearm'])
         hand = rest['hands'][s]
         R[f'hand.{s}'] = hand['twist']
         R[f'fingers.{s}'] = hand['curl'][0]
@@ -990,11 +993,12 @@ def main():
         ski_pivot[s] = tuple(float(x) for x in rest_point((0, -thick, zc)))
         tips[s] = tuple(float(x) for x in rest_point((0, -thick, zc + 0.8)))
 
-    rest = dict(abduction={}, ramp=binding['bootBoardRamp'] + binding['deltaAngle'],
+    rest = dict(ramp=binding['bootBoardRamp'] + binding['deltaAngle'],
                 femur={s: (Vector(J[s]['hip']) - Vector(J[s]['knee'])).normalized() for s in ('R', 'L')})
-    for s in ('R', 'L'):
-        d = J[s]['elbow'] - J[s]['shoulder']
-        rest['abduction'][s] = math.atan2(d[0], -d[2])
+    # The template's arm hangs back, its elbow bent and carried out; pose.ts's arm hangs straight down at zero.
+    down = Vector((0, 0, -1))
+    rest['hang'] = {s: {k: Vector((J[s][b] - J[s][a]).tolist()).rotation_difference(down).to_matrix().to_4x4()
+                        for k, a, b in (('upper', 'shoulder', 'elbow'), ('forearm', 'elbow', 'wrist'))} for s in ('R', 'L')}
     twist = palm_in(rig.data.bones, track, J, rest)
     parts = {k: np.concatenate(v) for k, v in pts.items()}
     rest['hands'] = {s: dict(twist=twist[s], curl=curls(J[s], s), thumb=thumb_pose(J[s], s, parts),
