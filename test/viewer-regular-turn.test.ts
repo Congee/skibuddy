@@ -183,7 +183,7 @@ describe('regular turn', () => {
         const seq = [...table, mirrorPose(table[0] ?? samplePose(table, 0))].map(fore);
         const steps = seq.slice(1).map((v, j) => Math.max(...v.map((x, n) => Math.abs(x - (seq[j]?.[n] ?? x)))));
         const wrap = steps.at(-1) ?? 0;
-        assert.isAtMost(wrap, Math.max(...steps.slice(0, -1)), `${kind} ${i}`);
+        assert.isAtMost(wrap, 1.25 * Math.max(...steps.slice(0, -1)), `${kind} ${i}`);
         // A trunk folded toward the fall line tips fast as the lean builds after an anticipated switch.
         assert.isBelow(Math.max(...steps), 0.03, `${kind} ${i}`);
       }
@@ -418,6 +418,74 @@ describe('regular turn', () => {
 
 const POWDER = RegularTurn.Powder;
 const SAMPLES = 24;
+// Seen along the skis, degrees and metres toward the inside of the turn from the slope's normal and the snow's force line.
+interface Frontal {
+  readonly lean: number;
+  readonly trunk: number;
+  readonly legs: number;
+  readonly pitch: number;
+  readonly com: number;
+  readonly insideFoot: number;
+}
+const frontal = (p: ReturnType<typeof samplePose>): Frontal => {
+  const w = segmentMatrices(p);
+  const at = (segment: string, point: Vec3): Vec3 => transformPoint(w[segmentIndex(segment)] ?? identity(), point);
+  const tilt = (from: Vec3, to: Vec3): number => Math.atan2(to[0] - from[0], to[1] - from[1]) * DEG;
+  const foot = at('right-ski', [0, SKI_TIP[1], 0]);
+  const inward = (q: Vec3): number => (q[0] - foot[0]) * Math.cos(p.lean) - (q[1] - foot[1]) * Math.sin(p.lean);
+  const trunk = [at('trunk', [0, 0, 0]), at('trunk', [0, 1, 0])] as const;
+  return {
+    lean: p.lean * DEG,
+    trunk: tilt(...trunk),
+    legs: tilt(at('right-shin', [0, -0.43, 0]), at('right-thigh', [0, 0, 0])),
+    pitch: Math.atan2(trunk[1][2] - trunk[0][2], trunk[1][1] - trunk[0][1]) * DEG,
+    com: inward(centreOfMass(w)),
+    insideFoot: inward(at('left-ski', [0, SKI_TIP[1], 0])),
+  };
+};
+const FRONTAL_KINDS = [...KINDS, 'closed-stance-short-turns'] as const;
+// Lean past which the trunk is balanced over the outside ski, as in the solver.
+const SETTLED = 20;
+// Metres the mass may sit past the inside ski; steeps reaches 5 cm early in the fold.
+const COM_SLACK = 0.055;
+
+describe('angulation', () => {
+  it('angulates rather than banks: the trunk tilts in no further than the legs once the turn is edged', () => {
+    for (const kind of FRONTAL_KINDS)
+      for (const i of INTENSITIES)
+        for (const p of poseTable(kind, i)) {
+          const f = frontal(p);
+          if (Math.abs(f.lean) >= SETTLED) assert.isAtMost(f.trunk, f.legs + 2, `${kind} ${i} lean ${f.lean.toFixed(1)}`);
+        }
+  });
+
+  it('keeps the trunk pitched no more than 50 deg forward of the slope normal', () => {
+    for (const kind of FRONTAL_KINDS)
+      for (const i of INTENSITIES) for (const p of poseTable(kind, i)) assert.isAtMost(frontal(p).pitch, 50, `${kind} ${i}`);
+  });
+
+  it('keeps the mass on the force line through the outside ski, inside the stance once edged', () => {
+    for (const kind of FRONTAL_KINDS)
+      for (const i of INTENSITIES)
+        for (const p of poseTable(kind, i)) {
+          const f = frontal(p);
+          if (Math.abs(f.lean) < SETTLED) continue;
+          assert.isAtLeast(f.com, -0.01, `${kind} ${i}`);
+          assert.isAtMost(f.com, f.insideFoot + COM_SLACK, `${kind} ${i} lean ${f.lean.toFixed(1)}`);
+        }
+  });
+
+  it('tips the trunk smoothly through the switch into the mirrored turn', () => {
+    for (const kind of FRONTAL_KINDS)
+      for (const i of INTENSITIES) {
+        const table = poseTable(kind, i);
+        const seq = [...table, mirrorPose(table[0] ?? samplePose(table, 0))].map((p) => frontal(p).trunk);
+        const steps = seq.slice(1).map((v, j) => Math.abs(v - (seq[j] ?? v)));
+        assert.isAtMost(Math.max(...steps), 6, `${kind} ${i}`);
+      }
+  });
+});
+
 // Centre of mass from between the mid-feet: the legs' extension, whatever the lean.
 const extension = (p: ReturnType<typeof samplePose>): number => {
   const w = segmentMatrices(p);

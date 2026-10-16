@@ -3,7 +3,7 @@ import { arcLoad, isTurn, turnForcesAt } from '../physics/turn';
 import type { DrillScenario } from '../physics/turn';
 import { EQUIPMENT, minShinAngle, shinAngle } from './equipment';
 import { BodySide, SEGMENTS, SegmentKind } from './figure';
-import { identity, transformPoint } from './mat4';
+import { compose, identity, inverseRotation, rotationX, rotationY, rotationZ, transformPoint } from './mat4';
 import type { Mat4, Vec3 } from './mat4';
 import { HeadAim, keyValuesAt, touchShare, windowShare, wrapTime } from './pose-definition';
 import type { HeadRule, KeyField, PoseDefinition } from './pose-definition';
@@ -13,7 +13,10 @@ import { CORRIDOR_SHARE, headingAt } from './turn-heading';
 const DEG = Math.PI / 180;
 /** The shin's forward limit in a shell, inferred. */
 const SHIN_MAX = 50 * DEG;
-import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
+/** Lean by which a fold turned toward the inside is fully answered by hip angulation; inferred. */
+const FOLD_HANDOVER = 20 * DEG;
+const smooth = (u: number): number => u * u * (3 - 2 * u);
+import { ARM_ABDUCTION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
 import type { Pose } from './pose';
 
 /** How hard the drill is skied, from its physics. */
@@ -98,6 +101,29 @@ const balanceAhead = (world: ReadonlyArray<Mat4>, t: number, firm: boolean): num
   return firm ? com[2] - foot[2] : aheadOnSki(world, com, foot);
 };
 
+type Spine = Pick<Pose, 'spineFlex' | 'spineBend' | 'spineTwist'>;
+
+/** The spine that tips the trunk `outward` about the body frame's fore-aft axis, so the tip adds no pitch. */
+const spineTipped = (pelvis: Mat4, spine: Spine, outward: number): Spine => {
+  if (outward === 0) return spine;
+  const keyed = compose(rotationY(-spine.spineTwist), rotationZ(spine.spineBend), rotationX(spine.spineFlex));
+  const m = compose(inverseRotation(pelvis), rotationZ(outward), pelvis, keyed);
+  // Back to the trunk's twist, bend and flex, in that order.
+  return { spineTwist: -Math.atan2(-(m[2] ?? 0), m[0] ?? 1), spineBend: Math.asin(m[1] ?? 0), spineFlex: Math.atan2(-(m[9] ?? 0), m[5] ?? 1) };
+};
+
+/** The centre of mass toward the inside of the snow's force line through the skis, which tilts by the lean. */
+const inwardOfForce = (pose: Pose): number => {
+  const world = segmentMatrices(pose);
+  const o = outsideWeight(pose.lean);
+  const right = transformPoint(world[skiIndex(BodySide.Right)] ?? identity(), [0, SKI_TIP[1], 0]);
+  const left = transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), [0, SKI_TIP[1], 0]);
+  const com = centreOfMass(world);
+  const dx = com[0] - (o * right[0] + (1 - o) * left[0]);
+  const dy = com[1] - (o * right[1] + (1 - o) * left[1]);
+  return dx * Math.cos(pose.lean) - dy * Math.sin(pose.lean);
+};
+
 /** How far ahead of its own ankle the touching pole's full touch lands. */
 const touchAhead = (pose: Pose, basket: number): number => {
   const world = segmentMatrices(pose);
@@ -121,7 +147,8 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
   const k = keyValuesAt(def.keys, t);
   const effort = effortOf(def, scenario);
   const mild = (f: KeyField): number => k[f] * (1 + (c.gains[f] ?? 0) * effort.scale);
-  const lean = scenario !== null && isTurn(scenario) ? turnForcesAt(scenario, t).tilt : 0;
+  const turning = scenario !== null && isTurn(scenario);
+  const lean = turning ? turnForcesAt(scenario, t).tilt : 0;
   const angulation = mild('angulation');
   const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];
   const under = Math.min(1, Math.max(0, effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale));
@@ -145,10 +172,13 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
     (shinFirst ? shin : shinAngle(dorsiflexion + (k.insideDorsiflexion - dorsiflexion) * lifted, EQUIPMENT)) + tailLift;
   // Near the switch the legs share the difference in length, so neither kinks as outside and inside swap.
   const split = 1 - outsideWeight(lean);
-  const headYaw = headYawOf(c.head, scenario, t, mild('counter') + mild('spineTwist'));
-  const base = (knee: number, extra: number, tailLift: number, ankleFlex: number): Pose => {
+  // The trunk tipped outward about the skis' axis beyond its keys, solved below.
+  let tip = 0;
+  const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
+  const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
     const insideExtra = (1 - split) * extra;
+    const trunk = spineTipped(pelvisRotation(mild('counter'), mild('pelvisList'), hip - hipFlex), spine, outward);
     return {
       lean,
       hipAngulation: c.hipAngulation * angulation,
@@ -156,10 +186,8 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       pelvisList: mild('pelvisList'),
       pelvisPitch: hip - hipFlex,
       counter: mild('counter'),
-      spineFlex: mild('lumbarFlex'),
-      spineBend: mild('spineBend'),
-      spineTwist: mild('spineTwist'),
-      headYaw,
+      ...trunk,
+      headYaw: 0,
       armAbduction: c.armAbduction ?? ARM_ABDUCTION,
       poleTouch,
       reach: 0,
@@ -231,17 +259,39 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
     }
     return (lo + hi) / 2;
   };
+  // Hip angulation answers a fold turned toward the inside: as the lean builds, the spine tips the trunk outward until
+  // the fold moves the mass no further inside the snow's force than a square fold would (lemaster-2010 pp70-71, 126).
+  // At the switch the anticipated fold still leads the mass into the new turn.
+  const settled = smooth(Math.min(1, Math.abs(lean) / FOLD_HANDOVER));
+  const squareFold = (knee: number, extra: number, tailLift: number, shin: number): number => {
+    const pose = base(knee, extra, tailLift, shin, 0);
+    const inward = inwardOfForce(pose);
+    const excess = inward - inwardOfForce({ ...pose, counter: 0, spineTwist: 0 });
+    if (excess <= 0 || settled === 0) return 0;
+    const goal = inward - settled * excess;
+    let lo = 0;
+    let hi = 1.2;
+    for (let i = 0; i < 24; i++) {
+      const mid = (lo + hi) / 2;
+      if (inwardOfForce(base(knee, extra, tailLift, shin, mid)) > goal) lo = mid;
+      else hi = mid;
+    }
+    return (lo + hi) / 2;
+  };
   // The lifted leg and the balance depend on each other a little; two rounds settle them.
   let knee = shinFirst ? depthKnee : 65 * DEG;
   let shin = keyedShin;
   let inside = insideLeg(knee, shin);
   for (let round = 0; round < 2; round++) {
+    if (turning) tip = squareFold(knee, inside.extra, inside.tailLift, shin);
     if (shinFirst) shin = balanceShin(inside.extra, inside.tailLift);
     else knee = balance(inside.extra, inside.tailLift);
     inside = insideLeg(knee, shin);
   }
   const solved = base(knee, inside.extra, inside.tailLift, shin);
-  const legs = firm ? { ...solved, rise: riseOf(solved, mild('skiClearance')) } : solved;
+  // The head moves no mass to speak of, so it turns only once the trunk is set.
+  const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist) };
+  const legs = firm ? { ...turned, rise: riseOf(turned, mild('skiClearance')) } : turned;
   if (legs.poleTouch === 0) return legs;
   const reach = Math.abs(legs.poleTouch) * solveReach(legs, c.scapularRhythm, poleSize(CAPSULE_ARM, c.poleTrim).basket);
   const reaching = { ...girdle, protraction: girdle.protraction + c.scapularRhythm * reach };

@@ -207,7 +207,8 @@ export const mirrorPose = (p: Pose): Pose => ({
 export const MIRROR: Mat4 = new Float32Array([-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 
 /** The pelvis in the body frame: counter, then the outward tip, then the fold at the hips. */
-const pelvisRotation = (pose: Pose): Mat4 => compose(rotationY(-pose.counter), rotationZ(pose.pelvisList), rotationX(pose.pelvisPitch));
+export const pelvisRotation = (counter: number, list: number, pitch: number): Mat4 => compose(rotationY(-counter), rotationZ(list), rotationX(pitch));
+const pelvisOf = (pose: Pose): Mat4 => pelvisRotation(pose.counter, pose.pelvisList, pose.pelvisPitch);
 
 /** Share of the trunk's roll the head takes back out, so the eyes stay near level, tipped slightly outside (lemaster-2010 p72). */
 const HEAD_LEVEL = 0.7;
@@ -217,7 +218,7 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
   const out = segment.side === BodySide.Right ? -1 : 1;
   switch (segment.kind) {
     case SegmentKind.Pelvis:
-      return pelvisRotation(pose);
+      return pelvisOf(pose);
     case SegmentKind.Trunk:
       return compose(rotationY(-pose.spineTwist), rotationZ(pose.spineBend), rotationX(pose.spineFlex));
     case SegmentKind.Head:
@@ -245,7 +246,7 @@ const localRotation = (segment: Segment, pose: Pose): Mat4 => {
       return rotationX(-FOREARM_FLEXION - (1 - ARM_LEAN_SHOULDER) * armLean(pose) + (segment.side === touchSide(pose) ? ARM_REACH_ELBOW * pose.reach : 0));
     case SegmentKind.Thigh:
       // Set in the body frame, so the pelvis's counter and tip are rotation and abduction in the hip.
-      return compose(inverseRotation(pelvisRotation(pose)), rotationZ(-pose.hipAngulation - out * leg.adduction), rotationX(-leg.hipFlex), rotationY(leg.femurRotation));
+      return compose(inverseRotation(pelvisOf(pose)), rotationZ(-pose.hipAngulation - out * leg.adduction), rotationX(-leg.hipFlex), rotationY(leg.femurRotation));
     case SegmentKind.Shin:
       // A hinge: the knee only flexes.
       return rotationX(leg.hipFlex + leg.ankleFlex);
