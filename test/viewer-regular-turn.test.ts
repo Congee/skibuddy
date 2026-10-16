@@ -107,7 +107,8 @@ describe('regular turn', () => {
 
   it('leans the trunk forward within the measured range', () => {
     // Spine flexion 11-27 deg in racers (sporri-2016) on a pelvis pitched forward; outside hip up to 55-65 deg (gao-2024).
-    for (const kind of KINDS)
+    // The zipper's trunk follows its shin instead, below.
+    for (const kind of KINDS.filter((k) => k !== RegularTurn.Moguls))
       for (const i of INTENSITIES) {
         const trunk = angles(kind, i, 1 / 2).trunkForward;
         assert.isTrue(trunk >= 15 && trunk <= 40, `${kind} ${i}: ${trunk.toFixed(1)}`);
@@ -150,6 +151,21 @@ describe('regular turn', () => {
     // Upright through the whole absorption, not hinging forward (fis-freestyle-judging-2025 p28); bound as the trunk test's.
     for (const i of INTENSITIES)
       for (let k = 0; k < 24; k++) assert.isAtMost(angles(RegularTurn.Moguls, i, k / 24).trunkForward, 40, `${i} ${k}/24`);
+  });
+
+  it('lines the zipper trunk up with the shin at the crest and stands it up behind the shin down the backside', () => {
+    // Fully flexed the trunk is about parallel to the shin; extending, the shins drive forward under a much more upright upper body (gellie-2019-moguls-forward 06:00-06:20, 10:13).
+    const behind = (i: Intensity, t: number): number => {
+      const a = angles(RegularTurn.Moguls, i, t);
+      return a.shinForward.right - a.trunkForward;
+    };
+    for (const i of INTENSITIES) {
+      const { crest } = surfaceFor(RegularTurn.Moguls, i);
+      for (const t of [0, crest]) assert.isAtMost(Math.abs(behind(i, t)), 10, `${i} crest t=${t}`);
+      const backside = Array.from({ length: 13 }, (_, k) => behind(i, 0.05 + (k * 0.3) / 12));
+      assert.isAtLeast(Math.max(...backside), 10, `${i} backside`);
+      for (let k = 0; k < 48; k++) assert.isAtLeast(behind(i, k / 48), -5, `${i} ${k}/48`);
+    }
   });
 
   it('moves forward at initiation and back through the finish, most in moguls', () => {
@@ -423,12 +439,21 @@ describe('regular turn', () => {
   });
 
   it('keeps the mogul mass near upright: the lean bounded, the edge from the legs', () => {
-    for (const style of [TURN_STYLES[RegularTurn.Moguls], CLOSED_STANCE])
-      for (const i of INTENSITIES) {
-        const tilt = Math.max(...Array.from({ length: 96 }, (_, k) => Math.abs(turnForcesAt(style.scenarios[i], k / 96).tilt)));
-        assert.isAtMost(tilt * DEG, 20, i);
-        assert.isAtLeast(tilt * DEG, 8, i);
-      }
+    const peakTilt = (style: (typeof TURN_STYLES)[RegularTurn], i: Intensity): number =>
+      Math.max(...Array.from({ length: 96 }, (_, k) => Math.abs(turnForcesAt(style.scenarios[i], k / 96).tilt))) * DEG;
+    for (const i of INTENSITIES) {
+      const closed = peakTilt(CLOSED_STANCE, i);
+      assert.isAtMost(closed, 20, i);
+      assert.isAtLeast(closed, 8, i);
+      // The zipper's mass line leans with the turn: atan(v^2 / (r g)) on the mass's path, more as it tightens at the apex.
+      const s = TURN_STYLES[RegularTurn.Moguls].scenarios[i];
+      const tilt = peakTilt(TURN_STYLES[RegularTurn.Moguls], i);
+      assert.isAtMost(tilt, Math.atan(s.speedMps ** 2 / ((s.comRadiusM ?? s.radiusM) * 9.81)) * DEG + 8, i);
+      assert.isAtLeast(tilt, 8, i);
+      // The legs make the angulation, so the shoulders tip well short of the mass line.
+      const shoulders = Array.from({ length: 24 }, (_, k) => Math.abs(angles(RegularTurn.Moguls, i, k / 24).shoulderList));
+      assert.isAtMost(Math.max(...shoulders), 0.65 * tilt, `${i} shoulders`);
+    }
     const mogul = angles(RegularTurn.Moguls, Intensity.Moderate, 1 / 2);
     // The mass rides the force line, so the legs make the whole margin.
     assert.isAbove(mogul.edge.right, turnForcesAt(TURN_STYLES[RegularTurn.Moguls].scenarios.moderate, 1 / 2).tilt * DEG + 5);

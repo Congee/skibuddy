@@ -121,6 +121,15 @@ const baseRiseOf = (pose: Pose): number => {
 
 const segmentOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 
+/** The trunk behind the outside shin, each pitched from the slope normal, radians. */
+const trunkBehindShin = (world: ReadonlyArray<Mat4>): number => {
+  const pitch = (kind: SegmentKind, side: BodySide): number => {
+    const m = world[segmentOf(kind, side)] ?? identity();
+    return Math.atan2(m[6] ?? 0, m[5] ?? 1);
+  };
+  return pitch(SegmentKind.Shin, BodySide.Right) - pitch(SegmentKind.Trunk, BodySide.Center);
+};
+
 /**
  * The centre of mass ahead of the outside mid-foot; near the transition, where the outside foot changes, ahead of
  * a point between both, so a turn's end balances as the mirrored next turn's start. Along the ski, or on firm snow
@@ -234,6 +243,18 @@ const CUFF_EASE = 3 * DEG;
 const UPRIGHT_MAX = 20 * DEG;
 /** The most the trunk leans behind the shin, from the slope normal; inferred. */
 const TRUNK_BEHIND = 20 * DEG;
+/** Zipper trunk behind the shin: up to STAND_PEAK on the backside, up to TROUGH_AHEAD ahead in the trough; inferred. */
+const STAND_PEAK = 15 * DEG;
+const STAND_END = 0.45;
+const TROUGH_AHEAD = 2 * DEG;
+const TROUGH_END = 0.75;
+/** Past a straight hip, the lumbar spine unflexes by at most this, into slight extension if need be; inferred. */
+const UNFLEX_MAX = 10 * DEG;
+const standBehind = (t: number): number => {
+  const u = wrapTime(t);
+  if (u < STAND_END) return STAND_PEAK * Math.sin((Math.PI * u) / STAND_END) ** 2;
+  return u >= TROUGH_END ? 0 : -TROUGH_AHEAD * Math.sin((Math.PI * (u - STAND_END)) / (TROUGH_END - STAND_END)) ** 2;
+};
 
 /** `x` held in [lo, hi], easing quadratically onto each end from `w` inside it to `w` beyond; hi - lo > 2w. */
 const softClamp = (x: number, lo: number, hi: number, w: number): number => {
@@ -458,6 +479,8 @@ const solveOn = (
   let folded = false;
   // On bumps with `absorb`, radians the trunk stands up off its lean on the shin as the hips drive forward.
   let upright = 0;
+  // On the zipper, radians the lumbar spine unflexes once the hip is straight, so the trunk still stands up.
+  let unflex = 0;
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
@@ -465,7 +488,7 @@ const solveOn = (
     // A folding hip turns the thighs' draw forward, so absorbing legs squeeze harder to keep the boots together.
     const adduction = c.stance * (c.absorb === undefined ? 1 : 1 + STANCE_SQUEEZE * Math.max(0, knee - SQUEEZE_FROM));
     const insideExtra = (1 - split) * extra;
-    const trunk = spineTipped(pelvisRotation(mild('counter'), mild('pelvisList'), pelvisPitch), spine, outward);
+    const trunk = spineTipped(pelvisRotation(mild('counter'), mild('pelvisList'), pelvisPitch), { ...spine, spineFlex: spine.spineFlex - unflex }, outward);
     return {
       lean,
       hipAngulation: c.hipAngulation * angulation,
@@ -538,7 +561,8 @@ const solveOn = (
   const depthKnee = absorbKnee ?? hip + trunkOffset;
   const cuff = minShinAngle(EQUIPMENT) - pitch - ride.outside;
   // Absorbing, the trunk stands up no further than a straight hip, nor further behind the shin than TRUNK_BEHIND.
-  const stand = c.absorb === undefined || surface?.line !== MogulLine.Zipper ? UPRIGHT_MAX : Math.min(hip, hip + mild('lumbarFlex') - depthKnee + TRUNK_BEHIND);
+  const zipper = c.absorb !== undefined && surface?.line === MogulLine.Zipper;
+  const stand = !zipper ? UPRIGHT_MAX : Math.min(hip, hip + mild('lumbarFlex') - depthKnee + TRUNK_BEHIND);
   const balanceShin = (extra: number, tailLift: number): number => {
     // The cuff stops the shin on the boot, which pitches with the ski.
     let lo = bumps ? cuff - CUFF_EASE : cuff;
@@ -550,16 +574,21 @@ const solveOn = (
     }
     return (lo + hi) / 2;
   };
+  // Standing up `by`: the hip opens to its floor, then on the zipper the lumbar spine unflexes.
+  const standTo = (by: number): void => {
+    upright = Math.min(stand, by);
+    unflex = zipper ? Math.min(UNFLEX_MAX, Math.max(0, by - upright)) : 0;
+  };
   // The hip opens until the mass sits back at the target; standing up moves it back.
-  const standUp = (extra: number, tailLift: number, shin: number): number => {
-    let lo = Math.min(0, stand);
-    let hi = Math.min(UPRIGHT_MAX, stand);
+  const standUp = (extra: number, tailLift: number, shin: number, from: number): void => {
+    let lo = from;
+    let hi = Math.max(from, zipper ? stand + UNFLEX_MAX : Math.min(UPRIGHT_MAX, stand));
     for (let i = 0; i < 24; i++) {
-      upright = (lo + hi) / 2;
-      if (balanceAhead(segmentMatrices(base(depthKnee, extra, tailLift, shin)), t, alongSnow, brake) > target) lo = upright;
-      else hi = upright;
+      standTo((lo + hi) / 2);
+      if (balanceAhead(segmentMatrices(base(depthKnee, extra, tailLift, shin)), t, alongSnow, brake) > target) lo = (lo + hi) / 2;
+      else hi = (lo + hi) / 2;
     }
-    return (lo + hi) / 2;
+    standTo((lo + hi) / 2);
   };
   // Hip angulation answers a fold turned toward the inside: as the lean builds, the spine tips the trunk outward until
   // the fold moves the mass no further inside the snow's force than a square fold would (lemaster-2010 pp70-71, 126).
@@ -588,6 +617,11 @@ const solveOn = (
     if (turning) tip = squareFold(knee, inside.extra, inside.tailLift, shin);
     if (shinFirst) {
       upright = Math.min(0, stand);
+      // Zipper: the trunk keeps its line on the shin at full absorption and stands up behind it as the hips and shins drive
+      // down the backside, the shins still forward (gellie-2019-moguls-forward 06:00-06:20, 10:13).
+      unflex = 0;
+      const matched = zipper ? upright + standBehind(t) - trunkBehindShin(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin))) : upright;
+      standTo(matched);
       shin = balanceShin(inside.extra, inside.tailLift);
       knee = depthKnee;
       // Down a bump's face the cuff holds the shin forward, easing on; the mass comes back by the legs folding or, absorbing,
@@ -598,7 +632,7 @@ const solveOn = (
           if (c.absorb === undefined) {
             folded = true;
             knee = balance(inside.extra, inside.tailLift, shin, target);
-          } else upright = standUp(inside.extra, inside.tailLift, shin);
+          } else standUp(inside.extra, inside.tailLift, shin, matched);
         }
       }
     } else knee = balance(inside.extra, inside.tailLift);
