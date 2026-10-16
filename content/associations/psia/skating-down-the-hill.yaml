@@ -1,0 +1,8 @@
+association: psia
+drill: skating
+task: Skating - Down the Hill
+level: { label: Level 2, ordinal: 2 }
+category: Individual
+# PSIA-C tags it Edge and Pressure but prints no fundamentals.
+url: https://thesnowpros.org/wp-content/uploads/2026/10/PSIA-AASI_National_Alpine_Activities_List_v1.2a.pdf#page=28
+reviewed_by: []

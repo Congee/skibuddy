@@ -262,6 +262,32 @@
   url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7865744/
   read: full
 
+- id: berg-1995
+  type: article
+  citation: Berg HE, Eiken O, Tesch PA. Involvement of eccentric muscle actions in giant slalom racing. Med Sci Sports Exerc. 1995;27:1666-70.
+  url: https://pubmed.ncbi.nlm.nih.gov/8614323/
+  read: abstract
+- id: bon-2021
+  type: article
+  citation: Bon I et al. What are kinematic and kinetic differences between short and parallel turn in alpine skiing? Int J Environ Res Public Health. 2021;18.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC8000885/
+  read: full
+- id: reid-2020
+  type: article
+  citation: Reid RC et al. Alpine ski motion characteristics in slalom. Front Sports Act Living. 2020;2:25.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7739813/
+  read: full
+- id: komissarov-2022b
+  type: article
+  citation: Komissarov SS. Dynamics of carving runs in alpine skiing. II. Centrifugal pendulum with a retractable leg. Sports Biomech. 2022;21:912-39.
+  url: https://pubmed.ncbi.nlm.nih.gov/32727319/
+  read: abstract
+- id: sporri-2012
+  type: article
+  citation: Spörri J et al. Course setting and selected biomechanical variables related to injury risk in alpine ski racing - an explorative case study. Br J Sports Med. 2012;46:1072-7.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC3505866/
+  read: full
+
 # Books and manuals; citations to these give pages.
 - id: lemaster-2010
   type: book
@@ -404,4 +430,30 @@
   type: web
   citation: PSIA-AASI Central. Hockey Stops (alpine resources).
   url: https://psia-c.org/education/alpine/alpine-resources/hockey-stops/
+
+  read: full
+- id: psia-c-basic-short-turns
+  type: web
+  citation: PSIA-AASI Central. Basic Short Turns (alpine resources, former task).
+  url: https://psia-c.org/education/alpine/alpine-resources/basic-short-turns/
+  read: full
+- id: psia-c-performance-short-turns
+  type: web
+  citation: PSIA-AASI Central. Performance Short Turns (alpine resources, former task).
+  url: https://psia-c.org/education/alpine/alpine-resources/performance-short-turns/
+  read: full
+- id: psia-c-medium-radius-carved
+  type: web
+  citation: PSIA-AASI Central. Medium Radius Carved Turns (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/medium-radius-carved-turns/
+  read: full
+- id: psia-c-basic-parallel-leaper
+  type: web
+  citation: PSIA-AASI Central. Basic Parallel Leaper Turns (alpine resources, former task).
+  url: https://psia-c.org/education/alpine/alpine-resources/basic-parallel-leaper-turns/
+  read: full
+- id: psia-c-skating-down-the-hill
+  type: web
+  citation: PSIA-AASI Central. Skating - Down the Hill (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/skating-down-the-hill/
   read: full

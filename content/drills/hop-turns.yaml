@@ -1,0 +1,38 @@
+id: hop-turns
+name: Hop turns and leapers
+movement: hop-turn
+summary: Linked turns where both skis leave the snow at every edge change. The skier sinks onto the edges at the end of a turn and springs straight up from the knees and hips, changes edges in the air and lands softly on the new edges, hips above the knees and shins on the tongues. In leapers the skis land on their new edges and carve away; in hop turns, often on steeper terrain, a firm pole plant supports the take-off and the legs pivot the skis under a body that keeps facing down the hill.
+terrain: Groomed blue runs for leapers; hop turns on a steeper blue or an easy black with good snow
+# One drill with two variants: biomechanics.md D11 treats them together, and how far the skis pivot in the air
+# is technique, not intensity. Settings are how hard the drill is skied: speed, pitch and hop height.
+# Turn loads follow Lind & Sanders eq 4.9, p 103; the push and landing follow the impulse balance, pp 118-120.
+# Speeds, radii and hop heights are our inference.
+scenarios:
+  gentle: { speed_mps: 6, radius_m: 8, slope_deg: 12 }
+  moderate: { speed_mps: 7, radius_m: 7, slope_deg: 18 }
+  dynamic: { speed_mps: 8, radius_m: 7, slope_deg: 25 }
+equipment: Efforts assume recreational carving skis of about 12-15 m sidecut and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. The boot leaves no room for an ankle push, so the knees and hips do the jumping; a stiff rear shaft pushes the shin forward on a tail landing.
+cautions:
+  - Land with the hips above the knees and the shins on the tongues; landing back on the tails is the back-weighted knee injury pattern.
+  - Land on both skis at once, knees over the feet; landing on one ski or with the knees caving in loads the ligaments.
+  - Small hops first; stop when the landings get loud or the legs tire.
+sources:
+  - { source: lind-sanders-2004, pages: "103, 115-120" }
+  - { source: lemaster-2010, pages: "94-96, 104, 112-119" }
+  - { source: patterson-2023, pages: 89 }
+  - { source: cross-raschner-2023, pages: 4 }
+  - { source: jordan-sporri-taylor-2023, pages: "119-121" }
+  - { source: iasi-2021, pages: 171 }
+  - psia-c-basic-parallel-leaper
+  - psia-c-dynamic-leapers
+primitives:
+  - { primitive: extension-transition, modifier: "a two-footed spring off the edges, stretch then shortening" }
+  - { primitive: ankle-flexion, modifier: shins on the tongues in the air and on landing }
+  - { primitive: tipping, modifier: in the air }
+  - { primitive: edge-set, modifier: on landing }
+  - { primitive: leg-rotation, modifier: "in the air; far in hop turns, little in leapers" }
+  - { primitive: counter, modifier: the upper body keeps facing down the hill }
+  - { primitive: stance-leg-edge-hold, modifier: through the short arc }
+  - { primitive: hip-angulation, modifier: on landing }
+  - { primitive: pole-touch, modifier: a firm plant that supports the take-off in hop turns }
+reviewed_by: []

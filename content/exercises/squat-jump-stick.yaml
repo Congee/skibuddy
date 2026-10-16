@@ -1,0 +1,29 @@
+id: squat-jump-stick
+name: Squat jump, stick the landing
+targets:
+  - { muscle: vasti, contraction: eccentric }
+  - { muscle: gluteus-maximus, contraction: eccentric }
+  - { muscle: hamstrings, contraction: isometric }
+  - { muscle: soleus, contraction: eccentric }
+single_leg: false
+matches_on_snow: The two-footed spring and soft landing of hop turns and leapers, hips above the knees and knees over the feet
+easier: Small hops, or a drop from a low step onto both feet without the jump
+harder: Jump straight into the next jump on landing, keeping the stick quiet
+cautions: [Knee pain, Back pain]
+dosing:
+  per_side: false
+  ranges:
+    - goal: power
+      sets: { min: 2, max: 6 }
+      reps: { min: 3, max: 6 }
+      rest_seconds: { min: 120, max: 180 }
+      note: Stick each landing with the shins forward and the knees over the feet; full rest between sets; stop when landings get loud or the knees cave in.
+      basis: Sets and reps for squat jumps in a racers' plyometric table, read as reps × sets (inferred from the column order of the book's other tables, not yet checked against p76); the rest follows ACSM's power guidance.
+      sources:
+        - { source: pritchard-cross-2023, pages: 76 }
+        - acsm-2009
+  suggested: { goal: power, sets: 2, reps: 3 }
+sources:
+  - { source: pritchard-cross-2023, pages: 76 }
+  - { source: jordan-sporri-taylor-2023, pages: "120, 123" }
+reviewed_by: []

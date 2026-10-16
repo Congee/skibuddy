@@ -1,0 +1,8 @@
+association: psia
+drill: hop-turns
+task: Short turn Leapers
+level: { label: Level 3, ordinal: 3 }
+category: Individual
+# The carved (leaper) form of hop turns. PSIA-C tags it Edge and Pressure but prints no fundamentals.
+url: https://thesnowpros.org/wp-content/uploads/2026/10/PSIA-AASI_National_Alpine_Activities_List_v1.2a.pdf#page=55
+reviewed_by: []

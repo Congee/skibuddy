@@ -1,0 +1,9 @@
+association: psia
+drill: hop-turns
+task: Hop Turns
+level: { label: Level 3, ordinal: 3 }
+category: Individual
+# Fundamentals from PSIA-C, which joins the two with "and": https://psia-c.org/education/alpine/alpine-resources/hop-turns/
+fundamentals: { relation: and, ids: [leg-rotation, pressure-magnitude] }
+url: https://thesnowpros.org/wp-content/uploads/2026/10/PSIA-AASI_National_Alpine_Activities_List_v1.2a.pdf#page=51
+reviewed_by: []

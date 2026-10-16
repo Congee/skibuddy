@@ -5,9 +5,11 @@ import {
   Citation,
   Content,
   Drill,
+  DrillScenarios,
   ExerciseTarget,
   formatPages,
   Intensity,
+  isTurnScenario,
   isTurnScenarios,
   LevelBySetting,
   MatrixCell,
@@ -189,5 +191,23 @@ describe('intensity settings', () => {
       assert.strictEqual(phaseContraction(exit.value.contraction, Intensity.Dynamic).initiation, 'eccentric');
     }
     assert.isTrue(Exit.isFailure(decodeActivation({ ...activation, contraction: { ...c, shaping: { gentle: 'isometric' } } })));
+  });
+});
+
+describe('drill scenarios', () => {
+  const decode = Schema.decodeUnknownSync(DrillScenarios);
+  const straight = { speed_mps: 6, slope_deg: 8, stop_distance_m: 12 };
+
+  it('reads a scenario without a radius as no round turn', () => {
+    const turns = decode(scenarios);
+    assert.isTrue(isTurnScenarios(turns));
+    const none = decode({ gentle: straight, moderate: straight, dynamic: straight });
+    assert.deepStrictEqual(none.gentle, { speedMps: 6, slopeDeg: 8, stopDistanceM: 12 });
+    assert.isFalse(isTurnScenario(none.gentle));
+    assert.isFalse(isTurnScenarios({ ...turns, dynamic: none.dynamic }));
+  });
+
+  it('rejects a non-positive step rate', () => {
+    assert.throws(() => decode({ ...scenarios, gentle: { speed_mps: 6, slope_deg: 8, step_rate_hz: 0 } }));
   });
 });

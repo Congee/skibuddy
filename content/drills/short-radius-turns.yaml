@@ -1,0 +1,35 @@
+id: short-radius-turns
+name: Short-radius turns
+movement: short-radius-turn
+summary: Linked, rhythmic turns in a corridor about one groomer track wide. The pelvis and chest keep facing down the hill while both legs turn underneath them, so the skis swing from side to side below a quiet upper body. Each turn ends in a short edge set timed with a pole plant, and the rebound from it starts the next turn. Skied brushed or carved, at any setting.
+terrain: Groomed blue runs in a corridor about one groomer track wide; dynamic on a steeper blue or an easy black
+# Settings are how hard the turns are skied, not their shape: brushed or carved is technique at any setting.
+# Loads follow Lind & Sanders eq 4.9, p 103, with a short edge-set spike at the finish (eq 4.7, p 91).
+# Speeds and radii are our inference, well under slalom levels.
+scenarios:
+  gentle: { speed_mps: 6, radius_m: 6, slope_deg: 12 }
+  moderate: { speed_mps: 7, radius_m: 6, slope_deg: 15 }
+  dynamic: { speed_mps: 9, radius_m: 7, slope_deg: 20 }
+equipment: Efforts assume recreational carving skis of about 12-15 m sidecut and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. A shorter sidecut lets the skis carve a short turn at lower speed; more lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee.
+cautions:
+  - Stay over the feet at the edge set; a hard set from the back seat is the slip-catch knee injury pattern.
+  - Hold the speed with turn shape, not by skidding harder and harder; stop when the legs burn.
+sources:
+  - { source: lind-sanders-2004, pages: "91, 103" }
+  - { source: lemaster-2010, pages: "32-33, 109-116, 128" }
+  - { source: jordan-sporri-taylor-2023, pages: "120-122" }
+  - psia-c-basic-short-turns
+  - psia-c-performance-short-turns
+  - posch-2025
+  - ruedl-2022
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: shared with a loaded inside leg }
+  - { primitive: inside-leg-shortening }
+  - { primitive: ankle-flexion, modifier: at every edge change }
+  - { primitive: tipping, modifier: "fast, inside foot leading" }
+  - { primitive: leg-rotation, modifier: "large, both legs under a pelvis facing down the hill" }
+  - { primitive: counter, modifier: "large, about 30-40° at the finish" }
+  - { primitive: hip-angulation, modifier: "small, from the legs winding under the pelvis" }
+  - { primitive: edge-set, modifier: "short, at every finish" }
+  - { primitive: pole-touch, modifier: a blocking plant at the edge change }
+reviewed_by: []

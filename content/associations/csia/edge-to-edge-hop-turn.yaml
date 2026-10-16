@@ -1,0 +1,8 @@
+association: csia
+drill: hop-turns
+task: Edge to Edge (Hop Turn)
+level: { label: Level 3, ordinal: 3 }
+category: tactic run
+# The carved (leaper) form of hop turns: a small hop from outside ski to outside ski, landing on edge.
+url: https://csia.snowpro.com/ServicesServlet/telechargement/document/L3CG-EN.pdf
+reviewed_by: []

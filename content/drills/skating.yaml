@@ -1,0 +1,27 @@
+id: skating
+name: Skating down the hill
+movement: skate
+summary: Gaining speed down a gentle slope by stepping from ski to ski with the tips apart, as on ice skates. Each new ski lands on its little-toe edge, glides as it rolls flat, then tips onto its big-toe edge to give a platform for the next push. The free foot comes back beside the stance foot before it steps out again. The hips move over each ski while the upper body stays quiet; a light double-pole push goes with each step.
+terrain: Gentle groomed green or easy blue runs and flat run-outs, with room to step side to side
+# There is no round turn, so the scenarios give no radius: speed, slope and step rate set the push.
+# The push loads are our inference from Newton's second law (Lind & Sanders pp 78-86) with a push at about 12°
+# to the line of travel (p 153); see the movement's header.
+scenarios:
+  gentle: { speed_mps: 5, slope_deg: 6, step_rate_hz: 1.2 }
+  moderate: { speed_mps: 6, slope_deg: 8, step_rate_hz: 1.4 }
+  dynamic: { speed_mps: 7, slope_deg: 10, step_rate_hz: 1.6 }
+equipment: Efforts assume recreational carving skis and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. The boot leaves little room for an ankle push, so the push comes from the hip and knee. The efforts assume poles, with a light double-pole push on each step; without poles the arms are near idle.
+cautions:
+  - Push off a big-toe edge with the knee over the foot; a flat ski slides out and a caving knee loads the ligaments.
+  - Keep the tips apart and the tails clear of each other; crossed tails trip the stride.
+sources:
+  - psia-c-skating-down-the-hill
+  - hermann-2023
+  - { source: lind-sanders-2004, pages: "78-86, 152-153" }
+  - { source: patterson-2023, pages: 89 }
+  - { source: pritchard-cross-2023, pages: 79 }
+primitives:
+  - { primitive: stance-leg-edge-hold, modifier: "the push leg, loaded and then extended sideways" }
+  - { primitive: inside-leg-lift, modifier: the free leg recovering between pushes }
+  - { primitive: ankle-flexion, modifier: shin forward onto each new ski }
+reviewed_by: []

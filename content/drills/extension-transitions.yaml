@@ -1,0 +1,36 @@
+id: extension-transitions
+name: Extension transitions
+movement: extension-transition-turn
+summary: Linked turns, carved or brushed, where the edge change happens high. As a turn ends both legs push the body up and forward across the skis; the skis go light at the top of the rise, the edges change, and the new outside leg meets the turn long and then flexes as the load builds. Compare with flexion transitions, where the skis cross under a body that stays low.
+terrain: Groomed blue runs with room for medium turns; dynamic on a steeper blue
+# Settings are how hard the turns are skied; brushed or carved is technique at any setting.
+# Loads follow Lind & Sanders eq 4.9, p 103, with a short push replacing the turn load at the switch
+# (pp 118-120); speeds and radii are our inference, well under GS levels. The same
+# scenarios as flexion transitions, so the two compare directly.
+scenarios:
+  gentle: { speed_mps: 8, radius_m: 12, slope_deg: 12 }
+  moderate: { speed_mps: 10, radius_m: 14, slope_deg: 15 }
+  dynamic: { speed_mps: 12, radius_m: 16, slope_deg: 18 }
+equipment: Efforts assume recreational carving skis of about 14-17 m sidecut and boots with about 15° of cuff lean, about 0.9° of binding ramp (4.7 mm) and about 42 mm stand height. Too little forward lean lets the rise go up and back; more lean or ramp deepens the knee; a higher stand height adds edge leverage but loads the knee.
+cautions:
+  - Rise forward over the feet, not up and back; starting the new turn in the back seat is the knee injury pattern.
+  - A hard push makes a hard landing; the turn must absorb what the rise took away.
+sources:
+  - seifert-2023
+  - komissarov-2022b
+  - { source: lind-sanders-2004, pages: "103, 118-120" }
+  - { source: lemaster-2010, pages: "40-42, 94, 144-148, 164-167" }
+  - { source: jordan-sporri-taylor-2023, pages: 120 }
+  - posch-2025
+  - ruedl-2022
+primitives:
+  - { primitive: extension-transition, modifier: the body rises over the skis at the switch }
+  - { primitive: stance-leg-edge-hold }
+  - { primitive: inside-leg-shortening, modifier: the old outside leg pushes then softens }
+  - { primitive: ankle-flexion, modifier: shins kept on the tongues as the body rises }
+  - { primitive: tipping, modifier: while the skis are light }
+  - { primitive: leg-rotation, modifier: small }
+  - { primitive: counter, modifier: slight }
+  - { primitive: hip-angulation }
+  - { primitive: pole-touch, modifier: a light touch to time the rise }
+reviewed_by: []

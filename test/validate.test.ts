@@ -53,6 +53,14 @@ describe('findProblems', () => {
     ]);
   });
 
+  it('accepts scenarios with no turn radius but not a mix', () => {
+    const straight = { speed_mps: 6, slope_deg: 8, step_rate_hz: 1.2 };
+    const none = rawContent.drills.map((d) => ({ ...d, scenarios: { gentle: straight, moderate: straight, dynamic: straight } }));
+    assert.deepStrictEqual(findProblems(contentWith({ drills: none })), []);
+    const mixed = rawContent.drills.map((d) => ({ ...d, scenarios: { ...d.scenarios, gentle: straight } }));
+    assert.deepStrictEqual(findProblems(contentWith({ drills: mixed })), ['drill stork-turns: give radius_m at every setting or at none']);
+  });
+
   it('flags a drill pointing at an unknown movement', () => {
     const drills = rawContent.drills.map((d) => ({ ...d, movement: 'missing' }));
     assert.deepStrictEqual(findProblems(contentWith({ drills })), ['drill stork-turns: unknown movement missing']);

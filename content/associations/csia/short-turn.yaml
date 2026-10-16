@@ -1,0 +1,7 @@
+association: csia
+drill: short-radius-turns
+task: Short Turn (less than 1 cat track)
+level: { label: Level 2, ordinal: 2 }
+category: ski-off run
+url: https://csia.snowpro.com/ServicesServlet/telechargement/document/L2CG-EN.pdf
+reviewed_by: []

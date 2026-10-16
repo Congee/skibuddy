@@ -419,7 +419,7 @@ Use the plain English name that most associations already use, and avoid any one
 - **outside-ski-turns**, **whitepass-turns** and **one-ski-turns** are three different drills. PSIA's outside ski turn changes the stance ski at each transition; whitepass makes the transition on the old outside ski; NZSIA's "One ski" keeps the same ski for the whole run. Do not merge them. **outside-ski-j-turn** can be a variant of outside-ski-turns.
 - **pivot-slips**: map PSIA Pivot Slips, RM/NZSIA "Linked pivot slips", and CSIA Braquage with a note that it is the nearest match. "Linked hockey slips" (RM) belongs under hockey-stops as a variant.
 - **sideslips**, with variants for fall line, diagonal and edge set. PSIA spells it "Sideslip"; NZSIA "Side Slips". Prefer one word, as PSIA does.
-- **hop-turns** for the pivoted, Spiess-style drill. **leaper-turns** for hops between carved or parallel turns. Map CSIA "Edge to Edge (Hop Turn)" to **leaper-turns**, not hop-turns, despite its name.
+- **hop-turns** covers both the pivoted, Spiess-style hop and the leaper (a hop between carved or parallel turns, landing already on edge); biomechanics.md D11 treats them as one drill. Leaper mappings, including CSIA "Edge to Edge (Hop Turn)", say in their notes that they are the carved form.
 - **railroad-track-turns** (PSIA's full name; NZSIA says "Railroad tracks"). Variants: one-footed, garland.
 - **garlands**: a generic drill with no current national task. Map PSIA-C's former tasks and mark them as such.
 - **short-radius-turns**, **medium-radius-turns**, **long-radius-turns**. Add a "dynamic" variant for PSIA L3 / NZSIA. Prefer "long" to PSIA's "large", because BASI, Snowsport Austria (lange Radien) and SAJ (大回り) all say long.

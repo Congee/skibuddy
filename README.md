@@ -60,6 +60,8 @@ primitives:
 reviewed_by: []
 ```
 
+Each drill gives `scenarios` for `gentle`, `moderate` and `dynamic`: `speed_mps` and `slope_deg`, plus `radius_m` for round turns. Leave `radius_m` out at every setting for drills with no round turn (skating, slips), and add `step_rate_hz` or `stop_distance_m` where they set the load.
+
 Then map each association's task onto it with `content/associations/<association>/<task>.yaml` (`association` must match the folder):
 
 ```yaml
