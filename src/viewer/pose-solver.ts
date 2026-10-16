@@ -121,14 +121,15 @@ const baseRiseOf = (pose: Pose): number => {
 
 const segmentOf = (kind: SegmentKind, side: BodySide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
 
-/** The trunk behind the outside shin, each pitched from the slope normal, radians. */
-const trunkBehindShin = (world: ReadonlyArray<Mat4>): number => {
-  const pitch = (kind: SegmentKind, side: BodySide): number => {
-    const m = world[segmentOf(kind, side)] ?? identity();
-    return Math.atan2(m[6] ?? 0, m[5] ?? 1);
-  };
-  return pitch(SegmentKind.Shin, BodySide.Right) - pitch(SegmentKind.Trunk, BodySide.Center);
+/** A segment pitched forward of the slope normal, radians. */
+const pitchOf = (world: ReadonlyArray<Mat4>, kind: SegmentKind, side: BodySide): number => {
+  const m = world[segmentOf(kind, side)] ?? identity();
+  return Math.atan2(m[6] ?? 0, m[5] ?? 1);
 };
+
+/** The trunk behind the outside shin, each pitched from the slope normal, radians. */
+const trunkBehindShin = (world: ReadonlyArray<Mat4>): number =>
+  pitchOf(world, SegmentKind.Shin, BodySide.Right) - pitchOf(world, SegmentKind.Trunk, BodySide.Center);
 
 /**
  * The centre of mass ahead of the outside mid-foot; near the transition, where the outside foot changes, ahead of
@@ -318,8 +319,10 @@ const solveRidden = (
     fb = above(b);
   }
   const slope = b !== a && fb !== fa ? (fb - fa) / (b - a) : (warm?.slope ?? 0);
+  // Where the legs' balancing fold holds the knee, the height goes flat and the secant can overshoot: keep the nearer.
+  const knee = Math.abs(fa) < Math.abs(fb) ? a : b;
   // The legs' balancing fold changes the skis' pitch, so the ride settles once more.
-  return { pose: settle(held(b), ridden(held(b), ride).ride), warm: slope === 0 ? null : { hip: b, ride, slope } };
+  return { pose: settle(held(knee), ridden(held(knee), ride).ride), warm: slope === 0 ? null : { hip: knee, ride, slope } };
 };
 
 /** The outside knee from open to its absorbing ceiling, radians, a hair inside, which the knee keeps. */
@@ -582,7 +585,10 @@ const solveOn = (
   // The hip opens until the mass sits back at the target; standing up moves it back.
   const standUp = (extra: number, tailLift: number, shin: number, from: number): void => {
     let lo = from;
-    let hi = Math.max(from, zipper ? stand + UNFLEX_MAX : Math.min(UPRIGHT_MAX, stand));
+    standTo(from);
+    // Off the zipper the trunk stands up no further than the slope normal; the legs fold for the rest.
+    const square = zipper ? Infinity : from + pitchOf(segmentMatrices(base(depthKnee, extra, tailLift, shin)), SegmentKind.Trunk, BodySide.Center);
+    let hi = Math.max(from, zipper ? stand + UNFLEX_MAX : Math.min(UPRIGHT_MAX, stand, square));
     for (let i = 0; i < 24; i++) {
       standTo((lo + hi) / 2);
       if (balanceAhead(segmentMatrices(base(depthKnee, extra, tailLift, shin)), t, alongSnow, brake) > target) lo = (lo + hi) / 2;

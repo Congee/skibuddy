@@ -427,11 +427,11 @@ export const CLOSED_STANCE: TurnStyle = {
 /** Turns on the tops (content/drills/turns-on-the-tops.yaml): the mogul style turning over each crest in the 2 m corridor. */
 export const TOPS: TurnStyle = {
   ...TURN_STYLES[RegularTurn.Moguls],
-  // As content/drills/turns-on-the-tops.yaml: a recreational field.
+  // As content/drills/turns-on-the-tops.yaml: a recreational field; a quarter of the braking fore-aft, as the zipper.
   scenarios: {
-    gentle: { speedMps: 5, radiusM: 5, slopeDeg: 15, comRadiusM: MOGUL_COM * 5, brakingShare: 0.5 },
-    moderate: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5, brakingShare: 0.5 },
-    dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22, comRadiusM: MOGUL_COM * 5.5, brakingShare: 0.5 },
+    gentle: { speedMps: 5, radiusM: 5, slopeDeg: 15, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
+    moderate: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
+    dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22, comRadiusM: MOGUL_COM * 5.5, brakingShare: 0.25 },
   },
   counter: fallLineHeading(5, CORRIDOR),
   counterGain: COUNTER_GAIN,
