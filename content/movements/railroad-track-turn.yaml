@@ -529,8 +529,9 @@ activations:
     contraction: { initiation: concentric, shaping: concentric, finish: eccentric }
     role: Inverts the inside foot with tibialis anterior to lead the edge change
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the mechanics of tipping inside the boot; not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: "95, 139" }
   - muscle: tibialis-anterior
     side: outside
     serves: [ankle.flexion]
@@ -567,8 +568,9 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Holds the arch and co-contracts with the peroneals so the roll stays smooth
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the mechanics of tipping inside the boot; not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: "95, 139" }
   - muscle: peroneals
     side: inside
     serves: [ankle.inversion]
@@ -576,8 +578,9 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: concentric }
     role: Let the inside foot roll onto its little-toe edge under control, then roll it back to flat
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the mechanics of tipping inside the boot; not measured on snow
+    sources:
+      - { source: lind-sanders-2004, pages: "95, 139" }
   - muscle: foot-intrinsics
     side: both
     serves: [foot.arch]
