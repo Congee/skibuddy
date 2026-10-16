@@ -42,6 +42,8 @@ export interface TurnStyle {
   readonly twist: number;
   /** Share of the peak counter and twist at each phase key. */
   readonly counterCurve: PhaseValues;
+  /** Metres the inside tip leads mid-turn at moderate, nil at the switch; absent, as the countered hips set it. */
+  readonly insideLead?: number;
   /** Trunk bent toward the outside ski at shaping. */
   readonly bend: number;
   /** Degrees the trunk leans further forward than the outside shin; the ankle, solved, sets fore-aft (lemaster-2010 p81). */
@@ -152,6 +154,8 @@ const anticipation = (scenarios: TurnScenarios, share: number): number =>
 // Signed, as headingAt in turn-heading.ts: -max at the transition, 0 at the fall line, max into the next transition.
 const heading = (t: number): number => -Math.cos(Math.PI * t);
 const HEADING: PhaseValues = [heading(0), heading(1 / 6), heading(1 / 2), heading(0.65), heading(5 / 6)];
+// Observed side-on in Olivia Giaccio's closed-stance short turns: level at the edge change, peak 9-13 cm fall line to finish.
+const FALL_LINE_LEAD = 0.1;
 
 // The mass runs nearly straight while the legs swing under it (lind-sanders-2004 pp114-115), the feet under the
 // hips (fis-freestyle-judging-2025 p26): its path about 4x the skis' arc, inferred, so the trunk inclines 10-20 deg.
@@ -278,6 +282,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     counter: anticipation(SHORT, 0.6),
     twist: 6,
     counterCurve: HEADING,
+    insideLead: FALL_LINE_LEAD,
     bend: 5,
     spineFlex: 22,
     narrow: 0,
@@ -308,6 +313,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     counterGain: 0,
     twist: 0,
     counterCurve: HEADING,
+    insideLead: FALL_LINE_LEAD,
     bend: 3,
     spineFlex: 24,
     // Legs together (fis-freestyle-judging-2025 p26), as the closed stance.
@@ -343,6 +349,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     counter: anticipation(STEEP, 0.65),
     twist: 7,
     counterCurve: HEADING,
+    insideLead: FALL_LINE_LEAD,
     bend: 9,
     spineFlex: 24,
     narrow: 0,
@@ -370,6 +377,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     counter: anticipation(POWDER, 0.7),
     twist: 7,
     counterCurve: HEADING,
+    insideLead: FALL_LINE_LEAD,
     bend: 2,
     spineFlex: 19,
     narrow: 2,
@@ -408,6 +416,7 @@ export const CLOSED_STANCE: TurnStyle = {
   counter: fallLineHeading(4.5, CORRIDOR),
   twist: 0,
   counterCurve: HEADING,
+  insideLead: FALL_LINE_LEAD,
   bend: 1,
   spineFlex: 22,
   narrow: 7,
@@ -589,6 +598,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       trunkOverShin: style.trunkOverShin * DEG,
       trunkOverShinGain: style.trunkOverShinGain ?? TRUNK_OVER_SHIN_GAIN,
       insideAnkleShare: INSIDE_ANKLE_SHARE,
+      ...(style.insideLead === undefined ? {} : { insideLead: style.insideLead }),
       poleTouch: style.polePlant ? { t: style.poleTouchAt ?? 1 / 24, hold: 0.02, swing: 0.11 } : null,
       scapularRhythm: 0.3,
       stance: style.narrow * DEG,

@@ -3,6 +3,7 @@ import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
 import { INTENSITIES, Intensity } from '../src/content/schema';
 import { PHASE_T, turnForcesAt } from '../src/physics/turn';
 import { gazeHeading } from '../src/viewer/gaze';
+import { EQUIPMENT } from '../src/viewer/equipment';
 import { segmentIndex } from '../src/viewer/figure';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
@@ -436,6 +437,26 @@ describe('regular turn', () => {
         assert.isBelow(gap, 0.17, `${drill} ${k}/24`);
         assert.isBelow(gap, 0.8 * bootGap(RegularTurn.Cruising, k / 24), `${drill} ${k}/24`);
       }
+  });
+
+  it('leads with the inside tip from the fall-line chest drills, level at the switch', () => {
+    // Observed side-on in Olivia Giaccio's closed-stance short turns: about level at the edge change, then 3-13 cm ahead.
+    const tipLead = (drill: string, i: Intensity, t: number): number => {
+      const w = segmentMatrices(samplePose(poseTable(drill, i), t));
+      const [outside, inside] = [w[segmentIndex('right-ski')], w[segmentIndex('left-ski')]];
+      if (!outside || !inside) throw new Error(drill);
+      const [o, a, b] = [transformPoint(outside, [0, 0, 0]), transformPoint(outside, [0, 0, 1]), transformPoint(outside, SKI_TIP)];
+      const c = transformPoint(inside, SKI_TIP);
+      return (c[0] - b[0]) * (a[0] - o[0]) + (c[1] - b[1]) * (a[1] - o[1]) + (c[2] - b[2]) * (a[2] - o[2]);
+    };
+    for (const drill of [RegularTurn.ShortTurns, RegularTurn.Moguls, RegularTurn.Steeps, RegularTurn.Powder, TOPS_POSE, 'closed-stance-short-turns'])
+      for (const i of INTENSITIES)
+        for (let k = 0; k < 96; k++) {
+          const lead = tipLead(drill, i, k / 96);
+          assert.isAtLeast(lead, -0.03, `${drill} ${i} ${k}/96`);
+          assert.isAtMost(lead, EQUIPMENT.soleLength / 2, `${drill} ${i} ${k}/96`);
+          if (k / 96 >= 0.3) assert.isAbove(lead, 0, `${drill} ${i} ${k}/96`);
+        }
   });
 
   it('keeps the mogul mass near upright: the lean bounded, the edge from the legs', () => {

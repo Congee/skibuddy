@@ -97,6 +97,20 @@ const insideTipHeight = (pose: Pose): number => {
   return tip(BodySide.Left) - tip(BodySide.Right);
 };
 
+/** How far the inside tip sits ahead of the outside one along the outside ski. */
+const insideTipLead = (pose: Pose): number => {
+  const world = segmentMatrices(pose);
+  const outside = world[skiIndex(BodySide.Right)] ?? identity();
+  return aheadOnSki(world, transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), SKI_TIP), transformPoint(outside, SKI_TIP));
+};
+
+/** Share per unit of effort scale the inside lead grows by; inferred. */
+const LEAD_GAIN = 0.2;
+/** Metres the old inside tip still leads at the switch; observed within a few cm of level. */
+const SWITCH_LEAD = 0.02;
+/** Hip to ankle, metres, near enough to step the inside leg's swing toward its lead. */
+const LEG_REACH = 0.8;
+
 /**
  * On firm snow the boots stand `clearance` over it, or higher if a tip-down tip would dip under it; a tip-up ski's
  * tail stays under it, drawn so for the bent, loaded tail.
@@ -486,6 +500,13 @@ const solveOn = (
   let upright = 0;
   // On the zipper, radians the lumbar spine unflexes once the hip is straight, so the trunk still stands up.
   let unflex = 0;
+  // Radians the legs scissor about the hips, the knees held: the inside forward, the outside back, half each.
+  let swing = 0;
+  const u = wrapTime(t);
+  const rise = smooth(Math.min(1, u / 0.3));
+  const fall = smooth(Math.max(0, (u - 0.75) / 0.25));
+  // The old inside tip still just ahead at the switch, so a countered pelvis needs no uneven legs.
+  const lead = c.insideLead === undefined ? null : c.insideLead * (1 + LEAD_GAIN * effort.scale) * rise * (1 - fall) + SWITCH_LEAD * (fall - (1 - rise));
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
@@ -508,12 +529,13 @@ const solveOn = (
       reach: 0,
       rise: 0,
       balance: onAxis,
-      outside: { hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch - ride.outside, adduction },
+      // The outside leg gives up its share as the inside one takes it, so the legs swap evenly at the switch.
+      outside: { hipFlex: hipFlex - split * extra * (1 - insideShare) - swing / 2, ankleFlex: ankleFlex - split * extra * insideShare + swing / 2, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch - ride.outside, adduction },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
       inside: {
-        hipFlex: hipFlex + insideExtra * (1 - insideShare),
-        ankleFlex: insideAnkle(tailLift, ankleFlex) + insideShare * insideExtra,
+        hipFlex: hipFlex + insideExtra * (1 - insideShare) + swing / 2,
+        ankleFlex: insideAnkle(tailLift, ankleFlex) + insideShare * insideExtra - swing / 2,
         femurRotation: c.insideFemurShare * femurRotation - c.kneesIn,
         tailLift: tailLift - pitch - ride.inside,
         adduction,
@@ -647,6 +669,10 @@ const solveOn = (
       }
     } else knee = balance(inside.extra, inside.tailLift);
     inside = insideLeg(knee, shin);
+    for (let i = 0; lead !== null && i < 3; i++) {
+      swing += (lead - insideTipLead(base(knee, inside.extra, inside.tailLift, shin))) / LEG_REACH;
+      inside = insideLeg(knee, shin);
+    }
   }
   const solved = base(knee, inside.extra, inside.tailLift, shin);
   // The head moves no mass to speak of, so it turns only once the trunk is set.

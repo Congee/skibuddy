@@ -110,6 +110,8 @@ export interface PoseConstraints {
   readonly trunkOverShinGain?: number;
   /** Share of the inside leg's extra flexion its ankle takes, so its foot leads less. */
   readonly insideAnkleShare?: number;
+  /** Metres the inside tip leads the outside one from the fall line to the finish at moderate, nil at the switch; absent, as the legs fall. */
+  readonly insideLead?: number;
   /** Where the head looks; absent, with the chest. */
   readonly head?: HeadRule;
   /** Radians both arms are abducted; absent, ARM_ABDUCTION. */
