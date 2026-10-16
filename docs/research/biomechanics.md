@@ -21,7 +21,9 @@ movement pattern. They never define a drill.
 - **Effort, 0 to 3** (the schema's `intensity`): 0 idle; 1 low, postural or stabilising; 2 moderate, a clear
   working role; 3 high, prime mover against the full turn load, or measured near or above maximal
   voluntary contraction (MVC). Numbers are relative within the drill. They are never percentages unless a
-  source measured one.
+  source measured one. Each leg swaps roles at the switch, so a display blending effort through the turn
+  runs each muscle toward its twin on the other leg there: the old outside leg's finish into the new
+  inside leg's initiation. That is a display rule, not a measured transition.
 - **Contraction.** *Concentric* means the muscle shortens and produces the movement. *Eccentric* means it
   lengthens under load and brakes the movement. *Isometric* means it holds a position. Under ski loads,
   "the knee flexes" usually means the extensors yield eccentrically. It does not mean the flexors pull.
@@ -229,6 +231,12 @@ Each claim lists the segments that move, which way, and the muscles that produce
    that was 34 % on the outside leg against 20 % on the inside (alhammoud-2020). Over a GS run, the
    negative mechanical work done by the skier's own activity was about three times the positive
    (hladnik-2026).
+5. The centre of mass need not follow the skis' arc. In moguls the mass runs nearly straight while the
+   legs swing the skis under it (lind-sanders-2004 pp114-115). The figure gives the mass its own, wider
+   path, about four times the skis' radius in moguls (inferred), and takes the lean from the turn force
+   on that path (lind-sanders-2004 eq 4.9, p103). The trunk then inclines only about 10° to 20° and the
+   legs make most of the edge angle. The effort scale still reads the load the skis' own arc would
+   carry, so a straighter mass does not make a mogul turn look easier.
 
 **Segments, directions, muscles.**
 
@@ -276,6 +284,19 @@ these generalise to drills.
 5. *Spine.* At peak load in GS the trunk was flexed forward about 39°, bent sideways about 15° and twisted
    about 8° (sporri-2015). The lumbar extension moment was the largest joint moment in a modelled carved
    turn (1.88 Nm/kg). The lateral bending moment was smaller (0.75 Nm/kg) (heinrich-2022).
+6. *Angulation against a countered fold.* A trunk folded forward at the hips and turned toward the
+   fall line points its mass toward the inside of the turn. Hip angulation answers it: as the lean
+   builds, the spine tips the trunk out over the outside ski until the fold puts the mass no further
+   inside the snow's force line than a square fold would (lemaster-2010 pp70-71, 126). In the figure
+   the answer is complete by about 20° of lean (inferred), and the trunk then tilts in no further than
+   the legs. At the switch the anticipated fold still leads the mass into the new turn.
+7. *Mass on the balance axis.* Once edged, the figure rolls its whole body out about the outside ski's
+   contact until the line from the contact through the centre of mass tilts by the lean, so the mass
+   rides the snow's force line and the legs make the whole edge margin (balance axis, 0.1). The roll
+   fades in between about 15° and 20° of lean, or as the lean nears its peak in a turn that never
+   reaches that, and is nil at the switch so the mass still crosses ahead of the feet there. Those
+   thresholds are inferred. The head levels against the roll. Stork turns keep their keyed angulation
+   without the roll.
 
 **Muscles.**
 
@@ -311,6 +332,21 @@ these generalise to drills.
    flexion beyond 60° kept sagittal ACL load low in a balanced carved turn (heinrich-2023).
 5. When the trunk pitches forward, biceps femoris activity rises, controlling trunk angular momentum
    (ishige-2021, one-leg racer).
+6. *Fore-aft from the ankles, shin first.* Closing the ankle draws the feet back under the mass and
+   opening it slides them ahead, while the upper body stays still; about 10° of ankle moves the mass
+   about 15 cm (lemaster-2010 p81). The figure keeps the trunk leaning a set amount further forward than
+   the outside shin, a little more in harder turns (inferred), so the knee follows the hip's depth and
+   the solved ankle alone places the mass. The boot cuff stops the shin when the ankle opens; the shin's
+   forward limit in the shell is taken as 50° (inferred). The inside boot lets its ankle take some of
+   the inside leg's extra flexion, so its foot leads less (lemaster-2010 p61; share inferred).
+7. *How far the mass moves.* In free skiing the fore-aft range is an inch or two, more when skiing
+   aggressively, from about the ball of the foot to the back of the arch (lemaster-2010 p85). The figure
+   puts the mass forward into the control phase and back toward the middle or tail by the completion,
+   the feet sliding ahead to the finish (lemaster-2010 pp79-81, 85; debertin-2022), then draws the feet
+   back through the transition and centres them by the edge set (lemaster-2010 p86). On steeps the
+   balance axis stays square to the skis, which is forward of gravity, not of the feet (lemaster-2010
+   p84). The figure never sits behind the heels (lemaster-2010 pp193-199). The values per phase are
+   inferred.
 
 **Segments and muscles.**
 
@@ -360,6 +396,15 @@ these generalise to drills.
    and erector spinae were the primary trunk muscles in the model (heinrich-2023). Upper-body rotation
    strategy differed measurably between Austrian and German instructors (debertin-2026). That suggests
    association habits, not physics, decide how much counter is taught.
+6. *Anticipation.* In short turns, on steeps and in powder the pelvis and chest stay biased down the
+   fall line while the legs turn under them, facing it fully only in passing (kipp-2024; lemaster-2010
+   pp74, 128). Counter to the skis is square at the fall line, greatest through the finish and switch,
+   and unwinds through the next initiation, changing sign with the turn. It comes from the femurs turning
+   in the hips, with the spine adding about 5° to 8° (sporri-2016, fujii-2007). The figure sets the
+   pelvis's counter at the switch as a share of the skis' heading off the fall line, capped by the hip's
+   rotation range: about 0.6 in short turns (about 36° at the switch), more on steeps (skimag-steeps-2018,
+   kipp-2024), less in the rounder powder turns. The shares are inferred. In moguls the pelvis faces the
+   fall line outright, so counter is the skis' whole heading off it with no spinal twist.
 
 **Muscles.**
 
@@ -462,6 +507,29 @@ normal turns. Medium for the rest.
    isometric job for the anterior deltoid and shoulder flexors. A pole touch is a small wrist and forearm
    movement. A forceful pole plant, as in hop turns and steep short turns, adds latissimus dorsi and
    triceps (pole push). Confidence: low throughout.
+3. *Head and gaze.* No study measures a skier's head turned on the trunk; eye tracking gives where and
+   when the skier looks, not the head's angle. Slalom gaze moves to the next pole about 0.5 s before
+   passing the current one (decroix-2017). In driving the head leads the car's rotation by about 0.65 to
+   1 s and does most of the gaze rotation, the eyes staying within about 5° of it (land-tatler-2001,
+   lappi-2025). Walkers' heads lead their path by up to 25° to 30° (imai-2001, hicheur-2005). Coaching
+   sources agree on the direction:
+   - carved turns: trace the arc a little inside the direction of travel, not the turn's centre
+     (collin-psia-nw);
+   - cruising: head up, eyes a few ski lengths ahead, picking the next turn's spot before the transition
+     (lemaster-2010 pp64, 150);
+   - short turns: at least two turns ahead, the head and torso turning toward the next turn
+     (zalohar-fall-line); steeps: down the fall line, the upper body following the eyes
+     (skimag-steeps-2018);
+   - moguls: the head still, facing downhill (fis-freestyle-judging-2025 p29).
+
+   The figure aims the head per kind: along the carving arc about 1 s ahead, moving to the next apex
+   about 0.5 s before passing one; at the next apex about 1 s early in cruising and dolphin turns; at
+   the corridor's centre line two turns ahead in short turns, steeps and powder; down the fall line in
+   moguls and closed-stance turns. The head settles over about 0.25 s and stays within 30° of the chest.
+   The lead times beyond the measured ones, the lag and the cap are inferred.
+4. *Hands in moguls.* The hands stay in front of the body, not out wide, and the pole touch is light
+   (fis-freestyle-judging-2025 p29); how far in is inferred. Elsewhere the arms are abducted so the hands
+   ride wide and the poles clear the body (lemaster-2010).
 
 ### F9. Spine and trunk: neutral, hinged, angulated, mostly not twisted
 
@@ -605,6 +673,26 @@ normal turns. Medium for the rest.
      compressed, not skipped (D12).
    - Hop turns change edges in the air; dynamic leapers land already on edge (D11).
    - Wedge turns hold both skis on inside edges; there is no edge change (D14).
+6. **The transition stance.** The crossover is the instant the centre of mass crosses the feet. The
+   body rolls through flat into the new turn without pausing there (lemaster-2010 p39; iasi-2021
+   pp19-22). At that instant, in the figure:
+   - the skis are flat and the weight roughly even, the outside foot's share growing again with the
+     new turn's lean;
+   - the legs are about equal in length;
+   - the mass is over the mid-foot, the feet pulled back under the hips by closing ankles (F3.7;
+     lemaster-2010 p86);
+   - the upper body already faces the next turn (F4.6).
+
+   How high the mass passes depends on the transition (D17). In a cross-over the body travels up and
+   across the skis (iasi-2021 p46; lemaster-2010 pp144-148), so the figure is tallest at the switch. In
+   a cross-under the legs flex and retract so the skis pass under a lower, steadier mass (lemaster-2010
+   pp65-67, 152-154; iasi-2021 pp62-63; lind-sanders-2004 p120), so it is lowest there; flexing near the
+   switch also keeps the skis on the snow (komissarov-2022b). The figure crosses over in cruising,
+   powder and gentle to moderate carving. It crosses under in dynamic carving, short turns, steeps,
+   moguls, closed-stance and dolphin turns (lemaster-2010 pp144-156; lind-sanders-2004 pp114-115;
+   seifert-2023). Dynamic carving folds to an outside knee of about 72°, an ankle of about 21° and a
+   trunk about 41° forward at the switch: short of the near-90° held flexion transition (seifert-2023)
+   and inside the GS knee and ankle ranges (heinrich-2022).
 
 **Initiation-phase muscles for early edging** (the new outside and new inside leg, left turn = right leg
 outside). Frontal-plane hip words depend on the reference: see the note below the table.
@@ -622,6 +710,11 @@ the outside femur (open chain, light load). Once the leg carries load and the tr
 inclined further into the turn than the pelvis, so the same outside hip is described as abducted
 (pelvis-on-femur). Both happen within one initiation. The figure should compute hip angles from segment
 poses, not from these words.
+
+The app names one early edger per leg from the foot row above: on the outside leg a foot muscle that
+rolls the foot to its big-toe edge, on the inside leg one that rolls it to its little-toe edge, picked
+only if it works in initiation and no harder later. Boots come off in the figure while a foot or ankle
+muscle is shown.
 
 ### F11. Equipment geometry and the stance it sets
 
@@ -765,6 +858,8 @@ movement on both legs throughout the turn.
      valgus and medial knee displacement in a squat (macrum-2012). The ski analogue (shin stopped early,
      knee drifting in) is inference.
    - A heel raise reduces the ankle range needed (posch-2025; F11).
+   - The app shows the range a kind needs as the deepest ankle bend in its posed turn, on either leg.
+     The pose measures the shin from the ski, so the boot and binding ramp is subtracted first (F11).
 5. **Gym side.**
    - *Mobility:* weight-bearing knee-to-wall (lunge) dorsiflexion, measured with a test that has adult
      normative values (mcbride-2026); soleus mobility with the knee bent.
@@ -822,6 +917,43 @@ shaping-phase pose for D1, D2 and D13, scaled down for slower drills.
 | D16 Uphill-ski | Forward 30°, spine lat. 10° over the uphill foot | Held | Held |
 | D17 Flexion transition | Forward 40° to 50°, knees and hips near 90° (seifert-2023), edge through 0° low | As D13 | As D13 |
 | D18 Step turns | Forward 25°, counter 0° → 10° | As D12 basic | As D12 basic |
+
+**Moguls, powder and dolphin turns in the figure.** These regular-turn kinds have no drill entry; their
+poses follow the foundations above, with these additions.
+
+- *Mogul stance.* Legs together, with the lower leg's angulation setting the radius
+  (fis-freestyle-judging-2025 p26; the amount inferred). The feet stay under the hips and shoulders and
+  the head up (fis-freestyle-judging-2025 pp26, 29). The mass runs straighter than the skis (F1.5), the
+  hands stay in front (F8.4), the pelvis faces the fall line (F4.6) and the head looks downhill (F8.3).
+- *Riding the bumps.* Each ski is drawn rigid, resting on the chord of the snow from tail to tip: over a
+  crest it touches under the boot with the ends floating, in a trough the ends touch. Pressed together,
+  the skis edge as one platform. The legs absorb up to the top of each bump and extend right after it,
+  keeping the pressure on the snow even (fis-freestyle-judging-2025 p28): the outside knee opens in the
+  troughs and folds over the crests, deeper as the intensity grows, toward the elite mogul knee a little
+  past 100° (arndt-1992 p85). The mass then rises and falls by well under the bumps' height; the open
+  knee, the share absorbed and the extra squeeze that keeps the boots together in deep flexion are
+  inferred. Pitched by the bumps, the mass balances over the feet along the snow, not along the ski.
+  Closed-stance turns absorb shallower bumps the same way, keeping the hips over the heels.
+- *Powder pop.* In snow deeper than a few inches on flat to moderate pitches, rhythm, bounce and
+  up-unweighting help (lemaster-2010 p196). Both legs flex through the finish as the snow packs, the
+  feet moving slightly ahead of the hips, then extend to their longest at the switch and sink into the
+  new turn, the feet drawn back under the hips (iasi-2021 pp87-88; lemaster-2010 p197). The pop is soft
+  at gentle and clear at dynamic (iasi-2021 p88). The weight stays near even and the skier never sits
+  back nor loads the tips at initiation (lemaster-2010 p198; iasi-2021 p87). The skis' pitch, tips rising
+  into the switch and dipping less after it, is inferred.
+- *Dolphin turns.* Medium-radius turns that work the fore-aft range on firm snow. Through the finish the
+  ankles open and the feet slide ahead, the mass behind the mid-foot over loaded tails (lemaster-2010
+  p81; lind-sanders-2004 pp69-70, 146), and the tips lift. In the transition both legs retract under
+  the hips, near 90° at hip and knee (seifert-2023; inferred for this drill), the skis just off the snow
+  with the tips pointing down (iasi-2021 p174; lind-sanders-2004 p120). They land tip first on the new
+  edges, the mass ahead of the mid-foot. The outside foot carries about 60 % to 75 % through shaping
+  (heinrich-2022). The tips-up pitch of 8° to 16°, lifting the forebody 12 to 23 cm, is inferred from
+  the tail's reverse bend and the boot tipped back on its spoiler.
+- *Snow surfaces.* Moguls are drawn as an egg-crate field: crests on the line at each switch and on the
+  columns either side between them. Competition moguls run 1 to 1.5 m high (arndt-1992 p1); the smaller
+  recreational heights and the spacing across are inferred. Powder is loose snow over a packed base:
+  15 cm or less still skis like packed snow, deeper calls for near even weighting (lemaster-2010 p197).
+  The depths drawn, with the boots partly buried, are inferred.
 
 ### 2.1 Abbreviations used in the DOF matrices
 
@@ -1822,7 +1954,7 @@ with a short quasi-isometric share on the outside leg (11 %) (alhammoud-2020).
 | Ankles | Tip quickly to new edges | Dorsiflexed; tipped | Released early |
 | Knees | Extend or retract through the quick transition | Flex rapidly under load | Flex, then extend (rebound) |
 | Hips | Rotate quickly (more in skidded): outside internal, inside external | Held; abduction (outside) | Unwind to neutral |
-| Pelvis | Faces down the fall line all the time | Same | Same |
+| Pelvis | Biased down the fall line; faces it fully only in passing (F4.6) | Same | Same |
 | Trunk | Quiet, facing downhill; strong counter | Angulated | Same |
 | Poles | Pole touch at release | Swing forward | Prepare the next touch |
 
@@ -2528,6 +2660,8 @@ returned HTTP 200 to curl on 2026-10-15. The slugs follow `content/sources.yaml`
 | petrone-2013 | Petrone N, Marcolin G, Panizzolo FA. The effect of boot stiffness on field and laboratory flexural behavior of alpine ski boots. Sports Engineering. 2013. | https://research.unipd.it/handle/11577/2840072 | abstract (repository page) |
 | posch-2025 | Posch M et al. Impact of an elevated rear component of the ski binding on joint angles of the lower extremity and the center of mass in recreational skiers. J Hum Kinet. 2025;98:29-40. | https://pmc.ncbi.nlm.nih.gov/articles/PMC12360943/ | full: heel heights, knee and ankle angles, CoM shift (Table 1 not in the extracted text; prose values used) |
 | ruedl-2022 | Ruedl G et al. A comparison of ACL injury risk, ski geometry and standing height parameters between skiers with rented and with owned skis. Int J Environ Res Public Health. 2022;19:11124. | https://pmc.ncbi.nlm.nih.gov/articles/PMC9518475/ | full: front and rear stand heights, ski geometry |
+| arndt-1992 | Arndt AN. A three-dimensional kinematic analysis of Alpine skiing in moguls. MSc thesis, University of Wollongong; 1992. | https://ro.uow.edu.au/articles/thesis/A_three-dimensional_kinematic_analysis_of_Alpine_skiing_in_moguls/27649476 | full: competition mogul height 1 to 1.5 m (p1); elite ankle span about 35° (p67); knee little past 100° (p85) |
+| decroix-2017 | Decroix M et al. Expert - non-expert differences in visual behaviour during alpine slalom skiing. Hum Mov Sci. 2017;55:229-39. | https://doi.org/10.1016/j.humov.2017.08.012 | abstract: gaze moves to the next pole about 0.5 s before passing one |
 
 ### 4.2 Hip and trunk kinesiology, exercise EMG (non-ski)
 
@@ -2554,6 +2688,10 @@ returned HTTP 200 to curl on 2026-10-15. The slugs follow `content/sources.yaml`
 | macrum-2012 | Macrum E et al. Effect of limiting ankle-dorsiflexion range of motion on lower extremity kinematics and muscle-activation patterns during a squat. J Sport Rehabil. 2012;21:144-50. | https://pubmed.ncbi.nlm.nih.gov/22100617/ | abstract |
 | conradsson-2010 | Conradsson D et al. Ankle-joint mobility and standing squat posture in elite junior cross-country skiers. J Sports Med Phys Fitness. 2010;50:132-8. | https://pubmed.ncbi.nlm.nih.gov/20585291/ | abstract |
 | mcbride-2026 | McBride S et al. International normative values for the weight-bearing lunge test across age and sex in 899 healthy adults. Musculoskelet Sci Pract. 2026;82:103525. | https://pubmed.ncbi.nlm.nih.gov/41723909/ | abstract |
+| land-tatler-2001 | Land MF, Tatler BW. Steering with the head - the visual strategy of a racing driver. Curr Biol. 2001;11(15):1215-20. | https://doi.org/10.1016/s0960-9822(01)00351-7 | abstract: head direction leads the car's rotation by about 1 s |
+| lappi-2025 | Lappi O et al. The racer's gaze - visual strategy in high-speed sports expertise. J Vis. 2025;25(8):16. | https://pmc.ncbi.nlm.nih.gov/articles/PMC12302049/ | full: the head does most of the gaze rotation, eyes within about 5°; head yaw leads car yaw by 0.65 s |
+| imai-2001 | Imai T et al. Interaction of the body, head, and eyes during walking and turning. Exp Brain Res. 2001;136(1):1-18. | https://doi.org/10.1007/s002210000533 | abstract: the head leads the walking path by up to 25° |
+| hicheur-2005 | Hicheur H et al. Head motion in humans alternating between straight and curved walking path. Neurosci Lett. 2005;383(1-2):87-92. | https://doi.org/10.1016/j.neulet.2005.03.046 | abstract: the head leads walking direction by about 30° at most |
 
 ### 4.3 Instructional and association sources
 
@@ -2589,15 +2727,22 @@ returned HTTP 200 to curl on 2026-10-15. The slugs follow `content/sources.yaml`
 | psia-c-step-turn-fall-line | PSIA-AASI Central, Step Turn into Fall Line | https://psia-c.org/education/alpine/alpine-resources/step-turn-fall-line/ | full |
 | skiracing-2015-flex | Feehan CJ. "Backshop: Flex of Gold", Ski Racing Media (boot-fitter interview; coaching media, not peer-reviewed). | https://skiracing.com/backshop-flex-of-gold/ | full (page) |
 | psia-c-increasing-arc-railroad-tracks | PSIA-AASI Central, Increasing Arc Railroad Tracks, Medium Radius | https://psia-c.org/education/alpine/alpine-resources/increasing-arc-railroad-tracks-medium-radius/ | full |
+| lemaster-2010 | LeMaster R. *Ultimate Skiing* (Human Kinetics, 2010), the book. | https://us.humankinetics.com/products/ultimate-skiing | full: page-cited for the edge change, fore-aft, anticipation, transitions, gaze and powder |
+| iasi-2021 | Irish Association of Snowsports Instructors. *IASI Manual - The Five Key Concepts*, version 2, 2021. | https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/ | full: page-cited for the edge change, cross-over and cross-under, powder and dolphin turns |
+| lind-sanders-2004 | Lind D, Sanders SP. *The Physics of Skiing*, 2nd ed. (Springer, 2004). | https://doi.org/10.1007/978-1-4757-4345-6 | full: turn loads (eq 4.9, p103), the mogul mass path (pp114-115), retraction (p120), fore-aft on the ski (pp69-70, 146) |
+| fis-freestyle-judging-2025 | FIS. *Freestyle Skiing Judging Handbook*, July 2025, moguls judging criteria pp25-30. | https://assets.fis-ski.com/f/252177/x/5ee5340522/freestyle-skiing-judging-handbook.pdf | full: mogul stance, absorption and head (pp26, 28, 29) |
+| kipp-2024 | Kipp R. "Mastering ski turns - upper body facing downhill", Ski Racing Media, 16 Aug 2024. Coaching text. | https://skiracing.com/mastering-ski-turns-upper-body-facing-downhill/ | full |
+| collin-psia-nw | Collin A. "The Eyes Have It", PSIA-AASI Northwest newsletter (undated). | https://www.psia-nw.org/newsletter-articles/contributions/the-eyes-have-it/ | full |
+| zalohar-fall-line | Zalohar B. "Clear vision", *Fall-Line Skiing* magazine. | https://www.fall-line.co.uk/?p=1103803 | full |
+| skimag-steeps-2018 | *SKI Magazine*. "How to ski the steeps" (clinic), 9 Nov 2018. | https://www.skimag.com/performance/clinic-how-to-ski-the-steeps | full |
 
 ### 4.4 Looked for and not used
 
 - *The Skier's Edge* (LeMaster, 1998/99): no legitimate preview was found. Not cited.
-- *Ultimate Skiing* (LeMaster, 2010): the user has since supplied the book. Another agent is writing
-  page-cited notes, which were not yet available. Until then only the three publisher excerpts above are
-  cited; book-level points are pending book notes.
-- *The Science of Alpine Ski Racing* (Pritchard and Taylor, eds., Routledge 2023) and the IASI manual,
-  chapter 3: being read by other agents into notes; pending book notes. Not cited.
+- *Ultimate Skiing* (LeMaster, 2010) and the IASI manual are now read in full and cited by page as
+  lemaster-2010 and iasi-2021 (4.3). Older points still rest on the three publisher excerpts.
+- *The Science of Alpine Ski Racing* (Pritchard and Taylor, eds., Routledge 2023): its chapters are read
+  per `content/sources.yaml`; only bacharach-cross-2023 is cited here so far.
 - NZSIA interactive manual (learning.nzsia.org): returns HTTP 403 to non-browser clients. A search snippet
   described javelin and stork exercises, but the pages were not read, so they are not cited.
 - CSIA and BASI manuals: no publicly readable copy found.
@@ -2645,11 +2790,9 @@ returned HTTP 200 to curl on 2026-10-15. The slugs follow `content/sources.yaml`
 15. **The hip frontal moment's direction** differs between the two model studies (F4). The outside-hip
     abductor role in a two-footed turn is therefore medium, not high. In one-ski drills it rests on
     mechanics.
-16. **Books pending.** LeMaster's *Ultimate Skiing* (supplied by the user), Pritchard and Taylor's *The
-    Science of Alpine Ski Racing*, and the IASI manual chapter 3 are being read by other agents into
-    notes. No claim here cites those books. The LeMaster points that are cited come only from the three
-    publisher excerpts in 4.3. Any LeMaster-book point, in particular his treatment of tipping (F10.4),
-    is **pending book notes**.
+16. **Books.** LeMaster's *Ultimate Skiing* and the IASI manual are now cited by page (4.3), mostly for
+    the figure's pose rules. Points that cite only the publisher excerpts have not been rechecked against
+    the book, in particular his treatment of tipping (F10.4).
 
 ## 6. Corrections to the current Stork Turns content
 
