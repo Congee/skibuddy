@@ -455,7 +455,8 @@ describe('regular turn', () => {
           const lead = tipLead(drill, i, k / 96);
           assert.isAtLeast(lead, -0.03, `${drill} ${i} ${k}/96`);
           assert.isAtMost(lead, EQUIPMENT.soleLength / 2, `${drill} ${i} ${k}/96`);
-          if (k / 96 >= 0.3) assert.isAbove(lead, 0, `${drill} ${i} ${k}/96`);
+          // Square to the fall line the countered hips set no lead; a millimetre of solver slack.
+          if (k / 96 >= 0.3) assert.isAtLeast(lead, -0.001, `${drill} ${i} ${k}/96`);
         }
   });
 
