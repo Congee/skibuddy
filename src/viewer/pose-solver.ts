@@ -268,7 +268,7 @@ const absorbRange = (def: PoseDefinition, scenario: DrillScenario | null): reado
 
 const levels = new WeakMap<PoseDefinition, Map<string, number>>();
 
-/** Midway between the mass folded deepest over the crest at the switch and stretched longest into the trough at mid-turn. */
+/** Midway between the mass folded deepest over the path's highest snow and stretched longest into its lowest. */
 const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface): number => {
   const key = JSON.stringify([scenario, surface]);
   const cached = levels.get(def)?.get(key);
@@ -279,7 +279,7 @@ const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: S
     for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, ride, hip, true, false));
     return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, ride, hip, true, false)))[1];
   };
-  const level = (at(0, hi) + at(0.5, lo)) / 2;
+  const level = (at(surface.crest, hi) + at(surface.trough, lo)) / 2;
   const map = levels.get(def) ?? new Map<string, number>();
   map.set(key, level);
   levels.set(def, map);

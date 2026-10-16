@@ -30,7 +30,7 @@ const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 const VIEW_LOCKS = [ViewLock.SkisFixed, ViewLock.HipsFixed, ViewLock.SlopeFixed] as const;
 const VIEW_LOCK_NAMES: Readonly<Record<ViewLock, string>> = { [ViewLock.SkisFixed]: 'Skis fixed', [ViewLock.HipsFixed]: 'Hips fixed', [ViewLock.SlopeFixed]: 'Slope fixed' };
 /** Mogul motions, seen as their hips hold the fall line. */
-const HIPS_FIXED_POSES: ReadonlySet<string> = new Set([RegularTurn.Moguls, 'closed-stance-short-turns']);
+const HIPS_FIXED_POSES: ReadonlySet<string> = new Set([RegularTurn.Moguls, 'turns-on-the-tops', 'closed-stance-short-turns']);
 
 const TURN_NAMES = { [TurnDirection.Left]: 'Left turn', [TurnDirection.Right]: 'Right turn' } as const;
 const HALVES = [TurnDirection.Left, TurnDirection.Right] as const;

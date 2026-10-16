@@ -1,7 +1,7 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
 import { RegularTurn } from '../src/viewer/poses/regular-turn';
-import { headingAt, transitionHeading, turnPath } from '../src/viewer/turn-heading';
+import { TOPS_POSE, headingAt, transitionHeading, turnPath } from '../src/viewer/turn-heading';
 
 const DEG = Math.PI / 180;
 const close = (a: number, b: number, eps = 1e-9): void => assert.isBelow(Math.abs(a - b), eps, `${a} vs ${b}`);
@@ -43,9 +43,15 @@ describe('headingAt', () => {
 });
 
 describe('turnPath', () => {
-  it('runs mogul turns in a 2 m corridor', () => {
-    assert.deepStrictEqual(turnPath(RegularTurn.Moguls, Intensity.Moderate), { radius: 5, corridor: 2 });
+  it('runs the zipper in a rut-wide corridor, the tops line and closed stance in 2 m', () => {
+    assert.deepStrictEqual(turnPath(RegularTurn.Moguls, Intensity.Moderate), { radius: 5, corridor: 1.1 });
+    assert.deepStrictEqual(turnPath(TOPS_POSE, Intensity.Moderate), { radius: 5, corridor: 2 });
     assert.deepStrictEqual(turnPath('closed-stance-short-turns', Intensity.Moderate), { radius: 4.5, corridor: 2 });
+  });
+
+  it('keeps the zipper skis within 30° of the fall line (fis-freestyle-judging-2025 p28)', () => {
+    for (const i of [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic])
+      assert.isAtMost(transitionHeading(turnPath(RegularTurn.Moguls, i)), 30 * DEG, i);
   });
 
   it('gives other turns a round shape, 60° off the fall line', () => {

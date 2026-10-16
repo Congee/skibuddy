@@ -1,0 +1,27 @@
+id: turns-on-the-tops
+name: Turns on the tops
+# No movement of its own yet: it shares the closed-stance short turn's.
+movement: closed-stance-short-turn
+summary: Short turns through a mogul field where each turn starts on top of a bump. On the crest only the middle of the skis touches the snow, the tips and tails are free, so the legs pivot both skis round under a still pelvis with little effort. Then the skis slide down the bump's back into the trough below, the legs reaching for the snow, and fold again as the next bump rises. An easier line than the zipper, which keeps to the ruts between the bumps; we teach it first (our inference).
+terrain: An easy, soft mogul field on a blue, bumps about half a metre high, in a corridor about two metres wide; dynamic on a steeper, bigger field
+# The mogul turn's speeds and radii; inferred.
+# The mass runs nearly straight while the legs swing under it: its path about 4x the skis' arc, inferred.
+scenarios:
+  gentle: { speed_mps: 5, radius_m: 5, com_radius_m: 20, slope_deg: 15 }
+  moderate: { speed_mps: 6, radius_m: 5, com_radius_m: 20, slope_deg: 18 }
+  dynamic: { speed_mps: 7.5, radius_m: 5.5, com_radius_m: 22, slope_deg: 22 }
+equipment: Efforts assume recreational skis of about 12-15 m sidecut and boots with about 15° of cuff lean. Softer, narrower skis and shorter poles make the bumps easier (lemaster-2010 p185).
+cautions:
+  - "Common mistake: staying low the whole turn. Stand taller as the skis slide down into the trough, then fold again for the next bump (lemaster-2010 p191)."
+  - Control speed by turning across the hill on the crest, not by setting a hard edge on the bump's back.
+  - Pick a soft field and stop if the bumps are icy; landing on a crest from speed jars the knees and back.
+sources:
+  - { source: lemaster-2010, pages: "185-192" }
+  - { source: fis-freestyle-judging-2025, pages: "25-26, 28-29" }
+primitives:
+  - { primitive: flexion-transition, modifier: "folding over each crest, extending down its back" }
+  - { primitive: leg-rotation, modifier: "large and quick, both legs pivoting the skis on the crest" }
+  - { primitive: tipping, modifier: "small, both knees together" }
+  - { primitive: counter, modifier: "large, the chest facing down the fall line throughout" }
+  - { primitive: pole-touch, modifier: a quick plant on the crest as the turn starts }
+reviewed_by: []

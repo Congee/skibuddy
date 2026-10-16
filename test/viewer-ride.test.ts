@@ -6,11 +6,12 @@ import { mirrorPose } from '../src/viewer/pose';
 import { poseTable } from '../src/viewer/pose-table';
 import { RegularTurn } from '../src/viewer/poses/regular-turn';
 import { surfaceFor } from '../src/viewer/surface';
+import { TOPS_POSE } from '../src/viewer/turn-heading';
 import { ALONG, SIDES, clearance, ridden } from './ride-probes';
 import type { Ridden } from './ride-probes';
 
 const DEG = 180 / Math.PI;
-const FALL_LINE_KINDS = [RegularTurn.Moguls] as const;
+const FALL_LINE_KINDS = [RegularTurn.Moguls, TOPS_POSE] as const;
 
 const table = (drill: string, i: Intensity): ReadonlyArray<Ridden> => {
   const s = surfaceFor(drill, i);
@@ -55,10 +56,45 @@ describe('ride on moguls', () => {
         const boot = rows.map((r) => r.snow(r.ski[BodySide.Right][ALONG / 2] ?? [0, 0, 0]));
         const swing = Math.max(...com) - Math.min(...com);
         const relief = Math.max(...boot) - Math.min(...boot);
-        assert.isAbove(relief, 0.2, `${drill} ${i}`);
+        // The zipper's rut rides lower bumps than the crests it passes.
+        assert.isAbove(relief, 0.4 * surfaceFor(drill, i).relief, `${drill} ${i}`);
         // The legs take most of the bumps; share inferred.
         assert.isBelow(swing, 0.35 * relief, `${drill} ${i}`);
       }
+  });
+
+  it('lays the zipper snow level under each pressed ski, both edges within 2 cm of it', () => {
+    // The skis edge on the rut's floor, not on its walls; the drawn edges neither float nor sink.
+    for (const i of INTENSITIES)
+      table(RegularTurn.Moguls, i).forEach((r, k) => {
+        for (const side of SIDES) {
+          const line = r.ski[side];
+          const gap = Math.min(...line.map((p) => p[1] - r.ground(p)));
+          for (const edge of r.edges[side])
+            edge.forEach((p, j) => {
+              const c = line[j] ?? p;
+              assert.isAtMost(Math.abs(gap) + Math.abs(r.ground(p) - r.ground(c)), 0.02, `${i} ${k} ${side} ${j}`);
+            });
+          assert.isAtMost(Math.abs(r.ride.outsideBank) * DEG, 4, `${i} ${k}`);
+          assert.isAtMost(Math.abs(r.ride.insideBank) * DEG, 4, `${i} ${k}`);
+        }
+      });
+  });
+
+  it('meets the next mogul tip first, the snow rising ahead from mid-turn', () => {
+    // The tip touches the next mogul before any other part of the ski (fis-freestyle-judging-2025 p28).
+    for (const i of INTENSITIES) {
+      const { trough } = surfaceFor(RegularTurn.Moguls, i);
+      const rows = table(RegularTurn.Moguls, i);
+      rows.forEach((r, k) => {
+        const t = k / rows.length;
+        for (const side of SIDES) {
+          if (t >= 0.55 && t <= 0.9) assert.isAbove(side === BodySide.Right ? r.ride.outside : r.ride.inside, 0, `${i} ${k} ${side} tip up`);
+          const tip = r.ski[side][ALONG] ?? [0, 0, 0];
+          if (t >= trough && t <= trough + 0.1) assert.closeTo(tip[1] - r.snow(tip), 0, 0.003, `${i} ${k} ${side} tip on the face`);
+        }
+      });
+    }
   });
 
   it('rides into the mirrored turn without a jump', () => {

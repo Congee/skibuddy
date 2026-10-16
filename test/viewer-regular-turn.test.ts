@@ -10,7 +10,7 @@ import { solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
 import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
-import { CORRIDOR_SHARE, headingAt, turnPath } from '../src/viewer/turn-heading';
+import { CORRIDOR_SHARE, TOPS_POSE, headingAt, turnPath } from '../src/viewer/turn-heading';
 import { CLOSED_STANCE, OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
@@ -19,6 +19,7 @@ import { SIDES, clearance, ridden } from './ride-probes';
 const KINDS = Object.values(RegularTurn);
 const angles = (kind: RegularTurn, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(kind, i), t));
 const DEG = 180 / Math.PI;
+const DEG_RAD = Math.PI / 180;
 const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as const;
 // The bumps pitch the skis, so mogul turns balance along the snow, not along the ski.
 const balanceOf = (kind: string, a: ReturnType<typeof poseAngles>): number => (kind === RegularTurn.Moguls ? a.comOnSnow : a.comAhead);
@@ -123,11 +124,21 @@ describe('regular turn', () => {
 
   it('extends the mogul legs into the trough and folds them over the crest', () => {
     // Extension right after the top of the bump (fis-freestyle-judging-2025 p28), knees near straight (arndt-1992 p79).
-    for (const i of INTENSITIES) {
-      const v = Array.from({ length: 24 }, (_, k) => angles(RegularTurn.Moguls, i, k / 24).knee.right);
-      assert.isAtMost(Math.min(...v), 28, `${i} trough`);
-      assert.isAtLeast(v[0] ?? 0, Math.min(...v) + 35, `${i} crest`);
-    }
+    // In the zipper's ruts the knees stay flexed between the moguls (fis p28, arndt-1992 p93).
+    for (const drill of [RegularTurn.Moguls, TOPS_POSE])
+      for (const i of INTENSITIES) {
+        const knees = Array.from({ length: 24 }, (_, k) => poseAngles(samplePose(poseTable(drill, i), k / 24)).knee);
+        const v = knees.map((k) => k.right);
+        assert.isAtMost(Math.min(...v), drill === TOPS_POSE ? 28 : 40, `${drill} ${i} trough`);
+        assert.isAtLeast(Math.max(...v), Math.min(...v) + 35, `${drill} ${i} crest`);
+        if (drill === RegularTurn.Moguls) assert.isAtLeast(Math.min(...knees.map((k) => Math.min(k.left, k.right))), 15, `${i} never straight`);
+      }
+  });
+
+  it('keeps the zipper upper body upright through the absorption', () => {
+    // Upright through the whole absorption, not hinging forward (fis-freestyle-judging-2025 p28); bound as the trunk test's.
+    for (const i of INTENSITIES)
+      for (let k = 0; k < 24; k++) assert.isAtMost(angles(RegularTurn.Moguls, i, k / 24).trunkForward, 40, `${i} ${k}/24`);
   });
 
   it('moves forward at initiation and back through the finish, most in moguls', () => {
@@ -140,12 +151,15 @@ describe('regular turn', () => {
       assert.isAbove(com(1 / 6), com(1 / 2) + 0.02, kind);
       assert.isAbove(com(1 / 2), com(5 / 6), kind);
     }
-    // Crest at the transition: ankles closed, feet pulled back; trough at the fall line: legs long, tips down.
-    const mogul = (t: number): ReturnType<typeof poseAngles> => angles(RegularTurn.Moguls, Intensity.Moderate, t);
-    assert.isAbove(mogul(0).dorsiflexion.right, mogul(1 / 2).dorsiflexion.right + 12);
-    // At the transition the balance is over both feet, the countered outside one trailing.
-    assert.isAbove(mogul(0).comOnSnow - mogul(0).lead / 2, mogul(1 / 2).comOnSnow + 0.05);
-    assert.isAbove(mogul(0).knee.right, mogul(1 / 2).knee.right + 25);
+    // Over the crest: ankles closed, feet pulled back; in the trough: legs long, tips down.
+    for (const drill of [RegularTurn.Moguls, TOPS_POSE]) {
+      const { crest, trough } = surfaceFor(drill, Intensity.Moderate);
+      const mogul = (t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(drill, Intensity.Moderate), t));
+      assert.isAbove(mogul(crest).dorsiflexion.right, mogul(trough).dorsiflexion.right + 12, drill);
+      // Near the transition the balance is over both feet, the countered outside one trailing.
+      assert.isAbove(mogul(crest).comOnSnow - mogul(crest).lead / 2, mogul(trough).comOnSnow + 0.05, drill);
+      assert.isAbove(mogul(crest).knee.right, mogul(trough).knee.right + 25, drill);
+    }
     assert.isAbove(range(RegularTurn.Moguls, (a) => a.dorsiflexion.right), 2 * range(RegularTurn.Carving, (a) => a.dorsiflexion.right));
   });
 
@@ -288,12 +302,23 @@ describe('regular turn', () => {
     const at = (drill: string, t: number): number => poseAngles(samplePose(poseTable(drill, Intensity.Moderate), t)).counter;
     for (let k = 0; k < 24; k++) assert.isBelow(Math.abs(at(RegularTurn.Carving, k / 24)), 8, `${k}/24`);
     // Signed: facing the last turn's outside at the transition, square on the fall line, the most into the next.
-    for (const drill of [RegularTurn.Moguls, 'closed-stance-short-turns']) {
-      assert.isBelow(at(drill, 0), -30, drill);
+    for (const drill of [RegularTurn.Moguls, TOPS_POSE, 'closed-stance-short-turns']) {
       assert.isBelow(Math.abs(at(drill, 1 / 2)), 1, drill);
-      assert.isAbove(at(drill, 5 / 6), 25, drill);
-      assert.isAbove(at(drill, 0.999), 30, drill);
+      if (drill !== RegularTurn.Moguls) {
+        assert.isBelow(at(drill, 0), -30, drill);
+        assert.isAbove(at(drill, 5 / 6), 25, drill);
+        assert.isAbove(at(drill, 0.999), 30, drill);
+      }
       for (let k = 1; k < 24; k++) assert.isAbove(at(drill, k / 24), at(drill, (k - 1) / 24), `${drill} ${k}/24`);
+    }
+    // In moguls the chest and hips face the fall line (user's rule): the counter tracks the skis' heading; bound inferred.
+    for (const i of INTENSITIES) {
+      const path = turnPath(RegularTurn.Moguls, i);
+      for (let k = 0; k < 24; k++) {
+        const p = samplePose(poseTable(RegularTurn.Moguls, i), k / 24);
+        const chest = poseAngles(p).counter + p.spineTwist / DEG_RAD - headingAt(k / 24, path) / DEG_RAD;
+        assert.isBelow(Math.abs(chest), 7, `${i} ${k}/24`);
+      }
     }
   });
 

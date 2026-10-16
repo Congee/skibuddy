@@ -1,5 +1,5 @@
 import type { Intensity } from '../content/schema';
-import { CLOSED_STANCE, CORRIDOR_SHARE, RegularTurn, TURN_STYLES } from './poses/regular-turn';
+import { CLOSED_STANCE, CORRIDOR_SHARE, RegularTurn, TOPS, TURN_STYLES, ZIPPER_CORRIDOR } from './poses/regular-turn';
 import type { TurnStyle } from './poses/regular-turn';
 
 export { CORRIDOR_SHARE };
@@ -23,20 +23,22 @@ export const transitionHeading = ({ radius, corridor }: TurnPath): number => Mat
  */
 export const headingAt = (t: number, path: TurnPath): number => -transitionHeading(path) * Math.cos(Math.PI * (((t % 1) + 1) % 1));
 
-/** Mogul lines run in a corridor about 2 m wide, as regular-turn.ts sets their counter. */
-const MOGUL_CORRIDOR = 2;
+/** The tops line runs in a corridor about 2 m wide, as regular-turn.ts sets its counter. */
+const TOPS_CORRIDOR = 2;
 /** For a motion with no turn of its own, such as a drill's: a short turn. */
 const FALLBACK_RADIUS = 7;
 
 export const MOGUL_POSE = RegularTurn.Moguls;
 export const POWDER_POSE = RegularTurn.Powder;
+export const TOPS_POSE = 'turns-on-the-tops';
 export const CLOSED_STANCE_POSE = 'closed-stance-short-turns';
-const STYLES: Readonly<Record<string, TurnStyle>> = { ...TURN_STYLES, [CLOSED_STANCE_POSE]: CLOSED_STANCE };
-/** The closed-stance drill rehearses the mogul line on groomed snow, in the same corridor. */
-const MOGUL_POSES: ReadonlySet<string> = new Set([MOGUL_POSE, CLOSED_STANCE_POSE]);
+const STYLES: Readonly<Record<string, TurnStyle>> = { ...TURN_STYLES, [TOPS_POSE]: TOPS, [CLOSED_STANCE_POSE]: CLOSED_STANCE };
+/** The closed-stance drill rehearses the tops line on groomed snow, in the same corridor. */
+const TOPS_POSES: ReadonlySet<string> = new Set([TOPS_POSE, CLOSED_STANCE_POSE]);
 
 /** The path a pose's turn follows at this intensity. */
 export const turnPath = (pose: string, intensity: Intensity): TurnPath => {
   const radius = STYLES[pose]?.scenarios[intensity].radiusM ?? FALLBACK_RADIUS;
-  return { radius, corridor: MOGUL_POSES.has(pose) ? MOGUL_CORRIDOR : CORRIDOR_SHARE * radius };
+  const corridor = pose === MOGUL_POSE ? ZIPPER_CORRIDOR : TOPS_POSES.has(pose) ? TOPS_CORRIDOR : CORRIDOR_SHARE * radius;
+  return { radius, corridor };
 };

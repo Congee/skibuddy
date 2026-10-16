@@ -8,17 +8,20 @@ import { SurfaceKind, skiRest } from './surface';
 import type { SkiRest, Surface } from './surface';
 
 /**
- * How the snow under the skis meets a pose at turn time t: each ski's pitch tip-up, the inside tip's height over the
- * outside one, and how far the figure's root rises so both skis rest on the snow.
+ * How the snow under the skis meets a pose at turn time t: each ski's pitch tip-up, the snow's bank under each ski
+ * toward the turn's inside, the inside tip's height over the outside one, and how far the figure's root rises so both
+ * skis rest on the snow. A ski's edge on the snow is its edge to the slope less its bank.
  */
 export interface Ride {
   readonly outside: number;
   readonly inside: number;
+  readonly outsideBank: number;
+  readonly insideBank: number;
   readonly insideTip: number;
   readonly lift: number;
 }
 
-export const FLAT_RIDE: Ride = { outside: 0, inside: 0, insideTip: 0, lift: 0 };
+export const FLAT_RIDE: Ride = { outside: 0, inside: 0, outsideBank: 0, insideBank: 0, insideTip: 0, lift: 0 };
 
 /** Each ski's rest on moguls under `pose`, from where its binding stands in the figure's root, and the root's lift onto them. */
 const skiRests = (s: Surface, t: number, pose: Pose): { readonly outside: SkiRest; readonly inside: SkiRest; readonly lift: number } => {
@@ -39,5 +42,12 @@ const skiRests = (s: Surface, t: number, pose: Pose): { readonly outside: SkiRes
 export const rideOf = (s: Surface, t: number, pose: Pose): Ride => {
   if (s.kind !== SurfaceKind.Moguls) return FLAT_RIDE;
   const { outside, inside, lift } = skiRests(s, t, pose);
-  return { outside: outside.pitch, inside: inside.pitch, insideTip: inside.tip - outside.tip, lift };
+  return {
+    outside: outside.pitch,
+    inside: inside.pitch,
+    outsideBank: outside.roll,
+    insideBank: inside.roll,
+    insideTip: inside.tip - outside.tip,
+    lift,
+  };
 };

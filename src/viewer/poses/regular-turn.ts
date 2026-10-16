@@ -37,6 +37,8 @@ export interface TurnStyle {
   readonly kneeAngulation?: number;
   /** Peak pelvis turn toward the outside of the turn, relative to the skis, and the chest turned further beyond it. */
   readonly counter: number;
+  /** Share per intensity step the counter grows by; defaults to COUNTER_GAIN. */
+  readonly counterGain?: number;
   readonly twist: number;
   /** Share of the peak counter and twist at each phase key. */
   readonly counterCurve: PhaseValues;
@@ -44,6 +46,8 @@ export interface TurnStyle {
   readonly bend: number;
   /** Degrees the trunk leans further forward than the outside shin; the ankle, solved, sets fore-aft (lemaster-2010 p81). */
   readonly trunkOverShin: number;
+  /** How much a harder turn adds to trunkOverShin, as a share per intensity step; defaults to TRUNK_OVER_SHIN_GAIN. */
+  readonly trunkOverShinGain?: number;
   /** Low back flexed on the pelvis at moderate intensity; racers measure 11-27 deg (sporri-2016). */
   readonly spineFlex: number;
   /** Thighs drawn toward each other: a narrower stance than hip width. */
@@ -119,8 +123,10 @@ const LONG: TurnScenarios = {
 const FOLLOW: PhaseValues = [0, 0.5, 0.9, 1, 0.4];
 // In moguls the hips (user's rule) and the head and chest (fis-freestyle-judging-2025 p29, dipiro-2005 p32) face the
 // fall line, so pelvis counter is the skis' heading off it with no spine twist.
-// Mogul lines, and the closed-stance drill's terrain, run in a corridor about 2 m wide.
+// The tops line, and the closed-stance drill's terrain, run in a corridor about 2 m wide.
 const CORRIDOR = 2;
+/** The zipper line swings about a rut's width across, between two mogul columns; inferred. */
+export const ZIPPER_CORRIDOR = 1.1;
 // The head stays still, facing downhill (fis-freestyle-judging-2025 p29).
 const DOWNHILL: HeadRule = { aim: HeadAim.FallLine, corridor: CORRIDOR };
 // The head leads the path by about 1 s (land-tatler-2001, lappi-2025) and the gaze moves to the next gate about 0.5 s
@@ -180,6 +186,10 @@ export const OUTSIDE_KNEE_MAX: Readonly<Record<RegularTurn, Readonly<Record<Inte
   [RegularTurn.Steeps]: { gentle: 65, moderate: 65, dynamic: 80 },
   [RegularTurn.Powder]: { gentle: 60, moderate: 60, dynamic: 80 },
 };
+
+const COUNTER_GAIN = 0.15;
+// A harder turn leans the trunk further over the shin; inferred.
+const TRUNK_OVER_SHIN_GAIN = 0.4;
 
 /**
  * Per kind. Trunk 20-35 deg forward of vertical: outside hip flexion peaks at 55-65 deg (gao-2024). Outside knee within
@@ -272,7 +282,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     poleTrim: 0,
     head: DOWN_THE_LINE,
   },
-  // Compact; the legs fold deep over each bump at the transition.
+  // Compact, on the zipper line; the legs fold deep up each bump's face.
   [RegularTurn.Moguls]: {
     scenarios: {
       gentle: { speedMps: 5, radiusM: 5, slopeDeg: 15, comRadiusM: MOGUL_COM * 5 },
@@ -287,7 +297,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     angulation: 1,
     // Angulation of the lower leg sets the radius (fis-freestyle-judging-2025 p26); amount inferred.
     kneeAngulation: 34,
-    counter: fallLineHeading(5, CORRIDOR),
+    counter: fallLineHeading(5, ZIPPER_CORRIDOR),
+    // Held to the skis' heading off the fall line, which the corridor sets at every intensity.
+    counterGain: 0,
     twist: 0,
     counterCurve: HEADING,
     bend: 3,
@@ -298,7 +310,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Feet pushed ahead into the bump, pulled back over the crest, pressing forward into the trough (lemaster-2010
     // p78, p89); inferred. The legs fold up under a trunk that stays over the feet (fis-freestyle-judging-2025 p26).
     comAhead: [0.06, 0.05, 0.01, 0, -0.01],
-    trunkOverShin: 12,
+    trunkOverShin: 8,
+    // The upper body stays upright through the whole absorption, so deeper bumps fold the legs, not the hips (fis-freestyle-judging-2025 p28).
+    trunkOverShinGain: -0.5,
     early: 0.4,
     // Cross-under: the legs retract over the crest so the mass travels straight (lind-sanders-2004 pp114-115).
     crossUnder: [1, 1, 1],
@@ -308,7 +322,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     polePlant: true,
     // Shorter for quick plants on the bumps' backs.
     poleTrim: 0.05,
-    head: DOWNHILL,
+    head: { ...DOWNHILL, corridor: ZIPPER_CORRIDOR },
     armAbduction: HANDS_IN,
   },
   // Strong counter and angulation, a firm pole plant.
@@ -404,6 +418,16 @@ export const CLOSED_STANCE: TurnStyle = {
   armAbduction: HANDS_IN,
 };
 
+/** Turns on the tops (content/drills/turns-on-the-tops.yaml): the mogul style turning over each crest in the 2 m corridor. */
+export const TOPS: TurnStyle = {
+  ...TURN_STYLES[RegularTurn.Moguls],
+  counter: fallLineHeading(5, CORRIDOR),
+  counterGain: COUNTER_GAIN,
+  trunkOverShin: 12,
+  trunkOverShinGain: TRUNK_OVER_SHIN_GAIN,
+  head: DOWNHILL,
+};
+
 /**
  * The dolphin turn's fore-aft cycle on firm snow (content/movements/dolphin-turn.yaml). Through the finish the ankles
  * open and the feet slide ahead, the mass behind mid-foot over the loaded tails (lemaster-2010 p81; lind-sanders-2004
@@ -491,8 +515,6 @@ const SWITCH: ReadonlyArray<Pick<Phase, 't' | 'hip' | 'under'>> = [
 
 // The inside boot lets its ankle flex a little, so most of the inside leg's extra flex leads its foot (lemaster-2010 p61); inferred.
 const INSIDE_ANKLE_SHARE = 0.3;
-// A harder turn leans the trunk further over the shin; inferred.
-const TRUNK_OVER_SHIN_GAIN = 0.4;
 // A faster retraction lifts the skis higher; inferred.
 const CLEARANCE_GAIN = 0.4;
 
@@ -553,7 +575,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       tailLift: null,
       crossUnder: style.crossUnder,
       trunkOverShin: style.trunkOverShin * DEG,
-      trunkOverShinGain: TRUNK_OVER_SHIN_GAIN,
+      trunkOverShinGain: style.trunkOverShinGain ?? TRUNK_OVER_SHIN_GAIN,
       insideAnkleShare: INSIDE_ANKLE_SHARE,
       poleTouch: style.polePlant ? { t: style.poleTouchAt ?? 1 / 24, hold: 0.02, swing: 0.11 } : null,
       scapularRhythm: 0.3,
@@ -570,7 +592,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
         angulation: 0.15,
         eversion: 0.15,
         pelvisList: 0.4,
-        counter: 0.15,
+        counter: style.counterGain ?? COUNTER_GAIN,
         spineBend: 0.15,
         spineTwist: 0.1,
         skiPitch: pop?.pitchGain ?? 0,

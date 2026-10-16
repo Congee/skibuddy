@@ -4,6 +4,7 @@ import { RegularTurn } from '../src/viewer/poses/regular-turn';
 import type { Surface } from '../src/viewer/surface';
 import {
   fieldMesh,
+  MogulLine,
   heightAt,
   normalAt,
   skiRest,
@@ -13,11 +14,12 @@ import {
   SurfaceKind,
   underFoot,
 } from '../src/viewer/surface';
-import { CLOSED_STANCE_POSE } from '../src/viewer/turn-heading';
+import { CLOSED_STANCE_POSE, TOPS_POSE } from '../src/viewer/turn-heading';
 
 const close = (a: number, b: number, eps = 1e-9): void => assert.isBelow(Math.abs(a - b), eps, `${a} vs ${b}`);
 const INTENSITIES = [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic] as const;
 const moguls = surfaceFor(RegularTurn.Moguls, Intensity.Moderate);
+const tops = surfaceFor(TOPS_POSE, Intensity.Moderate);
 const powder = surfaceFor(RegularTurn.Powder, Intensity.Moderate);
 const groomed = surfaceFor(RegularTurn.Carving, Intensity.Moderate);
 const POINTS: ReadonlyArray<readonly [number, number]> = [
@@ -31,6 +33,9 @@ const POINTS: ReadonlyArray<readonly [number, number]> = [
 describe('surfaceFor', () => {
   it('puts mogul turns on moguls, powder on powder, the rest, closed stance too, on groomed snow', () => {
     assert.strictEqual(moguls.kind, SurfaceKind.Moguls);
+    assert.strictEqual(moguls.line, MogulLine.Zipper);
+    assert.strictEqual(tops.kind, SurfaceKind.Moguls);
+    assert.strictEqual(tops.line, MogulLine.Tops);
     for (const i of INTENSITIES) assert.strictEqual(surfaceFor(CLOSED_STANCE_POSE, i).kind, SurfaceKind.Groomed, i);
     assert.strictEqual(powder.kind, SurfaceKind.Powder);
     assert.strictEqual(groomed.kind, SurfaceKind.Groomed);
@@ -56,21 +61,60 @@ describe('heightAt', () => {
     }
   });
 
-  it('crests on the line at each switch and sits a quarter relief down mid-turn', () => {
-    close(heightAt(moguls, 0, 0), moguls.relief / 2);
-    close(heightAt(moguls, 0, moguls.spacing), moguls.relief / 2);
-    const mid = pathAt(moguls, 0.5);
-    close(heightAt(moguls, mid.x, mid.z), -moguls.relief / 4, 1e-3);
+  it('crests on the tops line at each switch and sits a quarter relief down mid-turn', () => {
+    close(heightAt(tops, 0, 0), tops.relief / 2);
+    close(heightAt(tops, 0, tops.spacing), tops.relief / 2);
+    const mid = pathAt(tops, 0.5);
+    close(heightAt(tops, mid.x, mid.z), -tops.relief / 4, 1e-3);
     // The columns either side crest between the line's crests.
-    close(heightAt(moguls, moguls.columns, moguls.spacing / 2), moguls.relief / 2);
+    close(heightAt(tops, tops.columns, tops.spacing / 2), tops.relief / 2);
+    assert.strictEqual(tops.crest, 0);
+    assert.strictEqual(tops.trough, 0.5);
   });
 
   it('repeats every turn down the fall line and is even across it, so the mirrored turn sees the same snow', () => {
-    for (const s of [moguls, powder])
+    for (const s of [tops, powder])
       for (const [x, z] of POINTS) {
         close(heightAt(s, x, z + s.spacing), heightAt(s, x, z), 1e-9);
         close(heightAt(s, -x, z), heightAt(s, x, z), 1e-12);
       }
+  });
+
+  it('mirrors the zipper field a spacing down, so the next turn rides the same snow', () => {
+    for (const i of INTENSITIES) {
+      const s = surfaceFor(RegularTurn.Moguls, i);
+      for (const [x, z] of POINTS) close(heightAt(s, -x, z + s.spacing), heightAt(s, x, z), 1e-9);
+    }
+  });
+
+  it('keeps the zipper path in the ruts, clear of every crest', () => {
+    for (const i of INTENSITIES) {
+      const s = surfaceFor(RegularTurn.Moguls, i);
+      // Crests: the field's local maxima on a grid around the turn.
+      const step = 0.05;
+      const crests: Array<readonly [number, number]> = [];
+      for (let x = -2; x <= 2; x += step)
+        for (let z = -s.spacing; z <= 2 * s.spacing; z += step) {
+          const h = heightAt(s, x, z);
+          const around = [-step, 0, step].flatMap((dx) => [-step, 0, step].map((dz) => heightAt(s, x + dx, z + dz)));
+          if (h > s.relief / 4 && around.every((v) => v <= h)) crests.push([x, z]);
+        }
+      assert.isNotEmpty(crests, i);
+      for (let k = 0; k < 48; k++) {
+        const p = pathAt(s, k / 48);
+        for (const [x, z] of crests) assert.isAbove(Math.hypot(p.x - x, p.z - z), 0.9, `${i} ${k}/48`);
+      }
+    }
+  });
+
+  it('lowers the zipper snow toward mid-turn and raises it again toward the switch', () => {
+    // The highest snow just past the switch, the lowest near the fall line; times inferred.
+    for (const i of INTENSITIES) {
+      const s = surfaceFor(RegularTurn.Moguls, i);
+      assert.isBelow(s.crest, 0.15, i);
+      assert.isAbove(s.trough, 0.4, i);
+      assert.isBelow(s.trough, 0.6, i);
+    }
   });
 
   it('puts the powder top a depth over a flat packed base', () => {
@@ -91,7 +135,7 @@ describe('heightAt', () => {
 describe('normalAt', () => {
   it('is a unit vector along the finite-difference gradient', () => {
     const h = 1e-5;
-    for (const s of [moguls, powder])
+    for (const s of [moguls, tops, powder])
       for (const [x, z] of POINTS) {
         const n = normalAt(s, x, z);
         close(Math.hypot(...n), 1, 1e-12);
@@ -181,10 +225,10 @@ describe('skiRest', () => {
     }
   });
 
-  it('rests on the boot over the crest at the switch, the ends floating', () => {
-    const r = skiRest(moguls, 0, [0, 0], 0.85, 0.75);
-    close(r.base, along(moguls, 0, 0), 5e-3);
-    assert.isAbove(r.tip, along(moguls, 0, 0.85 * Math.cos(r.pitch)));
+  it('rests on the boot over the crest at the switch on the tops line, the ends floating', () => {
+    const r = skiRest(tops, 0, [0, 0], 0.85, 0.75);
+    close(r.base, along(tops, 0, 0), 5e-3);
+    assert.isAbove(r.tip, along(tops, 0, 0.85 * Math.cos(r.pitch)));
   });
 });
 

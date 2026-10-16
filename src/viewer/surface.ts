@@ -1,18 +1,27 @@
 import type { Intensity } from '../content/schema';
-import { MOGUL_POSE, POWDER_POSE, transitionHeading, turnPath } from './turn-heading';
+import { MOGUL_POSE, POWDER_POSE, TOPS_POSE, transitionHeading, turnPath } from './turn-heading';
 import type { TurnPath } from './turn-heading';
 import type { Vec3 } from './mat4';
 
 /**
  * Snow surfaces in the slope's own frame: x across the slope toward the first turn's inside, z down the fall
  * line, y up from the slope. The turn starts at the origin, on the field's centre line; the mirrored next turn
- * is the same field reflected in x, which every surface here is symmetric under.
+ * is the same field reflected in x and moved a spacing down, which every surface here is symmetric under.
  */
 export const SurfaceKind = { Groomed: 'groomed', Moguls: 'moguls', Powder: 'powder' } as const;
 export type SurfaceKind = (typeof SurfaceKind)[keyof typeof SurfaceKind];
 
+/**
+ * The line through moguls: the zipper runs in the ruts between two columns, the tips meeting each mogul's face
+ * mid-turn (fis-freestyle-judging-2025 p26); the tops line turns over each crest at the switch, as a drill.
+ */
+export const MogulLine = { Zipper: 'zipper', Tops: 'tops' } as const;
+export type MogulLine = (typeof MogulLine)[keyof typeof MogulLine];
+
 export interface Surface {
   readonly kind: SurfaceKind;
+  /** The line through the moguls; null off them. */
+  readonly line: MogulLine | null;
   readonly path: TurnPath;
   /** Metres down the fall line per turn; on moguls also the bump spacing along the line. */
   readonly spacing: number;
@@ -24,12 +33,20 @@ export interface Surface {
   readonly depth: number;
   /** Metres of path per unit of turn time: the skier moves at a steady speed. */
   readonly speed: number;
+  /** Turn times where the snow under the path is highest and lowest. */
+  readonly crest: number;
+  readonly trough: number;
 }
 
 /** Recreational fields, gentle smaller, within what the legs absorb; competition moguls run 1-1.5 m (arndt-1992 p1); inferred. */
 const MOGUL_RELIEF: Readonly<Record<Intensity, number>> = { gentle: 0.4, moderate: 0.55, dynamic: 0.7 };
 /** Diagonal neighbours about 3.8 m apart, close to the spacing along the line; inferred. */
 const MOGUL_COLUMNS = 3;
+/**
+ * The zipper's field, depths as shares of the relief and places as shares of the spacing: columns a metre either side
+ * of the line, crest rows just past each switch, the rut deepest a little past mid-turn; shape inferred.
+ */
+const ZIPPER = { columns: 2, crestShare: 0.435, rutShare: 0.35, rutWidth: 0.65, crestAt: 1.1, rutAt: 0.6, trackShare: 1.4 } as const;
 /**
  * Snow over the ski base: 15 cm or less still skis like packed snow, deeper calls for near even weighting
  * (lemaster-2010 p197), which the powder pose uses; depths inferred, boots partly buried.
@@ -68,30 +85,56 @@ const tableFor = (most: number): ReturnType<typeof integrate> => {
   return table;
 };
 
+const lineOf = (pose: string): MogulLine | null => (pose === MOGUL_POSE ? MogulLine.Zipper : pose === TOPS_POSE ? MogulLine.Tops : null);
+
 const kindOf = (pose: string): SurfaceKind =>
-  pose === MOGUL_POSE ? SurfaceKind.Moguls : pose === POWDER_POSE ? SurfaceKind.Powder : SurfaceKind.Groomed;
+  lineOf(pose) !== null ? SurfaceKind.Moguls : pose === POWDER_POSE ? SurfaceKind.Powder : SurfaceKind.Groomed;
+
+const PROFILE_SAMPLES = 64;
 
 /** The snow a pose's turn is skied on at this intensity. */
 export const surfaceFor = (pose: string, intensity: Intensity): Surface => {
   const path = turnPath(pose, intensity);
   const kind = kindOf(pose);
+  const line = kind === SurfaceKind.Moguls ? lineOf(pose) : null;
   const { xs, zs } = tableFor(transitionHeading(path));
   // Steady speed that reaches the corridor's edge on the fall line, as turnPath's corridor says.
   const edge = -(xs[SAMPLES / 2] ?? 0);
   const speed = edge > 1e-9 ? path.corridor / 2 / edge : 0;
-  return {
+  const surface: Surface = {
     kind,
+    line,
     path,
     spacing: speed * (zs[SAMPLES] ?? 0),
-    columns: MOGUL_COLUMNS,
+    columns: line === MogulLine.Zipper ? ZIPPER.columns : MOGUL_COLUMNS,
     relief: kind === SurfaceKind.Moguls ? MOGUL_RELIEF[intensity] : 0,
     depth: kind === SurfaceKind.Powder ? POWDER_DEPTH[intensity] : 0,
     speed,
+    crest: 0,
+    trough: 0.5,
   };
+  return line === MogulLine.Zipper ? { ...surface, ...extremes(surface) } : surface;
+};
+
+/** Turn times of the highest and lowest snow along the skis' track. */
+const extremes = (s: Surface): { readonly crest: number; readonly trough: number } => {
+  let crest = 0;
+  let trough = 0;
+  let hi = -Infinity;
+  let lo = Infinity;
+  for (let i = 0; i < PROFILE_SAMPLES; i++) {
+    const t = i / PROFILE_SAMPLES;
+    const { z } = pathAt(s, t);
+    const h = heightAt(s, trackX(s, z), z);
+    if (h > hi) [hi, crest] = [h, t];
+    if (h < lo) [lo, trough] = [h, t];
+  }
+  return { crest, trough };
 };
 
 /** Height of the snow's top at (x, z), metres. */
 export const heightAt = (s: Surface, x: number, z: number): number => {
+  if (s.line === MogulLine.Zipper) return zipper(s, x, z);
   const w = wave(s);
   if (w === null) return 0;
   return s.depth + w.a * Math.cos(w.kz * z) * Math.cos(w.kx * x);
@@ -105,16 +148,49 @@ const wave = (s: Surface): { readonly a: number; readonly kz: number; readonly k
   return { a: SWELL, kz: (2 * Math.PI * Math.max(1, Math.round(s.spacing / SWELL_LENGTH))) / s.spacing, kx: (2 * Math.PI) / SWELL_ACROSS };
 };
 
+/** The wave's slopes along x and z at (x, z). */
+const slopes = (s: Surface, x: number, z: number): { readonly dx: number; readonly dz: number } => {
+  const w = wave(s);
+  if (w === null) return { dx: 0, dz: 0 };
+  const { a, kz, kx } = w;
+  return { dx: -a * kx * Math.cos(kz * z) * Math.sin(kx * x), dz: -a * kz * Math.sin(kz * z) * Math.cos(kx * x) };
+};
+
+/** The zipper's slopes by central differences, fine enough to read as exact. */
+const zipperSlopes = (s: Surface, x: number, z: number): { readonly dx: number; readonly dz: number } => {
+  const e = 1e-5;
+  return { dx: (zipper(s, x + e, z) - zipper(s, x - e, z)) / (2 * e), dz: (zipper(s, x, z + e) - zipper(s, x, z - e)) / (2 * e) };
+};
+
+/** Where the skis cross z on the zipper: wider than the root's path, as the solved legs swing out under the mass; fitted. */
+const trackX = (s: Surface, z: number): number => (-ZIPPER.trackShare * s.path.corridor * Math.sin((Math.PI * z) / s.spacing)) / 2;
+
+/**
+ * The zipper field: an egg crate whose columns sit either side of the line, crests alternating side each turn and
+ * flat between the columns, with a flat-floored rut along the skis' track whose depth swells once per turn. The floor
+ * lies level across the track, so the pressed skis rest on it edge to edge. Reflected in x and moved a spacing down
+ * it is unchanged, so the mirrored next turn rides the same snow.
+ */
+const zipper = (s: Surface, x: number, z: number): number => {
+  const egg = (ex: number, ez: number): number =>
+    -ZIPPER.crestShare * s.relief * Math.cos((Math.PI * (ez - ZIPPER.crestAt * s.spacing)) / s.spacing) * Math.sin((Math.PI * ex) / s.columns) ** 3;
+  const off = x - trackX(s, z);
+  const e = 1e-4;
+  const slope = (trackX(s, z + e) - trackX(s, z - e)) / (2 * e);
+  // The nearest point on the track, so the floor is level across it rather than across x.
+  const along = z + (off * slope) / (1 + slope * slope);
+  const depth = (ZIPPER.rutShare * s.relief * (1 + Math.cos((2 * Math.PI * (along - ZIPPER.rutAt * s.spacing)) / s.spacing))) / 2;
+  const rut = Math.exp(-((off / ZIPPER.rutWidth) ** 4));
+  return (1 - rut) * egg(x, z) + rut * (egg(trackX(s, along), along) - depth);
+};
+
 /** Height of what the skis ride on: the packed base under any loose snow. */
 export const supportAt = (s: Surface, x: number, z: number): number => (s.kind === SurfaceKind.Powder ? 0 : heightAt(s, x, z));
 
 /** The unit normal of the snow's top at (x, z). */
 export const normalAt = (s: Surface, x: number, z: number): Vec3 => {
-  const w = wave(s);
-  if (w === null) return [0, 1, 0];
-  const { a, kz, kx } = w;
-  const dx = -a * kx * Math.cos(kz * z) * Math.sin(kx * x);
-  const dz = -a * kz * Math.sin(kz * z) * Math.cos(kx * x);
+  const { dx, dz } = s.line === MogulLine.Zipper ? zipperSlopes(s, x, z) : slopes(s, x, z);
+  if (dx === 0 && dz === 0) return [0, 1, 0];
   const n = Math.hypot(dx, 1, dz);
   return [-dx / n, 1 / n, -dz / n];
 };
@@ -157,13 +233,17 @@ export const underFoot = (s: Surface, t: number, local: readonly [number, number
   const sn = Math.sin(p.heading);
   const x = p.x + across * c + local[1] * sn;
   const z = p.z - across * sn + local[1] * c;
-  // The mirrored turn sees the field reflected in x, which leaves it unchanged.
+  // The next turn, reflected in x a spacing down, meets the same field.
   return { x, z, height: heightAt(s, x, z), support: supportAt(s, x, z), normal: normalAt(s, x, z) };
 };
 
-/** A rigid ski resting on the support: its pitch tip-up and the heights of its base line at the binding and the tip. */
+/**
+ * A rigid ski resting on the support: its pitch tip-up, its roll toward +x as the snow under the binding banks it
+ * across the skis, and the heights of its base line at the binding and the tip.
+ */
 export interface SkiRest {
   readonly pitch: number;
+  readonly roll: number;
   readonly base: number;
   readonly tip: number;
 }
@@ -189,7 +269,10 @@ export const skiRest = (s: Surface, t: number, at: readonly [number, number], ah
     const along = (-behind + ((ahead + behind) * i) / REST_SAMPLES) * c;
     base = Math.max(base, under(along) - along * slope);
   }
-  return { pitch: Math.atan(slope), base, tip: base + ahead * c * slope };
+  const { normal } = underFoot(s, t, at);
+  const h = pathAt(s, t).heading;
+  const roll = Math.atan((normal[0] * Math.cos(h) - normal[2] * Math.sin(h)) / normal[1]);
+  return { pitch: Math.atan(slope), roll, base, tip: base + ahead * c * slope };
 };
 
 /** A grid over the field's square of half side `half`, `step` apart: positions, normals and triangle indices. */
