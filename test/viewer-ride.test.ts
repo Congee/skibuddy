@@ -55,9 +55,9 @@ describe('ride on moguls', () => {
         const boot = rows.map((r) => r.snow(r.ski[BodySide.Right][ALONG / 2] ?? [0, 0, 0]));
         const swing = Math.max(...com) - Math.min(...com);
         const relief = Math.max(...boot) - Math.min(...boot);
-        assert.isAbove(relief, 0.3, `${drill} ${i}`);
-        // Closed stance folds shallower, so its legs take less of the bumps; shares inferred.
-        assert.isBelow(swing, (drill === RegularTurn.Moguls ? 0.65 : 0.85) * relief, `${drill} ${i}`);
+        assert.isAbove(relief, 0.2, `${drill} ${i}`);
+        // The legs take most of the bumps; closed stance folds shallower; shares inferred.
+        assert.isBelow(swing, (drill === RegularTurn.Moguls ? 0.35 : 0.5) * relief, `${drill} ${i}`);
       }
   });
 

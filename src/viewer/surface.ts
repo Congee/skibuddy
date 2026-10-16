@@ -26,8 +26,10 @@ export interface Surface {
   readonly speed: number;
 }
 
-/** Recreational fields, gentle smaller; competition moguls run 1-1.5 m (arndt-1992 p1); inferred. */
-const MOGUL_RELIEF: Readonly<Record<Intensity, number>> = { gentle: 0.5, moderate: 0.7, dynamic: 0.9 };
+/** Recreational fields, gentle smaller, within what the legs absorb; competition moguls run 1-1.5 m (arndt-1992 p1); inferred. */
+const MOGUL_RELIEF: Readonly<Record<Intensity, number>> = { gentle: 0.4, moderate: 0.55, dynamic: 0.7 };
+/** The closed-stance drill rehearses the line on smaller bumps; inferred. */
+const CLOSED_STANCE_RELIEF: Readonly<Record<Intensity, number>> = { gentle: 0.3, moderate: 0.37, dynamic: 0.5 };
 /** Diagonal neighbours about 3.8 m apart, close to the spacing along the line; inferred. */
 const MOGUL_COLUMNS = 3;
 /**
@@ -84,7 +86,7 @@ export const surfaceFor = (pose: string, intensity: Intensity): Surface => {
     path,
     spacing: speed * (zs[SAMPLES] ?? 0),
     columns: MOGUL_COLUMNS,
-    relief: kind === SurfaceKind.Moguls ? MOGUL_RELIEF[intensity] : 0,
+    relief: kind !== SurfaceKind.Moguls ? 0 : (pose === CLOSED_STANCE_POSE ? CLOSED_STANCE_RELIEF : MOGUL_RELIEF)[intensity],
     depth: kind === SurfaceKind.Powder ? POWDER_DEPTH[intensity] : 0,
     speed,
   };

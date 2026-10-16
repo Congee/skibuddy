@@ -70,7 +70,8 @@ describe('regular turn', () => {
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
           const knee = angles(kind, i, k / 24).knee.right;
-          assert.isTrue(knee >= 25 && knee <= OUTSIDE_KNEE_MAX[kind][i], `${kind} ${i} ${k}/24: ${knee.toFixed(1)}`);
+          // Mogul knees extend near straight into the troughs (arndt-1992 pp79, 87).
+          assert.isTrue(knee >= (kind === RegularTurn.Moguls ? 10 : 25) && knee <= OUTSIDE_KNEE_MAX[kind][i], `${kind} ${i} ${k}/24: ${knee.toFixed(1)}`);
         }
   });
 
@@ -119,6 +120,16 @@ describe('regular turn', () => {
     assert.isAbove(span(Intensity.Dynamic), span(Intensity.Moderate) + 4);
     // Elite: near straight to about 100 deg (arndt-1992 pp85, 87).
     assert.isAbove(angles(RegularTurn.Moguls, Intensity.Dynamic, 0).knee.right, 85);
+  });
+
+  it('extends the mogul legs into the trough and folds them over the crest', () => {
+    // Extension right after the top of the bump (fis-freestyle-judging-2025 p28), knees near straight (arndt-1992 p79).
+    for (const kind of FALL_LINE_KINDS)
+      for (const i of INTENSITIES) {
+        const v = Array.from({ length: 24 }, (_, k) => poseAngles(samplePose(poseTable(kind, i), k / 24)).knee.right);
+        assert.isAtMost(Math.min(...v), kind === RegularTurn.Moguls ? 28 : 32, `${kind} ${i} trough`);
+        assert.isAtLeast(v[0] ?? 0, Math.min(...v) + 35, `${kind} ${i} crest`);
+      }
   });
 
   it('moves forward at initiation and back through the finish, most in moguls', () => {
@@ -246,7 +257,8 @@ describe('regular turn', () => {
         assert.isBelow(Math.abs(edge(0)), 5, `${kind} ${i} flat at the transition`);
         // End of initiation, before the fall line.
         assert.isAtLeast(edge(1 / 3), 0.4 * peak, `${kind} ${i}`);
-        assert.isAbove(edge(1 / 2), edge(1 / 3), `${kind} ${i} still growing`);
+        // In moguls the legs extend into the trough, so the knees edge a little less there.
+        if (kind !== RegularTurn.Moguls) assert.isAbove(edge(1 / 2), edge(1 / 3), `${kind} ${i} still growing`);
       }
     assert.isAtLeast(angles(RegularTurn.Carving, Intensity.Moderate, 1 / 3).edge.right, 15);
   });
@@ -367,7 +379,7 @@ describe('regular turn', () => {
       }
     const mogul = angles(RegularTurn.Moguls, Intensity.Moderate, 1 / 2);
     // The mass rides the force line, so the legs make the whole margin.
-    assert.isAbove(mogul.edge.right, turnForcesAt(TURN_STYLES[RegularTurn.Moguls].scenarios.moderate, 1 / 2).tilt * DEG + 8);
+    assert.isAbove(mogul.edge.right, turnForcesAt(TURN_STYLES[RegularTurn.Moguls].scenarios.moderate, 1 / 2).tilt * DEG + 5);
   });
 
   it('plants the mogul pole lightly, both hands in front of the chest', () => {

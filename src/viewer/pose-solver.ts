@@ -169,8 +169,9 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
 
 /** Knee flexion over which the absorbing knee eases into its range's ends, radians; inferred. */
 const ABSORB_EASE = 6 * DEG;
+/** On bumps the balancing knee may open near straight, as the absorbing one does. */
+const KNEE_FLOOR = 5;
 
-/** `x` held in [lo, hi], easing quadratically onto each end from `w` inside it to `w` beyond; hi - lo > 2w. */
 /** Share the thighs' draw grows per radian the absorbing knee folds past SQUEEZE_FROM; inferred. */
 const STANCE_SQUEEZE = 0.75;
 const SQUEEZE_FROM = 60 * DEG;
@@ -178,6 +179,7 @@ const SQUEEZE_FROM = 60 * DEG;
 /** Over this either side of the cuff the shin eases onto it on bumps; inferred. */
 const CUFF_EASE = 3 * DEG;
 
+/** `x` held in [lo, hi], easing quadratically onto each end from `w` inside it to `w` beyond; hi - lo > 2w. */
 const softClamp = (x: number, lo: number, hi: number, w: number): number => {
   const up = x <= lo - w ? lo : x >= lo + w ? x : lo + (x - lo + w) ** 2 / (4 * w);
   return up >= hi + w ? hi : up <= hi - w ? up : hi - (hi + w - up) ** 2 / (4 * w);
@@ -239,7 +241,8 @@ const solveRidden = (
     fb = above(b);
   }
   const slope = b !== a && fb !== fa ? (fb - fa) / (b - a) : (warm?.slope ?? 0);
-  return { pose: settle(held(b), ride), warm: slope === 0 ? null : { hip: b, ride, slope } };
+  // The legs' balancing fold changes the skis' pitch, so the ride settles once more.
+  return { pose: settle(held(b), ridden(held(b), ride, true).ride), warm: slope === 0 ? null : { hip: b, ride, slope } };
 };
 
 /** The outside knee from open to its absorbing ceiling, radians, a hair inside, which the knee keeps. */
@@ -318,19 +321,22 @@ const solveOn = (
   const split = 1 - outsideWeight(lean);
   // The trunk tipped outward about the skis' axis beyond its keys, solved below.
   let tip = 0;
+  // On bumps the hip folds with a balancing knee, so the trunk keeps its lean on the shin.
+  let folded = false;
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
+    const pelvisPitch = (folded ? hip + knee - depthKnee : hip) - hipFlex;
     // A folding hip turns the thighs' draw forward, so absorbing legs squeeze harder to keep the boots together.
     const adduction = c.stance * (c.absorb === undefined ? 1 : 1 + STANCE_SQUEEZE * Math.max(0, knee - SQUEEZE_FROM));
     const insideExtra = (1 - split) * extra;
-    const trunk = spineTipped(pelvisRotation(mild('counter'), mild('pelvisList'), hip - hipFlex), spine, outward);
+    const trunk = spineTipped(pelvisRotation(mild('counter'), mild('pelvisList'), pelvisPitch), spine, outward);
     return {
       lean,
       hipAngulation: c.hipAngulation * angulation,
       eversion: mild('eversion'),
       pelvisList: mild('pelvisList'),
-      pelvisPitch: hip - hipFlex,
+      pelvisPitch,
       counter: mild('counter'),
       ...trunk,
       headYaw: 0,
@@ -382,7 +388,7 @@ const solveOn = (
   // Bend the knee until the centre of mass sits comAhead of mid-foot; more knee moves it back, as the hips
   // sink behind the foot and the trunk, at a set hip angle, stands up with the thigh (lemaster-2010 p9, p16).
   const balance = (extra: number, tailLift: number, shin = keyedShin, goal = k.comAhead): number => {
-    let lo = 30 * DEG;
+    let lo = (bumps ? KNEE_FLOOR : 30) * DEG;
     let hi = 120 * DEG;
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
@@ -435,11 +441,13 @@ const solveOn = (
     if (shinFirst) {
       shin = balanceShin(inside.extra, inside.tailLift);
       knee = depthKnee;
-      // Down a bump's face the cuff holds the shin forward, easing on; the knee folds under a set hip to bring the mass back.
+      // Down a bump's face the cuff holds the shin forward, easing on; the legs fold to bring the mass back.
       if (bumps && fold && shin < cuff + CUFF_EASE) {
         shin = softClamp(shin, cuff, SHIN_MAX + CUFF_EASE, CUFF_EASE);
-        if (balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow) > target)
+        if (balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow) > target) {
+          folded = true;
           knee = balance(inside.extra, inside.tailLift, shin, target);
+        }
       }
     } else knee = balance(inside.extra, inside.tailLift);
     inside = insideLeg(knee, shin);
