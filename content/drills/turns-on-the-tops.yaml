@@ -2,11 +2,11 @@ id: turns-on-the-tops
 name: Turns on the tops
 # No movement of its own yet: it shares the closed-stance short turn's.
 movement: closed-stance-short-turn
-summary: The recreational line through moguls, each turn starting on top of a bump. On the crest only the middle of the skis touches the snow, so the legs pivot both skis round with little effort (campbell-rogan-2001). Fore-aft, the feet work against the bump. Coming into it, with the legs long, the feet move a little ahead (lemaster-2010 fig 6.2 pp88-89, craenen-2022); a feel cue we use is to let the tails meet the bump and take its rebound. Near the crest the feet pull back under the body, the tails lift and the tips drop early onto the back side (lemaster-2010 pp88-89, smith-j2ski-compression, dipiro-2005 pp36, 44). Then the tips are pressed down into the trough, keeping as much of the ski on the snow as possible, and the legs fold again as the next bump rises (dipiro-2005 p46). The upper body stays forward and square to the fall line, ready for the plant, made on the top (campbell-rogan-2001), or just below the crest with the pole tip reaching the bump well before the feet (wiegand-2021). An easier line than the zipper (see Moguls), which keeps to the ruts between the bumps; we teach it first (our inference).
-terrain: An easy, soft mogul field on a blue, bumps about half a metre high, in a corridor about two metres wide; dynamic on a steeper, bigger field
+summary: The recreational line through moguls, each turn starting on top of a bump. On the crest only the middle of the skis touches the snow, so the legs pivot both skis round with little effort (campbell-rogan-2001). Fore-aft, the feet work against the bump. Coming into it, with the legs long, the feet move a little ahead (lemaster-2010 fig 6.2 pp88-89, craenen-2022); a feel cue we use is to let the tails meet the bump and take its rebound. Near the crest the feet pull back under the body, the tails lift and the tips drop early onto the back side (lemaster-2010 pp88-89, smith-j2ski-compression, dipiro-2005 pp36, 44). Then the tips are pressed down into the trough, keeping as much of the ski on the snow as possible, and the legs fold again as the next bump rises (dipiro-2005 p46). The upper body stays forward and square to the fall line, hands wide and forward, the edges tipped early on the backside and clear by the fall line (duncan-smith-2021), released on the top just before the crest with the plant downhill (campbell-rogan-2001, duncan-smith-2021), or just below the crest with the pole tip reaching the bump well before the feet (wiegand-2021). An easier line than the zipper (see Moguls), which keeps to the ruts between the bumps; we teach it first (our inference).
+terrain: An easy, soft mogul field on a blue, bumps about half a metre high, the line coming round about 50° off the fall line over each crest and riding the saddles' shoulders between them, out of the troughs (duncan-smith-2021, campbell-rogan-2001; angle inferred); dynamic on a steeper, bigger field
 # The mogul turn's speeds and radii; inferred.
 # A quarter of gravity's pull along the line is braked fore-aft at the feet: most mogul braking is lateral edge skid, which tilts the balance line sideways, not fore-aft; inferred.
-# The mass runs nearly straight while the legs swing under it: its path about 4x the skis' arc, inferred.
+# The mass runs straighter than the skis, its path about 3x their arc, so the body inclines as in duncan-smith-2021; inferred.
 scenarios:
   gentle: { speed_mps: 5, radius_m: 5, com_radius_m: 15, slope_deg: 15, braking_share: 0.25 }
   moderate: { speed_mps: 6, radius_m: 5, com_radius_m: 15, slope_deg: 18, braking_share: 0.25 }
@@ -24,6 +24,7 @@ sources:
   - craenen-2022
   - campbell-rogan-2001
   - wiegand-2021
+  - duncan-smith-2021
 primitives:
   - { primitive: flexion-transition, modifier: "folding over each crest, extending down its back" }
   - { primitive: leg-rotation, modifier: "large and quick, both legs pivoting the skis on the crest" }
