@@ -1,7 +1,7 @@
 // Build time only: where the head looks through a turn, from the turn's shape on the slope.
 import { HeadAim } from './pose-definition';
 import type { HeadRule } from './pose-definition';
-import { headingAt } from './turn-heading';
+import { headingAt, transitionHeading } from './turn-heading';
 import type { TurnPath } from './turn-heading';
 
 const DEG = Math.PI / 180;
@@ -18,7 +18,7 @@ export const runHeading = (t: number, path: TurnPath): number => (Math.abs(Math.
 
 /** Seconds per turn: at the fall line the path's heading turns at speed / radius. */
 export const turnSeconds = (path: TurnPath, speed: number): number => {
-  const most = -headingAt(0, path);
+  const most = transitionHeading(path);
   return (Math.PI * most * path.radius) / speed;
 };
 

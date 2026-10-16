@@ -1,5 +1,5 @@
 import type { PoseDefinition } from '../pose-definition';
-import { CLOSED_STANCE, DEFAULT_REGULAR_TURN, DOLPHIN, REGULAR_TURNS, RegularTurn, TOPS, regularTurn } from './regular-turn';
+import { CLOSED_STANCE, DEFAULT_REGULAR_TURN, DOLPHIN, REGULAR_TURNS, ROUND, RegularTurn, TOPS, regularTurn } from './regular-turn';
 import { STORK_TURNS } from './stork-turns';
 
 /**
@@ -10,6 +10,7 @@ export const POSE_DEFINITIONS: Readonly<Record<string, PoseDefinition>> = {
   'stork-turns': STORK_TURNS,
   ...REGULAR_TURNS,
   'turns-on-the-tops': regularTurn(TOPS),
+  'round-line': regularTurn(ROUND),
   'closed-stance-short-turns': regularTurn(CLOSED_STANCE),
   'dolphin-turns': regularTurn(DOLPHIN),
 };

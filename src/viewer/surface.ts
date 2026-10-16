@@ -1,5 +1,5 @@
 import type { Intensity } from '../content/schema';
-import { MOGUL_POSE, POWDER_POSE, TOPS_POSE, transitionHeading, turnPath } from './turn-heading';
+import { MOGUL_POSE, POWDER_POSE, ROUND_POSE, TOPS_POSE, transitionHeading, turnPath } from './turn-heading';
 import type { TurnPath } from './turn-heading';
 import type { Vec3 } from './mat4';
 
@@ -13,9 +13,10 @@ export type SurfaceKind = (typeof SurfaceKind)[keyof typeof SurfaceKind];
 
 /**
  * The line through moguls: the zipper runs in the ruts between two columns, the tips meeting each mogul's face
- * mid-turn (fis-freestyle-judging-2025 p26); the tops line turns over each crest at the switch, as a drill.
+ * mid-turn (fis-freestyle-judging-2025 p26); the tops line turns over each crest at the switch, as a drill; the round
+ * line skis round each bump high on its wall (jds-bumps-style 1:20-1:55).
  */
-export const MogulLine = { Zipper: 'zipper', Tops: 'tops' } as const;
+export const MogulLine = { Round: 'round', Zipper: 'zipper', Tops: 'tops' } as const;
 export type MogulLine = (typeof MogulLine)[keyof typeof MogulLine];
 
 export interface Surface {
@@ -66,6 +67,12 @@ const ZIPPER = {
  * Snow over the ski base: 15 cm or less still skis like packed snow, deeper calls for near even weighting
  * (lemaster-2010 p197), which the powder pose uses; depths inferred, boots partly buried.
  */
+/**
+ * The round line's natural field: raised-cosine bumps `reach` wide, one per turn on alternate sides of the line,
+ * `side` off it and `at` spacings down, in rows `pitch` apart, so the edge set lands on a face just below a crest and
+ * the path keeps to the walls, never the troughs (jds-bumps-style 1:20-2:00, dipiro-2005 pp60-61); placement inferred.
+ */
+const ROUND_FIELD = { pitch: 3.3, reach: 3, side: 1.4, at: 0.8, rows: 3 } as const;
 const POWDER_DEPTH: Readonly<Record<Intensity, number>> = { gentle: 0.15, moderate: 0.2, dynamic: 0.25 };
 /** Soft swells on loose snow, so its top reads as a surface; height and length inferred. */
 const SWELL = 0.03;
@@ -90,17 +97,34 @@ const integrate = (most: number): { readonly xs: Float64Array; readonly zs: Floa
   return { xs, zs };
 };
 
-const tables = new Map<number, ReturnType<typeof integrate>>();
-const tableFor = (most: number): ReturnType<typeof integrate> => {
-  let table = tables.get(most);
+/** As integrate, the heading `phase` turn time ahead, the path centred so that the next turn mirrors it. */
+const integratePhased = (most: number, phase: number): ReturnType<typeof integrate> => {
+  const xs = new Float64Array(SAMPLES + 1);
+  const zs = new Float64Array(SAMPLES + 1);
+  for (let i = 1; i <= SAMPLES; i++) {
+    const a = heading((i - 1) / SAMPLES + phase, most);
+    const b = heading(i / SAMPLES + phase, most);
+    xs[i] = (xs[i - 1] ?? 0) + (Math.sin(a) + Math.sin(b)) / (2 * SAMPLES);
+    zs[i] = (zs[i - 1] ?? 0) + (Math.cos(a) + Math.cos(b)) / (2 * SAMPLES);
+  }
+  const mid = (xs[SAMPLES] ?? 0) / 2;
+  for (let i = 0; i <= SAMPLES; i++) xs[i] = (xs[i] ?? 0) - mid;
+  return { xs, zs };
+};
+
+const tables = new Map<string, ReturnType<typeof integrate>>();
+const tableFor = (most: number, phase = 0): ReturnType<typeof integrate> => {
+  const key = `${most}:${phase}`;
+  let table = tables.get(key);
   if (table === undefined) {
-    table = integrate(most);
-    tables.set(most, table);
+    table = phase === 0 ? integrate(most) : integratePhased(most, phase);
+    tables.set(key, table);
   }
   return table;
 };
 
-const lineOf = (pose: string): MogulLine | null => (pose === MOGUL_POSE ? MogulLine.Zipper : pose === TOPS_POSE ? MogulLine.Tops : null);
+const lineOf = (pose: string): MogulLine | null =>
+  pose === MOGUL_POSE ? MogulLine.Zipper : pose === TOPS_POSE ? MogulLine.Tops : pose === ROUND_POSE ? MogulLine.Round : null;
 
 const kindOf = (pose: string): SurfaceKind =>
   lineOf(pose) !== null ? SurfaceKind.Moguls : pose === POWDER_POSE ? SurfaceKind.Powder : SurfaceKind.Groomed;
@@ -112,23 +136,33 @@ export const surfaceFor = (pose: string, intensity: Intensity): Surface => {
   const path = turnPath(pose, intensity);
   const kind = kindOf(pose);
   const line = kind === SurfaceKind.Moguls ? lineOf(pose) : null;
-  const { xs, zs } = tableFor(transitionHeading(path));
+  const { xs, zs } = tableFor(transitionHeading(path), path.phase);
   // Steady speed that reaches the corridor's edge on the fall line, as turnPath's corridor says.
-  const edge = -(xs[SAMPLES / 2] ?? 0);
+  const edge = path.phase === undefined ? -(xs[SAMPLES / 2] ?? 0) : Math.max(...xs.map(Math.abs));
   const speed = edge > 1e-9 ? path.corridor / 2 / edge : 0;
   const surface: Surface = {
     kind,
     line,
     path,
     spacing: speed * (zs[SAMPLES] ?? 0),
-    columns: line === MogulLine.Zipper ? ZIPPER.pitch : MOGUL_COLUMNS,
+    columns: line === MogulLine.Zipper ? ZIPPER.pitch : line === MogulLine.Round ? ROUND_FIELD.pitch : MOGUL_COLUMNS,
     relief: line === MogulLine.Zipper ? ZIPPER.height : kind === SurfaceKind.Moguls ? MOGUL_RELIEF[intensity] : 0,
     depth: kind === SurfaceKind.Powder ? POWDER_DEPTH[intensity] : 0,
     speed,
     crest: 0,
     trough: 0.5,
   };
+  if (line === MogulLine.Round) return { ...surface, ...roundExtremes(surface) };
   return line === MogulLine.Zipper ? { ...surface, ...extremes(surface) } : surface;
+};
+
+/** Turn times of the highest and lowest snow under the round line's path. */
+const roundExtremes = (s: Surface): { readonly crest: number; readonly trough: number } => {
+  const hs = Array.from({ length: PROFILE_SAMPLES }, (_, i) => {
+    const { x, z } = pathAt(s, i / PROFILE_SAMPLES);
+    return heightAt(s, x, z);
+  });
+  return { crest: hs.indexOf(Math.max(...hs)) / PROFILE_SAMPLES, trough: hs.indexOf(Math.min(...hs)) / PROFILE_SAMPLES };
 };
 
 /** Turn times of the highest and lowest snow along the skis' track. */
@@ -150,6 +184,7 @@ const extremes = (s: Surface): { readonly crest: number; readonly trough: number
 /** Height of the snow's top at (x, z), metres. */
 export const heightAt = (s: Surface, x: number, z: number): number => {
   if (s.line === MogulLine.Zipper) return zipper(s, x, z);
+  if (s.line === MogulLine.Round) return round(s, x, z);
   const w = wave(s);
   if (w === null) return 0;
   return s.depth + w.a * Math.cos(w.kz * z) * Math.cos(w.kx * x);
@@ -175,6 +210,52 @@ const slopes = (s: Surface, x: number, z: number): { readonly dx: number; readon
 const zipperSlopes = (s: Surface, x: number, z: number): { readonly dx: number; readonly dz: number } => {
   const e = 1e-5;
   return { dx: (zipper(s, x + e, z) - zipper(s, x - e, z)) / (2 * e), dz: (zipper(s, x, z + e) - zipper(s, x, z - e)) / (2 * e) };
+};
+
+/** The round field's bumps summed at (x, z), before scaling: the next turn's row mirrored in x a spacing down. */
+const roundBumps = (s: Surface, x: number, z: number): number => {
+  const { pitch, reach, side, at, rows } = ROUND_FIELD;
+  const first = Math.floor((z - reach) / s.spacing - at);
+  const last = Math.ceil((z + reach) / s.spacing - at);
+  let h = 0;
+  for (let k = first; k <= last; k++) {
+    const sign = k % 2 === 0 ? 1 : -1;
+    for (let m = -rows; m <= rows; m++) {
+      const r = Math.hypot(x - sign * (side + m * pitch), z - (k + at) * s.spacing);
+      if (r < reach) h += Math.cos((Math.PI * r) / (2 * reach)) ** 2;
+    }
+  }
+  return h;
+};
+
+/** The round field's lowest and highest raw sums near the line, by spacing. */
+const roundRanges = new Map<number, readonly [number, number]>();
+const roundRange = (s: Surface): readonly [number, number] => {
+  let range = roundRanges.get(s.spacing);
+  if (range === undefined) {
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let x = -4; x <= 4; x += 0.1)
+      for (let z = 0; z <= 2 * s.spacing; z += 0.1) {
+        const h = roundBumps(s, x, z);
+        lo = Math.min(lo, h);
+        hi = Math.max(hi, h);
+      }
+    range = [lo, hi];
+    roundRanges.set(s.spacing, range);
+  }
+  return range;
+};
+
+/** The round field's top, its troughs at 0 and crests at the relief. */
+const round = (s: Surface, x: number, z: number): number => {
+  const [lo, hi] = roundRange(s);
+  return (s.relief * (roundBumps(s, x, z) - lo)) / (hi - lo);
+};
+
+const roundSlopes = (s: Surface, x: number, z: number): { readonly dx: number; readonly dz: number } => {
+  const e = 1e-5;
+  return { dx: (round(s, x + e, z) - round(s, x - e, z)) / (2 * e), dz: (round(s, x, z + e) - round(s, x, z - e)) / (2 * e) };
 };
 
 /** Where the skis cross z on the zipper: wider than the root's path, as the solved legs swing out under the mass; fitted. */
@@ -237,7 +318,7 @@ export const supportAt = (s: Surface, x: number, z: number): number => (s.kind =
 
 /** The unit normal of the snow's top at (x, z). */
 export const normalAt = (s: Surface, x: number, z: number): Vec3 => {
-  const { dx, dz } = s.line === MogulLine.Zipper ? zipperSlopes(s, x, z) : slopes(s, x, z);
+  const { dx, dz } = s.line === MogulLine.Zipper ? zipperSlopes(s, x, z) : s.line === MogulLine.Round ? roundSlopes(s, x, z) : slopes(s, x, z);
   if (dx === 0 && dz === 0) return [0, 1, 0];
   const n = Math.hypot(dx, 1, dz);
   return [-dx / n, 1 / n, -dz / n];
@@ -253,12 +334,13 @@ export interface OnField {
 /** Where the turn's path is at time t: from the centre line at the switch, across to the corridor's edge on the fall line, back to the centre line a spacing down at t = 1. */
 export const pathAt = (s: Surface, t: number): OnField => {
   const most = transitionHeading(s.path);
-  const { xs, zs } = tableFor(most);
+  const phase = s.path.phase ?? 0;
+  const { xs, zs } = tableFor(most, s.path.phase);
   const u = Math.min(1, Math.max(0, t)) * SAMPLES;
   const i = Math.min(SAMPLES - 1, Math.floor(u));
   const f = u - i;
   const lerp = (a: Float64Array): number => ((a[i] ?? 0) * (1 - f) + (a[i + 1] ?? 0) * f) * s.speed;
-  return { x: lerp(xs), z: lerp(zs), heading: heading(Math.min(1, Math.max(0, t)), most) };
+  return { x: lerp(xs), z: lerp(zs), heading: heading(Math.min(1, Math.max(0, t)) + phase, most) };
 };
 
 /** A point under the skier: on the field, the snow's top and the support there, and the top's normal. */

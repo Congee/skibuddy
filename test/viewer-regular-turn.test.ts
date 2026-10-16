@@ -12,7 +12,7 @@ import { forceTiltAt, solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
 import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
-import { CORRIDOR_SHARE, TOPS_POSE, headingAt, turnPath } from '../src/viewer/turn-heading';
+import { CORRIDOR_SHARE, ROUND_POSE, TOPS_POSE, headingAt, turnPath } from '../src/viewer/turn-heading';
 import { CLOSED_STANCE, OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
@@ -206,7 +206,7 @@ describe('regular turn', () => {
   it('keeps the chest over the outside knee through the turn, the trunk within 40 deg', () => {
     // Chest over the knees (lemaster-2010 pp57, 182-183); behind the knee is the slip-and-catch fault
     // (jordan-sporri-taylor-2023 pp120-121). 2 cm slack and the 40 deg cap inferred.
-    const drills = Object.keys(POSE_DEFINITIONS).filter((d) => d !== RegularTurn.Moguls && d !== TOPS_POSE);
+    const drills = Object.keys(POSE_DEFINITIONS).filter((d) => d !== RegularTurn.Moguls && d !== TOPS_POSE && d !== ROUND_POSE);
     // The dolphin sits back over the tails from the pole touch to the landing, the tips off the snow.
     const airborne = (drill: string, t: number): boolean => drill === DOLPHIN && (t >= 5 / 6 || t <= 1 / 12);
     for (const drill of drills)

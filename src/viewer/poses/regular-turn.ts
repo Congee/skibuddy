@@ -469,6 +469,43 @@ export const TOPS: TurnStyle = {
   head: DOWNHILL,
 };
 
+/** The round line swings wider than the tops line's corridor (jds-bumps-style 2:00); inferred. */
+export const ROUND_CORRIDOR = 2.8;
+/**
+ * The round line's path crosses its centre line, heading most across the hill, at the edge set, 0.35 turn before the
+ * flat skis of the switch (jds-bumps-style 1:56-2:01, measured 0.3-0.4).
+ */
+export const ROUND_PHASE = 0.35;
+const roundHeading = (t: number): number => heading(t + ROUND_PHASE);
+// Hands wide and forward (jds-bumps-style frames): the figure's default, not the zipper's hands in.
+const { armAbduction: _handsIn, ...MOGUL_HANDS_WIDE } = TURN_STYLES[RegularTurn.Moguls];
+
+/**
+ * The round line (content/drills/round-line.yaml): round each bump high on its wall, a skidded edge set across the
+ * hill on the next face, then release and pivot over the shoulder (jds-bumps-style 1:11-2:37, 5:11-7:22).
+ */
+export const ROUND: TurnStyle = {
+  ...MOGUL_HANDS_WIDE,
+  // As content/drills/round-line.yaml: a natural field, turn times 1.1-1.3 s at moderate (jds-bumps-style 1:56-2:01).
+  scenarios: {
+    gentle: { speedMps: 3.8, radiusM: 3, slopeDeg: 15, comRadiusM: MOGUL_COM * 3, brakingShare: 0.25 },
+    moderate: { speedMps: 4.3, radiusM: 3, slopeDeg: 18, comRadiusM: MOGUL_COM * 3, brakingShare: 0.25 },
+    dynamic: { speedMps: 5.2, radiusM: 3, slopeDeg: 22, comRadiusM: MOGUL_COM * 3, brakingShare: 0.25 },
+  },
+  // The chest faces downhill (jds-bumps-style frames), so the pelvis turns back by the skis' heading, phased as the path.
+  counter: fallLineHeading(3, ROUND_CORRIDOR),
+  counterGain: 0,
+  counterCurve: [roundHeading(0), roundHeading(1 / 6), roundHeading(1 / 2), roundHeading(0.65), roundHeading(5 / 6)],
+  // Trunk parallel to the shin at the crest (gellie-2019-moguls-forward).
+  trunkOverShin: 0,
+  trunkOverShinGain: 0,
+  // Tip the legs as soon as the skis are flat (jds-bumps-style 5:11-6:00).
+  early: 0.6,
+  // The plant downhill at the release, on the bump's top or shoulder (jds-bumps-style 3:24, 4:25).
+  poleTouchAt: 0.78,
+  head: { ...DOWNHILL, corridor: ROUND_CORRIDOR },
+};
+
 /**
  * The dolphin turn's fore-aft cycle on firm snow (content/movements/dolphin-turn.yaml). Through the finish the ankles
  * open and the feet slide ahead, the mass behind mid-foot over the loaded tails (lemaster-2010 p81; lind-sanders-2004
