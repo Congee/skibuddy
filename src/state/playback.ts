@@ -1,8 +1,20 @@
 import * as Atom from 'effect/reactivity/Atom';
 import { PHASES, Phase } from '../content/schema';
 
-/** Seconds per turn while playing. */
+/** Seconds per turn for a motion with no speed of its own. */
 export const TURN_SECONDS = 3;
+
+/** Playback speed, as a multiple of the turn's real time. */
+export const PlaybackRate = { Full: 1, Half: 0.5, Quarter: 0.25, Eighth: 0.125 } as const;
+export type PlaybackRate = (typeof PlaybackRate)[keyof typeof PlaybackRate];
+export const PLAYBACK_RATES: ReadonlyArray<PlaybackRate> = [PlaybackRate.Full, PlaybackRate.Half, PlaybackRate.Quarter, PlaybackRate.Eighth];
+export const RATE_NAMES: Readonly<Record<PlaybackRate, string>> = { 1: '1×', 0.5: '½×', 0.25: '¼×', 0.125: '⅛×' };
+/** A stored rate, or real time for anything else. */
+export const parseRate = (v: string | null): PlaybackRate => PLAYBACK_RATES.find((r) => String(r) === v) ?? PlaybackRate.Full;
+export const playbackRateAtom = Atom.keepAlive(Atom.make<PlaybackRate>(PlaybackRate.Full));
+
+/** How far a left-then-right cycle advances in `seconds` of play, turns taking `turnSeconds` each at real time. */
+export const cycleAdvance = (seconds: number, turnSeconds: number, rate: PlaybackRate): number => (seconds * rate) / (2 * turnSeconds);
 
 /** Playback advances the turn, and so draws the figure, at most this often a second. */
 export const PLAYBACK_FPS = 30;

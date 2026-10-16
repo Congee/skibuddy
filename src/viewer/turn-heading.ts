@@ -42,3 +42,6 @@ export const turnPath = (pose: string, intensity: Intensity): TurnPath => {
   const corridor = pose === MOGUL_POSE ? ZIPPER_CORRIDOR : TOPS_POSES.has(pose) ? TOPS_CORRIDOR : CORRIDOR_SHARE * radius;
   return { radius, corridor };
 };
+
+/** A pose's regular-turn style, with its speeds; none for a drill's own motion. */
+export const turnStyle = (pose: string): TurnStyle | undefined => STYLES[pose];

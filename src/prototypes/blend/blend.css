@@ -648,14 +648,47 @@ p {
 
 .rail {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: 44px auto minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 8px 16px 0;
 }
 
 .play {
   border-width: 2px;
+}
+
+.speed {
+  height: 44px;
+  min-width: 52px;
+  padding: 0 10px;
+  margin-right: 4px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  appearance: none;
+  background: color-mix(in srgb, var(--snow) 88%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  text-align-last: center;
+  cursor: pointer;
+  transition: background 160ms var(--ease);
+}
+
+.speed:hover:not(:disabled) {
+  background: var(--course-tint);
+}
+
+.speed:disabled {
+  color: var(--ink-3);
+  cursor: default;
+}
+
+.speed option {
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .rail-track input {
@@ -1159,6 +1192,52 @@ p {
 
 .app[data-sheet='glance'] .legal {
   display: none;
+}
+
+/* Phones: the meta line takes the full width under the bar, and the speed sits under play so the rail keeps its labels apart. */
+@media (max-width: 540px) {
+  :root {
+    --top-h: 80px;
+    --dock-h: 146px;
+  }
+
+  .top {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+
+  .top-id {
+    display: contents;
+  }
+
+  .wordmark {
+    align-self: center;
+  }
+
+  .top-meta {
+    order: 1;
+    flex-basis: 100%;
+  }
+
+  .settings {
+    top: var(--top-h);
+  }
+
+  .rail {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 4px 12px;
+  }
+
+  .rail-track {
+    grid-area: 1 / 2 / 3;
+  }
+
+  .speed {
+    height: 30px;
+    min-width: 44px;
+    padding: 0;
+    margin: 0;
+  }
 }
 
 /* Narrow phones: labels alone keep the top bar to one line. */

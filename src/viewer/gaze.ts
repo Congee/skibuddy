@@ -1,4 +1,4 @@
-// Build time only: where the head looks through a turn, from the turn's shape on the slope.
+// Where the head looks through a turn, from the turn's shape on the slope. Also times turns at runtime.
 import { HeadAim } from './pose-definition';
 import type { HeadRule } from './pose-definition';
 import { headingAt } from './turn-heading';

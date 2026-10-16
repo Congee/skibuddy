@@ -2,6 +2,7 @@ import { Schema } from 'effect';
 import { Drill, Exercise, INTENSITIES, Movement, MovementId, Muscle, PHASES, Phase, Source, levelAt } from '../../content/schema';
 import type { Activation, EffortLevel, Intensity, LevelBySetting } from '../../content/schema';
 import { RegularTurn } from '../../viewer/poses/regular-turn';
+import { MogulLine } from '../../viewer/surface';
 
 export interface BlendDrill extends Drill {
   readonly draft: boolean;
@@ -97,6 +98,12 @@ export const KINDS: ReadonlyArray<Kind> = [
     shift: (a) => (a.side === 'inside' && LEGS.has(a.muscle) ? 1 : FOOT.has(a.muscle) ? -1 : 0),
   },
 ];
+
+export { MogulLine };
+/** Moguls is skied down the zipper line (the kind's own turn) or over the tops (that drill's). */
+export const MOGUL_LINES: ReadonlyArray<MogulLine> = [MogulLine.Zipper, MogulLine.Tops];
+export const MOGUL_LINE_NAMES: Readonly<Record<MogulLine, string>> = { [MogulLine.Zipper]: 'Zipper line', [MogulLine.Tops]: 'On the tops' };
+export const TOPS_DRILL = 'turns-on-the-tops';
 
 const clamp = (v: number): EffortLevel => Math.min(3, Math.max(0, Math.round(v)));
 

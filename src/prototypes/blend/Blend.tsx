@@ -3,13 +3,15 @@ import { For, Match, Show, Switch, batch, createEffect, createMemo, createSignal
 import type { JSX } from 'solid-js';
 import { steadyOrder } from '../../content/effort';
 import { INTENSITIES, Intensity, PHASES, isTurnScenarios } from '../../content/schema';
-import { TurnDirection, cycleOf, phaseAt, playingAtom, turnAt, turnDirectionAtom, turnTimeAtom } from '../../state/playback';
-import { usePlayback } from './playback';
+import { PLAYBACK_RATES, RATE_NAMES, TurnDirection, cycleOf, phaseAt, playingAtom, turnAt, turnDirectionAtom, turnTimeAtom } from '../../state/playback';
+import type { PlaybackRate } from '../../state/playback';
+import { usePlayback, usePlaybackRate } from './playback';
 import { REDUCED_MOTION, createMedia } from './media';
 import { ViewLock } from '../../viewer/hip-lock';
 import { motionFor } from '../../viewer/poses';
 import { RegularTurn } from '../../viewer/poses/regular-turn';
-import { KINDS, KIND_DRILLS, KindId, kindMovement } from './data';
+import { realTurnSeconds } from '../../viewer/turn-time';
+import { KINDS, KIND_DRILLS, KindId, MOGUL_LINES, MOGUL_LINE_NAMES, MogulLine, TOPS_DRILL, kindMovement } from './data';
 import type { BlendData } from './data';
 import { drillsLike, keyOf, trainThese } from './detail';
 import { Cover, Figure } from './Figure';
@@ -17,6 +19,7 @@ import type { MusclePick } from './Figure';
 import { Icon } from './icons';
 import { Detail, DrillPicker, Glance, MuscleList, TrainPanel, shortName } from './Panel';
 import { RAMPS, ThemeChoice, createTheme } from './theme';
+import { readUrlState, writeUrlState } from './url-state';
 
 type Source = { readonly kind: KindId } | { readonly drill: string };
 const Sheet = { Closed: 'closed', Glance: 'glance', Half: 'half', Full: 'full' } as const;
@@ -36,7 +39,7 @@ const TURN_NAMES = { [TurnDirection.Left]: 'Left turn', [TurnDirection.Right]: '
 const HALVES = [TurnDirection.Left, TurnDirection.Right] as const;
 
 /** Rail under the figure: play a left then a right turn on a loop, or drag through them. */
-const Rail = (props: { readonly reducedMotion: boolean }): JSX.Element => {
+const Rail = (props: { readonly reducedMotion: boolean; readonly rate: PlaybackRate; readonly onRate: (r: PlaybackRate) => void }): JSX.Element => {
   const [t, setT] = useAtom(() => turnTimeAtom);
   const [direction, setDirection] = useAtom(() => turnDirectionAtom);
   const [playing, setPlaying] = useAtom(() => playingAtom);
@@ -59,6 +62,15 @@ const Rail = (props: { readonly reducedMotion: boolean }): JSX.Element => {
       >
         <Icon name={playing() ? 'pause' : 'play'} />
       </button>
+      <select
+        class="speed"
+        value={props.rate}
+        disabled={props.reducedMotion}
+        aria-label="Playback speed, as a share of real time"
+        onChange={(e) => props.onRate(PLAYBACK_RATES.find((r) => String(r) === e.currentTarget.value) ?? props.rate)}
+      >
+        <For each={PLAYBACK_RATES}>{(r) => <option value={r}>{RATE_NAMES[r]}</option>}</For>
+      </select>
       <div class="rail-track">
         <input
           type="range"
@@ -132,13 +144,19 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
   const desktop = createMedia(DESKTOP);
   const reducedMotion = createMedia(REDUCED_MOTION);
   const [stage, setStage] = createSignal<HTMLElement>();
-  usePlayback(reducedMotion, stage);
+  const [rate, setRate] = usePlaybackRate();
 
-  const [source, setSource] = createSignal<Source>({ kind: KindId.Carving });
+  const linked = readUrlState(window.location.search);
+  const [source, setSource] = createSignal<Source>({ kind: linked.kind });
   // The kind of skiing to return to from a drill.
-  const [home, setHome] = createSignal<KindId>(KindId.Carving);
+  const [home, setHome] = createSignal<KindId>(linked.kind);
+  const [line, setLine] = createSignal<MogulLine>(linked.line);
+  createEffect(() => {
+    const search = writeUrlState({ kind: home(), line: line() }, window.location.search);
+    if (search !== window.location.search) history.replaceState(history.state, '', `${window.location.pathname}${search}${window.location.hash}`);
+  });
   const homeName = (): string => KINDS.find((k) => k.id === home())?.name ?? '';
-  const homePose = (): string => KINDS.find((k) => k.id === home())?.pose ?? '';
+  const homePose = (): string => (home() === KindId.Moguls && line() === MogulLine.Tops ? TOPS_DRILL : (KINDS.find((k) => k.id === home())?.pose ?? ''));
   const chooseKind = (id: KindId): void => {
     setHome(id);
     setSource({ kind: id });
@@ -153,15 +171,17 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
     const s = source();
     return 'kind' in s ? KINDS.find((k) => k.id === s.kind) : undefined;
   });
+  // Moguls over the tops shows that drill's turn, field and muscles under the Moguls kind.
+  const lineDrill = (): string | null => (kind()?.id === KindId.Moguls && line() === MogulLine.Tops ? TOPS_DRILL : null);
   const drill = createMemo(() => {
     const s = source();
-    const id = 'drill' in s ? s.drill : kind()?.drill;
+    const id = 'drill' in s ? s.drill : (lineDrill() ?? kind()?.drill);
     return data.drills.find((d) => d.id === id) ?? data.drills[0];
   });
   const pose = createMemo((): string => {
     const k = kind();
     const d = drill();
-    if (k !== undefined) return k.pose;
+    if (k !== undefined && lineDrill() === null) return k.pose;
     return d === undefined ? '' : (motionFor(d.id, isTurnScenarios(d.scenarios)) ?? d.id);
   });
   // The pose's own view until one is chosen.
@@ -170,11 +190,12 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
   const movement = createMemo(() => {
     const k = kind();
     const d = drill();
-    return k === undefined ? (d === undefined ? undefined : data.movements.get(d.movement)) : kindMovement(k, data);
+    return k === undefined || lineDrill() !== null ? (d === undefined ? undefined : data.movements.get(d.movement)) : kindMovement(k, data);
   });
+  usePlayback(reducedMotion, stage, createMemo(() => realTurnSeconds(pose(), intensity())));
   const placeholder = createMemo(() => {
     const k = kind();
-    return k?.shift === undefined ? null : (KINDS.find((x) => x.base === k.base && x.shift === undefined)?.name.toLowerCase() ?? null);
+    return k?.shift === undefined || lineDrill() !== null ? null : (KINDS.find((x) => x.base === k.base && x.shift === undefined)?.name.toLowerCase() ?? null);
   });
   const order = createMemo(() => steadyOrder(movement()?.activations ?? []));
   const activation = createMemo(() => order().find((a) => keyOf(a) === selected()));
@@ -322,7 +343,11 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
     const a = activation();
     return a === undefined ? '' : shortName(data, a);
   });
-  const sourceName = (): string => kind()?.name ?? `Drill: ${drill()?.name ?? ''}`;
+  const sourceName = (): string => {
+    const k = kind();
+    if (k === undefined) return `Drill: ${drill()?.name ?? ''}`;
+    return k.id === KindId.Moguls ? `${k.name} · ${MOGUL_LINE_NAMES[line()]}` : k.name;
+  };
   const status = (): string | null => (placeholder() !== null ? 'placeholder data' : kind() === undefined && drill()?.draft !== true ? null : 'draft');
 
   return (
@@ -354,6 +379,9 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
         <Show when={settings()}>
           <div id="settings" class="settings" role="group" aria-label="Settings">
             <Segmented label="How hard it is skied" options={INTENSITIES} value={intensity()} onChange={setIntensity} />
+            <Show when={kind()?.id === KindId.Moguls}>
+              <Segmented label="Line through the moguls" options={MOGUL_LINES} names={MOGUL_LINE_NAMES} value={line()} onChange={setLine} />
+            </Show>
             <Segmented label="View" options={VIEW_LOCKS} names={VIEW_LOCK_NAMES} value={viewLock()} onChange={setViewChoice} />
             <Segmented label="Theme" options={[ThemeChoice.System, ThemeChoice.Light, ThemeChoice.Dark]} value={choice()} onChange={setChoice} />
             <p class="muted small">
@@ -400,7 +428,7 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
           </button>
         </Show>
         <div class="dock">
-          <Rail reducedMotion={reducedMotion()} />
+          <Rail reducedMotion={reducedMotion()} rate={rate()} onRate={setRate} />
           <Show
             when={kind()}
             fallback={
