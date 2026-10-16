@@ -58,6 +58,11 @@ describe('findProblems', () => {
     assert.deepStrictEqual(findProblems(contentWith({ drills })), ['drill stork-turns: unknown movement missing']);
   });
 
+  it('flags a drill whose settings mix turns and runs with no radius', () => {
+    const drills = rawContent.drills.map((d) => ({ ...d, scenarios: { ...d.scenarios, gentle: { speed_mps: 2, slope_deg: 15 } } }));
+    assert.deepStrictEqual(findProblems(contentWith({ drills })), ['drill stork-turns: give radius_m at every setting or at none']);
+  });
+
   it('flags a task pointing at an unknown drill', () => {
     const tasks = rawContent.tasks.map((t) => ({ ...t, drill: 'missing' }));
     assert.deepStrictEqual(findProblems(contentWith({ tasks })), ['task psia/Stork Turns: unknown drill missing']);

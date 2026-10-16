@@ -2,10 +2,10 @@ import { assert, describe, it } from '@effect/vitest';
 import type { Activation, ExerciseTarget, Movement, Muscle } from '../src/content/schema';
 import { steadyOrder } from '../src/content/effort';
 import { Intensity } from '../src/content/schema';
-import type { Scenario } from '../src/content/schema';
+import type { TurnScenario } from '../src/content/schema';
 import { pinInputs } from '../src/ui/figure/pin-inputs';
 import { BoardGroup, groupActivations } from '../src/ui/board/groups';
-import { peakLoad, phaseWords, scenarioLine, settingNotes, stripSamples, variesBySetting } from '../src/ui/board/intensity';
+import { peakLoad, phaseWords, scenarioLine, settingNotes, stopLoad, stripSamples, variesBySetting } from '../src/ui/board/intensity';
 import { sourceKeys } from '../src/ui/board/source-keys';
 import { TargetFit, targetMatch } from '../src/ui/gym/fit';
 
@@ -153,7 +153,7 @@ describe('effort per intensity setting', () => {
 });
 
 describe('scenarioLine', () => {
-  const moderate: Scenario = { speedMps: 8, radiusM: 12, slopeDeg: 12 };
+  const moderate: TurnScenario = { speedMps: 8, radiusM: 12, slopeDeg: 12 };
 
   it('takes the peak load below the fall line: about 1.2 at moderate', () => {
     assert.closeTo(peakLoad(moderate), 1.2, 0.01);
@@ -168,7 +168,35 @@ describe('scenarioLine', () => {
     assert.include(scenarioLine(Intensity.Dynamic, { speedMps: 10, radiusM: 14, slopeDeg: 15 }), '1.3 × body weight');
   });
 
-  it('reads a straight run with no turn load', () => {
-    assert.strictEqual(scenarioLine(Intensity.Gentle, { speedMps: 3, slopeDeg: 5 }), 'Gentle: about 10 km/h straight down a 5° slope.');
+  it('reads a run with no radius as no round turns, at about body weight', () => {
+    assert.strictEqual(
+      scenarioLine(Intensity.Gentle, { speedMps: 1.5, slopeDeg: 15 }),
+      'Gentle: about 5 km/h on a 15° slope, no round turns; the legs carry about body weight at a steady speed.',
+    );
+  });
+
+  it('reads a stepping run with its cadence, at about body weight on average', () => {
+    assert.strictEqual(
+      scenarioLine(Intensity.Moderate, { speedMps: 3, slopeDeg: 5, stepRateHz: 1.5 }),
+      'Moderate: about 10 km/h on a 5° slope, no round turns, stepping about 1.5 times a second; the legs carry about body weight on average, each push briefly more.',
+    );
+  });
+
+  it('reads a stop with its braking load from Lind & Sanders eq 4.7', () => {
+    assert.strictEqual(
+      scenarioLine(Intensity.Moderate, { speedMps: 7, slopeDeg: 12, stopDistanceM: 4 }),
+      'Moderate: about 25 km/h on a 12° slope, braking to a stop within about 4 m. The load on the legs rises to about 1.3 × body weight while braking.',
+    );
+  });
+});
+
+describe('stopLoad', () => {
+  // The book's worked example: 160 lb from 30 mph in 15 ft on 15° is about 2.3 W in the slope plane, 2.5 W in all.
+  it('matches the book example', () => {
+    assert.closeTo(stopLoad(13.41, 15, 4.572), 2.5, 0.05);
+  });
+
+  it('is body weight on the flat with no speed to lose', () => {
+    assert.closeTo(stopLoad(1e-9, 0, 1), 1, 1e-9);
   });
 });

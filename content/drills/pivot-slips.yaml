@@ -1,0 +1,28 @@
+id: pivot-slips
+name: Pivot slips
+movement: pivot-slip
+summary: Down a corridor little wider than the skis are long, the skier sideslips, flattens the skis and pivots them a half circle under the feet, through the fall line, into a sideslip facing the other way, again and again. The chest keeps facing down the hill the whole time; the thighs turn in the hip sockets, the pelvis follows the skis only partway, the skis stay flat and parallel, and the pivot point stays under the middle of the feet.
+# Sources back a gentle to moderate groomed slope; the pitch per setting is our inference.
+terrain: Smooth groomed slopes, from an easy blue when gentle to a steeper blue when dynamic, in a narrow corridor; firm snow that lets flat skis turn, not ice or deep snow
+# No turn radius and no stop: a steady descent at about body weight (Lind & Sanders eq 4.8, p 92).
+# Speeds are our inference for a drill; a harder setting also pivots faster.
+scenarios:
+  gentle: { speed_mps: 2, slope_deg: 12 }
+  moderate: { speed_mps: 3, slope_deg: 18 }
+  dynamic: { speed_mps: 4, slope_deg: 22 }
+equipment: Efforts assume recreational carving skis with normally tuned edges, and boots with about 15° of cuff lean, about 0.9° of binding ramp and about 42 mm stand height. Shorter, lighter skis pivot more easily; sharp edges, a high stand height or hard snow make an edge catch sooner.
+cautions:
+  - Flatten the skis before turning them; an edge that catches mid-pivot twists the knee.
+  - Turn the legs, not the shoulders; a rotating upper body spins the whole skier and leaves the trunk muscles idle.
+sources:
+  - { source: lemaster-2010, pages: "83, 107-109" }
+  - { source: lind-sanders-2004, pages: "53, 115-117" }
+  - { source: iasi-2021, pages: "27, 170" }
+  - psia-c-linked-sideslips
+primitives:
+  - { primitive: leg-rotation, modifier: "large, both legs at the same rate" }
+  - { primitive: tipping, modifier: "release to flat, gentle re-edge" }
+  - { primitive: counter, modifier: "large, chest facing down the hill throughout, the pelvis countered about 30-50° to the skis" }
+  - { primitive: ankle-flexion, modifier: "held centred, pivot under the feet" }
+  - { primitive: extension-transition, modifier: a small rise to lighten the skis }
+reviewed_by: []

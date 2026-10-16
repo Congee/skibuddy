@@ -1,0 +1,32 @@
+id: falling-leaf
+name: Falling leaf
+movement: falling-leaf
+summary: A sideslip down a corridor that drifts forward, then backward, like a leaf falling, with the same ski downhill the whole way. Turning the legs to steer the tips slightly down takes the skis forward, and steering the tails down takes them backward; the ankles move the pressure forward or back to follow, so it stays centred. The body keeps facing down the hill and the edges keep the slide steady.
+# Sources back a groomed slope that will slide; the pitch per setting is our inference.
+terrain: Smooth groomed slopes steep enough to slide sideways, from a blue when gentle to a steep blue when dynamic; firm snow, not ice or deep snow
+# No turn radius and no stop: a steady slip at about body weight (Lind & Sanders eq 4.8, p 92).
+# Slip speeds are our inference for a drill.
+scenarios:
+  gentle: { speed_mps: 1.5, slope_deg: 15 }
+  moderate: { speed_mps: 2.5, slope_deg: 20 }
+  dynamic: { speed_mps: 3.5, slope_deg: 25 }
+equipment: Efforts assume recreational carving skis with normally tuned edges, and boots with about 15° of cuff lean, about 0.9° of binding ramp and about 42 mm stand height. A boot too stiff in front makes the forward segment hard to start; too little forward lean puts the backward segment on the tails.
+cautions:
+  - Go backward with the ankles, not by sitting back; leaning on the back of the boots is the backward-fall position that loads the knee.
+  - Keep the slide in a corridor; drifting into a traverse means the upper body is steering.
+  - Steer with the legs, not by pressing forward or back; with a slip's few degrees of edge, forward pressure makes the tails lead, and the effect flips as the edge grows.
+  - Don't roll past flat; a caught downhill edge throws you down the hill.
+sources:
+  - { source: lemaster-2010, pages: "29-30, 73, 81, 85, 107-108" }
+  - { source: lind-sanders-2004, pages: "92-95" }
+  - { source: iasi-2021, pages: 168 }
+  - psia-c-falling-leaf
+primitives:
+  - { primitive: ankle-flexion, modifier: "forward and back, following the skis" }
+  - { primitive: tipping, modifier: "a few degrees, held" }
+  - { primitive: leg-rotation, modifier: "small, tips then tails steered down; the cause of the travel" }
+  - { primitive: counter, modifier: "pelvis about 30-50°, chest and head the rest of the way down the hill" }
+  - { primitive: hip-angulation, modifier: "a forward fold at the hips, held" }
+  - { primitive: stance-leg-edge-hold, modifier: "light, most weight on the downhill ski" }
+  - { primitive: inside-leg-shortening, modifier: the uphill leg more bent on the slope }
+reviewed_by: []

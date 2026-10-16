@@ -2,7 +2,7 @@ import { useAtom, useAtomValue } from '@effect/atom-solid';
 import { Show, createEffect, createMemo, createSignal, on } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { matchExercises } from '../content/match';
-import { isTurnScenarios, shortNameOf } from '../content/schema';
+import { shortNameOf } from '../content/schema';
 import type { Content, Drill, Movement } from '../content/schema';
 import { NO_FOCUS, focusAtom, openSlat } from '../state/focus';
 import { intensityAtom } from '../state/preferences';
@@ -46,7 +46,6 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
   // Another drill starts with every slat closed.
   createEffect(on(() => props.movement, () => setFocus(NO_FOCUS), { defer: true }));
   const compact = createMedia(PHONE);
-  const turnScenarios = createMemo(() => (isTurnScenarios(props.drill.scenarios) ? props.drill.scenarios : undefined));
   // A pin opens its slat and brings it into view.
   const pick = (key: string): void => {
     setFocus(openSlat(focus(), key));
@@ -57,21 +56,19 @@ const Lodge = (props: { readonly content: Content; readonly drill: Drill; readon
   return (
     <main class={s.lodge}>
       <section class={s.stage} aria-label="Figure and turn">
-        <Show when={turnScenarios()} fallback={<p class={s.status}>The 3D figure only poses turns so far; this drill runs straight.</p>}>
-          <FigureField
-            movement={props.movement}
-            muscles={props.content.muscles.map((m) => m.id)}
-            order={order()}
-            pins={pins()}
-            skeleton={skeleton()}
-            gear={gear()}
-            intensity={intensity()}
-            drill={props.drill.id}
-            muscleName={muscleShort}
-            onPick={pick}
-            ref={setField}
-          />
-        </Show>
+        <FigureField
+          movement={props.movement}
+          muscles={props.content.muscles.map((m) => m.id)}
+          order={order()}
+          pins={pins()}
+          skeleton={skeleton()}
+          gear={gear()}
+          intensity={intensity()}
+          drill={props.drill.id}
+          muscleName={muscleShort}
+          onPick={pick}
+          ref={setField}
+        />
         <LiftLine
           skeleton={skeleton()}
           onSkeleton={setSkeleton}

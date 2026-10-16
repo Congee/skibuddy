@@ -380,3 +380,28 @@
   citation: PSIA-AASI Central. Advanced One-Ski Activities (alpine resources, skill-building tasks).
   url: https://psia-c.org/education/alpine/alpine-resources/advanced-one-ski-activities/
   read: full
+- id: psia-c-sideslip-fall-line
+  type: web
+  citation: PSIA-AASI Central. Integrated Sideslip in the Fall Line (alpine resources, former task).
+  url: https://psia-c.org/education/alpine/alpine-resources/sideslip-fall-line/
+  read: full
+- id: psia-c-diagonal-side-slip
+  type: web
+  citation: PSIA-AASI Central. Diagonal Side Slip (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/diagonal-side-slip/
+  read: full
+- id: psia-c-falling-leaf
+  type: web
+  citation: PSIA-AASI Central. Falling Leaf (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/falling-leaf/
+  read: full
+- id: psia-c-linked-sideslips
+  type: web
+  citation: PSIA-AASI Central. Linked Sideslips (alpine resources, former task).
+  url: https://psia-c.org/education/alpine/alpine-resources/linked-sideslips/
+  read: full
+- id: psia-c-hockey-stops
+  type: web
+  citation: PSIA-AASI Central. Hockey Stops (alpine resources).
+  url: https://psia-c.org/education/alpine/alpine-resources/hockey-stops/
+  read: full

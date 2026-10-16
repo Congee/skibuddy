@@ -1,0 +1,31 @@
+id: hockey-stops
+name: Hockey stops
+movement: hockey-stop
+summary: From a straight run down the fall line, both skis are pivoted quickly and together across the hill under a body that keeps facing down it, then edged progressively into a braking skid to a full stop. The legs turn at the same rate and the pelvis follows the skis only partway; angulation over the downhill ski, mostly a forward fold at the hip, holds the edges as the skis slow.
+# Sources back groomed slopes; the pitch and speed per setting are our inference.
+terrain: Smooth groomed slopes with room to run straight, from a green when gentle to a blue when dynamic; firm, edgeable snow, not ice or deep snow
+# No turn radius: a braking stop. Loads follow Lind & Sanders eq 4.7, p 91. Entry speeds and stop distances are
+# our inference for a drill, well under race skids.
+scenarios:
+  gentle: { speed_mps: 5, slope_deg: 8, stop_distance_m: 4 }
+  moderate: { speed_mps: 7, slope_deg: 12, stop_distance_m: 4 }
+  dynamic: { speed_mps: 9, slope_deg: 15, stop_distance_m: 4 }
+equipment: Efforts assume recreational carving skis with normally tuned edges, and boots with about 15° of cuff lean, about 0.9° of binding ramp and about 42 mm stand height. Sharp edges, a high stand height or hard snow make the edges bite sooner and harder; shorter skis pivot more easily.
+cautions:
+  - Build the edge progressively; an abrupt edge set with the weight back can catch the downhill ski and twist the knee.
+  - Pivot the legs, not the shoulders; throwing the upper body around spins the skier to face across the hill.
+  - Stop well clear of other skiers and check uphill before starting again.
+sources:
+  - { source: lind-sanders-2004, pages: "91, 96, 117, 193" }
+  - { source: lemaster-2010, pages: "42-45, 107-108, 136" }
+  - psia-c-hockey-stops
+primitives:
+  - { primitive: leg-rotation, modifier: "fast, both legs at the same rate" }
+  - { primitive: counter, modifier: "large, chest facing down the hill, the pelvis countered about 30-50° to the skis" }
+  - { primitive: edge-set, modifier: progressive braking to a stop }
+  - { primitive: hip-angulation, modifier: "mostly a forward fold at the hip, builds with the edge" }
+  - { primitive: tipping, modifier: "flat to pivot, then a quick progressive set" }
+  - { primitive: ankle-flexion, modifier: shins forward before the pivot }
+  - { primitive: stance-leg-edge-hold, modifier: most of the braking on the downhill ski }
+  - { primitive: extension-transition, modifier: a brief rise to free the skis }
+reviewed_by: []

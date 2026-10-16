@@ -1,0 +1,20 @@
+id: seated-banded-hip-rotation
+name: Seated banded hip rotation
+# The pivot drills turn the bent thighs in and out against the skis; no other exercise here trains that concentric
+# rotation. LeMaster's seated leg-twist drill is the unloaded version. No dosing: no source supports one.
+# Turn-in: the adductors and gluteus medius's front fibres lead, gluteus minimus and TFL assist. Turn-out: the deep
+# rotators and gluteus maximus. Only the leaders are targets, so this doesn't outrank stork-hold for stork turns.
+targets:
+  - { muscle: adductors, contraction: concentric }
+  - { muscle: gluteus-medius, contraction: concentric }
+  - { muscle: deep-hip-rotators, contraction: concentric }
+  - { muscle: gluteus-maximus, contraction: concentric }
+single_leg: true
+matches_on_snow: "Turning the bent thigh in or out in the hip socket under a quiet pelvis, as in pivot slips and hockey stops. Sit tall, knee bent at a right angle and held still, band around the ankle. Turn in: anchor the band beside the other leg and swing the foot out, away from it. Turn out: anchor the band on the outside and swing the foot in, across"
+easier: No band; twist the leg so the knee and big toe move toward the other leg, then away
+harder: A stronger band, or a slower return
+cautions: [Hip impingement, "Knee pain: keep the band low on the shin and the knee still"]
+sources:
+  - delp-1999
+  - { source: lemaster-2010, pages: "108-109" }
+reviewed_by: []

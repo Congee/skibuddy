@@ -1,0 +1,8 @@
+association: psia
+drill: pivot-slips
+task: Pivot Slips
+level: { label: Level 3, ordinal: 3 }
+category: Individual
+# PSIA-C tags it Pressure and Rotary but gives no Fundamental Focus, so no fundamentals are mapped.
+url: https://psia-c.org/education/alpine/alpine-resources/pivot-slips/
+reviewed_by: []

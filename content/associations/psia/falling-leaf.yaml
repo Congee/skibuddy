@@ -1,0 +1,9 @@
+association: psia
+drill: falling-leaf
+task: Falling Leaf
+level: { label: Level 2, ordinal: 2 }
+category: Individual
+# PSIA-C's page joins the two with "and/or".
+fundamentals: { relation: and/or, ids: [ski-to-ski, edge-angles] }
+url: https://psia-c.org/education/alpine/alpine-resources/falling-leaf/
+reviewed_by: []

@@ -1,0 +1,6 @@
+association: iasi
+drill: pivot-slips
+# The nearest match; IASI's braquage adds a short glide in the fall line and gives no level.
+task: Braquage
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=170
+reviewed_by: []

@@ -1,0 +1,33 @@
+id: sideslips
+name: Sideslips
+movement: sideslip
+summary: Skis parallel and across the hill, the body facing down it. Rolling the knees and ankles down the hill flattens the skis so they slide sideways down a narrow corridor at a steady rate; rolling them back into the hill sets the edges and stops. In the diagonal version the skis slide forward and down along a steady line. The edges, not the upper body, set the speed.
+# Sources back groomed snow at any pitch that will slide; the pitch per setting is our inference.
+terrain: Smooth groomed slopes steep enough to slide sideways, from a blue when gentle to a steep blue or easy black when dynamic; firm snow, not ice or deep snow
+# No turn radius: a steady slip, then an edge set. The stop's load follows Lind & Sanders eq 4.7, p 91.
+# Slip speeds and stop distances are our inference for a drill.
+scenarios:
+  gentle: { speed_mps: 1.5, slope_deg: 15, stop_distance_m: 1.5 }
+  moderate: { speed_mps: 2.5, slope_deg: 20, stop_distance_m: 1.5 }
+  dynamic: { speed_mps: 3.5, slope_deg: 25, stop_distance_m: 1 }
+equipment: Efforts assume recreational carving skis with normally tuned edges, and boots with about 15° of cuff lean, about 0.9° of binding ramp and about 42 mm stand height. Sharp edges, a high stand height or hard snow make the slip grabby and the edge set sudden; wide or detuned skis slide more easily.
+cautions:
+  - Set the edges progressively; an abrupt edge set with the weight back can catch the downhill ski and twist the knee.
+  - Lean out over the downhill ski, not into the hill; leaning in locks the edges or lets the feet slide out.
+  - Don't roll past flat; a caught downhill edge throws you down the hill.
+sources:
+  - { source: lind-sanders-2004, pages: "91-95" }
+  - { source: lemaster-2010, pages: "73, 108, 123-126, 130, 181, 184, 200-204" }
+  - { source: iasi-2021, pages: 168 }
+  - psia-c-sideslip-fall-line
+  - psia-c-diagonal-side-slip
+primitives:
+  - { primitive: ankle-flexion, modifier: "held centred, small fore-aft trim" }
+  - { primitive: tipping, modifier: "release and re-set, no progressive build" }
+  - { primitive: counter, modifier: "pelvis about 30-50°, chest and head the rest of the way down the hill" }
+  - { primitive: hip-angulation, modifier: "a forward fold at the hips, deepened for the edge set" }
+  - { primitive: leg-rotation, modifier: "knee roll releases and sets the edges; small steering in the diagonal" }
+  - { primitive: edge-set, modifier: to stop }
+  - { primitive: stance-leg-edge-hold, modifier: "light, most weight on the downhill ski" }
+  - { primitive: inside-leg-shortening, modifier: the uphill leg more bent on the slope }
+reviewed_by: []

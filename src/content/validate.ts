@@ -9,6 +9,7 @@ import {
   DOFS,
   INTENSITIES,
   isAxial,
+  isTurnScenario,
   levelAt,
   MatrixSide,
   PHASES,
@@ -122,6 +123,10 @@ export const findProblems = (content: Content): ReadonlyArray<string> => {
     const movement = movements.get(drill.movement);
     if (movement === undefined) problems.push(`drill ${drill.id}: unknown movement ${drill.movement}`);
     cite(`drill ${drill.id}`, drill.sources ?? []);
+    const turns = INTENSITIES.filter((i) => isTurnScenario(drill.scenarios[i]));
+    if (turns.length > 0 && turns.length < INTENSITIES.length) {
+      problems.push(`drill ${drill.id}: give radius_m at every setting or at none`);
+    }
     for (const id of duplicates(drill.primitives.map((p) => p.primitive))) problems.push(`drill ${drill.id}: primitive ${id} appears twice`);
     for (const { primitive: id } of drill.primitives) {
       const primitive = primitives.get(id);

@@ -1,0 +1,6 @@
+association: iasi
+drill: sideslips
+# IASI gives drills no level and names no skills for them as fundamentals.
+task: Side Slipping/edge set
+url: https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/#page=168
+reviewed_by: []

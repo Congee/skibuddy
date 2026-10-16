@@ -138,17 +138,14 @@ describe('intensity settings', () => {
     assert.isTrue(Exit.isFailure(Schema.decodeUnknownExit(Drill)({ ...drill, scenarios: undefined })));
   });
 
-  it('takes a straight run as speed and slope, with no radius', () => {
-    const run = { gentle: { speed_mps: 3, slope_deg: 5 }, moderate: { speed_mps: 5, slope_deg: 8 }, dynamic: { speed_mps: 7, slope_deg: 10 } };
-    const d = decodeDrill({ ...drill, scenarios: run });
-    assert.deepStrictEqual(d.scenarios.moderate, { speedMps: 5, slopeDeg: 8 });
+  it('takes a scenario with no radius and an optional stop distance', () => {
+    const slip = { speed_mps: 7, slope_deg: 12, stop_distance_m: 4 };
+    const d = decodeDrill({ ...drill, scenarios: { gentle: slip, moderate: slip, dynamic: slip } });
+    assert.deepStrictEqual(d.scenarios.moderate, { speedMps: 7, slopeDeg: 12, stopDistanceM: 4 });
     assert.isFalse(isTurnScenarios(d.scenarios));
     assert.isTrue(isTurnScenarios(decodeDrill(drill).scenarios));
-  });
-
-  it('rejects a run with a radius on only some settings', () => {
-    const mixed = { ...scenarios, gentle: { speed_mps: 3, slope_deg: 5 } };
-    assert.isTrue(Exit.isFailure(Schema.decodeUnknownExit(Drill)({ ...drill, scenarios: mixed })));
+    const still = { gentle: slip, moderate: slip, dynamic: { ...slip, stop_distance_m: 0 } };
+    assert.isTrue(Exit.isFailure(Schema.decodeUnknownExit(Drill)({ ...drill, scenarios: still })));
   });
 
   it('takes a single number or one value per setting for each phase', () => {

@@ -1,0 +1,8 @@
+association: csia
+drill: pivot-slips
+# The nearest match: a skidded fall-line rotation of parallel skis with no arc; CSIA does not call it pivot slips.
+task: Braquage
+level: { label: Level 3, ordinal: 3 }
+category: tactic run
+url: https://csia.snowpro.com/ServicesServlet/telechargement/document/L3CG-EN.pdf
+reviewed_by: []
