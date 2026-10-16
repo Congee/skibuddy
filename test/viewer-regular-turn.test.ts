@@ -460,7 +460,7 @@ describe('regular turn', () => {
       }
   });
 
-  it('leads with the inside tip from the fall-line chest drills, level at the switch', () => {
+  it('builds the inside tip lead progressively from level at the switch', () => {
     // Observed side-on in Olivia Giaccio's closed-stance short turns: about level at the edge change, then 3-13 cm ahead.
     const tipLead = (drill: string, i: Intensity, t: number): number => {
       const w = segmentMatrices(samplePose(poseTable(drill, i), t));
@@ -470,15 +470,31 @@ describe('regular turn', () => {
       const c = transformPoint(inside, SKI_TIP);
       return (c[0] - b[0]) * (a[0] - o[0]) + (c[1] - b[1]) * (a[1] - o[1]) + (c[2] - b[2]) * (a[2] - o[2]);
     };
-    for (const drill of [RegularTurn.ShortTurns, RegularTurn.Moguls, RegularTurn.Steeps, RegularTurn.Powder, TOPS_POSE, 'closed-stance-short-turns'])
-      for (const i of INTENSITIES)
-        for (let k = 0; k < 96; k++) {
-          const lead = tipLead(drill, i, k / 96);
-          assert.isAtLeast(lead, -0.03, `${drill} ${i} ${k}/96`);
-          assert.isAtMost(lead, EQUIPMENT.soleLength / 2, `${drill} ${i} ${k}/96`);
-          // Square to the fall line the countered hips set no lead; a millimetre of solver slack.
-          if (k / 96 >= 0.3) assert.isAtLeast(lead, -0.001, `${drill} ${i} ${k}/96`);
+    for (const drill of Object.keys(POSE_DEFINITIONS))
+      for (const i of INTENSITIES) {
+        const leads = Array.from({ length: 48 }, (_, k) => tipLead(drill, i, k / 48));
+        const at = (t: number): number => leads[Math.round(t * 48)] ?? NaN;
+        const peak = Math.max(...leads);
+        const tag = `${drill} ${i}`;
+        assert.isAtMost(Math.abs(at(0)), 0.01, tag);
+        // Where the legs scissor the counter sets the lead; elsewhere the inside leg's flex does, smaller and dipping in gentle carving.
+        const scissor = POSE_DEFINITIONS[drill]?.constraints.scissor === true;
+        if (scissor) {
+          assert.isAtLeast(at(0.3), 0.03, tag);
+          assert.isAtLeast(peak, 0.06, tag);
+          // Olivia's measured peak is 9-13 cm; the counter here sets up to 15.
+          assert.isAtMost(peak, 0.15, tag);
         }
+        const peakT = leads.indexOf(peak) / 48;
+        assert.isAtLeast(peakT, 0.55, tag);
+        assert.isAtMost(peakT, 0.9, tag);
+        leads.forEach((lead, k) => {
+          assert.isAtMost(lead, EQUIPMENT.soleLength / 2, `${tag} ${k}/48`);
+          if (k / 48 > 0.1) assert.isAtLeast(lead, -0.01, `${tag} ${k}/48`);
+          // No plateau: rising from just after the switch to past the fall line, 2 mm of slack a step.
+          if (scissor && k / 48 > 0.05 && k / 48 <= 0.6) assert.isAtLeast(lead, (leads[k - 1] ?? 0) - 0.002, `${tag} ${k}/48`);
+        });
+      }
   });
 
   it('keeps the mogul mass near upright: the lean bounded, the edge from the legs', () => {

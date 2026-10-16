@@ -368,7 +368,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     kneesIn: 0,
     // The balance axis stays square to the skis, so forward of gravity, not of the feet (lemaster-2010 p84); inferred.
     // Mass toward the ball of the foot so the chest stays over the outside knee (lemaster-2010 pp57, 182-183); inferred.
-    comAhead: [0.08, 0.06, 0.02, 0.045, 0.025],
+    comAhead: [0.072, 0.06, 0.02, 0.045, 0.025],
     comAheadGain: 0.2,
     trunkOverShin: 16,
     trunkOverShinGain: 0.2,

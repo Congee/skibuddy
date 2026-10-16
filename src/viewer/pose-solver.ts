@@ -108,8 +108,23 @@ const insideTipLead = (pose: Pose): number => {
 const hipX = (side: BodySide): number => SEGMENTS.find((g) => g.kind === SegmentKind.Thigh && g.side === side)?.joint[0] ?? 0;
 const HIP_SPACING = Math.abs(hipX(BodySide.Left) - hipX(BodySide.Right));
 
-/** Metres the old inside tip still leads at the switch; observed within a few cm of level. */
-const SWITCH_LEAD = 0.02;
+/** Turn time the inside tip leads most, between the fall line and the finish. */
+const LEAD_PEAK = 0.7;
+/** The lead's phase rate at the switch and at its peak; slow at the switch, so it builds progressively. */
+const [LEAD_SWITCH_RATE, LEAD_PEAK_RATE] = [0.5, 0.9];
+const hermite = (p0: number, p1: number, m0: number, m1: number, h: number, x: number): number =>
+  (2 * x ** 3 - 3 * x ** 2 + 1) * p0 + (x ** 3 - 2 * x ** 2 + x) * h * m0 + (3 * x ** 2 - 2 * x ** 3) * p1 + (x ** 3 - x ** 2) * h * m1;
+/**
+ * Share of its peak the inside tip leads at turn time `u`: level at the switch, growing as the legs turn through the
+ * turn to LEAD_PEAK, then back to level; the switch's slope matches the mirrored next turn's.
+ */
+const leadShape = (u: number): number =>
+  Math.sin(
+    Math.PI *
+      (u < LEAD_PEAK
+        ? hermite(0, 0.5, LEAD_SWITCH_RATE, LEAD_PEAK_RATE, LEAD_PEAK, u / LEAD_PEAK)
+        : hermite(0.5, 1, LEAD_PEAK_RATE, LEAD_SWITCH_RATE, 1 - LEAD_PEAK, (u - LEAD_PEAK) / (1 - LEAD_PEAK))),
+  );
 /** Most the inside tip leads: half a boot sole. */
 const LEAD_MAX = EQUIPMENT.soleLength / 2;
 /** Hip to ankle, metres, near enough to step the inside leg's swing toward its lead. */
@@ -506,13 +521,10 @@ const solveOn = (
   let unflex = 0;
   // Radians the legs scissor about the hips, the knees held: the inside forward, the outside back, half each.
   let swing = 0;
-  // Square boots under countered hips lead by the hip spacing times the sine of the counter; about the edge change the
-  // new inside foot slides forward to within SWITCH_LEAD of level, not behind (observed side-on in Olivia Giaccio's closed-stance turns).
-  const u = wrapTime(t);
-  const rise = smooth(Math.min(1, u / 0.2));
-  const fall = smooth(Math.max(0, (u - 0.875) / 0.125));
-  const scissor = SWITCH_LEAD * (fall - (1 - rise));
-  const lead = c.scissor === true ? (pose: Pose): number => Math.min(LEAD_MAX, Math.max(scissor, HIP_SPACING * Math.sin(pose.counter) * (1 - fall))) : null;
+  // The lead builds progressively from level at the edge change to about what square boots under the most countered
+  // hips give, the hip spacing times the sine of the counter (Olivia Giaccio side-on).
+  const peakCounter = c.scissor === true ? Math.max(...Array.from({ length: 48 }, (_, j) => keyValuesAt(def.keys, j / 48).counter)) * (1 + (c.gains.counter ?? 0) * effort.scale) : 0;
+  const lead = c.scissor === true ? Math.min(LEAD_MAX, HIP_SPACING * Math.sin(peakCounter) * leadShape(wrapTime(t))) : null;
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
@@ -677,7 +689,7 @@ const solveOn = (
     inside = insideLeg(knee, shin);
     for (let i = 0; lead !== null && i < 3; i++) {
       const pose = base(knee, inside.extra, inside.tailLift, shin);
-      swing += (lead(pose) - insideTipLead(pose)) / LEG_REACH;
+      swing += (lead - insideTipLead(pose)) / LEG_REACH;
       inside = insideLeg(knee, shin);
     }
   }
