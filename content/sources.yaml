@@ -349,6 +349,46 @@
   citation: Arndt AN. A three-dimensional kinematic analysis of Alpine skiing in moguls. MSc thesis, University of Wollongong; 1992.
   url: https://ro.uow.edu.au/articles/thesis/A_three-dimensional_kinematic_analysis_of_Alpine_skiing_in_moguls/27649476
   read: full
+- id: fis-course-standards-2023
+  type: web
+  citation: FIS. Freestyle Course Standards Manual, edition August 2023 (sheets dated 30.04.2023). Moguls p 3, dual moguls p 4.
+  url: https://assets.fis-ski.com/f/252177/9bd14f7a20/freestyle-course-standards-manual-2023.pdf
+  read: partial
+- id: fis-icr-book6-2025
+  type: web
+  citation: FIS. International Competition Rules (ICR) Book VI - Freestyle Skiing, edition November 2025. Sections 4204 (moguls course) and 4207 (pace speed).
+  url: https://www.infoski.lv/files/sbfsfk-new-icr-fall-2025.pdf
+  read: partial
+- id: fis-moguls-101-2026
+  type: web
+  citation: "FIS. Moguls 101: understanding moguls and dual moguls (FIS news). 9 Feb 2026."
+  url: https://www.fis-ski.com/freestyle/news/moguls-aerials-2025-26/moguls-101-understanding-moguls-and-dual-moguls
+  read: full
+- id: kersting-2011
+  type: article
+  citation: Kersting UG, McAlpine P, Kurpiers N. The effect of boot shaft flexibility on ankle, knee and hip coupling during mogul skiing. In - Scher I, Greenwald R, eds. Book of Abstracts, 19th International Congress on Ski Trauma and Skiing Safety; 2011 May 1-7; Keystone (CO). p. 81.
+  url: https://vbn.aau.dk/ws/files/62984277/RevisedISSS2011AbstractBook_1_4_5_81.pdf
+  read: full
+- id: campbell-rogan-2001
+  type: web
+  citation: Campbell S, Rogan M. Turning Points Part 6 - Bumps. Ski Magazine. 15 Feb 2001.
+  url: https://www.skimag.com/uncategorized/turning-pointspart-6-bumps
+  read: full
+- id: wiegand-2021
+  type: web
+  citation: Wiegand J. Struggling in Moguls? Change the Way You Use Your Poles (quoting R Barnes). Ski Magazine. 23 Mar 2021, updated 21 Feb 2024.
+  url: https://www.skimag.com/performance/instruction/how-to-ski-moguls-pole-plants/
+  read: full
+- id: craenen-2022
+  type: web
+  citation: Craenen N. Why mogul skiing is very much like cycling backwards. Substack. 1 Jun 2022.
+  url: https://nielscraenen.substack.com/p/why-mogul-skiing-is-very-much-like
+  read: full
+- id: smith-j2ski-compression
+  type: web
+  citation: Smith W. Ski Techniques and Tips for Moguls - 4 Compression Turns. J2Ski (undated).
+  url: https://www.j2ski.com/ski_technique/Moguls/4_Compression_Turns.html
+  read: full
 
 # Association task pages
 - id: psia-c-stork-turns

@@ -73,7 +73,7 @@ export const KINDS: ReadonlyArray<Kind> = [
     id: KindId.Moguls,
     name: 'Moguls',
     base: 'short-radius-turn',
-    drill: 'short-radius-turns',
+    drill: 'moguls',
     pose: RegularTurn.Moguls,
     // Absorbing each bump: legs work harder through finish into initiation; the trunk steadies the absorption.
     shift: (a, p) => ((LEGS.has(a.muscle) && p !== Phase.Shaping) || (TRUNK.has(a.muscle) && p === Phase.Finish) ? 1 : 0),

@@ -1,0 +1,32 @@
+id: moguls
+name: Moguls
+# No movement of its own yet: it shares the closed-stance short turn's.
+movement: closed-stance-short-turn
+summary: Short turns down the zipper line, the rut between two columns of moguls, skied the way mogul judges score it. The skis stay close to the fall line, within about 30° either side, and carve on their edges; the edged tips meet the face of the next mogul before any other part of the ski. The legs fold up the face to the crest and extend again right after it, the feet staying under the body rather than pushed ahead, so the hips travel level and the skis keep snow contact past the crest. The legs stay together, knees and ankles always bent. The upper body stays upright and quiet, chest up so the bib shows to the judges below, shoulders and hips square and level, hands in front. One light pole plant per turn, made with a flick of the wrist on the back side of the mogul just after the crest (fis-freestyle-judging-2025 pp26-29).
+terrain: A steep, even mogul field; FIS courses run about 25° at FIS level and 28° at World Cup, one fall line, with evenly spaced moguls (fis-course-standards-2023 p3, fis-icr-book6-2025 §4204). Start on a softer, gentler field.
+# Placeholders copied from the Moguls turn (src/viewer/poses/regular-turn.ts); reconciled with the model.
+scenarios:
+  gentle: { speed_mps: 5, radius_m: 5, com_radius_m: 20, slope_deg: 15 }
+  moderate: { speed_mps: 6, radius_m: 5, com_radius_m: 20, slope_deg: 18 }
+  dynamic: { speed_mps: 7.5, radius_m: 5.5, com_radius_m: 22, slope_deg: 22 }
+equipment: Efforts assume recreational skis of about 12-15 m sidecut and boots with about 15° of cuff lean. Competitors use stiff, narrow mogul skis with little sidecut and much shorter poles (fis-moguls-101-2026); a softer boot cuff lets the ankles and knees flex further and keeps the mass further forward (kersting-2011).
+cautions:
+  - "Common mistake: turning the skis across the hill. Past about 45° the tails slide out of the tips' track and the side of the ski hits the next mogul (fis-freestyle-judging-2025 p28)."
+  - "Common mistake: pushing the feet ahead to absorb. The bump then throws the body back; fold the legs under the hips instead (fis-freestyle-judging-2025 p28)."
+  - "Common mistake: hinging forward at the waist as the legs fold. Keep the chest upright through the whole absorption (fis-freestyle-judging-2025 p28)."
+  - Do not reach for the plant or let the arms drift back; an early or heavy plant, or a second one, costs balance (fis-freestyle-judging-2025 p29).
+  - Competition pace is about 9-10 m/s (fis-icr-book6-2025 §4207); ski it slower and keep the line until it holds at speed.
+sources:
+  - { source: fis-freestyle-judging-2025, pages: "25-29" }
+  - { source: fis-course-standards-2023, pages: 3 }
+  - fis-icr-book6-2025
+  - fis-moguls-101-2026
+  - kersting-2011
+primitives:
+  - { primitive: flexion-transition, modifier: "absorbing up each face to the crest, extending right after it" }
+  - { primitive: ankle-flexion, modifier: "always some, the feet under the body" }
+  - { primitive: tipping, modifier: "both knees together, the skis on edge" }
+  - { primitive: leg-rotation, modifier: "small, the skis within about 30° of the fall line" }
+  - { primitive: counter, modifier: "the chest and hips square down the fall line throughout" }
+  - { primitive: pole-touch, modifier: "light, a wrist flick on the back side just after the crest" }
+reviewed_by: []

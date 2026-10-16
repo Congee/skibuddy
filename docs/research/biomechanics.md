@@ -919,8 +919,8 @@ shaping-phase pose for D1, D2 and D13, scaled down for slower drills.
 | D17 Flexion transition | Forward 40° to 50°, knees and hips near 90° (seifert-2023), edge through 0° low | As D13 | As D13 |
 | D18 Step turns | Forward 25°, counter 0° → 10° | As D12 basic | As D12 basic |
 
-**Moguls, powder and dolphin turns in the figure.** These regular-turn kinds have no drill entry; their
-poses follow the foundations above, with these additions.
+**Moguls, powder and dolphin turns in the figure.** These regular-turn kinds have no drill matrix (moguls
+has text only, see D19); their poses follow the foundations above, with these additions.
 
 - *Mogul stance.* Legs together, with the lower leg's angulation setting the radius
   (fis-freestyle-judging-2025 p26; the amount inferred). The feet stay under the hips and shoulders and
@@ -2465,6 +2465,41 @@ stepped in.
 
 Coverage: 34 DOF rows, 102 cells, all filled. 4 rows are specific to this drill; the other 30 follow the turn baseline (2.2).
 
+### D19. Moguls: the zipper line and the tops line
+
+Two lines through a mogul field, with different aims.
+
+- *Zipper (the Moguls drill).* The competition line in the ruts, scored by the FIS check points
+  (fis-freestyle-judging-2025 pp26-29), which we take as the standard:
+  - carving: skis within about ±30° of the fall line (11:00 to 1:00), past ±45° is a fault; the edged
+    tip meets the next face before any other part of the ski; the tail follows the tip's track; knees
+    and ankles always flexed, never straight between moguls; legs together; ski-snow contact, no
+    lifting tails (p28);
+  - absorption and extension: absorb up to the crest and extend right after it; the absorption is under
+    the body, feet out in front is a fault; hip line level; upper body upright through the whole
+    absorption, bib visible, hinging forward is a fault; skis keep contact past the crest (p28);
+  - upper body: calm head and chest, shoulders and hips square and level, symmetrical; hands quiet in
+    front; one light plant per turn on the back side of the mogul; an early plant, reaching, arms going
+    back or a double plant are faults (p29).
+  The feet stay under the body fore-aft, so the zipper has no push-and-pull of the feet.
+- *Tops (turns-on-the-tops).* The recreational line, pivoting on each crest where only the ski centre
+  touches (campbell-rogan-2001). The feet move a little ahead into the bump and pull back near the crest
+  so the tips drop early onto the back side (lemaster-2010 fig 6.2 pp88-89; craenen-2022;
+  smith-j2ski-compression; dipiro-2005 pp36, 44); the tips are then pressed into the trough to keep the
+  ski on the snow (dipiro-2005 p46). The plant goes on the top (campbell-rogan-2001) or just below the
+  crest, the pole tip reaching the bump before the feet (wiegand-2021). The tails meeting the bump for
+  rebound is our feel cue, not a source's wording; the sources put first contact at the tips (FIS) or
+  rebound from the edge set (lemaster-2010 p104).
+- *Course angle.* FIS course standards: 25 ± 3° at FIS level, 27 ± 3° Continental Cup, 28 ± 4° World
+  Cup, 28 ± 2° Olympics and World Championships; no section longer than 20 m under 20° or over 37°;
+  length 200 to 260 m by level, track 10 ± 2 m (fis-course-standards-2023 p3). The ICR asks only for a
+  constant grade, one fall line and even moguls, and defers the numbers to the manual
+  (fis-icr-book6-2025 §4204). Recreational fields are gentler; our slopes per intensity are inferred.
+- *Pace.* Pace speed is 10.30 m/s for men and 9.00 m/s for women (fis-icr-book6-2025 §4207); runs last
+  25 to 30 s over about 235 m (fis-moguls-101-2026). Our zipper speeds sit below this.
+- *Boots.* A softer boot shaft gave more ankle and knee range, the mass further forward and lower joint
+  load at peak force in national-team mogul skiers (kersting-2011).
+
 ## 3. Anatomy list
 
 ### 3.1 Muscles
@@ -2732,6 +2767,14 @@ returned HTTP 200 to curl on 2026-10-15. The slugs follow `content/sources.yaml`
 | iasi-2021 | Irish Association of Snowsports Instructors. *IASI Manual - The Five Key Concepts*, version 2, 2021. | https://iasisnowsports.ie/mp-files/iasi-full-manual.pdf/ | full: page-cited for the edge change, cross-over and cross-under, powder and dolphin turns |
 | lind-sanders-2004 | Lind D, Sanders SP. *The Physics of Skiing*, 2nd ed. (Springer, 2004). | https://doi.org/10.1007/978-1-4757-4345-6 | full: turn loads (eq 4.9, p103), the mogul mass path (pp114-115), retraction (p120), fore-aft on the ski (pp69-70, 146) |
 | fis-freestyle-judging-2025 | FIS. *Freestyle Skiing Judging Handbook*, July 2025, moguls judging criteria pp25-30. | https://assets.fis-ski.com/f/252177/x/5ee5340522/freestyle-skiing-judging-handbook.pdf | full: mogul stance, absorption and head (pp26, 28, 29) |
+| fis-course-standards-2023 | FIS. *Freestyle Course Standards Manual*, August 2023 (sheets 30.04.2023). | https://assets.fis-ski.com/f/252177/9bd14f7a20/freestyle-course-standards-manual-2023.pdf | page: moguls course angle, length and width (p3), dual (p4) |
+| fis-icr-book6-2025 | FIS. *ICR Book VI Freestyle Skiing*, November 2025. | https://www.infoski.lv/files/sbfsfk-new-icr-fall-2025.pdf | page: course (§4204), pace speed (§4207) |
+| fis-moguls-101-2026 | FIS news. Moguls 101: understanding moguls and dual moguls. 9 Feb 2026. | https://www.fis-ski.com/freestyle/news/moguls-aerials-2025-26/moguls-101-understanding-moguls-and-dual-moguls | full: run time, scoring shares, mogul skis and poles |
+| kersting-2011 | Kersting UG, McAlpine P, Kurpiers N. Boot shaft flexibility and joint coupling in mogul skiing. ISSS 2011 abstracts, p81. | https://vbn.aau.dk/ws/files/62984277/RevisedISSS2011AbstractBook_1_4_5_81.pdf | full (abstract): softer shaft, more ankle and knee range, mass further forward |
+| campbell-rogan-2001 | Campbell S, Rogan M. Turning Points Part 6 - Bumps. Ski Magazine; 2001. | https://www.skimag.com/uncategorized/turning-pointspart-6-bumps | full: pivot on the crest, plant on top over the tops |
+| wiegand-2021 | Wiegand J. Struggling in Moguls? Change the Way You Use Your Poles. Ski Magazine; 2021. | https://www.skimag.com/performance/instruction/how-to-ski-moguls-pole-plants/ | full: plant just below the crest, pole tip ahead of the feet |
+| craenen-2022 | Craenen N. Why mogul skiing is very much like cycling backwards. Substack; 2022. | https://nielscraenen.substack.com/p/why-mogul-skiing-is-very-much-like | full (low authority): feet ahead into the bump, pulled back over it |
+| smith-j2ski-compression | Smith W. Moguls - 4 Compression Turns. J2Ski (undated). | https://www.j2ski.com/ski_technique/Moguls/4_Compression_Turns.html | full: flex and pull the feet under you, then extend |
 | kipp-2024 | Kipp R. "Mastering ski turns - upper body facing downhill", Ski Racing Media, 16 Aug 2024. Coaching text. | https://skiracing.com/mastering-ski-turns-upper-body-facing-downhill/ | full |
 | collin-psia-nw | Collin A. "The Eyes Have It", PSIA-AASI Northwest newsletter (undated). | https://www.psia-nw.org/newsletter-articles/contributions/the-eyes-have-it/ | full |
 | zalohar-fall-line | Zalohar B. "Clear vision", *Fall-Line Skiing* magazine. | https://www.fall-line.co.uk/?p=1103803 | full |
