@@ -67,10 +67,10 @@ const Rail = (props: { readonly reducedMotion: boolean }): JSX.Element => {
         class="icon-button play"
         onClick={play}
         disabled={props.reducedMotion}
-        aria-label={playing() ? 'Stop' : 'Play one turn'}
+        aria-label={playing() ? 'Pause' : 'Play'}
         title={props.reducedMotion ? 'Playback is off while reduced motion is on; drag the rail instead' : undefined}
       >
-        <Icon name={playing() ? 'stop' : 'play'} />
+        <Icon name={playing() ? 'pause' : 'play'} />
       </button>
       <div class="rail-track">
         <input
