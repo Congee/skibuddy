@@ -23,7 +23,7 @@ name: Skis across the hill, slipping sideways, then an edge set to stop
 #
 # Hip rotation: with the pelvis facing downhill and the skis across the hill, the downhill femur is internally
 # rotated relative to the pelvis and the uphill femur externally rotated, as at the end of a turn toward the uphill
-# side (biomechanics.md F4.2). biomechanics.md's slip baseline (2.2, D6) has the two swapped. Hip rotation range
+# side (biomechanics.md F4.2). Hip rotation range
 # is about 30-45° (heinrich-2022 measured 5-28° in turns), so the pelvis counters about 30-50° and the thorax,
 # neck and a little tibial rotation make up the rest of the facing down the hill.
 # Edge release: the snow's force on the edged ski tends to flatten it (LeMaster pp 123-124). The main release is

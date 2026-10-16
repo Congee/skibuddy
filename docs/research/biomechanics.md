@@ -859,11 +859,11 @@ Measured moments are from heinrich-2022 and heinrich-2023. The rest are reasoned
 | Ankle inv/ev | inside | Inversion to little-toe edge, leading; TA, TP con | Inversion held; TA, TP iso; PL ecc/iso | Back to neutral; TA, TP ecc | inversion (force on lateral edge) while moving into inversion -> TA, TP con / inversion held -> iso / falling -> ecc |
 | Foot arch, toes | outside | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso | arch-supporting moment against load -> iso |
 | Foot arch, toes | inside | Arch held, light load; INT iso | Arch held, light load; INT iso | Arch held, light load; INT iso | small -> iso |
-| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Flexes under load; VAS, RF ecc; MH, BF iso | Deepest flexion, then extends; VAS ecc, iso, then con | extension, knee extending or still -> con/iso / extension (up to 1.02 Nm/kg) while flexing (56-80 deg) -> ecc / extension, flexing then extending -> ecc then con |
+| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Near its longest, quasi-isometric as the load builds; VAS iso; MH, BF co-con | Flexes, absorbing the load that peaks below the fall line, into the transition; VAS ecc | extension, knee extending or still -> con/iso / extension (up to 1.02 Nm/kg) held at 56-80 deg -> iso / extension while flexing -> ecc |
 | Knee flex/ext | inside | Flexes (shortens) under its own load; VAS ecc (extension moment like outside); hamstrings, GAS con only when unloaded | More flexed than outside, held; VAS iso, hamstrings iso | Held, then extends as it becomes outside leg; VAS con | extension (up to 0.96 Nm/kg) while flexing -> ecc / extension, held at 81-114 deg -> iso / extension while extending -> con |
 | Knee tibial rot. | outside | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | frontal: internal adduction moment against valgus (up to 0.23 Nm/kg); rotation alternates (-0.08 to 0.22) -> iso |
 | Knee tibial rot. | inside | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) | frontal: internal abduction moment (up to 0.31 Nm/kg); rotation mostly internal (up to 0.28) -> iso |
-| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Flexes under load; GMAX, AM, MH ecc | Flexed at peak, then extends; GMAX ecc then con | extension, hip extending -> con / extension (up to 1.27 Nm/kg) while flexing (50-81 deg) -> ecc / extension, flexing then extending -> ecc then con |
+| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Near its longest, quasi-isometric as the load builds; GMAX, AM, MH iso | Flexes into the transition; GMAX, AM ecc | extension, hip extending -> con / extension (up to 1.27 Nm/kg) held at 50-81 deg -> iso / extension while flexing -> ecc |
 | Hip flex/ext | inside | Flexes (shortens) under load; GMAX ecc; IP, RF con only when unloaded (RF hip-flexor role) | More flexed, held; IP iso; GMAX iso (extension moment like outside) | Held, then extends | extension (up to 1.05 Nm/kg) while flexing -> ecc / extension, held at 70-117 deg -> iso / extension while extending -> con |
 | Hip abd/add | outside | Knee toward turn: add of flexed femur, ADD, AM con; then abd (pelvis-on-femur) as load arrives, GMED, GMIN, TFL ecc to iso | Abducted, inside half of pelvis held; GMED, GMIN, TFL, upper GMAX iso; ADD, AM co-con iso | Held, back to neutral; GMED ecc | changes sign; joint moving into abduction (3-27 deg) -> abductors con, adductors co-con / mostly adduction (up to 0.52 Nm/kg, heinrich-2022) or abduction from GMAX (heinrich-2023): sign varies -> abductors and adductors iso (co-con) / brief abduction moment (up to 0.39) as released -> ecc |
 | Hip abd/add | inside | Knee toward turn: abd of flexed femur; posterior GMED, DR con | Adducted, held; ADD (adductor longus) iso | Held; ADD iso | adduction, small / adduction only (up to 0.45 Nm/kg; adductor longus main contributor), held near neutral -> iso / held -> iso |
@@ -908,8 +908,8 @@ switch with release and set.
 | Hip flex/ext | inside | Flexed, slightly more; GMAX iso | Flexed, slightly more; GMAX iso | Flexed, slightly more; GMAX iso | as turn baseline unless noted |
 | Hip abd/add | outside | Abducted under a pelvis held over the downhill ski; GMED, GMIN, TFL iso; ADD co-con | Abducted under a pelvis held over the downhill ski; GMED, GMIN, TFL iso; ADD co-con | Abducted under a pelvis held over the downhill ski; GMED, GMIN, TFL iso; ADD co-con | as turn baseline unless noted |
 | Hip abd/add | inside | Adducted, held; ADD iso | Adducted, held; ADD iso | Adducted, held; ADD iso | as turn baseline unless noted |
-| Hip IR/ER | outside | Femur rotated across the hill under a downhill-facing pelvis (ER relative to pelvis); DR, GMAX iso | Femur rotated across the hill under a downhill-facing pelvis (ER relative to pelvis); DR, GMAX iso | Femur rotated across the hill under a downhill-facing pelvis (ER relative to pelvis); DR, GMAX iso | as turn baseline unless noted |
-| Hip IR/ER | inside | Femur rotated across the hill (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | Femur rotated across the hill (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | Femur rotated across the hill (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | as turn baseline unless noted |
+| Hip IR/ER | outside | Femur rotated across the hill under a downhill-facing pelvis (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | Femur rotated across the hill under a downhill-facing pelvis (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | Femur rotated across the hill under a downhill-facing pelvis (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | as turn baseline unless noted |
+| Hip IR/ER | inside | Femur rotated across the hill (ER relative to pelvis); DR, GMAX iso | Femur rotated across the hill (ER relative to pelvis); DR, GMAX iso | Femur rotated across the hill (ER relative to pelvis); DR, GMAX iso | as turn baseline unless noted |
 | Pelvis tilt | both | Anterior tilt held; ES, MF, RA, TrA iso | Anterior tilt held; ES, MF, RA, TrA iso | Anterior tilt held; ES, MF, RA, TrA iso | as turn baseline unless noted |
 | Pelvis hike (list) | both | Uphill half held slightly up; downhill GMED, GMIN iso; uphill QL iso | Uphill half held slightly up; downhill GMED, GMIN iso; uphill QL iso | Uphill half held slightly up; downhill GMED, GMIN iso; uphill QL iso | as turn baseline unless noted |
 | Pelvis rotation | both | Faces downhill, about 70° to 90° to the skis; obliques iso | Faces downhill, about 70° to 90° to the skis; obliques iso | Faces downhill, about 70° to 90° to the skis; obliques iso | as turn baseline unless noted |
@@ -1135,11 +1135,11 @@ or diverging (hip rotators not holding it parallel); hip dumped inside (as D1).
 | Ankle inv/ev | inside | Lifted ski tipped to match stance ski; TA, TP con | Tilt held; TA, TP iso | Back to neutral at set-down; TA, TP ecc |
 | Foot arch, toes | outside | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso |
 | Foot arch, toes | inside | Unloaded; INT low | Unloaded; INT low | Unloaded; INT low |
-| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Flexes under load; VAS, RF ecc; MH, BF iso | Deepest flexion, then extends; VAS ecc, iso, then con |
+| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Near its longest, quasi-isometric as the load builds; VAS iso; MH, BF co-con | Flexes, absorbing the load that peaks below the fall line, into the transition; VAS ecc |
 | Knee flex/ext | inside | Active flexion lifts the ski; BF (incl. short head), MH, GRA, SAR, GAS con; VAS near idle | Held flexed; hamstrings, GRA, SAR iso | Extends to set down; hamstrings ecc |
 | Knee tibial rot. | outside | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso |
 | Knee tibial rot. | inside | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) |
-| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Flexes under load; GMAX, AM, MH ecc | Flexed at peak, then extends; GMAX ecc then con |
+| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Near its longest, quasi-isometric as the load builds; GMAX, AM, MH iso | Flexes into the transition; GMAX, AM ecc |
 | Hip flex/ext | inside | Active flexion lifts the thigh; IP, RF, TFL, SAR, ADD (pectineus, longus) con | Held flexed; IP, RF iso | Lowered; IP, RF ecc |
 | Hip abd/add | outside | Knee toward turn: add of flexed femur, ADD, AM con; then abd (pelvis-on-femur) as load arrives, GMED, GMIN, TFL ecc to iso | Abducted, inside half of pelvis held; GMED, GMIN, TFL, upper GMAX iso; ADD, AM co-con iso | Held, back to neutral; GMED ecc |
 | Hip abd/add | inside | Slight add, boot beside stance boot; ADD, pectineus con | Held; ADD iso; GMED iso against drifting further | Held, then neutral |
@@ -1206,11 +1206,11 @@ drifts inside); hip pushed back to make room (back seat).
 | Ankle inv/ev | inside | Lifted ski tipped to match stance ski; TA, TP con | Tilt held; TA, TP iso | Back to neutral at set-down; TA, TP ecc |
 | Foot arch, toes | outside | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso |
 | Foot arch, toes | inside | Unloaded; INT low | Unloaded; INT low | Unloaded; INT low |
-| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Flexes under load; VAS, RF ecc; MH, BF iso | Deepest flexion, then extends; VAS ecc, iso, then con |
+| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Near its longest, quasi-isometric as the load builds; VAS iso; MH, BF co-con | Flexes, absorbing the load that peaks below the fall line, into the transition; VAS ecc |
 | Knee flex/ext | inside | Active flexion lifts the ski; BF (incl. short head), MH, GRA, SAR, GAS con; VAS near idle | Held flexed; hamstrings, GRA, SAR iso | Extends to set down; hamstrings ecc |
 | Knee tibial rot. | outside | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso |
 | Knee tibial rot. | inside | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) |
-| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Flexes under load; GMAX, AM, MH ecc | Flexed at peak, then extends; GMAX ecc then con |
+| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Near its longest, quasi-isometric as the load builds; GMAX, AM, MH iso | Flexes into the transition; GMAX, AM ecc |
 | Hip flex/ext | inside | Active flexion lifts the thigh; IP, RF, TFL, SAR, ADD (pectineus, longus) con | Held flexed; IP, RF iso | Lowered; IP, RF ecc |
 | Hip abd/add | outside | Knee toward turn: add of flexed femur, ADD, AM con; then abd (pelvis-on-femur) as load arrives, GMED, GMIN, TFL ecc to iso | Abducted, inside half of pelvis held; GMED, GMIN, TFL, upper GMAX iso; ADD, AM co-con iso | Held, back to neutral; GMED ecc |
 | Hip abd/add | inside | Adducts to carry lifted ski across the stance ski; ADD, pectineus con | Held crossed; ADD iso | Uncrossed; ADD ecc |
@@ -1391,14 +1391,14 @@ Finish = edge set to slow and stop. Outside = downhill ski.
 | Segment | Initiation | Shaping | Finish |
 |---|---|---|---|
 | Ankles | Tip downhill (release): downhill foot inverts, uphill foot everts less | Fine tipping adjustments hold a constant slip rate | Tip uphill (edge set) |
-| Knees and hips | Flexed, roughly in proportion | Held. Downhill hip flexed and externally rotated relative to a downhill-facing pelvis. | Flex a little to absorb the edge set |
+| Knees and hips | Flexed, roughly in proportion | Held. Downhill hip flexed and internally rotated relative to a downhill-facing pelvis, uphill hip externally rotated (F4.2). | Flex a little to absorb the edge set |
 | Pelvis | Faces downhill. Uphill half slightly up and forward. | Held | Held |
 | Trunk | Faces downhill, quiet | Hip angulation balances over the downhill ski | Angulation increases with the edge set |
 
 | Muscle (slug) | Side | I / S / F | Contraction | Role | Conf. | Sources |
 |---|---|---|---|---|---|---|
 | gluteus-medius, gluteus-minimus | outside (downhill) | 1 / 2 / 2 | isometric | Hold the pelvis over the downhill leg; angulation | medium | ganderton-2017 |
-| deep-hip-rotators, gluteus-maximus | both | 1 / 2 / 2 | isometric | Hold the femurs rotated across the hill under a downhill-facing pelvis | low | delp-1999 |
+| deep-hip-rotators, gluteus-maximus | inside (uphill) | 1 / 2 / 2 | isometric | Hold the uphill femur turned out under a downhill-facing pelvis; the downhill femur is turned in (F4.2) | low | delp-1999 |
 | quadriceps | both | 1 / 2 / 2 | isometric, eccentric | Hold the flexed stance; absorb the edge set | medium | hintermeister-1997 |
 | peroneals, tibialis-anterior, tibialis-posterior | both | 2 / 2 / 2 | isometric | Fine edge-angle control in the boot | low | — |
 | obliques, quadratus-lumborum | both | 1 / 1 / 2 | isometric | Hold the downhill-facing trunk and the uphill half up | low | — |
@@ -1424,8 +1424,8 @@ slip stops); weight on the uphill ski.
 | Hip flex/ext | inside | Flexed, slightly more; GMAX iso | Flexed, slightly more; GMAX iso | Flexed, slightly more; GMAX iso |
 | Hip abd/add | outside | Abducted under a pelvis held over the downhill ski; GMED, GMIN, TFL iso; ADD co-con | Abducted under a pelvis held over the downhill ski; GMED, GMIN, TFL iso; ADD co-con | Abducted under a pelvis held over the downhill ski; GMED, GMIN, TFL iso; ADD co-con |
 | Hip abd/add | inside | Adducted, held; ADD iso | Adducted, held; ADD iso | Adducted, held; ADD iso |
-| Hip IR/ER | outside | Femur rotated across the hill under a downhill-facing pelvis (ER relative to pelvis); DR, GMAX iso | Femur rotated across the hill under a downhill-facing pelvis (ER relative to pelvis); DR, GMAX iso | Femur rotated across the hill under a downhill-facing pelvis (ER relative to pelvis); DR, GMAX iso |
-| Hip IR/ER | inside | Femur rotated across the hill (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | Femur rotated across the hill (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | Femur rotated across the hill (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso |
+| Hip IR/ER | outside | Femur rotated across the hill under a downhill-facing pelvis (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | Femur rotated across the hill under a downhill-facing pelvis (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso | Femur rotated across the hill under a downhill-facing pelvis (IR relative to pelvis); GMED/GMIN ant, TFL, ADD iso |
+| Hip IR/ER | inside | Femur rotated across the hill (ER relative to pelvis); DR, GMAX iso | Femur rotated across the hill (ER relative to pelvis); DR, GMAX iso | Femur rotated across the hill (ER relative to pelvis); DR, GMAX iso |
 | Pelvis tilt | both | Anterior tilt held; ES, MF, RA, TrA iso | Anterior tilt held; ES, MF, RA, TrA iso | Anterior tilt held; ES, MF, RA, TrA iso |
 | Pelvis hike (list) | both | Uphill half held slightly up; downhill GMED, GMIN iso; uphill QL iso | Uphill half held slightly up; downhill GMED, GMIN iso; uphill QL iso | Uphill half held slightly up; downhill GMED, GMIN iso; uphill QL iso |
 | Pelvis rotation | both | Faces downhill, about 70° to 90° to the skis; obliques iso | Faces downhill, about 70° to 90° to the skis; obliques iso | Faces downhill, about 70° to 90° to the skis; obliques iso |
@@ -1698,11 +1698,11 @@ skis.
 | Ankle inv/ev | inside | Inversion to little-toe edge, leading; TA, TP con | Inversion held; TA, TP iso; PL ecc/iso | Back to neutral; TA, TP ecc |
 | Foot arch, toes | outside | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso |
 | Foot arch, toes | inside | Arch held, light load; INT iso | Arch held, light load; INT iso | Arch held, light load; INT iso |
-| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Flexes under load; VAS, RF ecc; MH, BF iso | Deepest flexion, then extends; VAS ecc, iso, then con |
+| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Near its longest, quasi-isometric as the load builds; VAS iso; MH, BF co-con | Flexes, absorbing the load that peaks below the fall line, into the transition; VAS ecc |
 | Knee flex/ext | inside | Flexes (shortens) under its own load; VAS ecc (extension moment like outside); hamstrings, GAS con only when unloaded | More flexed than outside, held; VAS iso, hamstrings iso | Held, then extends as it becomes outside leg; VAS con |
 | Knee tibial rot. | outside | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso |
 | Knee tibial rot. | inside | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) |
-| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Flexes under load; GMAX, AM, MH ecc | Flexed at peak, then extends; GMAX ecc then con |
+| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Near its longest, quasi-isometric as the load builds; GMAX, AM, MH iso | Flexes into the transition; GMAX, AM ecc |
 | Hip flex/ext | inside | Flexes (shortens) under load; GMAX ecc; IP, RF con only when unloaded (RF hip-flexor role) | More flexed, held; IP iso; GMAX iso (extension moment like outside) | Held, then extends |
 | Hip abd/add | outside | Knee toward turn: add of flexed femur, ADD, AM con; then abd (pelvis-on-femur) as load arrives, GMED, GMIN, TFL ecc to iso | Abducted, inside half of pelvis held; GMED, GMIN, TFL, upper GMAX iso; ADD, AM co-con iso | Held, back to neutral; GMED ecc |
 | Hip abd/add | inside | Knee toward turn: abd of flexed femur; posterior GMED, DR con | Adducted, held; ADD (adductor longus) iso | Held; ADD iso |
@@ -1856,7 +1856,7 @@ Errors: upper body turns with the skis (obliques drop, the shoulders rotate); sk
 | Knee flex/ext | inside | Flexes (shortens) under its own load; VAS ecc (extension moment like outside); hamstrings, GAS con only when unloaded | More flexed than outside, held; VAS iso, hamstrings iso | Held, then extends as it becomes outside leg; VAS con |
 | Knee tibial rot. | outside | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso |
 | Knee tibial rot. | inside | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) |
-| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Flexes under load; GMAX, AM, MH ecc | Flexed at peak, then extends; GMAX ecc then con |
+| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Near its longest, quasi-isometric as the load builds; GMAX, AM, MH iso | Flexes into the transition; GMAX, AM ecc |
 | Hip flex/ext | inside | Flexes (shortens) under load; GMAX ecc; IP, RF con only when unloaded (RF hip-flexor role) | More flexed, held; IP iso; GMAX iso (extension moment like outside) | Held, then extends |
 | Hip abd/add | outside | Knee toward turn: add of flexed femur, ADD, AM con; then abd (pelvis-on-femur) as load arrives, GMED, GMIN, TFL ecc to iso | Abducted, inside half of pelvis held; GMED, GMIN, TFL, upper GMAX iso; ADD, AM co-con iso | Held, back to neutral; GMED ecc |
 | Hip abd/add | inside | Knee toward turn: abd of flexed femur; posterior GMED, DR con | Adducted, held; ADD (adductor longus) iso | Held; ADD iso |
@@ -1940,11 +1940,11 @@ into the turn (tails skid); losing pressure on the outside ski and catching its 
 | Ankle inv/ev | inside | Inversion to little-toe edge, leading; TA, TP con | Inversion held; TA, TP iso; PL ecc/iso | Back to neutral; TA, TP ecc |
 | Foot arch, toes | outside | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso |
 | Foot arch, toes | inside | Arch held, light load; INT iso | Arch held, light load; INT iso | Arch held, light load; INT iso |
-| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Flexes under load; VAS, RF ecc; MH, BF iso | Deepest flexion, then extends; VAS ecc, iso, then con |
+| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Near its longest, quasi-isometric as the load builds; VAS iso; MH, BF co-con | Flexes, absorbing the load that peaks below the fall line, into the transition; VAS ecc |
 | Knee flex/ext | inside | Flexes (shortens) under its own load; VAS ecc (extension moment like outside); hamstrings, GAS con only when unloaded | More flexed than outside, held; VAS iso, hamstrings iso | Held, then extends as it becomes outside leg; VAS con |
 | Knee tibial rot. | outside | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso |
 | Knee tibial rot. | inside | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) |
-| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Flexes under load; GMAX, AM, MH ecc | Flexed at peak, then extends; GMAX ecc then con |
+| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Near its longest, quasi-isometric as the load builds; GMAX, AM, MH iso | Flexes into the transition; GMAX, AM ecc |
 | Hip flex/ext | inside | Flexes (shortens) under load; GMAX ecc; IP, RF con only when unloaded (RF hip-flexor role) | More flexed, held; IP iso; GMAX iso (extension moment like outside) | Held, then extends |
 | Hip abd/add | outside | Knee toward turn: add of flexed femur, ADD, AM con; then abd (pelvis-on-femur) as load arrives, GMED, GMIN, TFL ecc to iso | Abducted, inside half of pelvis held; GMED, GMIN, TFL, upper GMAX iso; ADD, AM co-con iso | Held, back to neutral; GMED ecc |
 | Hip abd/add | inside | Knee toward turn: abd of flexed femur; posterior GMED, DR con | Adducted, held; ADD (adductor longus) iso | Held; ADD iso |
@@ -2014,11 +2014,11 @@ wedge size changing (adductors not controlling).
 | Ankle inv/ev | inside | Everted (inside edge of wedge) throughout; PL, PB iso; no edge change | Everted (inside edge of wedge) throughout; PL, PB iso; no edge change | Everted (inside edge of wedge) throughout; PL, PB iso; no edge change |
 | Foot arch, toes | outside | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso |
 | Foot arch, toes | inside | Arch held, light load; INT iso | Arch held, light load; INT iso | Arch held, light load; INT iso |
-| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Flexes under load; VAS, RF ecc; MH, BF iso | Deepest flexion, then extends; VAS ecc, iso, then con |
+| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Near its longest, quasi-isometric as the load builds; VAS iso; MH, BF co-con | Flexes, absorbing the load that peaks below the fall line, into the transition; VAS ecc |
 | Knee flex/ext | inside | Flexed, held, loaded less in shaping; VAS iso | Flexed, held, loaded less in shaping; VAS iso | Flexed, held, loaded less in shaping; VAS iso |
 | Knee tibial rot. | outside | Held against valgus of wedge geometry; MH, POP, SAR, GRA iso | Held against valgus of wedge geometry; MH, POP, SAR, GRA iso | Held against valgus of wedge geometry; MH, POP, SAR, GRA iso |
 | Knee tibial rot. | inside | Held against valgus; MH, POP iso | Held against valgus; MH, POP iso | Held against valgus; MH, POP iso |
-| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Flexes under load; GMAX, AM, MH ecc | Flexed at peak, then extends; GMAX ecc then con |
+| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Near its longest, quasi-isometric as the load builds; GMAX, AM, MH iso | Flexes into the transition; GMAX, AM ecc |
 | Hip flex/ext | inside | Flexed, held; GMAX iso | Flexed, held; GMAX iso | Flexed, held; GMAX iso |
 | Hip abd/add | outside | Abducted (wedge); ADD ecc/iso hold the wedge size; GMED iso | Abducted (wedge); ADD ecc/iso hold the wedge size; GMED iso | Abducted (wedge); ADD ecc/iso hold the wedge size; GMED iso |
 | Hip abd/add | inside | Abducted (wedge); ADD ecc/iso; GMED iso | Abducted (wedge); ADD ecc/iso; GMED iso | Abducted (wedge); ADD ecc/iso; GMED iso |
@@ -2301,11 +2301,11 @@ stepped in.
 | Ankle inv/ev | inside | Inversion to little-toe edge, leading; TA, TP con | Inversion held; TA, TP iso; PL ecc/iso | Back to neutral; TA, TP ecc |
 | Foot arch, toes | outside | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso | Arch held under load, pressure spread; INT, TP, FHL iso |
 | Foot arch, toes | inside | Arch held, light load; INT iso | Arch held, light load; INT iso | Arch held, light load; INT iso |
-| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Flexes under load; VAS, RF ecc; MH, BF iso | Deepest flexion, then extends; VAS ecc, iso, then con |
+| Knee flex/ext | outside | Extends (extension transition) or stays flexed; VAS con or iso; MH, BF co-con | Near its longest, quasi-isometric as the load builds; VAS iso; MH, BF co-con | Flexes, absorbing the load that peaks below the fall line, into the transition; VAS ecc |
 | Knee flex/ext | inside | Stepping leg lifts then places; hamstrings con, VAS ecc | Matches outside ski; VAS iso | Parallel; VAS iso |
 | Knee tibial rot. | outside | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso | Held near neutral against valgus and external rotation; MH, POP, SAR, GRA iso; BF iso |
 | Knee tibial rot. | inside | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) | Held neutral; POP, MH, BF iso (low) |
-| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Flexes under load; GMAX, AM, MH ecc | Flexed at peak, then extends; GMAX ecc then con |
+| Hip flex/ext | outside | Extends slightly or holds; GMAX, AM con or iso | Near its longest, quasi-isometric as the load builds; GMAX, AM, MH iso | Flexes into the transition; GMAX, AM ecc |
 | Hip flex/ext | inside | Lifts and places; IP, RF con, then ecc | Held | Held |
 | Hip abd/add | outside | Stance hip holds pelvis during each step; GMED, GMIN iso | As D13 | As D13 |
 | Hip abd/add | inside | Knee toward turn: abd of flexed femur; posterior GMED, DR con | Adducted, held; ADD (adductor longus) iso | Held; ADD iso |
