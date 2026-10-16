@@ -15,5 +15,5 @@
     "typescript/ban-ts-comment": "error",
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
   },
-  "ignorePatterns": ["dist", "public/content.json"]
+  "ignorePatterns": ["dist", "public/content.json", ".claude"]
 }
