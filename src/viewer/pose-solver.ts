@@ -484,7 +484,7 @@ const solveOn = (
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
-    const pelvisPitch = (folded ? hip + knee - depthKnee : hip - upright) - hipFlex;
+    const pelvisPitch = (folded ? hip + knee - depthKnee : hip) - upright - hipFlex;
     // A folding hip turns the thighs' draw forward, so absorbing legs squeeze harder to keep the boots together.
     const adduction = c.stance * (c.absorb === undefined ? 1 : 1 + STANCE_SQUEEZE * Math.max(0, knee - SQUEEZE_FROM));
     const insideExtra = (1 - split) * extra;
@@ -629,10 +629,12 @@ const solveOn = (
       if (bumps && shin < cuff + CUFF_EASE) {
         shin = softClamp(shin, cuff, SHIN_MAX + CUFF_EASE, CUFF_EASE);
         if (balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow, brake) > target) {
-          if (c.absorb === undefined) {
+          if (c.absorb !== undefined) standUp(inside.extra, inside.tailLift, shin, matched);
+          // Off the zipper the legs fold for what standing up cannot bring back.
+          if (!zipper && balanceAhead(segmentMatrices(base(knee, inside.extra, inside.tailLift, shin)), t, alongSnow, brake) > target) {
             folded = true;
             knee = balance(inside.extra, inside.tailLift, shin, target);
-          } else standUp(inside.extra, inside.tailLift, shin, matched);
+          }
         }
       }
     } else knee = balance(inside.extra, inside.tailLift);
