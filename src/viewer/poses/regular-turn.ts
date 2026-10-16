@@ -352,22 +352,25 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   [RegularTurn.Steeps]: {
     scenarios: STEEP,
     outsideShare: [0.65, 0.85],
-    hip: [36, 50],
+    hip: [28, 42],
     hipStep: 4,
     hipSpread: 0,
     angulation: 14,
     // Further down the fall line than short turns (skimag-steeps-2018, kipp-2024); share inferred.
     counter: anticipation(STEEP, 0.65),
-    twist: 7,
+    twist: 4,
     counterCurve: HEADING,
     scissor: true,
-    bend: 9,
+    bend: 1,
     spineFlex: 24,
     narrow: 0,
     kneesIn: 0,
     // The balance axis stays square to the skis, so forward of gravity, not of the feet (lemaster-2010 p84); inferred.
-    comAhead: [0.02, 0.05, 0.03, 0.01, -0.01],
-    trunkOverShin: 10,
+    // Mass toward the ball of the foot so the chest stays over the outside knee (lemaster-2010 pp57, 182-183); inferred.
+    comAhead: [0.08, 0.06, 0.02, 0.045, 0.025],
+    comAheadGain: 0.2,
+    trunkOverShin: 16,
+    trunkOverShinGain: 0.2,
     early: 0.6,
     // Cross-under: flexing and relaxing the downhill leg, on a solid pole plant (lemaster-2010 pp151-156).
     crossUnder: [1, 1, 1],
