@@ -15,6 +15,8 @@ export const PROBE_SAMPLES = 96;
 
 export interface ProbeFrame {
   readonly grip: Readonly<Record<LegSide, Vec3>>;
+  /** Head of the humerus. */
+  readonly shoulder: Readonly<Record<LegSide, Vec3>>;
   readonly ankle: Readonly<Record<LegSide, Vec3>>;
   /** Elbow to wrist. */
   readonly forearm: Readonly<Record<LegSide, Vec3>>;
@@ -75,6 +77,7 @@ export const probeFixture = (model: AnatomyModel): ProbeFixture => {
     model.pose(i / PROBE_SAMPLES);
     return {
       grip: perSide((side) => vec(grips[side]())),
+      shoulder: perSide((side) => vec(model.bone(`upper_arm.${letter(side)}`).getWorldPosition(new Vector3()))),
       ankle: perSide((side) => vec(model.bone(`foot.${letter(side)}`).getWorldPosition(new Vector3()))),
       forearm: perSide((side) => {
         const elbow = model.bone(`forearm.${letter(side)}`).getWorldPosition(new Vector3());
