@@ -6,12 +6,13 @@ import type { JSX } from 'solid-js';
 import { render } from 'solid-js/web';
 import { loadData } from './data';
 import { Blend } from './Blend';
+import { registerServiceWorker } from '../../pwa/register';
 
 const root = document.getElementById('root');
 if (root === null) throw new Error('missing #root');
 
 const Page = (): JSX.Element => {
-  const [data, { refetch }] = createResource(() => loadData('/prototype-data.json'));
+  const [data, { refetch }] = createResource(() => loadData(`${import.meta.env.BASE_URL}content.json`));
   return (
     <Show
       when={data()}
@@ -39,3 +40,5 @@ render(
   ),
   root,
 );
+
+registerServiceWorker();

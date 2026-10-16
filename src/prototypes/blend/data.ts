@@ -24,22 +24,17 @@ export const loadData = async (url: string): Promise<BlendData> => {
     sources: unknown;
     exercises: unknown;
     movements: Record<string, unknown>;
-    drills: ReadonlyArray<{ status?: string; scenarios?: Record<string, Record<string, unknown>> }>;
+    drills: ReadonlyArray<{ reviewed_by?: ReadonlyArray<unknown> }>;
   };
   return {
     muscles: decode(Schema.Array(Muscle))(raw.muscles),
     sources: decode(Schema.Array(Source))(raw.sources),
     exercises: decode(Schema.Array(Exercise))(raw.exercises),
     movements: new Map(Object.values(raw.movements).map((m) => decode(Movement)(m)).map((m) => [m.id as string, m])),
-    drills: raw.drills.map((d) => Object.assign(decode(Drill)(withRadius(d)), { draft: d.status !== 'real' })),
+    // Draft until an instructor or physio has reviewed it.
+    drills: raw.drills.map((d) => Object.assign(decode(Drill)(d), { draft: (d.reviewed_by ?? []).length === 0 })),
   };
 };
-
-// Stops and slips have no turn radius; the schema needs one, and the shared pose ignores it.
-const withRadius = (d: { readonly scenarios?: Record<string, Record<string, unknown>> }): unknown =>
-  d.scenarios === undefined
-    ? d
-    : { ...d, scenarios: Object.fromEntries(Object.entries(d.scenarios).map(([k, s]) => [k, { radius_m: 100, ...s }])) };
 
 export const KindId = {
   Cruising: 'cruising',
