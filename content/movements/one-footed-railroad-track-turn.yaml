@@ -55,8 +55,8 @@ dof_matrix:
     side: inside
     cells:
       initiation: { action: Lifted; the shin stays forward in the boot so the ski hangs level with the slope, contraction: isometric, cue: Lifted ski parallel to the snow, confidence: low, sources: [psia-c-one-footed-railroad-track] }
-      shaping: { action: Held with the shin forward, contraction: isometric, cue: Lifted ski parallel to the snow, confidence: low, sources: [] }
-      finish: { action: Held with the shin forward, contraction: isometric, cue: Lifted ski parallel to the snow, confidence: low, sources: [] }
+      shaping: { action: Held with the shin forward, contraction: isometric, cue: Lifted ski parallel to the snow, confidence: low, sources: [{ source: lemaster-2010, pages: 81 }, { source: patterson-2023, pages: 89 }] }
+      finish: { action: Held with the shin forward, contraction: isometric, cue: Lifted ski parallel to the snow, confidence: low, sources: [{ source: lemaster-2010, pages: 81 }, { source: patterson-2023, pages: 89 }] }
   - dof: ankle.inversion
     side: outside
     cells:
@@ -103,7 +103,9 @@ dof_matrix:
         contraction: eccentric
         cue: Roll both feet back together
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -597,8 +599,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Pull the toes up with tibialis anterior
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from their dorsiflexor moment arm, working with tibialis anterior on the book's pull-the-toes-up cue; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: soleus
     side: outside
     serves: [ankle.flexion]
@@ -655,8 +657,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Helps flex the lifted knee
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; it crosses the knee, so it can help bend the light leg while the boot holds the ankle flexed; not measured on snow
+    sources: [{ source: patterson-2023, pages: 89 }]
   - muscle: sartorius
     side: inside
     serves: [hip.flexion, knee.flexion]
@@ -709,8 +711,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Tips the lifted foot onto its little-toe edge in step
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   # Trunk. The lifted side is unsupported; the trunk makes the fine lateral corrections.
   - muscle: quadratus-lumborum
     side: inside

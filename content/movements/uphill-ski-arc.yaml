@@ -35,7 +35,7 @@ dof_matrix:
     cells:
       initiation: { action: Lifted; the shin stays forward in the boot so the downhill ski hangs parallel to the slope, contraction: isometric, cue: Lifted ski parallel to the snow, confidence: low, sources: [psia-c-advanced-one-ski] }
       shaping: { action: Held with the shin forward, contraction: isometric, cue: Lifted ski parallel to the stance ski, confidence: low, sources: [psia-c-advanced-one-ski] }
-      finish: { action: Held with the shin forward as the ski is set down, contraction: isometric, cue: Set it down flat and parallel, confidence: low, sources: [] }
+      finish: { action: Held with the shin forward as the ski is set down, contraction: isometric, cue: Set it down flat and parallel, confidence: low, sources: [{ source: lemaster-2010, pages: 81 }, { source: patterson-2023, pages: 89 }] }
   - dof: ankle.flexion
     side: inside
     cells:
@@ -68,7 +68,7 @@ dof_matrix:
     cells:
       initiation: { action: The lifted foot tips toward the hill with the stance foot, contraction: concentric, cue: Lifted foot tips the same way as the stance foot, confidence: low, sources: [psia-c-advanced-one-ski] }
       shaping: { action: Tilt matched to the stance ski; tipping it more helps the stance ski grip, contraction: concentric, cue: Roll the lifted foot to feel the stance edge bite, confidence: low, sources: [psia-c-advanced-one-ski] }
-      finish: { action: Back toward flat to set the ski down, contraction: eccentric, cue: Flat and parallel to set down, confidence: low, sources: [] }
+      finish: { action: Back toward flat to set the ski down, contraction: eccentric, cue: Flat and parallel to set down, confidence: low, sources: [{ source: lemaster-2010, pages: 127 }, { source: lind-sanders-2004, pages: 95 }] }
   - dof: ankle.inversion
     side: inside
     cells:
@@ -94,7 +94,9 @@ dof_matrix:
         contraction: eccentric
         cue: Ease the edge as you slow
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -106,7 +108,7 @@ dof_matrix:
     cells:
       initiation: { action: Foot held firm under the whole load on its outer border, contraction: isometric, cue: Heel and little-toe ball on the boot sole, confidence: low, sources: [{ source: iasi-2021, pages: 190 }, { source: lemaster-2010, pages: "137-139" }] }
       shaping: { action: Held firm under peak load with constant fine corrections, contraction: isometric, cue: Keep the whole foot working, confidence: low, sources: [{ source: lind-sanders-2004, pages: 137 }] }
-      finish: { action: Held as the load eases, contraction: isometric, cue: Spread the pressure as you slow, confidence: low, sources: [] }
+      finish: { action: Held as the load eases, contraction: isometric, cue: Spread the pressure as you slow, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:
@@ -610,8 +612,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Pull the toes up with tibialis anterior
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from their dorsiflexor moment arm, working with tibialis anterior on the book's pull-the-toes-up cue; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: soleus
     side: inside
     serves: [ankle.flexion]
@@ -674,8 +676,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Helps flex the lifted knee
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; it crosses the knee, so it can help bend the light leg while the boot holds the ankle flexed; not measured on snow
+    sources: [{ source: patterson-2023, pages: 89 }]
   - muscle: sartorius
     side: outside
     serves: [hip.flexion, knee.flexion]
@@ -719,8 +721,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Keeps the lifted shin forward so the ski hangs level
     confidence: low
-    basis: Mechanics; not measured on snow
-    sources: []
+    basis: Inferred; tibialis anterior was above half of maximum in parallel and GS turns, and the book's cue for moving forward is pulling the toes up; on a lifted leg it only holds the foot, so not measured in this drill
+    sources: [hintermeister-1997, { source: lemaster-2010, pages: 81 }]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]

@@ -72,13 +72,17 @@ dof_matrix:
         contraction: isometric
         cue: Free shin forward too
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
       finish:
         action: Held flexed as the free foot reaches out to be set down
         contraction: isometric
         cue: Set the new ski down with the shin forward
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
   - dof: ankle.inversion
     side: outside
     cells:
@@ -121,9 +125,9 @@ dof_matrix:
   - dof: foot.arch
     side: outside
     cells:
-      initiation: { action: Arch held as the foot takes the body's weight, contraction: isometric, cue: Stand on heel and both balls of the foot, confidence: low, sources: [] }
-      shaping: { action: Arch held as the edge loads, contraction: isometric, cue: Keep the arch from collapsing, confidence: low, sources: [] }
-      finish: { action: Arch held under the push, contraction: isometric, cue: Push through the whole foot, confidence: low, sources: [] }
+      initiation: { action: Arch held as the foot takes the body's weight, contraction: isometric, cue: Stand on heel and both balls of the foot, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
+      shaping: { action: Arch held as the edge loads, contraction: isometric, cue: Keep the arch from collapsing, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
+      finish: { action: Arch held under the push, contraction: isometric, cue: Push through the whole foot, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
   - dof: foot.arch
     side: inside
     cells:
@@ -646,8 +650,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Help pull the shin forward
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from their dorsiflexor moment arm, working with tibialis anterior on the book's pull-the-toes-up cue; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 81 }]
   - muscle: soleus
     side: outside
     serves: [ankle.flexion]
@@ -676,8 +680,8 @@ activations:
     contraction: { initiation: eccentric, shaping: isometric, finish: isometric }
     role: Lets the little-toe edge roll flat under control and holds the arch up
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the foot can still roll inside the boot to let an edge go, and the outside foot's arch takes the sideways load; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: 139 }]
   - muscle: foot-intrinsics
     side: outside
     serves: [foot.arch]
@@ -685,8 +689,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the load over the sole for balance on one ski
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the outside foot's arch is built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 139 }]
   # Free leg: swings in and forward, then reaches out to set the next ski down.
   - muscle: iliopsoas
     side: inside
@@ -776,8 +780,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: concentric }
     role: Pulls the free foot up and tips the new ski toward its little-toe edge for the landing
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; tibialis anterior was above half of maximum in parallel and GS turns, and the foot can still roll inside the boot to set an edge; on the free leg it was not measured
+    sources: [hintermeister-1997, { source: lind-sanders-2004, pages: 95 }]
   # Trunk: hinged and quiet; the hips move over each ski, not the shoulders.
   - muscle: erector-spinae
     side: both

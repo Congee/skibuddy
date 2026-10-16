@@ -142,7 +142,9 @@ dof_matrix:
         contraction: isometric
         cue: Lifted ski quiet, just above the stance ski
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
       finish:
         action: Tilt held as the ski is uncrossed and set down on its little-toe edge alongside the stance ski
         contraction: isometric
@@ -172,11 +174,13 @@ dof_matrix:
         contraction: isometric
         cue: Spread the pressure as it moves to the heel
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 139 }
+          - falda-buscaiot-2017
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: Arch held under a light load until the ski lifts in early shaping, contraction: isometric, cue: A quiet foot, confidence: low, sources: [] }
+      initiation: { action: Arch held under a light load until the ski lifts in early shaping, contraction: isometric, cue: A quiet foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
       shaping: { neutral: true, contraction: isometric, cue: A quiet foot in the lifted boot, confidence: low, sources: [] }
       finish: { neutral: true, contraction: isometric, cue: A quiet foot in the lifted boot, confidence: low, sources: [] }
   - dof: knee.flexion
@@ -949,8 +953,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Adds a little ankle stiffness; slack with the knee bent
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; medial gastrocnemius averaged above half of maximum in GS turns, but the boot shaft carries much of the ankle moment and the bent knee slackens it, so its share here is small; not measured in this drill
+    sources: [hintermeister-1997, heinrich-2022]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -1135,8 +1139,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Tips the inside ski onto its little-toe edge for the edge change and holds that tilt for the set-down
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   # Pelvis and trunk. The trunk holds a large counter against the stance leg's turning, and bends toward the outside ski.
   - muscle: internal-oblique
     side: outside

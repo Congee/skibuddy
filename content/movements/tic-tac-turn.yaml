@@ -153,7 +153,9 @@ dof_matrix:
         contraction: eccentric
         cue: Flatten both skis together
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -177,7 +179,9 @@ dof_matrix:
         contraction: isometric
         cue: Spread the pressure as it moves to the heel
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 139 }
+          - falda-buscaiot-2017
   - dof: foot.arch
     side: inside
     cells:
@@ -194,7 +198,8 @@ dof_matrix:
         contraction: isometric
         cue: Feel the whole foot before the next lift
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: "137-139" }
   - dof: knee.flexion
     side: outside
     cells:
@@ -946,8 +951,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Helps bend the knee for the lift, then adds a little ankle stiffness
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; it crosses the knee, so it can help bend the leg for the lift, and on landing it adds a little stiffness while the boot holds the ankle flexed; not measured on snow
+    sources: [{ source: patterson-2023, pages: 89 }]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -980,8 +985,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Spread the landing pressure over the sole and make fine balance corrections
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the outside foot's arch is built for sideways load; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 139 }]
   # Inside (tac) leg: the lone stance leg during the tic, then lifted and set down short, then loaded and shortened.
   - muscle: vasti
     side: inside
@@ -1062,8 +1067,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Helps bend the knee for the lift, then adds a little ankle stiffness
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; it crosses the knee, so it can help bend the leg for the lift, and on landing it adds a little stiffness while the boot holds the ankle flexed; not measured on snow
+    sources: [{ source: patterson-2023, pages: 89 }]
   - muscle: gluteus-maximus
     side: inside
     serves: [hip.flexion, hip.rotation]
@@ -1134,8 +1139,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: eccentric }
     role: Inverts the lifted foot so the ski lands on its little-toe edge, holds it, then lets it flatten
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   - muscle: peroneals
     side: inside
     serves: [ankle.inversion]
@@ -1161,8 +1166,8 @@ activations:
     contraction: { initiation: isometric, shaping: null, finish: isometric }
     role: Brace the arch during the single-leg moment and again before the next tic
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; the arch takes the sideways load in the moment this foot stands alone; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 139 }]
   # Pelvis and trunk.
   - muscle: quadratus-lumborum
     side: inside

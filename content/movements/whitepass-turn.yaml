@@ -204,7 +204,8 @@ dof_matrix:
         contraction: isometric
         cue: Keep the foot quiet as the other ski lands
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: "137-139" }
       finish: { neutral: true, contraction: isometric, cue: A quiet foot in the lifted boot, confidence: low, sources: [] }
   - dof: knee.flexion
     side: outside
@@ -951,8 +952,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Helps hold the lifted knee bent, then adds a little ankle stiffness
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; it crosses the knee, so it can help bend the leg for the lift, and on landing it adds a little stiffness while the boot holds the ankle flexed; not measured on snow
+    sources: [{ source: patterson-2023, pages: 89 }]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -1105,8 +1106,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: concentric }
     role: Adds ankle stiffness on the stance leg, then helps bend the knee to lift the ski
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; it crosses the knee, so it can help bend the leg for the lift, and on landing it adds a little stiffness while the boot holds the ankle flexed; not measured on snow
+    sources: [{ source: patterson-2023, pages: 89 }]
   - muscle: sartorius
     side: inside
     serves: [hip.flexion, hip.rotation, knee.flexion]

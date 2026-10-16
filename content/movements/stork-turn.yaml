@@ -130,13 +130,17 @@ dof_matrix:
         contraction: isometric
         cue: Keep the lifted ski tilted with the stance ski
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
       finish:
         action: Tilt held as the ski is set down on its little-toe edge, ready for the edge change
         contraction: isometric
         cue: Set it down parallel, at hip width, on its little-toe edge alongside the stance ski
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -160,7 +164,9 @@ dof_matrix:
         contraction: isometric
         cue: Spread the pressure as it moves to the heel
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 139 }
+          - falda-buscaiot-2017
   - dof: foot.arch
     side: inside
     cells:
@@ -899,8 +905,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Adds a little ankle stiffness; slack with the knee bent
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; medial gastrocnemius averaged above half of maximum in GS turns, but the boot shaft carries much of the ankle moment and the bent knee slackens it, so its share here is small; not measured in this drill
+    sources: [hintermeister-1997, heinrich-2022]
   - muscle: peroneals
     side: outside
     serves: [ankle.inversion]
@@ -1085,8 +1091,8 @@ activations:
     contraction: { initiation: concentric, shaping: isometric, finish: isometric }
     role: Tips the lifted ski onto its new edge and holds it there for the set-down
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy and the edge mechanics; the foot can still roll inside the boot to set or let go an edge; not measured on snow
+    sources: [{ source: lind-sanders-2004, pages: 95 }, { source: lemaster-2010, pages: "123-124" }]
   # Pelvis and trunk. The spine bends toward the outside ski, so the inside side controls it lengthening.
   - muscle: quadratus-lumborum
     side: inside

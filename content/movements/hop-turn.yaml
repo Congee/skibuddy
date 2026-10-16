@@ -93,7 +93,9 @@ dof_matrix:
         contraction: eccentric
         cue: Sink with both shins forward
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 81 }
+          - { source: patterson-2023, pages: 89 }
   - dof: ankle.inversion
     side: outside
     cells:
@@ -137,25 +139,29 @@ dof_matrix:
         contraction: isometric
         cue: Land on both new edges
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
       finish:
         action: Tilt held into the platform for the next take-off
         contraction: isometric
         cue: Both skis edged for the take-off
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
-      initiation: { action: Arch held under the push, contraction: isometric, cue: Push through the whole foot, confidence: low, sources: [] }
+      initiation: { action: Arch held under the push, contraction: isometric, cue: Push through the whole foot, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
       shaping: { action: Arch held under the landing load, contraction: isometric, cue: Land on the whole foot, confidence: low, sources: [{ source: lemaster-2010, pages: 139 }] }
-      finish: { action: Arch held as the legs load, contraction: isometric, cue: Stand on heel and both balls of the foot, confidence: low, sources: [] }
+      finish: { action: Arch held as the legs load, contraction: isometric, cue: Stand on heel and both balls of the foot, confidence: low, sources: [{ source: lemaster-2010, pages: "139, 161-162" }] }
   - dof: foot.arch
     side: inside
     cells:
-      initiation: { action: Arch held under the push, contraction: isometric, cue: Push through the whole foot, confidence: low, sources: [] }
-      shaping: { action: Arch held under the landing load, contraction: isometric, cue: Land on the whole foot, confidence: low, sources: [] }
-      finish: { action: Arch held as the legs load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [] }
+      initiation: { action: Arch held under the push, contraction: isometric, cue: Push through the whole foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      shaping: { action: Arch held under the landing load, contraction: isometric, cue: Land on the whole foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
+      finish: { action: Arch held as the legs load, contraction: isometric, cue: A quiet inside foot, confidence: low, sources: [{ source: lemaster-2010, pages: "137-139" }] }
   - dof: knee.flexion
     side: outside
     cells:

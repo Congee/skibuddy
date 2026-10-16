@@ -116,7 +116,9 @@ dof_matrix:
         contraction: isometric
         cue: Both skis flat as they meet the snow
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: 127 }
+          - { source: lind-sanders-2004, pages: 95 }
   - dof: ankle.inversion
     side: inside
     cells:
@@ -137,7 +139,9 @@ dof_matrix:
         contraction: isometric
         cue: Land the ski flat, at hip width
         confidence: low
-        sources: []
+        sources:
+          - { source: lind-sanders-2004, pages: 95 }
+          - { source: lemaster-2010, pages: "123-124" }
   - dof: foot.arch
     side: outside
     cells:
@@ -161,7 +165,8 @@ dof_matrix:
         contraction: isometric
         cue: Spread the pressure over the whole foot
         confidence: low
-        sources: []
+        sources:
+          - { source: lemaster-2010, pages: "139, 161-162" }
   - dof: foot.arch
     side: inside
     cells:
@@ -723,8 +728,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Adds a little ankle stiffness
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred; medial gastrocnemius averaged above half of maximum in GS turns, but the boot shaft carries much of the ankle moment and the bent knee slackens it, so its share here is small; not measured in this drill
+    sources: [hintermeister-1997, heinrich-2022]
   - muscle: iliopsoas
     side: outside
     serves: [pelvis.tilt]
@@ -856,8 +861,8 @@ activations:
     contraction: { initiation: isometric, shaping: isometric, finish: isometric }
     role: Pair with tibialis anterior so the lifted ski stays flat, not tilted onto its little-toe edge
     confidence: low
-    basis: Anatomy; not measured on snow
-    sources: []
+    basis: Inferred from anatomy; eversion balances tibialis anterior's inversion so the lifted foot hangs flat; not measured on snow
+    sources: [{ source: lemaster-2010, pages: 127 }]
   # Pelvis and trunk. No side bend and no counter: the trunk works lightly to stay quiet over the stance foot.
   - muscle: quadratus-lumborum
     side: inside
