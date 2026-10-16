@@ -995,10 +995,13 @@ def main():
 
     rest = dict(ramp=binding['bootBoardRamp'] + binding['deltaAngle'],
                 femur={s: (Vector(J[s]['hip']) - Vector(J[s]['knee'])).normalized() for s in ('R', 'L')})
-    # The template's arm hangs back, its elbow bent and carried out; pose.ts's arm hangs straight down at zero.
+    # The template's arm hangs back and its elbow is bent; pose.ts's arm hangs straight down at zero. The carrying angle stays.
     down = Vector((0, 0, -1))
-    rest['hang'] = {s: {k: Vector((J[s][b] - J[s][a]).tolist()).rotation_difference(down).to_matrix().to_4x4()
-                        for k, a, b in (('upper', 'shoulder', 'elbow'), ('forearm', 'elbow', 'wrist'))} for s in ('R', 'L')}
+    rest['hang'] = {}
+    for s in ('R', 'L'):
+        upper = Vector((J[s]['elbow'] - J[s]['shoulder']).tolist()).rotation_difference(down).to_matrix().to_4x4()
+        g = upper.to_3x3() @ Vector((J[s]['wrist'] - J[s]['elbow']).tolist())
+        rest['hang'][s] = dict(upper=upper, forearm=g.rotation_difference(Vector((g.x, 0, g.z))).to_matrix().to_4x4() @ upper)
     twist = palm_in(rig.data.bones, track, J, rest)
     parts = {k: np.concatenate(v) for k, v in pts.items()}
     rest['hands'] = {s: dict(twist=twist[s], curl=curls(J[s], s), thumb=thumb_pose(J[s], s, parts),
