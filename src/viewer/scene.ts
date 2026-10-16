@@ -1,4 +1,4 @@
-import { CircleGeometry, Color, DirectionalLight, HemisphereLight, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, Raycaster, Scene, Vector2, WebGPURenderer } from 'three/webgpu';
+import { CircleGeometry, Color, DirectionalLight, Group, HemisphereLight, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, Raycaster, Scene, Vector2, WebGPURenderer } from 'three/webgpu';
 import { color, float, length, positionLocal, smoothstep, uniform, vec2 } from 'three/tsl';
 import type { MuscleLevel } from '../content/activation';
 import { Intensity } from '../content/schema';
@@ -10,16 +10,19 @@ import { createFrameScheduler } from './frame-scheduler';
 import type { GearMode } from './gear-mode';
 import { isDoubleTap, isTap, midpoint, pinchRatio, span, toNdc, wheelRatio } from './gestures';
 import type { Point, TapAt } from './gestures';
+import { ViewLock, hipLock, slopeLock } from './hip-lock';
 import { chooseView, highlightSlots, highlightStrength, pointsFor, revealsDeep } from './highlight';
 import type { FigureHighlight, Occluder } from './highlight';
 import { DRAG_DAMPING, TURN_DAMPING, dampOrbit, dampStep } from './orbit';
 import type { Orbit } from './orbit';
 import { pickOf } from './pick';
+import type { Pose } from './pose';
+import { headingAt, turnPath } from './turn-heading';
 import type { MusclePick } from './pick';
 import { pixelRatio } from './pixel-ratio';
 import { makeSlotTable } from './slots';
 import type { MusclePart } from './slots';
-import { HOME_FRAME, HOME_ORBIT, dampFrame, panBy, surfaceDepth, turnAim, zoomAbout } from './view';
+import { FOLLOW_ORBIT, HOME_FRAME, HOME_ORBIT, SLOPE_ORBIT, dampFrame, panBy, surfaceDepth, turnAim, zoomAbout } from './view';
 import type { CameraFrame, Lens } from './view';
 
 export const FigureKind = { Capsule: 'capsule', Anatomy: 'anatomy' } as const;
@@ -28,6 +31,8 @@ export type FigureKind = (typeof FigureKind)[keyof typeof FigureKind];
 /** A posable figure in the scene. */
 export interface Figure {
   readonly update: (t: number, levels: ReadonlyArray<MuscleLevel>) => void;
+  /** The pose the next update at `t` shows. */
+  readonly pose: (t: number) => Pose;
   /** One point per muscle and side, in world space, for the current pose. */
   readonly anchors: () => ReadonlyArray<AnchorPoint>;
   /** Limbs and trunk as capsules in the current pose, for whether a muscle is in view. */
@@ -60,6 +65,8 @@ export interface ViewerOptions {
   readonly onPick?: (pick: MusclePick | null) => void;
   /** Pinch, wheel and two-finger pan; true by default. */
   readonly zoom?: boolean;
+  /** Skis fixed by default. */
+  readonly viewLock?: ViewLock;
 }
 
 export interface Viewer {
@@ -84,6 +91,8 @@ export interface Viewer {
   /** Singles out one muscle; a focus also turns the figure toward it if it faces away. */
   readonly setHighlight: (highlight: FigureHighlight | null) => void;
   readonly setZoom: (on: boolean) => void;
+  /** Skis, hips or slope held still; eases to that mode's home view. */
+  readonly setViewLock: (lock: ViewLock) => void;
   /** CSS px of the canvas's bottom covered by a panel; the figure is framed in the rest. */
   readonly setInset: (bottom: number) => void;
   /** Eases back to the whole figure from the default angle. */
@@ -110,6 +119,7 @@ const MAX_INSET = 0.6;
 /** Metres; a wheel or pinch off the body zooms no closer than this. */
 const OFF_BODY_DISTANCE = 2.2;
 const GROUND_RADIUS = 6.5;
+const IDENTITY = new Matrix4().elements;
 
 export const createViewer = async (
   canvas: HTMLCanvasElement,
@@ -142,13 +152,17 @@ export const createViewer = async (
   const contact = new Mesh(new PlaneGeometry(0.84, 2).rotateX(-Math.PI / 2), shadowMaterial);
   contact.position.y = -0.001;
   contact.renderOrder = 1;
-  scene.add(contact);
+  // The figure's root: the hip lock moves it, so the snow and lights stay with the view.
+  const rig = new Group();
+  rig.matrixAutoUpdate = false;
+  rig.add(contact);
+  scene.add(rig);
 
   const table = makeSlotTable(muscles);
   const loadAnatomy = async (): Promise<Figure | null> => {
     try {
       const { createAnatomyFigure } = await import('./anatomy');
-      return await createAnatomyFigure(scene, table);
+      return await createAnatomyFigure(rig, table);
     } catch (e: unknown) {
       console.warn('anatomy figure unavailable, showing the capsule', e);
       return null;
@@ -156,7 +170,7 @@ export const createViewer = async (
   };
   const anatomyFigure = options.figure === FigureKind.Anatomy ? await loadAnatomy() : null;
   const anatomy = anatomyFigure !== null;
-  const figure: Figure = anatomyFigure ?? createCapsuleFigure(scene, table, muscles);
+  const figure: Figure = anatomyFigure ?? createCapsuleFigure(rig, table, muscles);
   if (anatomy) {
     // A cool back light separates the figure's silhouette from the background.
     const rim = new DirectionalLight(0xbfd8ff, 1.4);
@@ -165,8 +179,11 @@ export const createViewer = async (
   }
 
   const camera = new PerspectiveCamera(32, 1, 0.05, 50);
+  let lock: ViewLock = options.viewLock ?? ViewLock.SkisFixed;
+  // Hips fixed follows from behind, down the fall line the hips face; slope fixed watches from below.
+  const homeOrbit = (): Orbit => (lock === ViewLock.HipsFixed ? FOLLOW_ORBIT : lock === ViewLock.SlopeFixed ? SLOPE_ORBIT : HOME_ORBIT);
   // Gestures move `aim` and `frameAim`; the camera eases toward them and stops once there.
-  let aim: Orbit = HOME_ORBIT;
+  let aim: Orbit = homeOrbit();
   let orbit: Orbit = aim;
   let frameAim: CameraFrame = HOME_FRAME;
   let frame: CameraFrame = frameAim;
@@ -229,12 +246,25 @@ export const createViewer = async (
     damping = TURN_DAMPING;
   };
 
+  const rootAt = (t: number): ArrayLike<number> => {
+    switch (lock) {
+      case ViewLock.HipsFixed:
+        return hipLock(figure.pose(t));
+      case ViewLock.SlopeFixed:
+        return slopeLock(figure.pose(t), headingAt(t, turnPath(drill, intensity)));
+      default:
+        return IDENTITY;
+    }
+  };
+
   const draw = (now: number): boolean => {
     const seconds = lastDraw === 0 ? 0 : (now - lastDraw) / 1000;
     lastDraw = now;
     let moving = false;
     if (time !== posedAt) {
       posedAt = time;
+      rig.matrix.fromArray(rootAt(time));
+      rig.updateMatrixWorld(true);
       figure.update(time, levels(time));
     }
     if (turnPending) {
@@ -305,7 +335,7 @@ export const createViewer = async (
   };
 
   const resetView = (): void => {
-    aim = HOME_ORBIT;
+    aim = homeOrbit();
     frameAim = HOME_FRAME;
     damping = TURN_DAMPING;
     invalidate();
@@ -499,6 +529,12 @@ export const createViewer = async (
     setZoom: (on) => {
       zoomOn = on;
       if (!on) resetView();
+    },
+    setViewLock: (next) => {
+      if (next === lock) return;
+      lock = next;
+      posedAt = Number.NaN;
+      resetView();
     },
     setInset: (bottom) => {
       insetWanted = Math.max(0, bottom);

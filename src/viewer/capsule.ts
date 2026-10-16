@@ -11,7 +11,7 @@ import {
   Uint32BufferAttribute,
   Vector3,
 } from 'three/webgpu';
-import type { NodeBuilder, Scene } from 'three/webgpu';
+import type { NodeBuilder, Object3D } from 'three/webgpu';
 import {
   attribute,
   color,
@@ -210,27 +210,27 @@ const ahead = new Vector3();
 const across = new Vector3();
 
 /** The placeholder capsule skier. */
-export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: ReadonlyArray<string>): Figure => {
+export const createCapsuleFigure = (parent: Object3D, table: SlotTable, muscles: ReadonlyArray<string>): Figure => {
   const { geometry, anchors } = buildFigureGeometry(table);
   const material = new FigureMaterial(table.size);
   const figure = new Mesh(geometry, material);
   // Vertices move in the shader, so the rest-pose bounds are wrong.
   figure.frustumCulled = false;
-  scene.add(figure);
+  parent.add(figure);
 
   const gear = createGear({ [BodySide.Right]: CAPSULE_BOOT, [BodySide.Left]: CAPSULE_BOOT });
   for (const part of [...gear.shells, ...gear.soles, ...gear.cuffs, ...gear.plates, ...gear.bindings]) {
     part.mesh.matrixAutoUpdate = false;
-    scene.add(part.mesh);
+    parent.add(part.mesh);
   }
-  for (const part of gear.poles) scene.add(part.mesh);
+  for (const part of gear.poles) parent.add(part.mesh);
   // The midline is +x for the right hand once the fist's grip points up and its fingers forward.
   const skin = new MeshStandardNodeMaterial({ color: SKIN, roughness: 0.75 });
   const fists = [
     { side: BodySide.Right, fist: createFist(skin, 1) },
     { side: BodySide.Left, fist: createFist(skin, -1) },
   ] as const;
-  for (const { fist } of fists) scene.add(fist);
+  for (const { fist } of fists) parent.add(fist);
 
   const owners = new Map<number, { readonly muscle: string; readonly side: typeof Side.Outside | typeof Side.Inside }>();
   for (const muscle of muscles) for (const side of [Side.Outside, Side.Inside]) owners.set(table.slotOf(muscle, side), { muscle, side });
@@ -248,6 +248,7 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
       size = poleSize(CAPSULE_ARM, poleTrimOf(drill));
       gear.setPole(size);
     },
+    pose: (t: number) => samplePose(poses, t),
     update: (t: number, levels: ReadonlyArray<MuscleLevel>) => {
       const pose = samplePose(poses, t);
       const world = segmentMatrices(pose);
@@ -294,8 +295,9 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         const owner = owners.get(a.slot);
         const m = material.matrices[a.segment];
         if (owner === undefined || m === undefined) return [];
-        p.copy(a.position).applyMatrix4(m);
-        n.copy(a.normal).transformDirection(m);
+        // Segment matrices are in the figure's root; the hip lock moves that root.
+        p.copy(a.position).applyMatrix4(m).applyMatrix4(figure.matrixWorld);
+        n.copy(a.normal).transformDirection(m).transformDirection(figure.matrixWorld);
         return [{ ...owner, position: [p.x, p.y, p.z] as const, normal: [n.x, n.y, n.z] as const }];
       }),
     occluders: (): ReadonlyArray<Occluder> =>
@@ -304,7 +306,7 @@ export const createCapsuleFigure = (scene: Scene, table: SlotTable, muscles: Rea
         const { shape } = segment;
         if (m === undefined || shape.type !== 'capsule' || shape.length === 0) return [];
         const end = (dy: number): Vec3 => {
-          p.set(shape.center[0], shape.center[1] + dy, shape.center[2]).applyMatrix4(m);
+          p.set(shape.center[0], shape.center[1] + dy, shape.center[2]).applyMatrix4(m).applyMatrix4(figure.matrixWorld);
           return [p.x, p.y, p.z];
         };
         return [{ a: end(-shape.length / 2), b: end(shape.length / 2), radius: shape.radius }];

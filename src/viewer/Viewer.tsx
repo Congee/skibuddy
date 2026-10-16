@@ -9,6 +9,7 @@ import { playingAtom, turnTimeAtom } from '../state/playback';
 import type { AnchorsListener } from './anchors';
 import { GearMode } from './gear-mode';
 import type { FigureHighlight } from './highlight';
+import type { ViewLock } from './hip-lock';
 import type { MusclePick } from './pick';
 import { hasPose } from './poses';
 import type { FigureKind, Viewer as SceneViewer } from './scene';
@@ -66,6 +67,8 @@ export const Viewer = (props: {
   readonly onPick?: (pick: MusclePick | null) => void;
   /** Pinch, wheel and two-finger pan zoom; on by default. */
   readonly zoom?: boolean;
+  /** Skis, hips or slope held still on screen; skis by default. */
+  readonly viewLock?: ViewLock;
   /** CSS px of the figure's bottom covered by a panel; the figure is framed in the rest. */
   readonly inset?: { readonly bottom: number };
   /** Each change eases the camera back to the whole figure. */
@@ -120,6 +123,7 @@ export const Viewer = (props: {
           levels: levels(),
           drill: props.drill,
           zoom: props.zoom ?? true,
+          ...(props.viewLock === undefined ? {} : { viewLock: props.viewLock }),
           onPick: (pick) => props.onPick?.(pick),
           ...(onAnchors === undefined ? {} : { onAnchors }),
         }),
@@ -195,6 +199,11 @@ export const Viewer = (props: {
   createEffect(() => {
     const on = props.zoom ?? true;
     if (shown() !== null) viewer?.setZoom(on);
+  });
+
+  createEffect(() => {
+    const lock = props.viewLock;
+    if (shown() !== null && lock !== undefined) viewer?.setViewLock(lock);
   });
 
   createEffect(() => {

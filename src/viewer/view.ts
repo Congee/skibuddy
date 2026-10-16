@@ -11,6 +11,10 @@ export interface CameraFrame {
 /** The whole figure in view. */
 export const HOME_FRAME: CameraFrame = { distance: 4.2, target: [0, 0.7, 0] };
 export const HOME_ORBIT: Orbit = { azimuth: 0.7, elevation: 0.25 };
+/** A follow-cam: behind the skier and a little above, looking down the fall line. */
+export const FOLLOW_ORBIT: Orbit = { azimuth: Math.PI, elevation: 0.3 };
+/** Downhill of the skier, low, looking up the fall line. */
+export const SLOPE_ORBIT: Orbit = { azimuth: 0, elevation: 0.12 };
 /** About a forearm filling the view at the camera's 32° field. */
 export const MIN_DISTANCE = 0.55;
 export const MAX_DISTANCE = HOME_FRAME.distance;

@@ -1,5 +1,5 @@
 import { AnimationMixer, DoubleSide, Matrix4, MeshStandardNodeMaterial, PropertyBinding, SkinnedMesh, Uint32BufferAttribute, Vector3, Vector4 } from 'three/webgpu';
-import type { AnimationAction, AnimationClip, Intersection, Mesh, Object3D, Raycaster, Scene, Skeleton } from 'three/webgpu';
+import type { AnimationAction, AnimationClip, Intersection, Mesh, Object3D, Raycaster, Skeleton } from 'three/webgpu';
 import {
   attribute,
   color,
@@ -181,10 +181,10 @@ export interface AnatomyFigure extends Figure {
 }
 
 /** The Z-Anatomy figure from scripts/anatomy; poses come from its baked clip per posed drill and intensity. */
-export const createAnatomyFigure = async (scene: Scene, table: SlotTable, url: string = ANATOMY_URL): Promise<AnatomyFigure> => {
+export const createAnatomyFigure = async (rig: Object3D, table: SlotTable, url: string = ANATOMY_URL): Promise<AnatomyFigure> => {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
-  return buildAnatomyFigure(scene, table, await loader.loadAsync(url));
+  return buildAnatomyFigure(rig, table, await loader.loadAsync(url));
 };
 
 /** The parts of a loaded glTF the figure reads. */
@@ -193,7 +193,7 @@ export interface AnatomyModel {
   readonly animations: ReadonlyArray<AnimationClip>;
 }
 
-export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: AnatomyModel): AnatomyFigure => {
+export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: AnatomyModel): AnatomyFigure => {
   const root = gltf.scene;
   root.updateMatrixWorld(true);
 
@@ -287,15 +287,18 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
   const ankle = new Vector3();
   const wrist = new Vector3();
   const elbow = new Vector3();
+  const toRoot = new Matrix4();
+  // Poles hang from the figure's root, so they are placed in its frame, not the world's.
   const placePoles = (t: number): void => {
     if (kit === null) return;
     const touch = samplePose(poses, t).poleTouch;
+    toRoot.copy(rig.matrixWorld).invert();
     for (const { side, hand, forearm, foot, local } of fists) {
       const pole = kit.poles.find((p) => p.side === side);
       if (pole === undefined) continue;
-      fist.copy(local).applyMatrix4(hand.matrixWorld);
-      foot.getWorldPosition(ankle);
-      hand.getWorldPosition(wrist).sub(forearm.getWorldPosition(elbow));
+      fist.copy(local).applyMatrix4(hand.matrixWorld).applyMatrix4(toRoot);
+      foot.getWorldPosition(ankle).applyMatrix4(toRoot);
+      hand.getWorldPosition(wrist).applyMatrix4(toRoot).sub(forearm.getWorldPosition(elbow).applyMatrix4(toRoot));
       const grip: Vec3 = [fist.x, fist.y, fist.z];
       placePole(pole.mesh, grip, poleDirection(grip, side, side === BodySide.Left ? touch : 0, [ankle.x, ankle.y, ankle.z], size.basket, [wrist.x, wrist.y, wrist.z]));
     }
@@ -316,8 +319,8 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
     throw e;
   }
   // Nothing joins the scene until the figure is whole, so a failed build leaves no trace.
-  scene.add(root);
-  for (const p of kit?.poles ?? []) scene.add(p.mesh);
+  rig.add(root);
+  for (const p of kit?.poles ?? []) rig.add(p.mesh);
   const still = clip;
   const mixer = new AnimationMixer(root);
   // One baked clip per posed drill and intensity, from the same tables as `poses`; others stand still.
@@ -367,6 +370,7 @@ export const buildAnatomyFigure = (scene: Scene, table: SlotTable, gltf: Anatomy
   };
 
   return {
+    pose: (t: number) => samplePose(poses, t),
     update: (t: number, current: ReadonlyArray<MuscleLevel>) => {
       playing.action.time = (((t % 1) + 1) % 1) * playing.clip.duration;
       mixer.update(0);
