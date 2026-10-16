@@ -29,9 +29,11 @@ export interface TurnStyle {
   readonly hipStep: number;
   /** Peak hip angulation and the outside femur's rotation into the turn. */
   readonly angulation: number;
-  /** Pelvis facing the outside of the turn at shaping, and the trunk turned further beyond it. */
+  /** Peak pelvis turn toward the outside of the turn, relative to the skis, and the chest turned further beyond it. */
   readonly counter: number;
   readonly twist: number;
+  /** Share of the peak counter and twist at each phase key. */
+  readonly counterCurve: PhaseValues;
   /** Trunk bent toward the outside ski at shaping. */
   readonly bend: number;
   /** Outside ankle dorsiflexion at shaping. */
@@ -42,6 +44,8 @@ export interface TurnStyle {
   readonly spineFlex: number;
   /** Thighs drawn toward each other: a narrower stance than hip width. */
   readonly narrow: number;
+  /** Both femurs turned inward, so the knees meet while the boots stay apart. */
+  readonly kneesIn: number;
   /** Mass ahead of the outside mid-foot at shaping, metres. */
   readonly comAhead: number;
   /** Share of the peak angulation already in at the initiation key: feet and knees tip the new edges early. */
@@ -61,6 +65,18 @@ const LONG: TurnScenarios = {
   moderate: { speedMps: 11, radiusM: 14, slopeDeg: 14 },
   dynamic: { speedMps: 12, radiusM: 11, slopeDeg: 18 },
 };
+// The trunk follows the skis: counter builds to late shaping and eases off through completion (lemaster-2010 p128).
+const FOLLOW: PhaseValues = [0, 0.5, 0.9, 1, 0.4];
+// The trunk faces the fall line, so counter tracks the skis' heading off it: most at the edge set (lemaster-2010 pp74, 128).
+const SWIVEL: PhaseValues = [0, 0.3, 0.8, 0.94, 1];
+// Pelvis counter at the finish: short turns 30-40 deg, low confidence (biomechanics.md D12); the spine adds 5-8 (sporri-2016).
+const SHORT_COUNTER = 35;
+// Hips always face the fall line in moguls (user's rule), so counter is the skis' heading off it, 0 at the transition.
+// An arc of radius r from the fall line across half a corridor w heads acos(1 - w/2r) off it, up to the hips' rotation range.
+const fallLineHeading = (r: number, w: number): number => Math.min(45, Math.acos(1 - w / (2 * r)) / DEG);
+// Constant turn rate: the heading grows as t / (5/6) to the finish key.
+const HEADING: PhaseValues = [0, 0.2, 0.6, 0.78, 1];
+
 const SHORT: TurnScenarios = {
   gentle: { speedMps: 6, radiusM: 6, slopeDeg: 12 },
   moderate: { speedMps: 7, radiusM: 6, slopeDeg: 15 },
@@ -83,13 +99,16 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hip: [32, 38],
     hipStep: 2,
     angulation: 5,
-    counter: 6,
+    // Between carving and short turns; inferred.
+    counter: 12,
     twist: 2,
+    counterCurve: FOLLOW,
     bend: 2,
     dorsiflexion: 13,
     ankle: [0, 1, 0, 0, -1],
     spineFlex: 20,
     narrow: 0,
+    kneesIn: 0,
     comAhead: 0.05,
     early: 0.4,
     polePlant: false,
@@ -102,32 +121,37 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hip: [32, 38],
     hipStep: 2,
     angulation: 12,
-    counter: 7,
-    twist: 3,
+    // Slight, from the strong inside half; the trunk turns with the skis (debertin-2022, biomechanics.md D13).
+    counter: 5,
+    twist: 1,
+    counterCurve: FOLLOW,
     bend: 6,
     dorsiflexion: 14,
     ankle: [-1, 4, 2, 0, -2],
     spineFlex: 21,
     narrow: 0,
+    kneesIn: 0,
     comAhead: 0.08,
     early: 0.65,
     polePlant: false,
     poleTrim: 0,
   },
-  // Legs flex and extend under a quiet trunk turned down the fall line.
+  // Legs flex and extend under a quiet trunk square to the fall line.
   [RegularTurn.ShortTurns]: {
     scenarios: SHORT,
     outsideShare: [0.62, 0.85],
     hip: [32, 56],
     hipStep: 4,
     angulation: 9,
-    counter: 14,
-    twist: 10,
+    counter: SHORT_COUNTER,
+    twist: 5,
+    counterCurve: SWIVEL,
     bend: 5,
     dorsiflexion: 15,
     ankle: [0, 3, 2, 0, -2],
     spineFlex: 22,
     narrow: 0,
+    kneesIn: 0,
     comAhead: 0.06,
     early: 0.6,
     polePlant: true,
@@ -144,13 +168,16 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hip: [36, 75],
     hipStep: 5,
     angulation: 6,
-    counter: 15,
-    twist: 10,
+    // Zipper line about 2 m wide; the chest stays with the pelvis.
+    counter: fallLineHeading(5, 2),
+    twist: 0,
+    counterCurve: HEADING,
     bend: 3,
     dorsiflexion: 17,
     ankle: [4, 2, -1, -1, 2],
-    spineFlex: 20,
+    spineFlex: 24,
     narrow: 0,
+    kneesIn: 0,
     comAhead: 0.05,
     early: 0.4,
     polePlant: true,
@@ -168,13 +195,16 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hip: [36, 56],
     hipStep: 4,
     angulation: 14,
-    counter: 18,
-    twist: 12,
+    // Pivoted, so near short turns; inferred.
+    counter: 30,
+    twist: 6,
+    counterCurve: SWIVEL,
     bend: 9,
     dorsiflexion: 15,
     ankle: [-1, 4, 2, 0, -2],
     spineFlex: 24,
     narrow: 0,
+    kneesIn: 0,
     comAhead: 0.06,
     early: 0.6,
     polePlant: true,
@@ -191,18 +221,53 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hip: [28, 54],
     hipStep: 4,
     angulation: 4,
-    counter: 5,
-    twist: 2,
+    // Rhythmic fall-line turns, rounder than short turns; inferred.
+    counter: 20,
+    twist: 3,
+    counterCurve: SWIVEL,
     bend: 2,
     dorsiflexion: 13,
     ankle: [0, 1, 0, -1, -1],
-    spineFlex: 16,
+    spineFlex: 19,
     narrow: 2,
+    kneesIn: 0,
     comAhead: 0.04,
     early: 0.5,
     polePlant: true,
     poleTrim: 0,
   },
+};
+
+/**
+ * Closed-stance short turns: knees and boots together, the legs swivelling under a still trunk square to the
+ * fall line. Scenarios as content/drills/closed-stance-short-turns.yaml.
+ */
+export const CLOSED_STANCE: TurnStyle = {
+  scenarios: {
+    gentle: { speedMps: 5, radiusM: 4.5, slopeDeg: 14 },
+    moderate: { speedMps: 6, radiusM: 4.5, slopeDeg: 17 },
+    dynamic: { speedMps: 7, radiusM: 5, slopeDeg: 20 },
+  },
+  // Both feet share the load more evenly than in an open stance.
+  outsideShare: [0.55, 0.65],
+  // Little up and down: the trunk stays level.
+  hip: [40, 50],
+  hipStep: 3,
+  angulation: 3,
+  // A corridor about 2 m wide, as the drill's terrain.
+  counter: fallLineHeading(4.5, 2),
+  twist: 0,
+  counterCurve: HEADING,
+  bend: 1,
+  dorsiflexion: 15,
+  ankle: [0, 3, 2, 0, -2],
+  spineFlex: 22,
+  narrow: 7,
+  kneesIn: 10,
+  comAhead: 0.06,
+  early: 0.6,
+  polePlant: true,
+  poleTrim: 0,
 };
 
 export const isRegularTurn = (id: string): id is RegularTurn => Object.hasOwn(TURN_STYLES, id);
@@ -245,8 +310,8 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
         pelvisList: 1.2 * style.angulation * share * DEG,
         lumbarFlex: style.spineFlex * DEG,
         spineBend: style.bend * share * DEG,
-        spineTwist: style.twist * share * DEG,
-        counter: style.counter * share * DEG,
+        spineTwist: style.twist * (style.counterCurve[i] ?? 0) * DEG,
+        counter: style.counter * (style.counterCurve[i] ?? 0) * DEG,
         dorsiflexion: ankle,
         insideDorsiflexion: ankle,
         // The feet tip first, the hips follow.
@@ -271,6 +336,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       poleTouch: style.polePlant ? { t: 1 / 24, hold: 0.02, swing: 0.11 } : null,
       scapularRhythm: 0.3,
       stance: style.narrow * DEG,
+      kneesIn: style.kneesIn * DEG,
       poleTrim: style.poleTrim,
       gains: { lumbarFlex: 0.1, angulation: 0.15, eversion: 0.15, pelvisList: 0.4, counter: 0.15, spineBend: 0.15, spineTwist: 0.1 },
     },

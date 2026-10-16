@@ -161,13 +161,13 @@ export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenari
       spineTwist: mild('spineTwist'),
       poleTouch,
       insideReach: 0,
-      outside: { hipFlex, ankleFlex, femurRotation, tailLift: 0, adduction: c.stance },
+      outside: { hipFlex, ankleFlex, femurRotation: femurRotation + c.kneesIn, tailLift: 0, adduction: c.stance },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
       inside: {
         hipFlex: hipFlex + extra,
         ankleFlex: insideAnkle(tailLift),
-        femurRotation: c.insideFemurShare * femurRotation,
+        femurRotation: c.insideFemurShare * femurRotation - c.kneesIn,
         tailLift,
         adduction: c.stance,
       },

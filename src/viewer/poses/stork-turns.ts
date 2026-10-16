@@ -132,6 +132,7 @@ export const STORK_TURNS: PoseDefinition = {
     poleTouch: { t: 1 / 24, hold: 0.02, swing: 0.11 },
     scapularRhythm: 0.3,
     stance: 0,
+    kneesIn: 0,
     poleTrim: 0,
     // Inference: deeper, more dynamic turns flex, lift and counter a little more. Near constant
     // low back: a harder turn folds more at the hips, not the low back.

@@ -70,6 +70,8 @@ export interface PoseConstraints {
   readonly scapularRhythm: number;
   /** Both thighs drawn toward each other: a stance narrower than hip width. */
   readonly stance: number;
+  /** Both femurs turned inward, radians: with the thighs drawn in, knees together and the boots still apart. */
+  readonly kneesIn: number;
   /** Poles this many metres shorter than the figure's regular length. */
   readonly poleTrim: number;
   /** Per key field, how much more a dynamic turn takes (and a gentle one less), as a share per step of effort. */

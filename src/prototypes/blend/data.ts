@@ -131,15 +131,15 @@ export const DRILL_GROUPS: ReadonlyArray<{ readonly name: string; readonly ids: 
   },
   { name: 'Edging and carving', ids: ['railroad-track-turns', 'carved-j-turns', 'long-radius-carved-turns', 'whitepass-turns'] },
   { name: 'Steering and pivoting', ids: ['pivot-slips', 'sideslips', 'falling-leaf', 'hockey-stops', 'wedge-turns', 'crab-wedge-turns'] },
-  { name: 'Timing and pressure', ids: ['extension-transitions', 'flexion-transitions', 'dolphin-turns', 'short-radius-turns', 'tic-tac-turns'] },
+  { name: 'Timing and pressure', ids: ['extension-transitions', 'flexion-transitions', 'dolphin-turns', 'short-radius-turns', 'tic-tac-turns', 'closed-stance-short-turns'] },
 ];
 
 // Placeholder picks by hand, not researched: drills that practise what each kind of skiing asks most.
 export const KIND_DRILLS: Readonly<Record<KindId, ReadonlyArray<string>>> = {
   [KindId.Cruising]: ['outside-ski-turns', 'thousand-steps', 'stork-turns'],
   [KindId.Carving]: ['carved-j-turns', 'railroad-track-turns', 'one-footed-railroad-track-turns'],
-  [KindId.ShortTurns]: ['tic-tac-turns', 'javelin-turns', 'whitepass-turns'],
-  [KindId.Moguls]: ['flexion-transitions', 'pivot-slips', 'hockey-stops'],
+  [KindId.ShortTurns]: ['tic-tac-turns', 'javelin-turns', 'whitepass-turns', 'closed-stance-short-turns'],
+  [KindId.Moguls]: ['closed-stance-short-turns', 'flexion-transitions', 'pivot-slips', 'hockey-stops'],
   [KindId.Steeps]: ['sideslips', 'falling-leaf', 'hockey-stops'],
   [KindId.Powder]: ['extension-transitions', 'dolphin-turns', 'thousand-steps'],
 };

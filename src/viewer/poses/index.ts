@@ -1,5 +1,5 @@
 import type { PoseDefinition } from '../pose-definition';
-import { DEFAULT_REGULAR_TURN, REGULAR_TURNS } from './regular-turn';
+import { CLOSED_STANCE, DEFAULT_REGULAR_TURN, REGULAR_TURNS, regularTurn } from './regular-turn';
 import { STORK_TURNS } from './stork-turns';
 
 /**
@@ -9,6 +9,7 @@ import { STORK_TURNS } from './stork-turns';
 export const POSE_DEFINITIONS: Readonly<Record<string, PoseDefinition>> = {
   'stork-turns': STORK_TURNS,
   ...REGULAR_TURNS,
+  'closed-stance-short-turns': regularTurn(CLOSED_STANCE),
 };
 
 /** The drill's motion is modelled. */

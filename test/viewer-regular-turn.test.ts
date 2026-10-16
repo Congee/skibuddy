@@ -87,6 +87,16 @@ describe('regular turn', () => {
     }
   });
 
+  it('counters little when carving and tracks the skis off the fall line in moguls', () => {
+    const at = (drill: string, t: number): number => poseAngles(samplePose(poseTable(drill, Intensity.Moderate), t)).counter;
+    for (let k = 0; k < 24; k++) assert.isBelow(Math.abs(at(RegularTurn.Carving, k / 24)), 8, `${k}/24`);
+    for (const drill of [RegularTurn.Moguls, 'closed-stance-short-turns']) {
+      assert.isBelow(Math.abs(at(drill, 0)), 5, drill);
+      assert.isAbove(at(drill, 5 / 6), 25, drill);
+      assert.isAbove(at(drill, 5 / 6), at(drill, 1 / 2), drill);
+    }
+  });
+
   it('differs between kinds', () => {
     const shaping = KINDS.map((k) => poseToChannels(samplePose(poseTable(k, Intensity.Moderate), 1 / 2)).join());
     assert.strictEqual(new Set(shaping).size, KINDS.length);
