@@ -489,7 +489,15 @@ describe('regular turn', () => {
         const at = (t: number): number => leads[Math.round(t * 48)] ?? NaN;
         const peak = Math.max(...leads);
         const tag = `${drill} ${i}`;
-        // TODO: the lead at the switch follows the footage measured in scratchpad/lead-footage/notes.md; no point bound until then.
+        // Footage across 4 short-turn and mogul skiers: 0 ±5 cm at the switch, ≥ −5 cm to t 0.4, peak 5-13 cm at t 0.35-0.7.
+        const footage = [RegularTurn.ShortTurns, RegularTurn.Moguls, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns'].includes(drill);
+        const peakAt = leads.indexOf(peak) / 48;
+        if (footage) {
+          assert.isAtMost(Math.abs(at(0)), 0.05, `${tag} switch`);
+          for (let k = 0; k <= 0.4 * 48; k++) assert.isAtLeast(leads[k] ?? 0, -0.05, `${tag} ${k}/48 early`);
+          assert.isTrue(peak >= 0.05 && peak <= 0.13, `${tag} peak ${peak.toFixed(3)}`);
+          assert.isTrue(peakAt >= 0.35 && peakAt <= 0.7, `${tag} peak t ${peakAt.toFixed(2)}`);
+        }
         // Where the legs scissor the counter sets the lead; elsewhere the inside leg's flex does, smaller and dipping in gentle carving.
         const scissor = POSE_DEFINITIONS[drill]?.constraints.scissor === true;
         if (scissor) {
@@ -498,8 +506,10 @@ describe('regular turn', () => {
           assert.isAbove(peak, at(0.3), tag);
         }
         const peakT = leads.indexOf(peak) / 48;
-        assert.isAbove(peakT, 0.5, tag);
-        assert.isAtMost(peakT, 0.9, tag);
+        if (!footage) {
+          assert.isAbove(peakT, 0.5, tag);
+          assert.isAtMost(peakT, 0.9, tag);
+        }
         leads.forEach((lead, k) => {
           assert.isAtMost(lead, EQUIPMENT.soleLength / 2, `${tag} ${k}/48`);
           if (k / 48 > 0.1) assert.isAtLeast(lead, -0.01, `${tag} ${k}/48`);
