@@ -160,12 +160,16 @@ describe('round line', () => {
     }
   });
 
-  it('reaches its longest leg in the trough, t 0.25-0.35 (duncan-smith-2021 4:33-4:55)', () => {
+  it('reaches its longest leg where the snow under the boots is lowest', () => {
+    // The legs extend into the low snow (fis-freestyle-judging-2025 p28); the round line never enters the trough itself.
     for (const intensity of INTENSITIES) {
+      const s = surfaceFor(ROUND_POSE, intensity);
       const table = poseTable(ROUND_POSE, intensity);
-      const knee = (t: number): number => poseAngles(samplePose(table, t), 0).knee.right;
-      const trough = Math.min(...ts.filter((t) => t >= 0.25 && t <= 0.35).map(knee));
-      assert.isAtMost(trough, Math.min(...ts.map(knee)) + 3, intensity);
+      const knee = ts.map((t) => poseAngles(samplePose(table, t), 0).knee.right);
+      const snow = ts.map((t) => heightAt(s, pathAt(s, t).x, pathAt(s, t).z));
+      const at = (v: readonly number[]): number => ts[v.indexOf(Math.min(...v))] ?? 0;
+      const gap = Math.abs(at(knee) - at(snow));
+      assert.isAtMost(Math.min(gap, 1 - gap), 0.05, intensity);
     }
   });
 
