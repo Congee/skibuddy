@@ -474,6 +474,22 @@ describe('regular turn', () => {
       }
   });
 
+  it('flexes the inside knee beyond the outside one, more as the turn leans harder', () => {
+    // kroll-2011: about 81-88 deg inside against 65-70 outside in recreational skiers, 13-23 deg more; lemaster-2010 pp61-62:
+    // the inside leg shortens with inclination. Gentle groomed turns stand in for kroll's recreational skiers; inferred.
+    const surplus = (drill: RegularTurn, i: Intensity): number => {
+      const { knee } = angles(drill, i, 1 / 2);
+      return knee.left - knee.right;
+    };
+    for (const drill of [RegularTurn.Cruising, RegularTurn.Carving, RegularTurn.ShortTurns, RegularTurn.Steeps]) {
+      const [gentle, moderate, dynamic] = INTENSITIES.map((i) => surplus(drill, i));
+      assert.isAtLeast(gentle ?? NaN, 13, drill);
+      assert.isAbove(moderate ?? NaN, gentle ?? NaN, drill);
+      assert.isAbove(dynamic ?? NaN, moderate ?? NaN, drill);
+    }
+    for (const drill of [RegularTurn.Cruising, RegularTurn.Carving]) assert.isAtMost(surplus(drill, Intensity.Gentle), 23, drill);
+  });
+
   it('builds the inside tip lead progressively from level at the switch', () => {
     // Observed side-on in Olivia Giaccio's closed-stance short turns: about level at the edge change, then 3-13 cm ahead.
     const tipLead = (drill: string, i: Intensity, t: number): number => {
