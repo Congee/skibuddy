@@ -16,6 +16,8 @@ export interface SolveOptions {
   readonly penalty?: number;
   readonly penaltyGrowth?: number;
   readonly penaltyMax?: number;
+  // Warm-start multipliers per constraint block, e.g. from a previous solve of the same problem.
+  readonly multipliers?: ReadonlyMap<Block, ArrayLike<number>>;
 }
 
 export interface SolveResult {
@@ -192,7 +194,7 @@ export const solve = (problem: Problem, x0: ArrayLike<number>, options: SolveOpt
   let rows: Rows = { e: new Float64Array(nRows), scale: new Float64Array(nRows) };
   let trialRows: Rows = { e: new Float64Array(nRows), scale: new Float64Array(nRows) };
   const lambda = new Map<Block, Float64Array>();
-  for (const b of blocks) if (isConstraint(b)) lambda.set(b, new Float64Array(b.size));
+  for (const b of blocks) if (isConstraint(b)) lambda.set(b, Float64Array.from(options.multipliers?.get(b) ?? new Float64Array(b.size)));
   let penalty = options.penalty ?? 1e2;
 
   const g = new Float64Array(size);
