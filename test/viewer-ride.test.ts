@@ -49,18 +49,21 @@ describe('ride on moguls', () => {
   });
 
   it('carries the mass steadier than the snow under the boots rises and falls', () => {
-    for (const drill of FALL_LINE_KINDS)
-      for (const i of INTENSITIES) {
+    // The legs absorb deeper as the intensity grows (biomechanics.md, Riding the bumps; arndt-1992 p85).
+    const span = (v: readonly number[]): number => Math.max(...v) - Math.min(...v);
+    for (const drill of FALL_LINE_KINDS) {
+      const taken = INTENSITIES.map((i) => {
         const rows = table(drill, i);
         const com = rows.map((r) => r.com[1]);
         const boot = rows.map((r) => r.snow(r.ski[BodySide.Right][ALONG / 2] ?? [0, 0, 0]));
-        const swing = Math.max(...com) - Math.min(...com);
-        const relief = Math.max(...boot) - Math.min(...boot);
+        const relief = span(boot);
         // The zipper's rut rides lower bumps than the crests it passes.
         assert.isAbove(relief, 0.4 * surfaceFor(drill, i).relief, `${drill} ${i}`);
-        // The legs take most of the bumps; share inferred.
-        assert.isBelow(swing, 0.35 * relief, `${drill} ${i}`);
-      }
+        assert.isBelow(span(com), relief, `${drill} ${i}`);
+        return span(com.map((c, k) => c - (boot[k] ?? 0)));
+      });
+      for (let k = 1; k < taken.length; k++) assert.isAbove(taken[k] ?? 0, taken[k - 1] ?? 0, `${drill} ${INTENSITIES[k]}`);
+    }
   });
 
   it('lays the zipper snow level under each pressed ski, both edges within 2 cm of it', () => {
