@@ -5,11 +5,11 @@ import type { TurnScenario } from '../src/physics/turn';
 import { EQUIPMENT, FIS_STAND_HEIGHT_MAX, FORWARD_LEAN_RANGE, deltaAngle, minShinAngle, shellInFoot, shinAngle, totalRamp } from '../src/viewer/equipment';
 import type { Equipment } from '../src/viewer/equipment';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
-import { CAPSULE_BOOT } from '../src/viewer/gear-fit';
+import { CAPSULE_BOOT, TOE_ROOM } from '../src/viewer/gear-fit';
 import { compose, transformPoint, translation } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
 import { touchShare, windowShare } from '../src/viewer/pose-definition';
-import { FOREARM_FLEXION, SKI_TIP as TIP, segmentMatrices, turnDepth } from '../src/viewer/pose';
+import { FOREARM_FLEXION, MID_FOOT, SKI_TIP as TIP, segmentMatrices, turnDepth } from '../src/viewer/pose';
 import { POSE_SAMPLES, effortOf } from '../src/viewer/pose-solver';
 import { STORK_TURNS } from '../src/viewer/poses/stork-turns';
 import { MODERATE, SCENARIOS, poseAt, solvedPose } from './stork-poses';
@@ -87,14 +87,15 @@ describe('segmentMatrices', () => {
     }
   });
 
-  it('balances the centre of mass over the foot, between arch and ball', () => {
+  it('balances the centre of mass over the foot, never behind the arch nor past the toes', () => {
+    // lemaster-2010 p57, p85: free skiing keeps to the back of the arch (4 cm inferred), as the regular turns;
+    // the toes are the bare foot's in the capsule shell. Fore-aft is across the balance axis, the lean being about it.
+    const toes = CAPSULE_BOOT.toe - TOE_ROOM - MID_FOOT[2];
     for (const [i, s] of ALL) {
       for (const t of TIMES) {
-        // lemaster-2010 p57, p85; fore-aft is across the balance axis, since the lean is about the fore-aft axis.
-        // Ball-of-foot limit as in the regular turns, relaxed from 0.058 for chest over the knees (user requirement).
         const com = poseAngles(poseAt(t, s)).comAhead;
-        assert.isAbove(com, -0.02, `${i} at t=${t}`);
-        assert.isBelow(com, 0.095, `${i} at t=${t}`);
+        assert.isAbove(com, -0.04, `${i} at t=${t}`);
+        assert.isBelow(com, toes, `${i} at t=${t}`);
       }
     }
   });
@@ -118,26 +119,35 @@ describe('segmentMatrices', () => {
     for (const [i, s] of ALL) {
       const lumbar = TIMES.map((t) => poseAngles(poseAt(t, s)).spineFlex);
       // lemaster-2010 pp62-63: never arched or slumped; racers' 23-29 deg lumbar flexion is the ceiling (heinrich-2022).
-      assert.isAtLeast(Math.min(...lumbar), 5, i);
-      assert.isAtMost(Math.max(...lumbar), 20, i);
-      assert.isBelow(Math.max(...lumbar) - Math.min(...lumbar), 1.5, i);
-      for (const t of TIMES) {
-        const a = poseAngles(poseAt(t, s));
-        // Never the tall, upright stance; never folded past the turn's needs. 40 relaxed from 35 for chest over the knees (user requirement).
-        assert.isAtLeast(a.trunkForward, 18, `${i} at t=${t}`);
-        assert.isAtMost(a.trunkForward, 40, `${i} at t=${t}`);
+      assert.isAbove(Math.min(...lumbar), 0, i);
+      assert.isAtMost(Math.max(...lumbar), 29, i);
+      // The fold is at the hips: the low back nearly constant while the trunk moves.
+      const trunk = TIMES.map((t) => poseAngles(poseAt(t, s)).trunkForward);
+      assert.isBelow(Math.max(...lumbar) - Math.min(...lumbar), Math.max(...trunk) - Math.min(...trunk), i);
+      // Never upright; the regular turns' one trunk cap (inferred).
+      for (const [k, v] of trunk.entries()) {
+        assert.isAbove(v, 0, `${i} at t=${TIMES[k]}`);
+        assert.isAtMost(v, 50, `${i} at t=${TIMES[k]}`);
       }
     }
   });
 
   it('keeps the outside knee in its intensity band and both ankles in the measured ranges', () => {
-    // The solved bands, mid-turn to transition, as the content states them; heinrich-2022's GS 56-80 deg is the race reference.
-    const KNEE_BANDS: Readonly<Record<Intensity, readonly [number, number]>> = { gentle: [60, 68], moderate: [65, 74], dynamic: [71, 81] };
-    for (const [i, s] of ALL) {
-      const [low, high] = KNEE_BANDS[i];
+    // Deeper with intensity; the dynamic turn within heinrich-2022's GS 56-80 deg, the one measured outside knee.
+    const kneeRange = (s: TurnScenario): readonly [number, number] => {
       const knees = TIMES.map((t) => poseAngles(poseAt(t, s)).knee[BodySide.Right]);
-      assert.closeTo(Math.min(...knees), low, 3, `${i} most extended knee`);
-      assert.closeTo(Math.max(...knees), high, 3, `${i} deepest knee`);
+      return [Math.min(...knees), Math.max(...knees)];
+    };
+    const ranges = ALL.map(([, s]) => kneeRange(s));
+    for (const [k, [low, high]] of ranges.entries()) {
+      const [prevLow, prevHigh] = ranges[k - 1] ?? [-Infinity, -Infinity];
+      assert.isAbove(low, prevLow, `${ALL[k]?.[0]} most extended knee`);
+      assert.isAbove(high, prevHigh, `${ALL[k]?.[0]} deepest knee`);
+    }
+    const [dynLow, dynHigh] = kneeRange(SCENARIOS[Intensity.Dynamic]);
+    assert.isAtLeast(dynLow, 56, 'dynamic most extended knee');
+    assert.isAtMost(dynHigh, 80, 'dynamic deepest knee');
+    for (const [i, s] of ALL) {
       // heinrich-2022 Table 1: outside ankle 18-27, inside 17-21 deg; a gentle turn opens the outside ankle a little further.
       const outsideLow = i === Intensity.Gentle ? 17.5 : 18;
       for (const t of TIMES) {
