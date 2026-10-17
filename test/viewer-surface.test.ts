@@ -194,7 +194,7 @@ describe('pathAt', () => {
       const start = pathAt(s, 0);
       close(start.x, 0);
       close(start.z, 0);
-      close(pathAt(s, 0.5).x, -s.path.corridor / 2, 1e-9);
+      close(pathAt(s, 0.5).x, -(s.path.feet ?? s.path.corridor) / 2, 1e-9);
       const end = pathAt(s, 1);
       close(end.x, 0, 1e-9);
       close(end.z, s.spacing, 1e-9);

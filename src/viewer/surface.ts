@@ -1,6 +1,6 @@
 import type { Intensity } from '../content/schema';
 import { headingPhase } from './poses/regular-turn';
-import { MOGUL_POSE, POWDER_POSE, ROUND_POSE, TOPS_POSE, transitionHeading, turnPath } from './turn-heading';
+import { MOGUL_POSE, POWDER_POSE, ROUND_POSE, TOPS_POSE, trackMost, transitionHeading, turnPath } from './turn-heading';
 import type { TurnPath } from './turn-heading';
 import type { Vec3 } from './mat4';
 
@@ -172,11 +172,11 @@ const roundExtremes = (s: Surface): { readonly crest: number; readonly trough: n
 
 /** Spacing as `field` sets it, and the steady speed that carries `path` one spacing per turn. */
 const overField = (path: TurnPath, field: TurnPath): { readonly spacing: number; readonly speed: number } => {
-  const { xs, zs } = tableFor(transitionHeading(field), field.phase);
+  const { xs, zs } = tableFor(trackMost(field), field.phase);
   // Steady speed that reaches the corridor's edge on the fall line, as turnPath's corridor says.
   const edge = field.phase === undefined ? -(xs[SAMPLES / 2] ?? 0) : Math.max(...xs.map(Math.abs));
-  const spacing = edge > 1e-9 ? ((field.corridor / 2) * (zs[SAMPLES] ?? 0)) / edge : 0;
-  const along = tableFor(transitionHeading(path), path.phase).zs[SAMPLES] ?? 0;
+  const spacing = edge > 1e-9 ? (((field.feet ?? field.corridor) / 2) * (zs[SAMPLES] ?? 0)) / edge : 0;
+  const along = tableFor(trackMost(path), path.phase).zs[SAMPLES] ?? 0;
   return { spacing, speed: along > 1e-9 ? spacing / along : 0 };
 };
 
@@ -352,14 +352,14 @@ export interface OnField {
 
 /** Where the turn's path is at time t: from the centre line at the switch, across to the corridor's edge on the fall line, back to the centre line a spacing down at t = 1. */
 export const pathAt = (s: Surface, t: number): OnField => {
-  const most = transitionHeading(s.path);
+  const most = trackMost(s.path);
   const { xs, zs } = tableFor(most, s.path.phase);
   const at = Math.min(1, Math.max(0, t));
   const u = at * SAMPLES;
   const i = Math.min(SAMPLES - 1, Math.floor(u));
   const f = u - i;
   const lerp = (a: Float64Array): number => ((a[i] ?? 0) * (1 - f) + (a[i + 1] ?? 0) * f) * s.speed;
-  return { x: lerp(xs), z: lerp(zs), heading: yaw(at, most, s.path), track: heading(at + (s.path.phase ?? 0), most) };
+  return { x: lerp(xs), z: lerp(zs), heading: yaw(at, transitionHeading(s.path), s.path), track: heading(at + (s.path.phase ?? 0), most) };
 };
 
 /** A point under the skier: on the field, the snow's top and the support there, and the top's normal. */

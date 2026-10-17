@@ -1,4 +1,7 @@
 import type { Intensity } from '../content/schema';
+import { turnForcesAt } from '../physics/turn';
+import type { TurnScenario } from '../physics/turn';
+import { SEGMENTS, SegmentKind } from './figure';
 import { CLOSED_STANCE, CORRIDOR_SHARE, ROUND, ROUND_CORRIDOR, ROUND_FORCES, ROUND_PHASE, RegularTurn, TOPS, TOPS_CORRIDOR_SHARE, TURN_STYLES, ZIPPER_CORRIDOR, headingPhase } from './poses/regular-turn';
 import type { TurnStyle } from './poses/regular-turn';
 
@@ -14,6 +17,10 @@ export interface TurnPath {
   readonly set?: number;
   /** Turn time the braking load runs ahead of the keys; absent, 0. */
   readonly forces?: number;
+  /** The feet's own peak-to-peak corridor about a mass running down the fall line, metres; absent, the feet run the arc's corridor. */
+  readonly feet?: number;
+  /** Downhill length of one turn with `feet`, metres. */
+  readonly length?: number;
 }
 
 /**
@@ -22,6 +29,13 @@ export interface TurnPath {
  */
 export const transitionHeading = ({ radius, corridor }: TurnPath): number => Math.acos(Math.max(-1, 1 - corridor / (2 * radius)));
 
+/** Most heading of a sinusoid w peak-to-peak across, L downhill per turn, off its centre line: atan(πw / 2L). */
+export const sinusoidHeading = (corridor: number, length: number): number => Math.atan((Math.PI * corridor) / (2 * length));
+
+/** Most heading of the feet's track off the fall line, radians, at the switch: their own sinusoid, else the arc's. */
+export const trackMost = (path: TurnPath): number =>
+  path.feet === undefined || path.length === undefined ? transitionHeading(path) : sinusoidHeading(path.feet, path.length);
+
 const wrap = (t: number): number => ((t % 1) + 1) % 1;
 
 /**
@@ -29,7 +43,7 @@ const wrap = (t: number): number => ((t % 1) + 1) % 1;
  * S-path, from the outside at the transition (t = 0), through the fall line mid-turn, to the inside at the next
  * transition (t = 1), where the mirrored next turn takes over with the opposite sign and no kink.
  */
-export const trackHeadingAt = (t: number, path: TurnPath): number => -transitionHeading(path) * Math.cos(Math.PI * (wrap(t) + (path.phase ?? 0)));
+export const trackHeadingAt = (t: number, path: TurnPath): number => -trackMost(path) * Math.cos(Math.PI * (wrap(t) + (path.phase ?? 0)));
 
 /**
  * The skis' yaw off the fall line at turn time t, as trackHeadingAt: carved, along the track; pivoted, from the fall
@@ -43,6 +57,20 @@ export const pivotAt = (t: number, path: TurnPath): number => headingAt(t, path)
 
 /** The closed-stance drill runs in a corridor about 2 m wide, as regular-turn.ts sets its counter. */
 const CLOSED_STANCE_CORRIDOR = 2;
+const jointDrop = (kind: SegmentKind): number => Math.abs(SEGMENTS.find((s) => s.kind === kind)?.joint[1] ?? 0);
+/** The figure's hip-to-ankle length, metres. */
+export const LEG_LENGTH = jointDrop(SegmentKind.Shin) + jointDrop(SegmentKind.Boot);
+
+/**
+ * Peak-to-peak swing of the feet about the mass, metres: the leg inclined by the turn's peak lean puts the feet
+ * leg·sin(lean) out at the apex and under the mass at the switch; inferred, the mass taken at the hips.
+ */
+export const feetCorridor = (s: TurnScenario): number =>
+  2 * LEG_LENGTH * Math.sin(Math.max(...Array.from({ length: 48 }, (_, k) => Math.abs(turnForcesAt(s, k / 48).tilt))));
+
+/** Seconds per turn as the skis sweep their yaw from -most to +most at the arc's rate speed / radius; inferred. */
+export const sweepSeconds = (s: TurnScenario, most: number): number => (2 * most * s.radiusM) / s.speedMps;
+
 /** For a motion with no turn of its own, such as a drill's: a short turn. */
 const FALLBACK_RADIUS = 7;
 
@@ -61,7 +89,11 @@ export const turnPath = (pose: string, intensity: Intensity): TurnPath => {
   if (pose === ROUND_POSE) return { radius, corridor: ROUND_CORRIDOR, phase: ROUND_PHASE, ...set, forces: ROUND_FORCES };
   const corridor =
     pose === MOGUL_POSE ? ZIPPER_CORRIDOR : pose === TOPS_POSE ? TOPS_CORRIDOR_SHARE * radius : pose === CLOSED_STANCE_POSE ? CLOSED_STANCE_CORRIDOR : CORRIDOR_SHARE * radius;
-  return { radius, corridor, ...set };
+  const scenario = style?.scenarios[intensity];
+  if (scenario === undefined || style?.set === undefined || pose === MOGUL_POSE || pose === TOPS_POSE) return { radius, corridor, ...set };
+  // Pivoted on groomed or loose snow, the mass runs down the fall line and the feet swing about it (arndt-1992, fis-freestyle-judging-2025).
+  const length = scenario.speedMps * sweepSeconds(scenario, transitionHeading({ radius, corridor }));
+  return { radius, corridor, ...set, feet: feetCorridor(scenario), length };
 };
 
 /** A pose's regular-turn style, with its speeds; none for a drill's own motion. */

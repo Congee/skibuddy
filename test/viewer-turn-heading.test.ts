@@ -1,7 +1,7 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
 import { RegularTurn } from '../src/viewer/poses/regular-turn';
-import { ROUND_POSE, TOPS_POSE, headingAt, pivotAt, transitionHeading, turnPath } from '../src/viewer/turn-heading';
+import { LEG_LENGTH, ROUND_POSE, TOPS_POSE, feetCorridor, headingAt, pivotAt, sinusoidHeading, trackHeadingAt, transitionHeading, turnPath, turnStyle } from '../src/viewer/turn-heading';
 
 const DEG = Math.PI / 180;
 const close = (a: number, b: number, eps = 1e-9): void => assert.isBelow(Math.abs(a - b), eps, `${a} vs ${b}`);
@@ -74,7 +74,8 @@ describe('turnPath', () => {
     assert.deepStrictEqual(turnPath(RegularTurn.Moguls, Intensity.Moderate), { radius: 5, corridor: 1.1, set: 0.5 });
     // Finishing across the hill (duncan-smith-2021 1:28-1:32); 50° inferred.
     for (const i of [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic]) close(transitionHeading(turnPath(TOPS_POSE, i)), 50 * DEG);
-    assert.deepStrictEqual(turnPath('closed-stance-short-turns', Intensity.Moderate), { radius: 4.5, corridor: 2, set: 0.5 });
+    const { radius, corridor, set } = turnPath('closed-stance-short-turns', Intensity.Moderate);
+    assert.deepStrictEqual({ radius, corridor, set }, { radius: 4.5, corridor: 2, set: 0.5 });
   });
 
   it('keeps the zipper skis within 30° of the fall line (fis-freestyle-judging-2025 p28)', () => {
@@ -85,5 +86,58 @@ describe('turnPath', () => {
   it('gives other turns a round shape, 60° off the fall line', () => {
     close(transitionHeading(turnPath(RegularTurn.Carving, Intensity.Dynamic)), 60 * DEG);
     close(transitionHeading(turnPath('no-such-pose', Intensity.Gentle)), 60 * DEG);
+  });
+});
+
+describe('feet track', () => {
+  const INTENSITIES = [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic];
+  const GROOMED_PIVOTED = [RegularTurn.ShortTurns, RegularTurn.Steeps, RegularTurn.Powder, 'closed-stance-short-turns'];
+  const skids = (path: ReturnType<typeof turnPath>): ReadonlyArray<number> => Array.from({ length: 96 }, (_, k) => Math.abs(pivotAt(k / 96, path)));
+
+  it('skids carved and cruising skis within the measured spread: peak 15°, 4° after the fall line (reid-2010, nakazato-2016, klous-2014)', () => {
+    for (const drill of [RegularTurn.Carving, RegularTurn.Cruising])
+      for (const i of INTENSITIES) {
+        const all = skids(turnPath(drill, i));
+        assert.isAtMost(Math.max(...all) / DEG, 15, `${drill} ${i}`);
+        assert.isAtMost(Math.max(...all.slice(48)) / DEG, 4, `${drill} ${i}`);
+      }
+  });
+
+  it('skids pivoted groomed skis well short of a pivot slip, 30-45° ±15 at the set (SIA drone footage, measured)', () => {
+    for (const drill of GROOMED_PIVOTED)
+      for (const i of INTENSITIES) {
+        const path = turnPath(drill, i);
+        assert.isBelow(Math.max(...skids(path)) / DEG, 90 - 15, `${drill} ${i}`);
+        const atSet = Math.abs(pivotAt(path.set ?? 0, path)) / DEG;
+        assert.isAtLeast(atSet, 30 - 15, `${drill} ${i}`);
+        assert.isAtMost(atSet, 45 + 15 + 1e-9, `${drill} ${i}`);
+      }
+  });
+
+  it('swings the feet about a mass on the fall line: under it at the switch, farthest out at the apex (arndt-1992, gellie)', () => {
+    for (const drill of GROOMED_PIVOTED)
+      for (const i of INTENSITIES) {
+        const path = turnPath(drill, i);
+        const scenario = turnStyle(drill)?.scenarios[i];
+        if (scenario === undefined) throw new Error(drill);
+        assert.strictEqual(path.feet, feetCorridor(scenario), `${drill} ${i}`);
+        assert.isBelow(path.feet ?? Infinity, 2 * LEG_LENGTH, `${drill} ${i}`);
+        // Heading most at the switch, where the feet cross under the mass; nil at the apex, where they are farthest out.
+        close(Math.abs(trackHeadingAt(0, path)), sinusoidHeading(path.feet ?? 0, path.length ?? 1));
+        close(trackHeadingAt(0.5, path), 0, 1e-12);
+      }
+  });
+
+  it('heads the track further off the fall line in a wider corridor and less at speed', () => {
+    const seconds = 1;
+    for (const w of [0.5, 1, 1.5])
+      for (const v of [5, 8, 11]) {
+        assert.isAbove(sinusoidHeading(w + 0.1, v * seconds), sinusoidHeading(w, v * seconds), `${w} ${v}`);
+        assert.isBelow(sinusoidHeading(w, (v + 1) * seconds), sinusoidHeading(w, v * seconds), `${w} ${v}`);
+      }
+  });
+
+  it('keeps the mogul lines on their own corridors', () => {
+    for (const drill of [RegularTurn.Moguls, TOPS_POSE, ROUND_POSE]) for (const i of INTENSITIES) assert.isUndefined(turnPath(drill, i).feet, `${drill} ${i}`);
   });
 });

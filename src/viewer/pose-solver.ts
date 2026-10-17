@@ -9,6 +9,7 @@ import { HeadAim, keyValuesAt, touchShare, windowShare, wrapTime } from './pose-
 import type { HeadRule, KeyField, PoseDefinition } from './pose-definition';
 import { HEAD_LIMIT, gazeHeading } from './gaze';
 import { CORRIDOR_SHARE, headingAt } from './turn-heading';
+import type { TurnPath } from './turn-heading';
 import { FLAT_RIDE, rideOf } from './ride';
 import type { Ride } from './ride';
 import { MogulLine, SurfaceKind, trackRest } from './surface';
@@ -81,10 +82,10 @@ export const effortOf = (def: PoseDefinition, scenario: DrillScenario | null): E
 };
 
 /** Head yaw beyond the chest, toward the outside, that `rule` asks for at turn time `t` given the chest's heading on the skis. */
-export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | null, t: number, chest: number, set?: number): number => {
+export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | null, t: number, chest: number, set?: number, run?: TurnPath): number => {
   if (rule === undefined || rule.aim === HeadAim.Chest || scenario === null || !isTurn(scenario)) return 0;
   const corridor = rule.aim === HeadAim.FallLine ? rule.corridor : CORRIDOR_SHARE * scenario.radiusM;
-  const path = { radius: scenario.radiusM, corridor, ...(set === undefined ? {} : { set }) };
+  const path = rule.aim !== HeadAim.FallLine && run !== undefined ? run : { radius: scenario.radiusM, corridor, ...(set === undefined ? {} : { set }) };
   // The gaze lies the skis' heading, less its own, off the fall line toward the outside.
   const yaw = headingAt(t, path) - gazeHeading(rule, path, scenario.speedMps, t) - chest;
   return Math.min(HEAD_LIMIT, Math.max(-HEAD_LIMIT, yaw));
@@ -664,7 +665,7 @@ const solveOn = (
   }
   const solved = base(knee, inside.extra, inside.tailLift, shin);
   // The head moves no mass to speak of, so it turns only once the trunk is set.
-  const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist, c.set) };
+  const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist, c.set, surface?.path) };
   const rested = (p: Pose): Pose => (firm ? { ...p, rise: riseOf(p, mild('skiClearance')) } : pitch === 0 ? p : { ...p, rise: baseRiseOf(p) });
   const legs = rested(turned);
   if (legs.poleTouch === 0) return legs;
