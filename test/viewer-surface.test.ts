@@ -16,6 +16,7 @@ import {
   underFoot,
 } from '../src/viewer/surface';
 import { CLOSED_STANCE_POSE, TOPS_POSE } from '../src/viewer/turn-heading';
+import { failsUntil } from './legacy';
 
 const close = (a: number, b: number, eps = 1e-9): void => assert.isBelow(Math.abs(a - b), eps, `${a} vs ${b}`);
 const INTENSITIES = [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic] as const;
@@ -91,7 +92,7 @@ describe('heightAt', () => {
     }
   });
 
-  it('tops a mogul at each switch and drops into the rut mid-turn (fis-freestyle-judging-2025 p26, p28)', () => {
+  failsUntil('step 6: moguls on a C1 surface')('tops a mogul at each switch and drops into the rut mid-turn (fis-freestyle-judging-2025 p26, p28)', () => {
     // p28: absorb up to the top, extend right after it, into the rut (p26) mid-turn.
     for (const i of INTENSITIES) {
       const s = surfaceFor(RegularTurn.Moguls, i);

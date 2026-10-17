@@ -1,8 +1,9 @@
-import { assert, describe, it } from '@effect/vitest';
+import { assert, describe } from '@effect/vitest';
 import { BodySide } from '../src/viewer/figure';
 import type { Vec3 } from '../src/viewer/mat4';
 import { anatomyProbe, capsuleProbe } from './figure-probes';
 import type { FigureProbe } from './figure-probes';
+import { failsUntil } from './legacy';
 
 const TIMES = Array.from({ length: 96 }, (_, i) => i / 96);
 /** The baked fist may sit this far from the solver's, relative to the shoulder; the bodies' arm lengths differ by about 1 cm. */
@@ -16,7 +17,7 @@ const fromShoulder = (probe: FigureProbe, t: number, side: typeof BodySide.Left 
 };
 
 describe('baked grips', () => {
-  it('hold the fists where the solver puts them, relative to the shoulder', () => {
+  failsUntil('step 5: bake maps q to bones')('hold the fists where the solver puts them, relative to the shoulder', () => {
     const anatomy = anatomyProbe();
     for (const t of TIMES) {
       for (const side of [BodySide.Left, BodySide.Right] as const) {

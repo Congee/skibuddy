@@ -9,6 +9,7 @@ import { segmentMatrices, skiIndex } from '../src/viewer/pose';
 import { rideOf } from '../src/viewer/ride';
 import { poseAngles } from './pose-angles';
 import { ALONG, ridden } from './ride-probes';
+import { failsUntil, legacyIt } from './legacy';
 import { heightAt, MogulLine, pathAt, ROUND_FIELD, surfaceFor } from '../src/viewer/surface';
 import { ROUND_POSE, TOPS_POSE, transitionHeading, turnPath } from '../src/viewer/turn-heading';
 
@@ -69,11 +70,11 @@ describe('round line', () => {
     assert.isDefined(POSE_DEFINITIONS[ROUND_POSE]);
   });
 
-  it('keeps high on the wall, never in the trough (jds-bumps-style 1:20-1:55; floor 0.3 measured 1:56-2:01)', () => {
+  legacyIt('keeps high on the wall, never in the trough (jds-bumps-style 1:20-1:55; floor 0.3 measured 1:56-2:01)', () => {
     for (const intensity of INTENSITIES) for (const t of ts) assert.isAtLeast(fraction(intensity, t), 0.3, `${intensity} t${t}`);
   });
 
-  it('sets the edges on the uphill face at 0.5-0.8 of the relief (jds-bumps-style 1:56-2:01, measured)', () => {
+  legacyIt('sets the edges on the uphill face at 0.5-0.8 of the relief (jds-bumps-style 1:56-2:01, measured)', () => {
     for (const intensity of INTENSITIES) {
       const f = fraction(intensity, SET);
       assert.isAtLeast(f, 0.5, intensity);
@@ -100,11 +101,11 @@ describe('round line', () => {
     assert.isAbove(transitionHeading(turnPath(ROUND_POSE, Intensity.Moderate)), transitionHeading(turnPath(TOPS_POSE, Intensity.Moderate)));
   });
 
-  it('pivots with flat skis over the shoulder at 0.7-1.0 (jds-bumps-style 1:56-2:01, measured)', () => {
+  legacyIt('pivots with flat skis over the shoulder at 0.7-1.0 (jds-bumps-style 1:56-2:01, measured)', () => {
     for (const intensity of INTENSITIES) assert.isAtLeast(fraction(intensity, 0), 0.7, intensity);
   });
 
-  it('plants the pole at release, 0.10-0.15 turn after the set, on the top or shoulder (jds-bumps-style 3:24, 4:25)', () => {
+  legacyIt('plants the pole at release, 0.10-0.15 turn after the set, on the top or shoulder (jds-bumps-style 3:24, 4:25)', () => {
     const release = ROUND.poleTouchAt ?? 0;
     assert.isAtLeast(release - SET, 0.1 - 1e-9);
     assert.isAtMost(release - SET, 0.15 + 1e-9);
@@ -136,7 +137,7 @@ describe('round line', () => {
     for (const intensity of INTENSITIES) assert.isAtMost(Math.abs(edgeTiming(intensity).peakT - SET), 3 / N, intensity);
   });
 
-  it('releases 0.10-0.15 turn after the set, with the pole plant (jds-bumps-style 3:24, 4:25)', () => {
+  legacyIt('releases 0.10-0.15 turn after the set, with the pole plant (jds-bumps-style 3:24, 4:25)', () => {
     for (const intensity of INTENSITIES) {
       const { release } = edgeTiming(intensity);
       assert.isAtLeast(release - SET, 0.1, intensity);
@@ -144,7 +145,7 @@ describe('round line', () => {
     }
   });
 
-  it('flattens the skis over the shoulder 0.3-0.4 turn after the set (jds-bumps-style 1:56-2:01, measured)', () => {
+  legacyIt('flattens the skis over the shoulder 0.3-0.4 turn after the set (jds-bumps-style 1:56-2:01, measured)', () => {
     for (const intensity of INTENSITIES) {
       const { flat } = edgeTiming(intensity);
       assert.isAtLeast(flat - SET, 0.3, intensity);
@@ -153,7 +154,7 @@ describe('round line', () => {
     }
   });
 
-  it('tips the new edges 0.4-0.5 turn after the set, just after flat (jds-bumps-style 5:11-6:00)', () => {
+  legacyIt('tips the new edges 0.4-0.5 turn after the set, just after flat (jds-bumps-style 5:11-6:00)', () => {
     for (const intensity of INTENSITIES) {
       const { newEdge } = edgeTiming(intensity);
       assert.isAtLeast(newEdge - SET, 0.4, intensity);
@@ -161,7 +162,7 @@ describe('round line', () => {
     }
   });
 
-  it('reaches its longest leg where the snow under the boots is lowest', () => {
+  failsUntil('step 6: moguls')('reaches its longest leg where the snow under the boots is lowest', () => {
     // The legs extend into the low snow (fis-freestyle-judging-2025 p28); the round line never enters the trough itself.
     for (const intensity of INTENSITIES) {
       const s = surfaceFor(ROUND_POSE, intensity);

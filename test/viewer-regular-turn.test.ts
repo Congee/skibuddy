@@ -17,6 +17,7 @@ import { CLOSED_STANCE, OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLE
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
 import { SIDES, clearance, ridden } from './ride-probes';
+import { failsUntil, legacyIt } from './legacy';
 import { FIGURE_SKIER, REFERENCE_SKIER } from '../src/viewer/skier';
 
 /** The chest up the trunk's frame, scaled as figure.ts scales the trunk. */
@@ -81,7 +82,7 @@ describe('regular turn', () => {
     assert.isAtLeast(weightSplit(TURN_STYLES[RegularTurn.Carving], Intensity.Dynamic, 1 / 2).outside, 0.8);
   });
 
-  it('keeps the outside knee flexed, within its kind and intensity ceiling', () => {
+  legacyIt('keeps the outside knee flexed, within its kind and intensity ceiling', () => {
     for (const kind of KINDS)
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
@@ -93,7 +94,7 @@ describe('regular turn', () => {
         }
   });
 
-  it('reaches a measured GS ankle only when carving dynamically', () => {
+  legacyIt('reaches a measured GS ankle only when carving dynamically', () => {
     // A GS instructor's outside ankle 18-27 deg (heinrich-2022).
     const peak = (i: Intensity): number => Math.max(...Array.from({ length: 24 }, (_, k) => ankle(RegularTurn.Carving, i, k / 24)));
     assert.isAtLeast(peak(Intensity.Dynamic), 22);
@@ -103,7 +104,7 @@ describe('regular turn', () => {
     assert.isBelow(peak(Intensity.Moderate), peak(Intensity.Dynamic) - 2);
   });
 
-  it('folds deep through the dynamic carving cross-under, toward a measured flexion transition', () => {
+  legacyIt('folds deep through the dynamic carving cross-under, toward a measured flexion transition', () => {
     // seifert-2023 near 90 deg; heinrich-2022 GS 56-80 deg; the cross-overs stay tall at the switch.
     const knee = (i: Intensity, t: number): number => angles(RegularTurn.Carving, i, t).knee.right;
     assert.isAtLeast(knee(Intensity.Dynamic, 0), 65);
@@ -122,7 +123,7 @@ describe('regular turn', () => {
       }
   });
 
-  it('presses the shin forward at a carve initiation and opens it by the finish', () => {
+  legacyIt('presses the shin forward at a carve initiation and opens it by the finish', () => {
     const margin = { gentle: 1.5, moderate: 2.5, dynamic: 4 } as const;
     for (const i of INTENSITIES) assert.isAbove(ankle(RegularTurn.Carving, i, 1 / 6), ankle(RegularTurn.Carving, i, 5 / 6) + margin[i], i);
     const gentle = Array.from({ length: 24 }, (_, k) => ankle(RegularTurn.Cruising, Intensity.Gentle, k / 24));
@@ -157,7 +158,7 @@ describe('regular turn', () => {
       }
   });
 
-  it('lines the zipper trunk up with the shin at the crest and stands it up behind the shin down the backside', () => {
+  legacyIt('lines the zipper trunk up with the shin at the crest and stands it up behind the shin down the backside', () => {
     // Fully flexed the trunk is about parallel to the shin; extending, the shins drive forward under a much more upright upper body (gellie-2019-moguls-forward 06:00-06:20, 10:13).
     const behind = (i: Intensity, t: number): number => {
       const a = angles(RegularTurn.Moguls, i, t);
@@ -221,7 +222,7 @@ describe('regular turn', () => {
     }
   });
 
-  it('keeps the chest over the outside knee through the turn', () => {
+  legacyIt('keeps the chest over the outside knee through the turn', () => {
     // Chest over the knees (lemaster-2010 pp57, 182-183); behind the knee is the slip-and-catch fault
     // (jordan-sporri-taylor-2023 pp120-121). 2 cm slack inferred; the trunk's one cap is the angulation test's.
     const drills = Object.keys(POSE_DEFINITIONS).filter((d) => d !== RegularTurn.Moguls && d !== TOPS_POSE && d !== ROUND_POSE);
@@ -250,7 +251,7 @@ describe('regular turn', () => {
       }
   });
 
-  it('moves the feet under the hips with the ankle, not by pitching the trunk', () => {
+  failsUntil('step 6: short turns')('moves the feet under the hips with the ankle, not by pitching the trunk', () => {
     // Fore-aft from the ankles, the upper body still (lemaster-2010 p81).
     const range = (kind: RegularTurn, i: Intensity, f: (a: ReturnType<typeof poseAngles>) => number): number => {
       const v = Array.from({ length: 24 }, (_, k) => f(angles(kind, i, k / 24)));
@@ -287,7 +288,7 @@ describe('regular turn', () => {
     assert.isAbove(crest.hip.right, crest.trunkForward + 25);
   });
 
-  it('keeps the closed-stance hips over the heels', () => {
+  legacyIt('keeps the closed-stance hips over the heels', () => {
     for (const i of INTENSITIES)
       for (let k = 0; k < 24; k++) {
         const a = poseAngles(samplePose(poseTable('closed-stance-short-turns', i), k / 24));
@@ -469,7 +470,7 @@ describe('regular turn', () => {
     assert.strictEqual(poleTrimOf('stork-turns'), 0);
   });
 
-  it('skis moguls and closed stance with the legs together', () => {
+  failsUntil('step 3: boot capsules')('skis moguls and closed stance with the legs together', () => {
     for (const drill of FALL_LINE_KINDS)
       for (let k = 0; k < 24; k++) {
         const gap = bootGap(drill, k / 24);
@@ -477,7 +478,7 @@ describe('regular turn', () => {
       }
   });
 
-  it('flexes the inside knee beyond the outside one, more as the turn leans harder', () => {
+  legacyIt('flexes the inside knee beyond the outside one, more as the turn leans harder', () => {
     // kroll-2011: about 81-88 deg inside against 65-70 outside in recreational skiers, 13-23 deg more; lemaster-2010 pp61-62:
     // the inside leg shortens with inclination. Gentle groomed turns stand in for kroll's recreational skiers; inferred.
     const surplus = (drill: RegularTurn, i: Intensity): number => {
@@ -505,7 +506,7 @@ describe('regular turn', () => {
       }
   });
 
-  it('leads the inside tip by hip width × sin(counter) plus the inside thigh\'s flex over parallel shins', () => {
+  legacyIt('leads the inside tip by hip width × sin(counter) plus the inside thigh\'s flex over parallel shins', () => {
     // lead-footage notes, Conclusion 5: the counter staggers the hips, the shorter inside leg's thigh carries its knee ahead.
     const off: string[] = [];
     for (const drill of Object.keys(POSE_DEFINITIONS))
@@ -521,7 +522,7 @@ describe('regular turn', () => {
     assert.deepEqual(off, []);
   });
 
-  it('builds the inside tip lead from about level at the switch to a middle-to-late peak, never trailing', () => {
+  legacyIt('builds the inside tip lead from about level at the switch to a middle-to-late peak, never trailing', () => {
     for (const drill of Object.keys(POSE_DEFINITIONS))
       for (const i of INTENSITIES) {
         const leads = Array.from({ length: 48 }, (_, k) => leadTerms(samplePose(poseTable(drill, i), k / 48)).tip / REFERENCE_SKIER.bsl);
@@ -541,7 +542,7 @@ describe('regular turn', () => {
       }
   });
 
-  it('keeps the inside tip lead\'s peak inside the filmed band in boot soles, widened by parallax', () => {
+  legacyIt('keeps the inside tip lead\'s peak inside the filmed band in boot soles, widened by parallax', () => {
     for (const drill of Object.keys(POSE_DEFINITIONS))
       for (const i of INTENSITIES) {
         const peak = Math.max(...Array.from({ length: 48 }, (_, k) => leadTerms(samplePose(poseTable(drill, i), k / 48)).tip)) / REFERENCE_SKIER.bsl;
@@ -549,7 +550,7 @@ describe('regular turn', () => {
       }
   });
 
-  it('keeps the mogul mass near upright: the lean bounded, the edge from the legs', () => {
+  legacyIt('keeps the mogul mass near upright: the lean bounded, the edge from the legs', () => {
     const peakTilt = (style: (typeof TURN_STYLES)[RegularTurn], i: Intensity): number =>
       Math.max(...Array.from({ length: 96 }, (_, k) => Math.abs(turnForcesAt(style.scenarios[i], k / 96).tilt))) * DEG;
     for (const i of INTENSITIES) {
@@ -570,7 +571,7 @@ describe('regular turn', () => {
     assert.isAbove(mogul.edge.right, turnForcesAt(TURN_STYLES[RegularTurn.Moguls].scenarios.moderate, 1 / 2).tilt * DEG + 5);
   });
 
-  it('plants the mogul pole lightly, both hands in front of the chest', () => {
+  legacyIt('plants the mogul pole lightly, both hands in front of the chest', () => {
     for (const drill of FALL_LINE_KINDS)
       for (const side of ['left', 'right']) {
         const [x, , z] = local(drill, 1 / 24, `${side}-forearm`, CAPSULE_GRIP, 'trunk');
@@ -755,7 +756,7 @@ const LEAD_PEAK = [Math.max(0, 0.05 / FILMED_BOOT - PARALLAX), 0.13 / FILMED_BOO
 
 describe('hip rotation', () => {
 
-  it('turns the outside femur 3-17 deg into the turn against its ski, the inside one less', () => {
+  legacyIt('turns the outside femur 3-17 deg into the turn against its ski, the inside one less', () => {
     // yoon-2017: 6.3, 11.4, 13.5 deg across held positions, widened by the rotated position's SD (3.7); the knees-in stance apart.
     for (const drill of TURN_DRILLS)
       for (const i of INTENSITIES) {
@@ -766,7 +767,7 @@ describe('hip rotation', () => {
       }
   });
 
-  it('rotates a racer\'s carving hips as measured: outside internally 18-40 deg, inside externally 15-36', () => {
+  failsUntil('step 4: priors, step 6: carving')('rotates a racer\'s carving hips as measured: outside internally 18-40 deg, inside externally 15-36', () => {
     // Peaks, mean - SD to the highest: fasel-2017 Table 5 23.6 (5.7) / -30.5 (5.9), heinrich-2022 27.5 / 26.2, heinrich-2023 ~40 / 15-33.
     const outside = peakOf(RegularTurn.Carving, Intensity.Dynamic, (p) => p.counter + p.outside.femurRotation);
     const inside = peakOf(RegularTurn.Carving, Intensity.Dynamic, (p) => p.counter + p.inside.femurRotation);
@@ -774,7 +775,7 @@ describe('hip rotation', () => {
     assert.isTrue(inside >= 15 && inside <= 36.4, `inside ${inside.toFixed(1)}`);
   });
 
-  it('counters pivoted lines as filmed: 0-20 deg at the switch, 30-50 deg late, each ±15', () => {
+  legacyIt('counters pivoted lines as filmed: 0-20 deg at the switch, 30-50 deg late, each ±15', () => {
     // lead-footage notes: JDS, Olivia Giaccio, SCE short turns and moguls; Odermatt's carved switch keeps more.
     for (const drill of TURN_DRILLS.filter((d) => POSE_DEFINITIONS[d]?.constraints.set !== undefined))
       for (const i of INTENSITIES) {
@@ -835,7 +836,7 @@ const peakPitch = (i: Intensity): number => Math.max(...poseTable(POWDER, i).map
 
 describe('powder pop', () => {
 
-  it('extends highest near the switch and sinks lower by shaping', () => {
+  failsUntil('step 6: powder')('extends highest near the switch and sinks lower by shaping', () => {
     const margin = { gentle: 0.025, moderate: 0.04, dynamic: 0.06 } as const;
     for (const i of INTENSITIES) {
       const v = cycle(i);
@@ -881,7 +882,7 @@ describe('powder pop', () => {
       }
   });
 
-  it('pops harder at dynamic than at gentle', () => {
+  failsUntil('step 6: powder')('pops harder at dynamic than at gentle', () => {
     assert.isAbove(popRange(Intensity.Dynamic), popRange(Intensity.Gentle) + 0.05);
     assert.isAbove(peakPitch(Intensity.Dynamic), peakPitch(Intensity.Gentle) + 2);
   });

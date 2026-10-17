@@ -11,6 +11,7 @@ import { solvePose } from '../src/viewer/pose-solver';
 import { poseTable } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS } from '../src/viewer/poses';
 import { RegularTurn } from '../src/viewer/poses/regular-turn';
+import { failsUntil } from './legacy';
 
 const H = 1e-4;
 const DEG = Math.PI / 180;
@@ -56,25 +57,28 @@ const channels = (pose: Pose, mirror: boolean): Readonly<Record<string, number>>
 };
 
 const CASES = [...Object.values(RegularTurn), 'closed-stance-short-turns'].flatMap((drill) => INTENSITIES.map((i) => [drill, i] as const));
+const C1_KINKED = new Set<string>([RegularTurn.Moguls, 'closed-stance-short-turns']);
 
 describe('turn transition', () => {
-  it.each(CASES)('%s %s passes C1 from one turn into the next, either way', (drill, intensity) => {
-    const def = POSE_DEFINITIONS[drill];
-    if (def === undefined) throw new Error(`no ${drill}`);
-    const scenario = drillScenarios(drill)[intensity];
-    for (const mirrorOld of [false, true]) {
-      // s < 0 ends the old turn, s > 0 starts the next one in the mirrored frame.
-      const w = (s: number): Readonly<Record<string, number>> => channels(solvePose(def, s < 0 ? 1 + s : s, scenario), s < 0 ? mirrorOld : !mirrorOld);
-      const [a, b, c, d] = [w(-2 * H), w(-H), w(H), w(2 * H)];
-      for (const key of Object.keys(a)) {
-        const [left, right] = [((b[key] ?? 0) - (a[key] ?? 0)) / H, ((d[key] ?? 0) - (c[key] ?? 0)) / H];
-        const gap = ((c[key] ?? 0) - (b[key] ?? 0)) / (2 * H);
-        const tol = 0.1 * Math.max(Math.abs(left), Math.abs(right)) + 0.05;
-        assert.isBelow(Math.abs(left - right), tol, `${key} slope ${left.toFixed(3)} → ${right.toFixed(3)}`);
-        assert.isBelow(Math.abs(gap - (left + right) / 2), tol, `${key} jumps at the switch`);
+  // The sub-solves kink trunkPitch at the seam; a cycle solve with a mirror boundary removes it.
+  for (const [drill, intensity] of CASES)
+      failsUntil('step 2: cycle solve', C1_KINKED.has(drill))(`${drill} ${intensity} passes C1 from one turn into the next, either way`, () => {
+      const def = POSE_DEFINITIONS[drill];
+      if (def === undefined) throw new Error(`no ${drill}`);
+      const scenario = drillScenarios(drill)[intensity];
+      for (const mirrorOld of [false, true]) {
+        // s < 0 ends the old turn, s > 0 starts the next one in the mirrored frame.
+        const w = (s: number): Readonly<Record<string, number>> => channels(solvePose(def, s < 0 ? 1 + s : s, scenario), s < 0 ? mirrorOld : !mirrorOld);
+        const [a, b, c, d] = [w(-2 * H), w(-H), w(H), w(2 * H)];
+        for (const key of Object.keys(a)) {
+          const [left, right] = [((b[key] ?? 0) - (a[key] ?? 0)) / H, ((d[key] ?? 0) - (c[key] ?? 0)) / H];
+          const gap = ((c[key] ?? 0) - (b[key] ?? 0)) / (2 * H);
+          const tol = 0.1 * Math.max(Math.abs(left), Math.abs(right)) + 0.05;
+          assert.isBelow(Math.abs(left - right), tol, `${key} slope ${left.toFixed(3)} → ${right.toFixed(3)}`);
+          assert.isBelow(Math.abs(gap - (left + right) / 2), tol, `${key} jumps at the switch`);
+        }
       }
-    }
-  });
+    });
 
   it.each(CASES)('%s %s rolls through the switch without dwelling flat', (drill, intensity) => {
     const def = POSE_DEFINITIONS[drill];

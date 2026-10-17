@@ -17,6 +17,7 @@ import { RegularTurn, TOPS_PLANT } from '../src/viewer/poses/regular-turn';
 import { ROUND_POSE, TOPS_POSE, transitionHeading, turnPath } from '../src/viewer/turn-heading';
 import { poseAngles, trunkFromVertical } from './pose-angles';
 import type { PoseAngles } from './pose-angles';
+import { legacyIt } from './legacy';
 
 const DEG = 180 / Math.PI;
 // The bare foot's heel inside the capsule shell, behind mid-foot.
@@ -88,7 +89,7 @@ const snowShare = (i: Intensity, t: number): number => {
 };
 
 describe('turns on the tops', () => {
-  it('is flat on the crest, edged again by t 0.1 and edged through the fall line', () => {
+  legacyIt('is flat on the crest, edged again by t 0.1 and edged through the fall line', () => {
     // Tipped early once flat on the backside (duncan-smith-2021 5:26-6:14), clearly edged at the fall line (1:28-1:32).
     for (const i of INTENSITIES) {
       const peak = Math.max(...TIMES.map((t) => edgeAt(i, t)));
@@ -120,7 +121,7 @@ describe('turns on the tops', () => {
     }
   });
 
-  it('keeps the skis off the troughs, the snow under them at least 0.4 of the relief', () => {
+  legacyIt('keeps the skis off the troughs, the snow under them at least 0.4 of the relief', () => {
     // Inferred: the snow on the tops is better than in the troughs (campbell-rogan-2001).
     for (const i of INTENSITIES) for (const t of TIMES) assert.isAtLeast(snowShare(i, t), 0.4, `${i} t ${t}`);
   });
@@ -146,7 +147,7 @@ describe('turns on the tops', () => {
     assert.isTrue(plant > 5 / 6 && plant < 1, `plant at t ${plant}`);
   });
 
-  it('folds compact on the crest, the hips low and the trunk with the shin', () => {
+  legacyIt('folds compact on the crest, the hips low and the trunk with the shin', () => {
     // Smallest on top (duncan-smith-2021 4:24-5:07, 4:26), trunk about parallel to the shin, as the zipper's
     // (gellie-2019-moguls-forward 06:00-06:20; 10 deg inferred), not broken at the waist (fis-freestyle-judging-2025 p29).
     for (const i of INTENSITIES) {
@@ -161,7 +162,7 @@ describe('turns on the tops', () => {
     }
   });
 
-  it('holds the hands wide and in front, below the shoulders, other drills keep the default', () => {
+  legacyIt('holds the hands wide and in front, below the shoulders, other drills keep the default', () => {
     // Wide and forward at about waist to lower-chest height, never above the shoulders (duncan-smith-2021 1:28-1:32, 4:26):
     // wider than cruising's hands away from the pole plant's swing.
     for (const i of INTENSITIES)

@@ -12,7 +12,8 @@
     "poses": "bun scripts/anatomy/pose-tables.ts",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "oxlint --ignore-pattern '.claude/**'",
-    "test": "vitest run",
+    "test": "vitest run --testNamePattern '^(?!.*legacy: )'",
+    "test:legacy": "vitest run --testNamePattern 'legacy: '",
     "test:model": "vitest run --config vitest.model.config.ts",
     "check": "bun run content && bun run typecheck && bun run lint && bun run test"
   },

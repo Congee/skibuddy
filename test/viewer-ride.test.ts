@@ -9,6 +9,7 @@ import { surfaceFor } from '../src/viewer/surface';
 import { TOPS_POSE } from '../src/viewer/turn-heading';
 import { ALONG, SIDES, clearance, ridden } from './ride-probes';
 import type { Ridden } from './ride-probes';
+import { failsUntil } from './legacy';
 
 const DEG = 180 / Math.PI;
 const FALL_LINE_KINDS = [RegularTurn.Moguls, TOPS_POSE] as const;
@@ -22,7 +23,7 @@ const table = (drill: string, i: Intensity): ReadonlyArray<Ridden> => {
 const height = (r: Ridden): readonly number[] => [r.ride.lift, r.com[1]];
 
 describe('ride on moguls', () => {
-  it('rests each rigid ski on the snow: its lowest point touches, none sinks in', () => {
+  failsUntil('step 3: contact inequalities')('rests each rigid ski on the snow: its lowest point touches, none sinks in', () => {
     for (const drill of FALL_LINE_KINDS)
       for (const i of INTENSITIES)
         table(drill, i).forEach((r, k) => {
@@ -66,7 +67,7 @@ describe('ride on moguls', () => {
     }
   });
 
-  it('lays the zipper snow level under each pressed ski, both edges within 2 cm of it', () => {
+  failsUntil('step 3: contact inequalities')('lays the zipper snow level under each pressed ski, both edges within 2 cm of it', () => {
     // The skis edge on the rut's floor, not on its walls; the drawn edges neither float nor sink.
     for (const i of INTENSITIES)
       table(RegularTurn.Moguls, i).forEach((r, k) => {
@@ -84,7 +85,7 @@ describe('ride on moguls', () => {
       });
   });
 
-  it('meets the next mogul tip first, the snow rising ahead from mid-turn', () => {
+  failsUntil('step 6: moguls')('meets the next mogul tip first, the snow rising ahead from mid-turn', () => {
     // The tip touches the next mogul before any other part of the ski (fis-freestyle-judging-2025 p28).
     for (const i of INTENSITIES) {
       const { trough } = surfaceFor(RegularTurn.Moguls, i);

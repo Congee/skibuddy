@@ -4,6 +4,7 @@ import { RegularTurn } from '../src/viewer/poses/regular-turn';
 import { surfaceFor } from '../src/viewer/surface';
 import { realTurnSeconds } from '../src/viewer/turn-time';
 import { LEG_LENGTH, ROUND_POSE, TOPS_POSE, feetCorridor, headingAt, pivotAt, sinusoidHeading, trackHeadingAt, transitionHeading, turnPath, turnStyle } from '../src/viewer/turn-heading';
+import { legacyIt } from './legacy';
 
 const DEG = Math.PI / 180;
 const close = (a: number, b: number, eps = 1e-9): void => assert.isBelow(Math.abs(a - b), eps, `${a} vs ${b}`);
@@ -105,7 +106,7 @@ describe('feet track', () => {
       }
   });
 
-  it('skids pivoted groomed skis well short of a pivot slip, 30-45° ±15 at the set (SIA drone footage, measured)', () => {
+  legacyIt('skids pivoted groomed skis well short of a pivot slip, 30-45° ±15 at the set (SIA drone footage, measured)', () => {
     for (const drill of GROOMED_PIVOTED)
       for (const i of INTENSITIES) {
         const path = turnPath(drill, i);

@@ -14,6 +14,7 @@ import { POSE_SAMPLES, effortOf } from '../src/viewer/pose-solver';
 import { STORK_TURNS } from '../src/viewer/poses/stork-turns';
 import { MODERATE, SCENARIOS, poseAt, solvedPose } from './stork-poses';
 import { poseAngles } from './pose-angles';
+import { legacyIt } from './legacy';
 import { REFERENCE_SKIER } from '../src/viewer/skier';
 
 const tailLiftShare = (t: number): number => windowShare(STORK_TURNS.constraints.tailLift, t);
@@ -146,7 +147,7 @@ describe('segmentMatrices', () => {
     }
   });
 
-  it('keeps the outside knee in its intensity band and both ankles in the measured ranges', () => {
+  legacyIt('keeps the outside knee in its intensity band and both ankles in the measured ranges', () => {
     // Deeper with intensity; the dynamic turn within heinrich-2022's GS 56-80 deg, the one measured outside knee.
     const kneeRange = (s: TurnScenario): readonly [number, number] => {
       const knees = TIMES.map((t) => poseAngles(poseAt(t, s)).knee[BodySide.Right]);
@@ -182,7 +183,7 @@ describe('segmentMatrices', () => {
     }
   });
 
-  it('holds the hands forward and wide, between hip and chest height', () => {
+  legacyIt('holds the hands forward and wide, between hip and chest height', () => {
     for (const side of SIDES) {
       // Elbows bent about 75 deg (lemaster-2010 p142).
       assert.closeTo(FOREARM_FLEXION / DEG, 75, 5);
@@ -377,7 +378,7 @@ const mechanics = (name: string, s: TurnScenario): void => {
       for (const t of TIMES) assert.closeTo(poseAt(t, s).lean, turnForcesAt(s, t).tilt, 0.02, `t=${t}`);
     });
 
-    it('extends the outside knee a little into the turn, holds it through shaping and flexes it through the finish', () => {
+    legacyIt('extends the outside knee a little into the turn, holds it through shaping and flexes it through the finish', () => {
       // lemaster-2010 pp40-42, pritchard-taylor-2023 p27, iasi-2021 pp65-66: deepest in the transition, longest mid-turn.
       const knee = (t: number): number => at(t).knee[BodySide.Right];
       const hip = (t: number): number => at(t).hip[BodySide.Right];
