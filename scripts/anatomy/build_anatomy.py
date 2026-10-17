@@ -982,9 +982,9 @@ def main():
     binding, tracks = posed_track['binding'], posed_track['tracks']
     # The palm-in twist is found on the first posed turn, as the bake always has; else the still stance.
     track = next((v for k, v in tracks.items() if k != 'neutral'), tracks['neutral'])
-    # Skis: 1.6 m x 9 cm slabs centred 3 cm ahead of the foot, under each binding as in figure.ts and equipment.ts.
+    # Skis: the reference skier's groomed ski as a slab centred 3 cm ahead of the foot, under each binding as in figure.ts and equipment.ts.
     ski_pivot, tips = {}, {}
-    thick = binding['skiThickness']
+    thick, half, wide = binding['skiThickness'], binding['skiLength'] / 2, binding['skiWidth'] / 2
     for s in ('R', 'L'):
         j = J[s]
         a = fit[s]['ankle']
@@ -999,13 +999,13 @@ def main():
             return np.array([a[0] + g[0], -(a[2] + g[2]), a[1] + g[1]])
 
         # Same corner order as an axis-aligned box: x, then front to back, then bottom to top.
-        verts = np.array([rest_point((x, y, zc + z)) for x in (-0.045, 0.045) for z in (0.8, -0.8) for y in (-thick, 0.0)])
+        verts = np.array([rest_point((x, y, zc + z)) for x in (-wide, wide) for z in (half, -half) for y in (-thick, 0.0)])
         quads = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
         tris = np.array([t for a, b, c, d in quads for t in ((a, b, c), (a, c, d))])
         make_object(f'gear_ski_{s}', verts, tris, np.zeros(len(tris), np.int32), [mats['gear']], rig,
                     [[(f'foot.{s}', 1.0)]] * len(verts))
         ski_pivot[s] = tuple(float(x) for x in rest_point((0, -thick, zc)))
-        tips[s] = tuple(float(x) for x in rest_point((0, -thick, zc + 0.8)))
+        tips[s] = tuple(float(x) for x in rest_point((0, -thick, zc + half)))
 
     rest = dict(ramp=binding['bootBoardRamp'] + binding['deltaAngle'],
                 femur={s: (Vector(J[s]['hip']) - Vector(J[s]['knee'])).normalized() for s in ('R', 'L')},

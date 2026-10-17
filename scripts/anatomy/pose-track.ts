@@ -10,6 +10,7 @@ import { hasTable, poseTable, samplePose } from '../../src/viewer/pose-table';
 import { POSE_DEFINITIONS, poleTrimOf } from '../../src/viewer/poses';
 import { rideOf } from '../../src/viewer/ride';
 import { SurfaceKind, surfaceFor } from '../../src/viewer/surface';
+import { REFERENCE_SKIER, Terrain } from '../../src/viewer/skier';
 import { drillScenarios } from './drill-scenarios';
 
 const frames = Number(process.argv[2] ?? 24);
@@ -18,6 +19,8 @@ const binding = {
   deltaAngle: deltaAngle(EQUIPMENT),
   stackHeight: stackHeight(EQUIPMENT),
   skiThickness: EQUIPMENT.skiThickness,
+  skiLength: REFERENCE_SKIER.skis[Terrain.Groomed].length,
+  skiWidth: REFERENCE_SKIER.skis[Terrain.Groomed].waist,
   heelRoom: HEEL_ROOM,
   toeRoom: TOE_ROOM,
 };

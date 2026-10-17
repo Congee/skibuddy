@@ -1,6 +1,7 @@
 import type { BootFit } from './gear-fit';
 import { compose, rotationX, translation } from './mat4';
 import type { Mat4 } from './mat4';
+import { REFERENCE_SKIER } from './skier';
 
 const DEG = Math.PI / 180;
 
@@ -29,8 +30,7 @@ export const EQUIPMENT: Equipment = {
   bootBoardRamp: 3 * DEG,
   // Recreational mean, heel minus toe stand height (ruedl-2022).
   bindingDelta: 0.0047,
-  // About a mondopoint 26.5 shell; varies by size.
-  soleLength: 0.305,
+  soleLength: REFERENCE_SKIER.bsl,
   // Recreational mean of toe 39.9 and heel 44.6 mm (ruedl-2022); FIS caps race skis at 50 mm.
   standHeight: 0.042,
   // Typical; varies by model.

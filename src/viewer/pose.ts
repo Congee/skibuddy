@@ -3,6 +3,8 @@ import { BodySide, CAPSULE_BINDING, SEGMENTS, SegmentKind } from './figure';
 import type { Segment } from './figure';
 import { compose, identity, inverseRotation, rotationX, rotationY, rotationZ, transformPoint, translation } from './mat4';
 import type { Mat4, Vec3 } from './mat4';
+import { REFERENCE_SKIER, Terrain, skiEnds } from './skier';
+import type { Ski } from './skier';
 
 /**
  * Joint angles in radians; flexion is positive. "Body frame" is the figure before
@@ -309,12 +311,21 @@ const bootRotation = (segment: Segment, pose: Pose, edge: number, lean: number):
 export const HEAD_LIFT = 0.6;
 
 /** Height of the ski base below its segment origin. */
-const SKI_BASE = -EQUIPMENT.skiThickness / 2;
+export const SKI_BASE = -EQUIPMENT.skiThickness / 2;
 /** Mid-foot in the foot's frame: the binding's centre on the ski's top. */
 export const MID_FOOT: Vec3 = transformPoint(CAPSULE_BINDING, [0, 0, 0]);
-export const SKI_TIP: Vec3 = [0, SKI_BASE, 0.85];
-/** As figure.ts's ski: 1.6 m long, 5 cm more of it ahead of the binding than behind. */
-export const SKI_TAIL: Vec3 = [0, SKI_BASE, -0.75];
+export interface SkiEnds {
+  readonly tip: Vec3;
+  readonly tail: Vec3;
+}
+
+/** The tip and tail on the base of `ski`, in the ski segment's frame. */
+export const skiEndPoints = (ski: Ski): SkiEnds => {
+  const { tip, tail } = skiEnds(ski);
+  return { tip: [0, SKI_BASE, tip], tail: [0, SKI_BASE, tail] };
+};
+/** As figure.ts's drawn ski. */
+export const { tip: SKI_TIP, tail: SKI_TAIL } = skiEndPoints(REFERENCE_SKIER.skis[Terrain.Groomed]);
 
 const FOOT_KINDS: ReadonlySet<SegmentKind> = new Set([SegmentKind.Boot, SegmentKind.Ski]);
 const isFoot = (kind: SegmentKind): boolean => FOOT_KINDS.has(kind);

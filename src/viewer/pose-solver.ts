@@ -10,10 +10,12 @@ import type { HeadRule, KeyField, PoseDefinition } from './pose-definition';
 import { HEAD_LIMIT, gazeHeading } from './gaze';
 import { CORRIDOR_SHARE, headingAt } from './turn-heading';
 import type { TurnPath } from './turn-heading';
-import { FLAT_RIDE, rideOf } from './ride';
+import { FLAT_RIDE, rideOf, skiOn } from './ride';
 import type { Ride } from './ride';
 import { MogulLine, SurfaceKind, trackRest } from './surface';
 import type { Surface } from './surface';
+import { REFERENCE_SKIER, skiEnds } from './skier';
+import type { ReferenceSkier, Ski } from './skier';
 
 const DEG = Math.PI / 180;
 /** The shin's forward limit in a shell, inferred. */
@@ -39,8 +41,8 @@ const balanceShare = (lean: number, s: TurnScenario): number => {
   const a = Math.abs(lean);
   return 1 - (1 - fade((a - BALANCE_FROM) / (BALANCE_BY - BALANCE_FROM))) * (1 - fade(a / (BALANCE_PEAK * peakLean(s))));
 };
-import { ARM_ABDUCTION, ARM_FLEXION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TAIL, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, thighPitch, turnDepth } from './pose';
-import type { LegPose, Pose } from './pose';
+import { ARM_ABDUCTION, ARM_FLEXION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_BASE, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiEndPoints, skiIndex, touchSide, thighPitch, turnDepth } from './pose';
+import type { LegPose, Pose, SkiEnds } from './pose';
 
 /** How hard the drill is skied, from its physics. */
 export interface Effort {
@@ -92,9 +94,9 @@ export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | 
 };
 
 // Above the outside tip, which sits on the snow unless both skis pitch or the snow under the tips differs.
-const insideTipHeight = (pose: Pose): number => {
+const insideTipHeight = (pose: Pose, ski: SkiEnds): number => {
   const world = segmentMatrices(pose);
-  const tip = (side: BodySide): number => transformPoint(world[skiIndex(side)] ?? identity(), SKI_TIP)[1];
+  const tip = (side: BodySide): number => transformPoint(world[skiIndex(side)] ?? identity(), ski.tip)[1];
   return tip(BodySide.Left) - tip(BodySide.Right);
 };
 
@@ -102,9 +104,9 @@ const insideTipHeight = (pose: Pose): number => {
  * On firm snow the boots stand `clearance` over it, or higher if a tip-down tip would dip under it; a tip-up ski's
  * tail stays under it, drawn so for the bent, loaded tail.
  */
-const riseOf = (pose: Pose, clearance: number): number => {
+const riseOf = (pose: Pose, clearance: number, ski: SkiEnds): number => {
   const world = segmentMatrices({ ...pose, rise: 0 });
-  const tip = (side: BodySide): number => transformPoint(world[skiIndex(side)] ?? identity(), SKI_TIP)[1];
+  const tip = (side: BodySide): number => transformPoint(world[skiIndex(side)] ?? identity(), ski.tip)[1];
   return Math.max(0, clearance, -Math.min(tip(BodySide.Left), tip(BodySide.Right)));
 };
 
@@ -112,10 +114,10 @@ const riseOf = (pose: Pose, clearance: number): number => {
 const BASE_SOFTNESS = 0.005;
 
 /** In loose snow the pitched skis ride the packed base: the boots rise until neither ski's end dips under it. */
-const baseRiseOf = (pose: Pose): number => {
+const baseRiseOf = (pose: Pose, ski: SkiEnds): number => {
   const world = segmentMatrices({ ...pose, rise: 0 });
   const end = (side: BodySide, point: Vec3): number => transformPoint(world[skiIndex(side)] ?? identity(), point)[1];
-  const depths = [BodySide.Left, BodySide.Right].flatMap((side) => [-end(side, SKI_TIP), -end(side, SKI_TAIL)]);
+  const depths = [BodySide.Left, BodySide.Right].flatMap((side) => [-end(side, ski.tip), -end(side, ski.tail)]);
   const most = Math.max(...depths);
   return Math.max(0, most + BASE_SOFTNESS * Math.log(depths.reduce((sum, d) => sum + Math.exp((d - most) / BASE_SOFTNESS), 0)));
 };
@@ -175,8 +177,9 @@ const LAG_SAMPLES = 16;
  * 2-3 turns a second, so it meets that pitch raised-cosine averaged over BALANCE_LAG either side of t, through the
  * mirrored next turn. Radians uphill of the slope normal; 0 off moguls.
  */
-export const snowPitchAt = (scenario: DrillScenario | null, surface: Surface | null, t: number): number => {
+export const snowPitchAt = (scenario: DrillScenario | null, surface: Surface | null, t: number, skier: ReferenceSkier = REFERENCE_SKIER): number => {
   if (scenario === null || surface === null || surface.kind !== SurfaceKind.Moguls || surface.speed === 0) return 0;
+  const { tip, tail } = skiEnds(skiOn(surface, skier));
   const half = (BALANCE_LAG * scenario.speedMps) / surface.speed;
   let sum = 0;
   let weights = 0;
@@ -184,7 +187,7 @@ export const snowPitchAt = (scenario: DrillScenario | null, surface: Surface | n
     const u = (2 * (i + 0.5)) / LAG_SAMPLES - 1;
     const w = 1 + Math.cos(Math.PI * u);
     // On a face the feet lead and the body catches up, centred, rather than sitting back on its pitch (duncan-smith-2021 3:30-3:54).
-    sum += w * Math.min(0, trackRest(surface, wrapTime(t + u * half), SKI_TIP[2], -SKI_TAIL[2]).pitch);
+    sum += w * Math.min(0, trackRest(surface, wrapTime(t + u * half), tip, -tail).pitch);
     weights += w;
   }
   // Down the backside the ankle brings the tip down and presses it downhill (duncan-smith-2021 3:00-3:25).
@@ -192,8 +195,8 @@ export const snowPitchAt = (scenario: DrillScenario | null, surface: Surface | n
 };
 
 /** The snow's force line the mass balances on, radians uphill of the slope normal: the skis' averaged pitch plus braking. */
-export const forceTiltAt = (scenario: DrillScenario | null, surface: Surface | null, t: number): number =>
-  brakingTiltAt(scenario, surface, t) + snowPitchAt(scenario, surface, t);
+export const forceTiltAt = (scenario: DrillScenario | null, surface: Surface | null, t: number, skier: ReferenceSkier = REFERENCE_SKIER): number =>
+  brakingTiltAt(scenario, surface, t) + snowPitchAt(scenario, surface, t, skier);
 
 type Spine = Pick<Pose, 'spineFlex' | 'spineBend' | 'spineTwist'>;
 
@@ -210,8 +213,8 @@ const spineTipped = (pelvis: Mat4, spine: Spine, outward: number): Spine => {
 const inwardOfForce = (pose: Pose): number => {
   const world = segmentMatrices(pose, false);
   const o = outsideWeight(pose.lean);
-  const right = transformPoint(world[skiIndex(BodySide.Right)] ?? identity(), [0, SKI_TIP[1], 0]);
-  const left = transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), [0, SKI_TIP[1], 0]);
+  const right = transformPoint(world[skiIndex(BodySide.Right)] ?? identity(), [0, SKI_BASE, 0]);
+  const left = transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), [0, SKI_BASE, 0]);
   const com = centreOfMass(world);
   const dx = com[0] - (o * right[0] + (1 - o) * left[0]);
   const dy = com[1] - (o * right[1] + (1 - o) * left[1]);
@@ -236,8 +239,8 @@ const touchAhead = (pose: Pose, basket: number): number => {
  * pelvis, the knee bends until the centre of mass sits `comAhead` of mid-foot, and the inside hip flexes until
  * its ski tip just touches the snow. `scenario` null, or one without a radius, stands without turning.
  */
-export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenario | null, surface: Surface | null = null): Pose =>
-  solveRidden(def, t, scenario, surface, null).pose;
+export const solvePose = (def: PoseDefinition, t: number, scenario: DrillScenario | null, surface: Surface | null = null, skier: ReferenceSkier = REFERENCE_SKIER): Pose =>
+  solveRidden(def, t, scenario, surface, null, skier).pose;
 
 /** Knee flexion over which the absorbing knee eases into its range's ends, radians; inferred. */
 const ABSORB_EASE = 6 * DEG;
@@ -287,23 +290,24 @@ const solveRidden = (
   scenario: DrillScenario | null,
   surface: Surface | null,
   warm: Warm | null,
+  skier: ReferenceSkier,
 ): { readonly pose: Pose; readonly warm: Warm | null } => {
-  if (surface === null || surface.kind !== SurfaceKind.Moguls) return { pose: solveOn(def, t, scenario, surface, FLAT_RIDE, null, false), warm: null };
+  if (surface === null || surface.kind !== SurfaceKind.Moguls) return { pose: solveOn(def, t, scenario, surface, FLAT_RIDE, null, false, skier), warm: null };
   const c = def.constraints;
   const ridden = (hip: number | null, ride: Ride): { readonly pose: Pose; readonly ride: Ride } => {
-    const pose = solveOn(def, t, scenario, surface, ride, hip, true);
-    return { pose, ride: rideOf(surface, t, pose) };
+    const pose = solveOn(def, t, scenario, surface, ride, hip, true, skier);
+    return { pose, ride: rideOf(surface, t, pose, skier) };
   };
-  const settle = (hip: number | null, ride: Ride): Pose => solveOn(def, t, scenario, surface, ridden(hip, ride).ride, hip, true);
+  const settle = (hip: number | null, ride: Ride): Pose => solveOn(def, t, scenario, surface, ridden(hip, ride).ride, hip, true, skier);
   if (c.absorb === undefined) return { pose: settle(null, ridden(null, ridden(null, FLAT_RIDE).ride).ride), warm: null };
   const [lo, hi] = absorbRange(def, scenario);
-  const level = levelOf(def, scenario, surface).at(t);
+  const level = levelOf(def, scenario, surface, skier).at(t);
   // The knee folds as the snow rises under the skis, so the mass rides at `level` while the legs reach; past the
   // range's ends it eases in, so the knee settles on its stops without a kink.
   const w = ABSORB_EASE;
   const held = (hip: number): number => softClamp(hip, lo, hi, w);
   const guess = warm?.hip ?? null;
-  let ride = warm?.ride ?? rideOf(surface, t, solveOn(def, t, scenario, surface, FLAT_RIDE, held(lo), true));
+  let ride = warm?.ride ?? rideOf(surface, t, solveOn(def, t, scenario, surface, FLAT_RIDE, held(lo), true, skier), skier);
   // The mass's height over the level with the unclamped knee held in range by its ease, ridden afresh from one start
   // so the secant sees a function of the knee alone, not of the order it was tried in.
   const start = ride;
@@ -372,13 +376,14 @@ const TAUT_STEPS = 6000;
 const AIM_HALF = 0.08;
 
 /** The boots' snow along the skis' track at turn time t, raised-cosine averaged over AIM_HALF either side. */
-const snowAt = (surface: Surface, t: number): number => {
+const snowAt = (surface: Surface, t: number, ski: Ski): number => {
+  const { tip, tail } = skiEnds(ski);
   let sum = 0;
   let weights = 0;
   for (let i = 0; i < LAG_SAMPLES; i++) {
     const u = (2 * (i + 0.5)) / LAG_SAMPLES - 1;
     const w = 1 + Math.cos(Math.PI * u);
-    sum += w * trackRest(surface, wrapTime(t + u * AIM_HALF), SKI_TIP[2], -SKI_TAIL[2]).base;
+    sum += w * trackRest(surface, wrapTime(t + u * AIM_HALF), tip, -tail).base;
     weights += w;
   }
   return sum / weights;
@@ -389,8 +394,8 @@ const snowAt = (surface: Surface, t: number): number => {
  * zipper, the mass runs the straightest line inside the knee's reach, each end inside it by its spare share, so it
  * rises and falls only by what the legs cannot take (fis-freestyle-judging-2025 p28; Gellie 05:20).
  */
-const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface): Level => {
-  const key = JSON.stringify([scenario, surface]);
+const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface, skier: ReferenceSkier): Level => {
+  const key = JSON.stringify([scenario, surface, skier]);
   const cached = levels.get(def)?.get(key);
   if (cached !== undefined) return cached;
   const cache = (level: Level): Level => {
@@ -400,21 +405,22 @@ const levelOf = (def: PoseDefinition, scenario: DrillScenario | null, surface: S
     return level;
   };
   const [lo, hi] = absorbRange(def, scenario);
+  const ski = skiOn(surface, skier);
   const at = (t: number, hip: number): number => {
     let ride = FLAT_RIDE;
-    for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, surface, ride, hip, true));
-    return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, surface, ride, hip, true)))[1];
+    for (let i = 0; i < 3; i++) ride = rideOf(surface, t, solveOn(def, t, scenario, surface, ride, hip, true, skier), skier);
+    return ride.lift + centreOfMass(segmentMatrices(solveOn(def, t, scenario, surface, ride, hip, true, skier)))[1];
   };
   if (surface.line !== MogulLine.Zipper) {
     // The boots' own highest snow: on the round line's wall it comes after the path centre's crest.
     const ts = Array.from({ length: REACH_SAMPLES }, (_, k) => k / REACH_SAMPLES);
-    const snow = ts.map((t) => snowAt(surface, t));
+    const snow = ts.map((t) => snowAt(surface, t, ski));
     const high = Math.max(...snow);
-    const low = snowAt(surface, surface.trough);
+    const low = snowAt(surface, surface.trough, ski);
     // Folded deepest on the crest and long in the trough, the mass sinking on top by what the relief does not take.
     const crest = at(ts[snow.indexOf(high)] ?? surface.crest, hi);
     const trough = at(surface.trough, lo);
-    return cache({ at: (t) => trough + (crest - trough) * Math.min(1, Math.max(0, (snowAt(surface, t) - low) / (high - low))) });
+    return cache({ at: (t) => trough + (crest - trough) * Math.min(1, Math.max(0, (snowAt(surface, t, ski) - low) / (high - low))) });
   }
   const bounds = Array.from({ length: REACH_SAMPLES }, (_, k) => {
     const t = k / REACH_SAMPLES;
@@ -450,15 +456,17 @@ const solveOn = (
   ride: Ride,
   absorbKnee: number | null,
   bumps: boolean,
+  skier: ReferenceSkier,
 ): Pose => {
   const c = def.constraints;
+  const ends = skiEndPoints(skiOn(surface, skier));
   const k = keyValuesAt(def.keys, t);
   const effort = effortOf(def, scenario);
   const mild = (f: KeyField): number => k[f] * (1 + (c.gains[f] ?? 0) * effort.scale);
   const turning = scenario !== null && isTurn(scenario);
   const lean = turning ? turnForcesAt(scenario, t).tilt : 0;
   const braking = brakingTiltAt(scenario, surface, t);
-  const brake = Math.tan(forceTiltAt(scenario, surface, t));
+  const brake = Math.tan(forceTiltAt(scenario, surface, t, skier));
   const onAxis = turning && c.balanced !== false ? balanceShare(lean, scenario) : 0;
   const angulation = mild('angulation') + k.angulationStep * effort.scale;
   const counter = mild('counter') + k.counterStep * effort.scale;
@@ -546,7 +554,7 @@ const solveOn = (
     let hi = 1.5;
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
-      if (insideTipHeight(base(knee, mid, tailLift, shin)) > ride.insideTip) hi = mid;
+      if (insideTipHeight(base(knee, mid, tailLift, shin), ends) > ride.insideTip) hi = mid;
       else lo = mid;
     }
     return (lo + hi) / 2;
@@ -560,7 +568,7 @@ const solveOn = (
     let hi = fullLift;
     for (let i = 0; i < 20; i++) {
       const mid = (lo + hi) / 2;
-      if (insideTipHeight(base(knee, capped(mid), mid, shin)) > ride.insideTip) lo = mid;
+      if (insideTipHeight(base(knee, capped(mid), mid, shin), ends) > ride.insideTip) lo = mid;
       else hi = mid;
     }
     const tailLift = (lo + hi) / 2;
@@ -670,7 +678,7 @@ const solveOn = (
   const solved = base(knee, inside.extra, inside.tailLift, shin);
   // The head moves no mass to speak of, so it turns only once the trunk is set.
   const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist, c.set, surface?.path) };
-  const rested = (p: Pose): Pose => (firm ? { ...p, rise: riseOf(p, mild('skiClearance')) } : pitch === 0 ? p : { ...p, rise: baseRiseOf(p) });
+  const rested = (p: Pose): Pose => (firm ? { ...p, rise: riseOf(p, mild('skiClearance'), ends) } : pitch === 0 ? p : { ...p, rise: baseRiseOf(p, ends) });
   const legs = rested(turned);
   if (legs.poleTouch === 0) return legs;
   const reach = Math.abs(legs.poleTouch) * solveReach(legs, c.scapularRhythm, poleSize(CAPSULE_ARM, c.poleTrim).basket);
@@ -697,10 +705,16 @@ const solveReach = (pose: Pose, rhythm: number, basket: number): number => {
 export const POSE_SAMPLES = 96;
 
 /** One turn of poses, `samples` evenly spaced from t = 0. */
-export const solveTable = (def: PoseDefinition, scenario: DrillScenario | null, surface: Surface | null = null, samples = POSE_SAMPLES): ReadonlyArray<Pose> => {
+export const solveTable = (
+  def: PoseDefinition,
+  scenario: DrillScenario | null,
+  surface: Surface | null = null,
+  samples = POSE_SAMPLES,
+  skier: ReferenceSkier = REFERENCE_SKIER,
+): ReadonlyArray<Pose> => {
   let warm: Warm | null = null;
   return Array.from({ length: samples }, (_, i) => {
-    const solved = solveRidden(def, i / samples, scenario, surface, warm);
+    const solved = solveRidden(def, i / samples, scenario, surface, warm, skier);
     warm = solved.warm;
     return solved.pose;
   });
