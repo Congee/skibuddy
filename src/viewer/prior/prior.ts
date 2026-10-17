@@ -114,7 +114,7 @@ export interface PriorFile {
 export const PRIOR_FILE = PRIORS as unknown as PriorFile;
 
 const DEG = Math.PI / 180;
-const ODD_NAMES = /^(pelvis_list|pelvis_rotation|pelvis_tz|(lumbar|thoracic|neck)_(bending|rotation))$/;
+const ODD_NAMES = /^(pelvis_list|pelvis_rotation|pelvis_tx|(lumbar|thoracic|neck)_(bending|rotation))$/;
 
 export const baseName = (name: string): string => name.replace(/\.[RL]$/, '');
 

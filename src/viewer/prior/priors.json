@@ -10,7 +10,7 @@
      "indexProvenance": "measured: heinrich-2023 ≈12 m/s, min radius ≈10.7 m, 12.3° slope (the min radius, so the turn’s peak load)",
      "coordinates": {
       "pelvis_tx": {
-       "parity": "even",
+       "parity": "odd",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -44,7 +44,7 @@
        }
       },
       "pelvis_tz": {
-       "parity": "odd",
+       "parity": "even",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -1057,7 +1057,7 @@
      "indexProvenance": "inferred: the drill’s dynamic scenario (an SL racer and an instructor’s dynamic demo; neither source gives speed and radius)",
      "coordinates": {
       "pelvis_tx": {
-       "parity": "even",
+       "parity": "odd",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -1091,7 +1091,7 @@
        }
       },
       "pelvis_tz": {
-       "parity": "odd",
+       "parity": "even",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -1894,7 +1894,7 @@
      "indexProvenance": "gao-2025 11.5 m/s and r 17.6 m measured; slope the drill’s moderate one (inferred)",
      "coordinates": {
       "pelvis_tx": {
-       "parity": "even",
+       "parity": "odd",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -1928,7 +1928,7 @@
        }
       },
       "pelvis_tz": {
-       "parity": "odd",
+       "parity": "even",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -2699,7 +2699,7 @@
      "indexProvenance": "inferred: the drill’s dynamic scenario (elite and WC skiers)",
      "coordinates": {
       "pelvis_tx": {
-       "parity": "even",
+       "parity": "odd",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -2733,7 +2733,7 @@
        }
       },
       "pelvis_tz": {
-       "parity": "odd",
+       "parity": "even",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -3534,7 +3534,7 @@
      "indexProvenance": "one neutral example: the index is unused",
      "coordinates": {
       "pelvis_tx": {
-       "parity": "even",
+       "parity": "odd",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -3568,7 +3568,7 @@
        }
       },
       "pelvis_tz": {
-       "parity": "odd",
+       "parity": "even",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -4315,7 +4315,7 @@
      "indexProvenance": "one neutral example: the index is unused",
      "coordinates": {
       "pelvis_tx": {
-       "parity": "even",
+       "parity": "odd",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -4349,7 +4349,7 @@
        }
       },
       "pelvis_tz": {
-       "parity": "odd",
+       "parity": "even",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -5096,7 +5096,7 @@
      "indexProvenance": "one neutral example: the index is unused",
      "coordinates": {
       "pelvis_tx": {
-       "parity": "even",
+       "parity": "odd",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -5130,7 +5130,7 @@
        }
       },
       "pelvis_tz": {
-       "parity": "odd",
+       "parity": "even",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -5877,7 +5877,7 @@
      "indexProvenance": "one neutral example: the index is unused",
      "coordinates": {
       "pelvis_tx": {
-       "parity": "even",
+       "parity": "odd",
        "mu": null,
        "logSigma": null,
        "provenance": {
@@ -5911,7 +5911,7 @@
        }
       },
       "pelvis_tz": {
-       "parity": "odd",
+       "parity": "even",
        "mu": null,
        "logSigma": null,
        "provenance": {
