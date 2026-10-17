@@ -13,7 +13,7 @@ import { forceTiltAt, solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
 import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
-import { CORRIDOR_SHARE, ROUND_POSE, TOPS_POSE, headingAt, turnPath } from '../src/viewer/turn-heading';
+import { CORRIDOR_SHARE, ROUND_POSE, TOPS_POSE, headingAt, pivotAt, turnPath } from '../src/viewer/turn-heading';
 import { CLOSED_STANCE, OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
@@ -396,10 +396,10 @@ describe('regular turn', () => {
     };
     for (const kind of [RegularTurn.ShortTurns, RegularTurn.Steeps])
       for (const i of INTENSITIES) {
-        // At the finish, before the release, the skis are most across under a chest kept down the fall line.
+        // At the set the skis skid most across their track under a chest kept down the fall line.
         const set = turnPath(kind, i).set ?? 0;
-        const yaw = Array.from({ length: 96 }, (_, k) => Math.abs(headingAt(k / 96, turnPath(kind, i))));
-        assert.closeTo(yaw.indexOf(Math.max(...yaw)) / 96, set, 1 / 96, `${kind} ${i} most across at the set`);
+        const skid = Array.from({ length: 96 }, (_, k) => Math.abs(pivotAt(k / 96, turnPath(kind, i))));
+        assert.closeTo(skid.indexOf(Math.max(...skid)) / 96, set, 1 / 96, `${kind} ${i} skids most at the set`);
         assert.isAtMost(Math.abs(chestOffFallLine(kind, i, set)), i === Intensity.Gentle ? 25 : 20, `${kind} ${i}`);
         assert.isBelow(Math.abs(samplePose(poseTable(kind, i), set).headYaw) * DEG, 25, `${kind} ${i}`);
         // So the counter is largest between the set and the release at the switch.

@@ -1,6 +1,5 @@
 import type { Intensity } from '../content/schema';
-import { headingPhase } from './poses/regular-turn';
-import { MOGUL_POSE, POWDER_POSE, ROUND_POSE, TOPS_POSE, trackMost, transitionHeading, turnPath } from './turn-heading';
+import { MOGUL_POSE, POWDER_POSE, ROUND_POSE, TOPS_POSE, skisHeading, trackMost, turnPath } from './turn-heading';
 import type { TurnPath } from './turn-heading';
 import type { Vec3 } from './mat4';
 
@@ -85,9 +84,6 @@ const SAMPLES = 256;
 
 /** The feet's track heading off the fall line through one turn, t in 0..1, as trackHeadingAt without its wrap at 1. */
 const heading = (t: number, most: number): number => -most * Math.cos(Math.PI * t);
-/** The skis' yaw, as headingAt without its wrap at 1: pivoted skis skid across the track. */
-const yaw = (t: number, most: number, path: TurnPath): number =>
-  path.set === undefined ? heading(t + (path.phase ?? 0), most) : -most * Math.cos(Math.PI * headingPhase(t, path.set));
 
 /** Cumulative path offsets per unit speed at SAMPLES + 1 steps through the turn, by the trapezoid rule. */
 const integrate = (most: number): { readonly xs: Float64Array; readonly zs: Float64Array } => {
@@ -359,7 +355,7 @@ export const pathAt = (s: Surface, t: number): OnField => {
   const i = Math.min(SAMPLES - 1, Math.floor(u));
   const f = u - i;
   const lerp = (a: Float64Array): number => ((a[i] ?? 0) * (1 - f) + (a[i + 1] ?? 0) * f) * s.speed;
-  return { x: lerp(xs), z: lerp(zs), heading: yaw(at, transitionHeading(s.path), s.path), track: heading(at + (s.path.phase ?? 0), most) };
+  return { x: lerp(xs), z: lerp(zs), heading: skisHeading(at, s.path), track: heading(at + (s.path.phase ?? 0), most) };
 };
 
 /** A point under the skier: on the field, the snow's top and the support there, and the top's normal. */

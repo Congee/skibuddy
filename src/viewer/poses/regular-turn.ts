@@ -42,6 +42,10 @@ export interface TurnStyle {
   readonly counterCurve: PhaseValues;
   /** Turn time the pivoted skis are most across, flat in the fall line at the switch; absent, across at the switch. */
   readonly set?: number;
+  /** Seconds per turn on groomed or loose snow, the feet swinging about a mass on the fall line; absent, the path's own. */
+  readonly period?: number;
+  /** Skid of the pivoted skis off their track at the set, degrees; absent, the skis swing from the fall line at the switch. */
+  readonly skid?: number;
   /** Trunk bent toward the outside ski at shaping. */
   readonly bend: number;
   /** Degrees the trunk leans further forward than the outside shin; the ankle, solved, sets fore-aft (lemaster-2010 p81). */
@@ -194,6 +198,12 @@ const headingKeys = (set: number): PhaseValues => [heading(0, set), heading(1 / 
  */
 const PIVOT_SET = 0.5;
 const PIVOTED = { set: PIVOT_SET, counterCurve: headingKeys(PIVOT_SET) } as const;
+// Recreational short turns 0.73 s (Reilly vXcjdfBXTiI) and 0.66 s (SCE jBsWS4hpivY) a turn, measured; steeps and powder share it, inferred.
+const SHORT_TURN_SECONDS = 0.7;
+// Pivoted short turns skid 30-45 deg ±15 off the track at the set (SIA drone CHnFKcW8nRA, measured); mid-range.
+const PIVOT_SKID = 37.5;
+// The skis cross the hill with the track at the switch in groomed short turns (Reilly, SCE), so the skid builds from there.
+const GROOMED_PIVOTED = { ...PIVOTED, period: SHORT_TURN_SECONDS, skid: PIVOT_SKID } as const;
 
 // The mass runs nearly straight while the legs swing under it (lind-sanders-2004 pp114-115), the feet under the
 // hips (fis-freestyle-judging-2025 p26): its path about 4x the skis' arc, inferred, so the trunk inclines 10-20 deg.
@@ -335,7 +345,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // 36 deg at the switch: pelvis counter 30-40 deg, low confidence (biomechanics.md D12); share inferred.
     counter: anticipation(SHORT, 0.6),
     twist: 6,
-    ...PIVOTED,
+    ...GROOMED_PIVOTED,
     bend: 5,
     spineFlex: 22,
     narrow: 0,
@@ -402,7 +412,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Further down the fall line than short turns (skimag-steeps-2018, kipp-2024); share inferred.
     counter: anticipation(STEEP, 0.65),
     twist: 4,
-    ...PIVOTED,
+    ...GROOMED_PIVOTED,
     bend: 1,
     spineFlex: 24,
     narrow: 0,
@@ -432,7 +442,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Head on the fall line and near the chest in open powder, so the chest leads well down it; share inferred.
     counter: anticipation(POWDER, 0.7),
     twist: 7,
-    ...PIVOTED,
+    ...GROOMED_PIVOTED,
     bend: 2,
     spineFlex: 19,
     narrow: 2,
@@ -472,6 +482,8 @@ export const CLOSED_STANCE: TurnStyle = {
   counter: pathHeading(4.5, CORRIDOR),
   twist: 0,
   ...PIVOTED,
+  // Half a left-right cycle about 0.55 s, the skis in the fall line at the switch (Olivia Giaccio front view, measured).
+  period: 0.55,
   bend: 1,
   spineFlex: 22,
   narrow: 7,

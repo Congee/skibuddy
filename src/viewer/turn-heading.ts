@@ -19,8 +19,10 @@ export interface TurnPath {
   readonly forces?: number;
   /** The feet's own peak-to-peak corridor about a mass running down the fall line, metres; absent, the feet run the arc's corridor. */
   readonly feet?: number;
-  /** Downhill length of one turn with `feet`, metres. */
+  /** Downhill length of one turn with `feet`, metres: the mass's speed times the turn's period. */
   readonly length?: number;
+  /** Skid off the track at `set`, radians, building from none at the switch; absent, the skis swing from the fall line at the switch. */
+  readonly skid?: number;
 }
 
 /**
@@ -36,6 +38,7 @@ export const sinusoidHeading = (corridor: number, length: number): number => Mat
 export const trackMost = (path: TurnPath): number =>
   path.feet === undefined || path.length === undefined ? transitionHeading(path) : sinusoidHeading(path.feet, path.length);
 
+const DEG = Math.PI / 180;
 const wrap = (t: number): number => ((t % 1) + 1) % 1;
 
 /**
@@ -46,11 +49,18 @@ const wrap = (t: number): number => ((t % 1) + 1) % 1;
 export const trackHeadingAt = (t: number, path: TurnPath): number => -trackMost(path) * Math.cos(Math.PI * (wrap(t) + (path.phase ?? 0)));
 
 /**
- * The skis' yaw off the fall line at turn time t, as trackHeadingAt: carved, along the track; pivoted, from the fall
- * line at the switch to most across at the set and back, so they skid across the track.
+ * The skis' yaw off the fall line at turn time u in 0..1, unwrapped: carved, along the track; pivoted, the track plus a
+ * skid from none at the switch to `skid` at the set, or without one, from the fall line at the switch to most across at the set.
  */
-export const headingAt = (t: number, path: TurnPath): number =>
-  path.set === undefined ? trackHeadingAt(t, path) : -transitionHeading(path) * Math.cos(Math.PI * headingPhase(wrap(t), path.set));
+export const skisHeading = (u: number, path: TurnPath): number => {
+  const track = -trackMost(path) * Math.cos(Math.PI * (u + (path.phase ?? 0)));
+  if (path.set === undefined) return track;
+  const swing = -Math.cos(Math.PI * headingPhase(u, path.set));
+  return path.skid === undefined ? transitionHeading(path) * swing : track + path.skid * swing;
+};
+
+/** The skis' yaw off the fall line at turn time t, as skisHeading. */
+export const headingAt = (t: number, path: TurnPath): number => skisHeading(wrap(t), path);
 
 /** How far the skis are yawed off their track at turn time t, radians toward the turn's inside: the skid. */
 export const pivotAt = (t: number, path: TurnPath): number => headingAt(t, path) - trackHeadingAt(t, path);
@@ -67,9 +77,6 @@ export const LEG_LENGTH = jointDrop(SegmentKind.Shin) + jointDrop(SegmentKind.Bo
  */
 export const feetCorridor = (s: TurnScenario): number =>
   2 * LEG_LENGTH * Math.sin(Math.max(...Array.from({ length: 48 }, (_, k) => Math.abs(turnForcesAt(s, k / 48).tilt))));
-
-/** Seconds per turn as the skis sweep their yaw from -most to +most at the arc's rate speed / radius; inferred. */
-export const sweepSeconds = (s: TurnScenario, most: number): number => (2 * most * s.radiusM) / s.speedMps;
 
 /** For a motion with no turn of its own, such as a drill's: a short turn. */
 const FALLBACK_RADIUS = 7;
@@ -90,10 +97,10 @@ export const turnPath = (pose: string, intensity: Intensity): TurnPath => {
   const corridor =
     pose === MOGUL_POSE ? ZIPPER_CORRIDOR : pose === TOPS_POSE ? TOPS_CORRIDOR_SHARE * radius : pose === CLOSED_STANCE_POSE ? CLOSED_STANCE_CORRIDOR : CORRIDOR_SHARE * radius;
   const scenario = style?.scenarios[intensity];
-  if (scenario === undefined || style?.set === undefined || pose === MOGUL_POSE || pose === TOPS_POSE) return { radius, corridor, ...set };
+  if (scenario === undefined || style?.period === undefined) return { radius, corridor, ...set };
   // Pivoted on groomed or loose snow, the mass runs down the fall line and the feet swing about it (arndt-1992, fis-freestyle-judging-2025).
-  const length = scenario.speedMps * sweepSeconds(scenario, transitionHeading({ radius, corridor }));
-  return { radius, corridor, ...set, feet: feetCorridor(scenario), length };
+  const skid = style.skid === undefined ? {} : { skid: style.skid * DEG };
+  return { radius, corridor, ...set, feet: feetCorridor(scenario), length: scenario.speedMps * style.period, ...skid };
 };
 
 /** A pose's regular-turn style, with its speeds; none for a drill's own motion. */

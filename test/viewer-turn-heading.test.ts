@@ -1,6 +1,8 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
 import { RegularTurn } from '../src/viewer/poses/regular-turn';
+import { surfaceFor } from '../src/viewer/surface';
+import { realTurnSeconds } from '../src/viewer/turn-time';
 import { LEG_LENGTH, ROUND_POSE, TOPS_POSE, feetCorridor, headingAt, pivotAt, sinusoidHeading, trackHeadingAt, transitionHeading, turnPath, turnStyle } from '../src/viewer/turn-heading';
 
 const DEG = Math.PI / 180;
@@ -134,6 +136,39 @@ describe('feet track', () => {
       for (const v of [5, 8, 11]) {
         assert.isAbove(sinusoidHeading(w + 0.1, v * seconds), sinusoidHeading(w, v * seconds), `${w} ${v}`);
         assert.isBelow(sinusoidHeading(w, (v + 1) * seconds), sinusoidHeading(w, v * seconds), `${w} ${v}`);
+      }
+  });
+
+  it('turns as often as filmed short turns: 0.55-0.73 s (Reilly, SCE, Giaccio), quicker than slalom 0.83-0.98 s (reid-2010, kroll-2015)', () => {
+    for (const drill of GROOMED_PIVOTED)
+      for (const i of INTENSITIES) {
+        const seconds = realTurnSeconds(drill, i);
+        assert.isAtLeast(seconds, 0.55 - 0.05, `${drill} ${i}`);
+        assert.isBelow(seconds, 0.83, `${drill} ${i}`);
+      }
+  });
+
+  it('runs the mass one turn length L = v·P per turn, the feet within the 3 m short-turn corridor (bon-2021)', () => {
+    for (const drill of GROOMED_PIVOTED)
+      for (const i of INTENSITIES) {
+        const surface = surfaceFor(drill, i);
+        const speed = turnStyle(drill)?.scenarios[i].speedMps ?? NaN;
+        close(realTurnSeconds(drill, i), surface.spacing / speed, 1e-12);
+        assert.closeTo(surface.spacing / (surface.path.length ?? NaN), 1, 0.05, `${drill} ${i}`);
+        assert.isAtMost(surface.path.feet ?? Infinity, 3, `${drill} ${i}`);
+      }
+  });
+
+  it('skids groomed short turns off the track from none at the switch, so the skis cross with the track there (Reilly, SCE; reid-2010 0-4°)', () => {
+    for (const drill of [RegularTurn.ShortTurns, RegularTurn.Steeps, RegularTurn.Powder])
+      for (const i of INTENSITIES) {
+        const run = turnPath(drill, i);
+        close(headingAt(0, run), trackHeadingAt(0, run), 1e-12);
+        for (let k = 0; k < 48; k++) close(pivotAt(k / 48, run), headingAt(k / 48, run) - trackHeadingAt(k / 48, run), 1e-12);
+        // Yaw no wider than track and skid together, no narrower than the skid at the set.
+        const yaw = Math.max(...Array.from({ length: 96 }, (_, k) => Math.abs(headingAt(k / 96, run))));
+        assert.isAtMost(yaw, Math.abs(trackHeadingAt(0, run)) + Math.abs(pivotAt(run.set ?? 0, run)) + 1e-9, `${drill} ${i}`);
+        assert.isAtLeast(yaw, Math.abs(pivotAt(run.set ?? 0, run)), `${drill} ${i}`);
       }
   });
 

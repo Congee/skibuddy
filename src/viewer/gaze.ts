@@ -16,8 +16,9 @@ const LAG_STEPS = 16;
 /** Track heading toward the first turn's inside over a run of mirrored turns, turn k spanning turn time [k, k + 1). */
 export const runHeading = (t: number, path: TurnPath): number => (Math.abs(Math.floor(t) % 2) === 0 ? 1 : -1) * trackHeadingAt(t, path);
 
-/** Seconds per turn: at the fall line the path's heading turns at speed / radius. */
+/** Seconds per turn: the mass's run down `length` at speed, else at the fall line the path's heading turns at speed / radius. */
 export const turnSeconds = (path: TurnPath, speed: number): number => {
+  if (path.length !== undefined) return path.length / speed;
   const most = transitionHeading(path);
   return (Math.PI * most * path.radius) / speed;
 };
