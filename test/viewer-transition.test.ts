@@ -8,6 +8,7 @@ import type { Mat4, Vec3 } from '../src/viewer/mat4';
 import { centreOfMass, segmentMatrices } from '../src/viewer/pose';
 import type { Pose } from '../src/viewer/pose';
 import { solvePose } from '../src/viewer/pose-solver';
+import { poseTable } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS } from '../src/viewer/poses';
 import { RegularTurn } from '../src/viewer/poses/regular-turn';
 
@@ -81,10 +82,14 @@ describe('turn transition', () => {
   it.each(CASES)('%s %s switches on flat skis and even legs', (drill, intensity) => {
     const def = POSE_DEFINITIONS[drill];
     if (def === undefined) throw new Error(`no ${drill}`);
-    const pose = solvePose(def, 0, drillScenarios(drill)[intensity]);
+    const moguls = drill === RegularTurn.Moguls;
+    // On moguls the switch is on a crest, so it is solved on that snow, not flat.
+    const pose = moguls ? (poseTable(drill, intensity)[0] ?? solvePose(def, 0, null)) : solvePose(def, 0, drillScenarios(drill)[intensity]);
     const world = segmentMatrices(pose);
     assert.closeTo(pose.lean, 0, 1e-6);
     for (const side of [BodySide.Right, BodySide.Left]) assert.isBelow(Math.abs(skiRoll(world, side)), 3 * DEG, `${side} ski edged`);
-    assert.closeTo(legLength(world, BodySide.Right), legLength(world, BodySide.Left), 0.02);
+    // The rigid skis rest at their own snow heights on a bump, so the legs differ by the boots' height step.
+    const step = moguls ? at(world, SegmentKind.Ski, BodySide.Left, [0, 0, 0])[1] - at(world, SegmentKind.Ski, BodySide.Right, [0, 0, 0])[1] : 0;
+    assert.closeTo(legLength(world, BodySide.Right) - legLength(world, BodySide.Left), step, 0.02);
   });
 });
