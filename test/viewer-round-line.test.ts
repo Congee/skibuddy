@@ -8,6 +8,7 @@ import { transformPoint } from '../src/viewer/mat4';
 import { segmentMatrices, skiIndex } from '../src/viewer/pose';
 import { rideOf } from '../src/viewer/ride';
 import { poseAngles } from './pose-angles';
+import { ALONG, ridden } from './ride-probes';
 import { heightAt, MogulLine, pathAt, ROUND_FIELD, surfaceFor } from '../src/viewer/surface';
 import { ROUND_POSE, TOPS_POSE, transitionHeading, turnPath } from '../src/viewer/turn-heading';
 
@@ -166,7 +167,11 @@ describe('round line', () => {
       const s = surfaceFor(ROUND_POSE, intensity);
       const table = poseTable(ROUND_POSE, intensity);
       const knee = ts.map((t) => poseAngles(samplePose(table, t), 0).knee.right);
-      const snow = ts.map((t) => heightAt(s, pathAt(s, t).x, pathAt(s, t).z));
+      // The rigid skis' height under the bindings: the snow the legs level the body over.
+      const snow = ts.map((t) => {
+        const r = ridden(s, t, samplePose(table, t));
+        return ((r.ski[BodySide.Right][ALONG / 2]?.[1] ?? 0) + (r.ski[BodySide.Left][ALONG / 2]?.[1] ?? 0)) / 2;
+      });
       const at = (v: readonly number[]): number => ts[v.indexOf(Math.min(...v))] ?? 0;
       const gap = Math.abs(at(knee) - at(snow));
       assert.isAtMost(Math.min(gap, 1 - gap), 0.05, intensity);
