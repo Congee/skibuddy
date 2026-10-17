@@ -148,7 +148,7 @@ export const TOPS_CORRIDOR_SHARE = 2 * (1 - Math.cos(50 * DEG));
 const TOPS_COM = 2;
 /** Share of the edge already in at 1/6 of the tops turn; inferred from duncan-smith-2021. */
 export const TOPS_EARLY = 0.7;
-/** Turn time of the tops plant: at the release, just before the crest. */
+/** Turn time of the tops plant and the skis' set: at the release, just before the crest; inferred. */
 export const TOPS_PLANT = 0.9;
 // Hands wide and forward, the poles out to the side (duncan-smith-2021 1:28-1:32, 4:26); past ARM_ABDUCTION's 29 deg.
 const HANDS_WIDE = 35;
@@ -511,7 +511,8 @@ export const TOPS: TurnStyle = {
   // Smallest on top, the hips low and the trunk with the shin, not broken at the waist (duncan-smith-2021 4:24-5:07,
   // gellie-2019-moguls-forward, fis-freestyle-judging-2025 p29); amounts inferred.
   spineFlex: 18,
-  trunkOverShin: 12,
+  // Trunk parallel to the shin, as the round line's (gellie-2019-moguls-forward).
+  trunkOverShin: 0,
   trunkOverShinGain: 0,
   // A deep squat on the crest, thighs near level (duncan-smith-2021 4:26); never straight in the trough (fis p28,
   // arndt-1992 pp79, 87, 93); amounts inferred.
