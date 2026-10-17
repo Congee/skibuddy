@@ -2,13 +2,21 @@ import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
 import { checkJacobian } from '../src/solve/problem';
 import { forward } from '../src/viewer/motion/fk';
-import { buildTurnProblem, formatTurn, NAMES, seedFor, SeedKind, solveTurn, type TurnMotion } from '../src/viewer/motion/turn';
-import { COORDINATES, forwardKinematics, REST_POSE } from '../src/viewer/skeleton';
+import { buildTurnProblem, centreOfMassOf, formatTurn, LEG_LENGTH, NAMES, seedFor, SeedKind, solveTurn, type TurnMotion } from '../src/viewer/motion/turn';
+import { EQUIPMENT } from '../src/viewer/equipment';
+import { COORDINATES, forwardKinematics, REST_POSE, SKELETON_DATA, Side } from '../src/viewer/skeleton';
 
 const DEG = Math.PI / 180;
 // Fewer frames than the bake's keep the file quick; the problem's shape is the same.
 const FRAMES = 24;
-const DRILLS = ['regular-cruising', 'regular-carving'] as const;
+const DRILLS = ['regular-cruising', 'regular-carving', 'regular-short-turns'] as const;
+/** Standing tall at rest: base to CoM in leg lengths, the most a flexed skier can reach. */
+const STANDING = (() => {
+  const com = centreOfMassOf(forward(COORDINATES.map((c) => REST_POSE[c.name] ?? 0))).map(Number);
+  return ((com[1] ?? 0) - SKELETON_DATA.gear_fit[Side.Right].sole + EQUIPMENT.standHeight) / LEG_LENGTH;
+})();
+/** Deepest CoM a regular turn keeps, leg lengths; inferred sanity floor (no recreational CoM height read). */
+const CROUCH = 0.6;
 
 const solved = new Map<string, ReadonlyArray<TurnMotion>>();
 const motions = (drill: string): ReadonlyArray<TurnMotion> => {
@@ -67,6 +75,24 @@ describe('motion turn', () => {
         assert.isBelow(r.outsideContact, 1e-3);
         assert.isAtLeast(r.lowestBase, -1e-3);
         assert.isBelow(r.edgeError, 0.5 * DEG);
+      });
+
+      it('keeps both skis on the snow, balanced over the pressure centre', { timeout: 120_000 }, () => {
+        const r = first(drill).report;
+        assert.isBelow(r.insideContact, 1e-3);
+        assert.isBelow(r.balance, 0.5 * DEG);
+      });
+
+      it('keeps boots and skis apart', { timeout: 120_000 }, () => {
+        const r = first(drill).report;
+        assert.isAtLeast(r.bootClearance, -1e-6);
+        assert.isAtLeast(r.skiClearance, -1e-6);
+      });
+
+      it('lets the CoM height emerge between a crouch and standing tall', { timeout: 120_000 }, () => {
+        const [lo, hi] = first(drill).report.comHeight;
+        assert.isAbove(lo, CROUCH);
+        assert.isBelow(hi, STANDING);
       });
 
       it('stays within the joint limits', { timeout: 120_000 }, () => {
