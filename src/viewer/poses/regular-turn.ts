@@ -31,10 +31,8 @@ export interface TurnStyle {
   readonly hipSpread: number;
   /** Degrees the deep end deepens further at dynamic only: a lower cross-under. */
   readonly dynamicDeep?: number;
-  /** Peak hip angulation and the outside femur's rotation into the turn. */
+  /** Peak hip angulation. */
   readonly angulation: number;
-  /** Degrees both femurs turn further into the turn: edge from the knees, the pelvis left level. */
-  readonly kneeAngulation?: number;
   /** Peak pelvis turn toward the outside of the turn, relative to the skis, and the chest turned further beyond it. */
   readonly counter: number;
   /** Share per intensity step the counter grows by; defaults to COUNTER_GAIN. */
@@ -169,15 +167,12 @@ const DOWN_THE_LINE: HeadRule = { aim: HeadAim.Line, turns: 2 };
 const HANDS_IN = 10;
 // An arc of radius r from the fall line across half a corridor w heads acos(1 - w/2r) off it.
 const pathHeading = (r: number, w: number): number => Math.acos(1 - w / (2 * r)) / DEG;
-// The hips' rotation range.
-const HIP_TURN = 45;
-const fallLineHeading = (r: number, w: number): number => Math.min(HIP_TURN, pathHeading(r, w));
 /** Corridor as a share of the radius where none is known: a round turn, 60° off the fall line at the transition. */
 export const CORRIDOR_SHARE = 1;
 // Pelvis counter at the switch: a share of the skis' heading off the fall line, so the trunk is biased downhill, facing
 // it fully only in passing, more on steeper hills (kipp-2024; lemaster-2010 pp74, 128); the spine adds 5-8 (sporri-2016).
 const anticipation = (scenarios: TurnScenarios, share: number): number =>
-  Math.min(HIP_TURN, share * pathHeading(scenarios.moderate.radiusM, CORRIDOR_SHARE * scenarios.moderate.radiusM));
+  share * pathHeading(scenarios.moderate.radiusM, CORRIDOR_SHARE * scenarios.moderate.radiusM);
 const hermite = (p0: number, p1: number, m0: number, m1: number, h: number, x: number): number =>
   (2 * x ** 3 - 3 * x ** 2 + 1) * p0 + (x ** 3 - 2 * x ** 2 + x) * h * m0 + (3 * x ** 2 - 2 * x ** 3) * p1 + (x ** 3 - x ** 2) * h * m1;
 /**
@@ -245,6 +240,12 @@ export const OUTSIDE_KNEE_MAX: Readonly<Record<RegularTurn, Readonly<Record<Inte
 };
 
 const COUNTER_GAIN = 0.15;
+/**
+ * Peak outside femur rotation into the turn relative to the ski, degrees at moderate: yoon-2017 measured 6.3-13.5
+ * across held positions, independent of counter, which the hip adds on top. On the flexed knee it tips the shin
+ * inward, the knee angulation (lemaster-2010 pp124-125); intensity scales it with the angulation's gain. Mid-range inferred.
+ */
+const FEMUR_VS_SKI = 10;
 // A harder turn leans the trunk further over the shin; inferred.
 const TRUNK_OVER_SHIN_GAIN = 0.4;
 // A harder turn balances further forward; inferred.
@@ -360,10 +361,9 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hip: [30, 72],
     hipStep: 5,
     hipSpread: 3,
+    // The lower leg's angulation sets the radius (fis-freestyle-judging-2025 p26): FEMUR_VS_SKI on the flexed knee.
     angulation: 1,
-    // Angulation of the lower leg sets the radius (fis-freestyle-judging-2025 p26); amount inferred.
-    kneeAngulation: 34,
-    counter: fallLineHeading(5, ZIPPER_CORRIDOR),
+    counter: pathHeading(5, ZIPPER_CORRIDOR),
     // Held to the skis' heading off the fall line, which the corridor sets at every intensity.
     counterGain: 0,
     twist: 0,
@@ -469,9 +469,7 @@ export const CLOSED_STANCE: TurnStyle = {
   hipStep: 3,
   hipSpread: 0,
   angulation: 3,
-  // Edged from the knees, the legs together; amount inferred.
-  kneeAngulation: 10,
-  counter: fallLineHeading(4.5, CORRIDOR),
+  counter: pathHeading(4.5, CORRIDOR),
   twist: 0,
   ...PIVOTED,
   bend: 1,
@@ -501,7 +499,7 @@ export const TOPS: TurnStyle = {
     moderate: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: TOPS_COM * 5, brakingShare: 0.25 },
     dynamic: { speedMps: 7.5, radiusM: 5.5, slopeDeg: 22, comRadiusM: TOPS_COM * 5.5, brakingShare: 0.25 },
   },
-  counter: fallLineHeading(5, TOPS_CORRIDOR_SHARE * 5),
+  counter: pathHeading(5, TOPS_CORRIDOR_SHARE * 5),
   counterGain: COUNTER_GAIN,
   // Most across at the finish, released on top just before the crest (duncan-smith-2021 1:28-1:32, 1:31).
   set: TOPS_PLANT,
@@ -557,8 +555,9 @@ export const ROUND: TurnStyle = {
     moderate: { speedMps: 4.3, radiusM: 3, slopeDeg: 18, comRadiusM: MOGUL_COM * 3, brakingShare: 0.25 },
     dynamic: { speedMps: 5.2, radiusM: 3, slopeDeg: 22, comRadiusM: MOGUL_COM * 3, brakingShare: 0.25 },
   },
-  // The chest faces downhill (jds-bumps-style frames), so the pelvis turns back by the skis' heading, phased as the path.
-  counter: fallLineHeading(3, ROUND_CORRIDOR),
+  // The chest faces downhill (jds-bumps-style frames), phased as the path; the skis swing further across (58 deg) than
+  // the filmed late counter, 30-50 deg (scratchpad lead-footage notes: JDS, Giaccio, SCE), mid-range inferred.
+  counter: 40,
   counterGain: 0,
   set: ROUND_SET,
   counterCurve: headingKeys(ROUND_SET),
@@ -572,7 +571,6 @@ export const ROUND: TurnStyle = {
   // Edges build to the set and hold to the release; the hips tip the long legs on the wall, where the knees cannot (inferred).
   edgeCurve: [0, 0.3, 1.2, 1, 0.75],
   angulation: 15,
-  kneeAngulation: 25,
   head: { ...DOWNHILL, corridor: ROUND_CORRIDOR },
 };
 
@@ -733,7 +731,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
     ],
     constraints: {
       hipAngulation: style.angulation * DEG,
-      femurRotation: (0.5 * style.angulation + (style.kneeAngulation ?? 0)) * DEG,
+      femurRotation: (FEMUR_VS_SKI * DEG) / Math.max(...keys.map((k) => k.angulation), arc ? 1 : 0),
       insideFemurShare: 0.8,
       hipByLoad: [
         [load(Intensity.Gentle), open - step + spread, deep - step - spread],

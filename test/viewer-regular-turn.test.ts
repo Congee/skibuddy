@@ -708,6 +708,77 @@ describe('angulation', () => {
 
 });
 
+const TURN_DRILLS = [...KINDS, 'closed-stance-short-turns', TOPS_POSE, ROUND_POSE];
+const peakOf = (drill: string, i: Intensity, f: (p: ReturnType<typeof samplePose>) => number): number =>
+  Math.max(...Array.from({ length: 48 }, (_, k) => f(samplePose(poseTable(drill, i), k / 48)))) * DEG;
+const kneesInOf = (drill: string): number => POSE_DEFINITIONS[drill]?.constraints.kneesIn ?? NaN;
+/** Point `at` of segment b ahead of segment a's, along the outside ski. */
+const alongSki = (p: ReturnType<typeof solvePose>, a: string, b: string, at: Vec3): number => {
+  const w = segmentMatrices(p);
+  const ski = w[segmentIndex('right-ski')];
+  const [pa, pb] = [w[segmentIndex(a)], w[segmentIndex(b)]];
+  if (!ski || !pa || !pb) throw new Error('segments');
+  const [o, x, u, v] = [transformPoint(ski, [0, 0, 0]), transformPoint(ski, [0, 0, 1]), transformPoint(pa, at), transformPoint(pb, at)];
+  return (v[0] - u[0]) * (x[0] - o[0]) + (v[1] - u[1]) * (x[1] - o[1]) + (v[2] - u[2]) * (x[2] - o[2]);
+};
+const hipsAhead = (p: ReturnType<typeof solvePose>): number => alongSki(p, 'right-thigh', 'left-thigh', [0, 0, 0]);
+const tipAhead = (p: ReturnType<typeof solvePose>): number => alongSki(p, 'right-ski', 'left-ski', SKI_TIP);
+
+describe('hip rotation', () => {
+
+  it('turns the outside femur 3-17 deg into the turn against its ski, the inside one less', () => {
+    // yoon-2017: 6.3, 11.4, 13.5 deg across held positions, widened by the rotated position's SD (3.7); the knees-in stance apart.
+    for (const drill of TURN_DRILLS)
+      for (const i of INTENSITIES) {
+        const outside = peakOf(drill, i, (p) => p.outside.femurRotation - kneesInOf(drill));
+        assert.isTrue(outside >= 2.6 && outside <= 17.1, `${drill} ${i} ${outside.toFixed(1)}`);
+        // fasel-2017 Fig 5: the inside knee turns little, the outside one up to ~12 deg.
+        assert.isBelow(peakOf(drill, i, (p) => p.inside.femurRotation + kneesInOf(drill)), outside, `${drill} ${i}`);
+      }
+  });
+
+  it('rotates a racer\'s carving hips as measured: outside internally 18-40 deg, inside externally 15-36', () => {
+    // Peaks, mean - SD to the highest: fasel-2017 Table 5 23.6 (5.7) / -30.5 (5.9), heinrich-2022 27.5 / 26.2, heinrich-2023 ~40 / 15-33.
+    const outside = peakOf(RegularTurn.Carving, Intensity.Dynamic, (p) => p.counter + p.outside.femurRotation);
+    const inside = peakOf(RegularTurn.Carving, Intensity.Dynamic, (p) => p.counter + p.inside.femurRotation);
+    assert.isTrue(outside >= 17.9 && outside <= 40, `outside ${outside.toFixed(1)}`);
+    assert.isTrue(inside >= 15 && inside <= 36.4, `inside ${inside.toFixed(1)}`);
+  });
+
+  it('counters pivoted lines as filmed: 0-20 deg at the switch, 30-50 deg late, each ±15', () => {
+    // lead-footage notes: JDS, Olivia Giaccio, SCE short turns and moguls; Odermatt's carved switch keeps more.
+    for (const drill of TURN_DRILLS.filter((d) => POSE_DEFINITIONS[d]?.constraints.set !== undefined))
+      for (const i of INTENSITIES) {
+        const t0 = Math.abs(samplePose(poseTable(drill, i), 0).counter * DEG);
+        const late = peakOf(drill, i, (p) => p.counter);
+        assert.isAtMost(t0, 35, `${drill} ${i} switch`);
+        assert.isTrue(late >= 15 && late <= 65, `${drill} ${i} late ${late.toFixed(1)}`);
+      }
+  });
+
+  it('leads the inside ski by the counter across the hips, not by the femur rotation', () => {
+    // lead-footage notes: lead ≈ hip width × sin(counter) + the inside leg's flex, which may take some of it back.
+    for (const drill of [...KINDS.filter((k) => k !== RegularTurn.Moguls), 'closed-stance-short-turns']) {
+      const def = POSE_DEFINITIONS[drill];
+      if (!def) throw new Error(drill);
+      const scenario = drillScenarios(drill)[Intensity.Moderate];
+      const vary = (counter: number, femur: number): typeof def => ({
+        ...def,
+        keys: def.keys.map((k) => ({ ...k, counter: k.counter * counter })),
+        constraints: { ...def.constraints, femurRotation: def.constraints.femurRotation * femur },
+      });
+      for (const t of [0.5, 0.65, 0.8]) {
+        const tag = `${drill} ${t}`;
+        const [base, countered, rotated] = [solvePose(def, t, scenario), solvePose(vary(1.5, 1), t, scenario), solvePose(vary(1, 2), t, scenario)];
+        assert.closeTo(hipsAhead(base), REFERENCE_SKIER.body.hipWidth * Math.sin(base.counter), 0.003, tag);
+        const [byCounter, byHips, byFemur] = [tipAhead(countered) - tipAhead(base), hipsAhead(countered) - hipsAhead(base), tipAhead(rotated) - tipAhead(base)];
+        assert.isTrue(byCounter > 0 && byCounter <= byHips + 0.003, `${tag} counter ${byCounter.toFixed(3)} hips ${byHips.toFixed(3)}`);
+        assert.isBelow(Math.abs(byFemur), byCounter, tag);
+      }
+    }
+  });
+});
+
 // Centre of mass from between the mid-feet: the legs' extension, whatever the lean.
 const extension = (p: ReturnType<typeof samplePose>): number => {
   const w = segmentMatrices(p);
