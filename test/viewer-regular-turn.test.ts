@@ -353,16 +353,27 @@ describe('regular turn', () => {
     const at = (drill: string, t: number): number => poseAngles(samplePose(poseTable(drill, Intensity.Moderate), t)).counter;
     const most = (drill: string): number => Math.max(...Array.from({ length: 24 }, (_, k) => Math.abs(at(drill, k / 24))));
     for (const drill of KINDS) if (drill !== RegularTurn.Carving) assert.isBelow(most(RegularTurn.Carving), most(drill), drill);
-    // Signed: facing the last turn's outside at the transition, square on the fall line, the most into the next.
-    for (const drill of [RegularTurn.Moguls, TOPS_POSE, 'closed-stance-short-turns']) {
-      assert.isBelow(Math.abs(at(drill, 1 / 2)), 1, drill);
-      if (drill !== RegularTurn.Moguls) {
-        assert.isBelow(at(drill, 0), 0, drill);
-        assert.isAbove(at(drill, 5 / 6), 0, drill);
-        assert.closeTo(at(drill, 0.999), -at(drill, 0), 1, drill);
+    // Pivoted, the skis are flat in the fall line under a pelvis facing it at the switch, so square there, then the
+    // counter builds to a late peak (scratchpad lead-footage notes: Duncan-Smith round line, Giaccio closed stance).
+    const pivoted = [...KINDS, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns'].filter((d) => POSE_DEFINITIONS[d]?.constraints.set !== undefined);
+    assert.includeMembers(pivoted, [RegularTurn.ShortTurns, RegularTurn.Moguls, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns']);
+    for (const drill of pivoted)
+      for (const i of INTENSITIES) {
+        const c = (t: number): number => poseAngles(samplePose(poseTable(drill, i), t)).counter;
+        const tag = `${drill} ${i}`;
+        const xs = Array.from({ length: 96 }, (_, k) => c(k / 96));
+        const peakAt = xs.indexOf(Math.max(...xs)) / 96;
+        assert.isAtMost(Math.abs(c(0)), 15, `${tag} square at the switch`);
+        assert.isAtMost(Math.abs(c(0.999)), 15, `${tag} square into the next switch`);
+        assert.isTrue(peakAt >= 0.5 && peakAt < 1, `${tag} peak t ${peakAt.toFixed(2)}`);
+        for (let k = 1; k <= peakAt * 96; k++) assert.isAtLeast(xs[k] ?? 0, xs[k - 1] ?? 0, `${tag} builds ${k}/96`);
+        // The two measured drills, within the footage spread (±15° read off each frame).
+        if (drill === ROUND_POSE || drill === 'closed-stance-short-turns') {
+          assert.isTrue(c(0.1) >= 10 && c(0.1) <= 25, `${tag} t 0.1 ${c(0.1).toFixed(1)}`);
+          const by = Math.max(...Array.from({ length: 6 }, (_, k) => c(1 / 3 + k / 30)));
+          assert.isTrue(by >= 30 && by <= 50, `${tag} t 0.33-0.5 ${by.toFixed(1)}`);
+        }
       }
-      for (let k = 1; k < 24; k++) assert.isAbove(at(drill, k / 24), at(drill, (k - 1) / 24), `${drill} ${k}/24`);
-    }
     // In moguls the chest and hips face the fall line (user's rule): the chest turns much less than the skis; 3 deg slack inferred.
     for (const i of INTENSITIES) {
       const path = turnPath(RegularTurn.Moguls, i);
@@ -374,23 +385,26 @@ describe('regular turn', () => {
     }
   });
 
-  it('anticipates short turns and steeps: the chest near the fall line at the switch, the head inside its cap', () => {
+  it('anticipates short turns and steeps: the chest near the fall line while the skis are most across, the head inside its cap', () => {
     const chestOffFallLine = (kind: RegularTurn, i: Intensity, t: number): number => {
       const p = samplePose(poseTable(kind, i), t);
       return (p.counter + p.spineTwist - headingAt(t, turnPath(kind, i))) * DEG;
     };
     for (const kind of [RegularTurn.ShortTurns, RegularTurn.Steeps])
       for (const i of INTENSITIES) {
-        assert.isAtMost(Math.abs(chestOffFallLine(kind, i, 0)), i === Intensity.Gentle ? 25 : 20, `${kind} ${i}`);
-        assert.isBelow(Math.abs(samplePose(poseTable(kind, i), 0).headYaw) * DEG, 25, `${kind} ${i}`);
-        // Signed through the switch into the mirrored turn, square to the skis on the fall line.
+        // At the finish, before the release, the skis are most across under a chest kept down the fall line.
+        const set = turnPath(kind, i).set ?? 0;
+        const yaw = Array.from({ length: 96 }, (_, k) => Math.abs(headingAt(k / 96, turnPath(kind, i))));
+        assert.closeTo(yaw.indexOf(Math.max(...yaw)) / 96, set, 1 / 96, `${kind} ${i} most across at the set`);
+        assert.isAtMost(Math.abs(chestOffFallLine(kind, i, set)), i === Intensity.Gentle ? 25 : 20, `${kind} ${i}`);
+        assert.isBelow(Math.abs(samplePose(poseTable(kind, i), set).headYaw) * DEG, 25, `${kind} ${i}`);
+        // So the counter is largest between the set and the release at the switch.
         const at = (t: number): number => angles(kind, i, t).counter;
-        assert.isBelow(at(0), -25, `${kind} ${i}`);
-        assert.closeTo(at(0.999), -at(0), 1, `${kind} ${i}`);
-        assert.isBelow(Math.abs(at(1 / 2)), 1, `${kind} ${i}`);
-        for (let k = 1; k < 24; k++) assert.isAbove(at(k / 24), at((k - 1) / 24), `${kind} ${i} ${k}/24`);
+        const xs = Array.from({ length: 96 }, (_, k) => at(k / 96));
+        const peakAt = xs.indexOf(Math.max(...xs)) / 96;
+        assert.isTrue(peakAt >= set - 1 / 96 && peakAt < 1, `${kind} ${i} peak t ${peakAt.toFixed(2)}`);
       }
-    const peak = (kind: RegularTurn): number => Math.abs(angles(kind, Intensity.Moderate, 0).counter);
+    const peak = (kind: RegularTurn): number => Math.max(...Array.from({ length: 96 }, (_, k) => angles(kind, Intensity.Moderate, k / 96).counter));
     assert.isAbove(peak(RegularTurn.Steeps), peak(RegularTurn.ShortTurns));
   });
 

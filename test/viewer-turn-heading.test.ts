@@ -1,7 +1,7 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
 import { RegularTurn } from '../src/viewer/poses/regular-turn';
-import { TOPS_POSE, headingAt, transitionHeading, turnPath } from '../src/viewer/turn-heading';
+import { ROUND_POSE, TOPS_POSE, headingAt, pivotAt, transitionHeading, turnPath } from '../src/viewer/turn-heading';
 
 const DEG = Math.PI / 180;
 const close = (a: number, b: number, eps = 1e-9): void => assert.isBelow(Math.abs(a - b), eps, `${a} vs ${b}`);
@@ -39,6 +39,33 @@ describe('headingAt', () => {
   it('crosses at most square to the fall line', () => {
     close(transitionHeading({ radius: 1, corridor: 2 }), 90 * DEG);
     close(transitionHeading({ radius: 1, corridor: 9 }), 180 * DEG);
+  });
+});
+
+describe('pivotAt', () => {
+  const PIVOTED = [RegularTurn.ShortTurns, RegularTurn.Moguls, RegularTurn.Steeps, RegularTurn.Powder, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns'];
+
+  it('carves without skidding: the skis along the track', () => {
+    for (const drill of [RegularTurn.Carving, RegularTurn.Cruising])
+      for (const i of [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic])
+        for (let k = 0; k < 48; k++) close(pivotAt(k / 48, turnPath(drill, i)), 0, 1e-12);
+  });
+
+  it('skids pivoted skis off the track, continuous and mirrored through the switch', () => {
+    // The next turn is drawn mirrored, so its skid on the slope is the negative of its own.
+    const e = 1e-6;
+    for (const drill of PIVOTED)
+      for (const i of [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic]) {
+        const path = turnPath(drill, i);
+        assert.isDefined(path.set, drill);
+        const most = Math.max(...Array.from({ length: 48 }, (_, k) => Math.abs(pivotAt(k / 48, path))));
+        assert.isAbove(most, 5 * DEG, `${drill} ${i}`);
+        const world = (t: number): number => (t < 1 ? pivotAt(t, path) : -pivotAt(t - 1, path));
+        const slope = (t: number): number => (world(t + e) - world(t)) / e;
+        close(world(1 - e), world(1 + e), 1e-5);
+        close(slope(1 - 2 * e), slope(1 + e), 1e-2);
+        for (let k = 1; k < 48; k++) assert.isBelow(Math.abs(world(k / 48 + e) - world(k / 48 - e)), 1e-2, `${drill} ${i} ${k}/48`);
+      }
   });
 });
 
