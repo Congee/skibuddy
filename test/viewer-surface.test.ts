@@ -92,17 +92,20 @@ describe('heightAt', () => {
   });
 
   it('tops a mogul at each switch and drops into the rut mid-turn (fis-freestyle-judging-2025 p26, p28)', () => {
-    // p28: absorb up to the top, extend right after it; p26: the feet go into the rut only briefly. Shares inferred.
+    // p28: absorb up to the top, extend right after it, into the rut (p26) mid-turn.
     for (const i of INTENSITIES) {
       const s = surfaceFor(RegularTurn.Moguls, i);
       const base = Array.from({ length: 48 }, (_, k) => trackRest(s, k / 48, 1, 0.7).base);
-      const lo = Math.min(...base);
-      const share = (k: number): number => ((base[k % 48] ?? 0) - lo) / (Math.max(...base) - lo);
-      for (const k of [46, 47, 0, 1, 2, 3]) assert.isAbove(share(k), 0.85, `${i} top ${k}/48`);
-      // Down the backside by t 0.4, the brief floor between t 0.4 and 0.65, up the face by t 0.9.
-      assert.isBelow(share(19), 0.4, `${i} backside`);
-      for (let k = 20; k <= 30; k++) assert.isBelow(share(k), 0.15, `${i} rut ${k}/48`);
-      assert.isAbove(share(43), 0.7, `${i} face`);
+      const [lo, hi] = [Math.min(...base), Math.max(...base)];
+      const top = base.indexOf(hi);
+      const floor = base.indexOf(lo);
+      assert.isTrue(top <= 1 || top >= 47, `${i} top at ${top}/48`);
+      assert.isTrue(floor >= 12 && floor <= 36, `${i} floor at ${floor}/48`);
+      // Monotonic from the top down to the floor and up to the next top.
+      const at = (k: number): number => base[(k + 48) % 48] ?? 0;
+      const end = top > 1 ? top : top + 48;
+      for (let k = (top > 1 ? top - 48 : top) + 1; k <= floor; k++) assert.isAtMost(at(k), at(k - 1), `${i} down the backside ${k}/48`);
+      for (let k = floor + 1; k <= end; k++) assert.isAtLeast(at(k), at(k - 1), `${i} up the face ${k}/48`);
     }
   });
 
