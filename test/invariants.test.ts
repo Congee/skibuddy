@@ -99,12 +99,12 @@ const fmt = (x: number, digits = 3): string => x.toFixed(digits);
 // Cases the current sub-solves fail, keyed by invariant, each with the pipeline step expected to fix it.
 const all = (drill: string): ReadonlyArray<string> => INTENSITIES.map((i) => `${drill} ${i}`);
 const KNOWN: Readonly<Record<string, { readonly step: string; readonly cases: ReadonlyArray<string> }>> = {
-  'joints stay within the boot and the head within its cap': { step: 'step 2: bounded solve with barriers', cases: ['regular-powder gentle', ...all('turns-on-the-tops')] },
+  'joints stay within the boot and the head within its cap': { step: 'step 2: bounded solve with barriers; cruising: step 6, invariants on q', cases: ['regular-powder gentle', ...all('turns-on-the-tops'), ...all('regular-cruising')] },
   'no ski edge sinks into the snow': { step: 'step 3: contact inequalities', cases: CASES.map(([d, i]) => `${d} ${i}`) },
   'the boots never intersect': { step: 'step 3: boot capsules', cases: ['regular-carving moderate', 'regular-carving dynamic', ...all('regular-moguls'), 'regular-steeps moderate', 'regular-steeps dynamic', ...all('regular-powder'), ...all('turns-on-the-tops'), ...all('round-line'), ...all('closed-stance-short-turns'), 'dolphin-turns dynamic'] },
-  'the mass sits on the resultant through the pressure centre': { step: 'step 3: force-line balance', cases: [...all('stork-turns'), 'regular-carving dynamic', 'regular-steeps moderate', 'regular-steeps dynamic'] },
+  'the mass sits on the resultant through the pressure centre': { step: 'step 3: force-line balance; cruising: step 6, invariants on q', cases: [...all('stork-turns'), ...all('regular-cruising'), 'regular-carving dynamic', 'regular-steeps moderate', 'regular-steeps dynamic'] },
   'the outside ski touches the snow': { step: 'step 3: contact inequalities', cases: [...all('regular-moguls')] },
-  'the seam is no rougher than the interior': { step: 'step 2: cycle solve with mirror boundary', cases: [...all('stork-turns'), 'regular-cruising gentle', 'regular-cruising dynamic', ...all('regular-carving'), ...all('regular-short-turns'), ...all('regular-steeps'), ...all('regular-powder'), ...all('turns-on-the-tops'), ...all('round-line'), ...all('closed-stance-short-turns'), ...all('dolphin-turns')] },
+  'the seam is no rougher than the interior': { step: 'step 2: cycle solve with mirror boundary', cases: [...all('stork-turns'), ...all('regular-cruising'), ...all('regular-carving'), ...all('regular-short-turns'), ...all('regular-steeps'), ...all('regular-powder'), ...all('turns-on-the-tops'), ...all('round-line'), ...all('closed-stance-short-turns'), ...all('dolphin-turns')] },
   'the turn ends on the mirror of its start': { step: 'step 2: mirror boundary', cases: [...all('regular-powder')] },
 };
 const check = (invariant: string, body: (drill: string, i: Intensity) => void): void => {

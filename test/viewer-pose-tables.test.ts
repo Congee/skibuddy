@@ -7,6 +7,7 @@ import { poseToChannels, segmentMatrices } from '../src/viewer/pose';
 import { solvePose, solveTable } from '../src/viewer/pose-solver';
 import { TABLE_SCALE, decodeTable, encodeTable, hasTable, poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, hasPose } from '../src/viewer/poses';
+import { MIGRATED } from '../src/viewer/motion/q-table';
 import { NEUTRAL } from '../src/viewer/poses/neutral';
 import { STORK_TURNS } from '../src/viewer/poses/stork-turns';
 import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
@@ -25,7 +26,8 @@ describe('pose tables', () => {
     assert.isFalse(hasPose('no-such-drill'));
   });
 
-  for (const [drill, def] of Object.entries(POSE_DEFINITIONS))
+  // Migrated drills' adapter fit drifts between JS engines; `bun scripts/anatomy/pose-tables.ts --check` covers them.
+  for (const [drill, def] of Object.entries(POSE_DEFINITIONS).filter(([d]) => !MIGRATED.has(d)))
     it(`match a fresh solve of ${drill} and its scenarios; run \`bun run poses\` if not`, () => {
       const scenarios = drillScenarios(drill);
       for (const i of INTENSITIES) {

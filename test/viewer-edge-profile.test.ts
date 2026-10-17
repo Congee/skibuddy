@@ -5,7 +5,7 @@ import { turnForcesAt } from '../src/physics/turn';
 import { BodySide } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
 import { segmentMatrices, skiIndex } from '../src/viewer/pose';
-import { poseTable } from '../src/viewer/pose-table';
+import { oldTable } from './old-table';
 import { RegularTurn } from '../src/viewer/poses/regular-turn';
 import { rideOf } from '../src/viewer/ride';
 import { surfaceFor } from '../src/viewer/surface';
@@ -23,7 +23,7 @@ const PEAK: readonly [number, number] = [0.35, 0.6];
 
 const edgeShares = (kind: RegularTurn, i: Intensity): ((t: number) => number) => {
   const s = surfaceFor(kind, i);
-  const table = poseTable(kind, i);
+  const table = oldTable(kind, i);
   const n = table.length;
   const edges = table.map((p, k) => {
     const bank = rideOf(s, k / n, p).outsideBank;

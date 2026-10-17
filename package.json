@@ -16,7 +16,8 @@
     "test:legacy": "vitest run --testNamePattern 'legacy: '",
     "test:model": "vitest run --config vitest.model.config.ts",
     "check": "bun run content && bun run typecheck && bun run lint && bun run test",
-    "priors": "bun scripts/prior/build.ts"
+    "priors": "bun scripts/prior/build.ts",
+    "test:solve": "vitest run --config vitest.solve.config.ts"
   },
   "dependencies": {
     "@effect/atom-solid": "4.0.5",

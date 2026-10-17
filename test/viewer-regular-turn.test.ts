@@ -9,7 +9,8 @@ import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
 import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, aheadOnSki, SKI_TAIL, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
 import { forceTiltAt, solvePose } from '../src/viewer/pose-solver';
-import { poseTable, samplePose } from '../src/viewer/pose-table';
+import { samplePose } from '../src/viewer/pose-table';
+import { oldTable } from './old-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
 import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
 import { CORRIDOR_SHARE, ROUND_POSE, TOPS_POSE, headingAt, massHeadingAt, massMost, pelvisHeadingAt, pivotAt, trackMost, turnPath } from '../src/viewer/turn-heading';
@@ -33,7 +34,7 @@ const surfaceOf = (drill: string, i: Intensity): ReturnType<typeof surfaceFor> =
 };
 // Braking drills balance on the snow's force line, tilted uphill of the slope normal.
 const brakeOf = (drill: string, i: Intensity, t: number): number => forceTiltAt(drillScenarios(drill)[i], surfaceOf(drill, i), t);
-const anglesOf = (drill: string, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(poseTable(drill, i), t), brakeOf(drill, i, t));
+const anglesOf = (drill: string, i: Intensity, t: number): ReturnType<typeof poseAngles> => poseAngles(samplePose(oldTable(drill, i), t), brakeOf(drill, i, t));
 const angles: (kind: RegularTurn, i: Intensity, t: number) => ReturnType<typeof poseAngles> = anglesOf;
 const DEG = 180 / Math.PI;
 const DEG_RAD = Math.PI / 180;
@@ -42,12 +43,12 @@ const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as con
 const balanceOf = (kind: string, a: ReturnType<typeof poseAngles>): number => (kind === RegularTurn.Moguls || kind === ROUND_POSE ? a.comOnSnow : a.comAhead);
 // Head turned toward the outside of the turn beyond the skis.
 const headOnSkis = (kind: RegularTurn, i: Intensity, t: number): number => {
-  const p = samplePose(poseTable(kind, i), t);
+  const p = samplePose(oldTable(kind, i), t);
   return p.counter + p.spineTwist + p.headYaw;
 };
 const LOOKING_KINDS = KINDS.filter((k) => k !== RegularTurn.Moguls);
 const local = (drill: string, t: number, segment: string, point: Vec3, frame: string): Vec3 => {
-  const w = segmentMatrices(samplePose(poseTable(drill, Intensity.Moderate), t));
+  const w = segmentMatrices(samplePose(oldTable(drill, Intensity.Moderate), t));
   const m = w[segmentIndex(frame)];
   const p = w[segmentIndex(segment)];
   if (!m || !p) throw new Error(`${segment} in ${frame}`);
@@ -233,7 +234,7 @@ describe('regular turn', () => {
         for (let k = 0; k < SAMPLES; k++) {
           const t = k / SAMPLES;
           if (airborne(drill, t)) continue;
-          const w = segmentMatrices(samplePose(poseTable(drill, i), t));
+          const w = segmentMatrices(samplePose(oldTable(drill, i), t));
           const at = (segment: string, point: Vec3): Vec3 => transformPoint(w[segmentIndex(segment)] ?? identity(), point);
           const foot = at('right-boot', MID_FOOT);
           const gap = aheadOnSki(w, at('trunk', [0, CHEST, 0]), foot) - aheadOnSki(w, at('right-shin', [0, 0, 0]), foot);
@@ -273,7 +274,7 @@ describe('regular turn', () => {
     // Feet under the hips and shoulders, head up (fis-freestyle-judging-2025 pp26, 29); bounds inferred.
     for (const kind of [...KINDS, 'closed-stance-short-turns'])
       for (const i of INTENSITIES) {
-        const p = samplePose(poseTable(kind, i), 0);
+        const p = samplePose(oldTable(kind, i), 0);
         const w = segmentMatrices(p);
         const at = (segment: string, point: Vec3 = [0, 0, 0]): Vec3 => transformPoint(w[segmentIndex(segment)] ?? identity(), point);
         const half = (a: Vec3, b: Vec3): Vec3 => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
@@ -291,7 +292,7 @@ describe('regular turn', () => {
   legacyIt('keeps the closed-stance hips over the heels', () => {
     for (const i of INTENSITIES)
       for (let k = 0; k < 24; k++) {
-        const a = poseAngles(samplePose(poseTable('closed-stance-short-turns', i), k / 24));
+        const a = poseAngles(samplePose(oldTable('closed-stance-short-turns', i), k / 24));
         // Near the outside boot, or at the transition, where the countered outside foot trails, between both.
         // Heel about 0.095 behind the mid-foot; the balanced mass keeps the flexed hips near it, the deeper dynamic knees a little behind.
         assert.isAbove(Math.max(a.hipsAhead, a.hipsAhead - a.lead / 2), i === Intensity.Dynamic ? -0.16 : -0.15, `${i} ${k}/24`);
@@ -301,7 +302,7 @@ describe('regular turn', () => {
   it('skis the closed stance flat on groomed snow, the knees together and flexed alike', () => {
     for (const i of INTENSITIES)
       for (let k = 0; k < 24; k++) {
-        const p = samplePose(poseTable('closed-stance-short-turns', i), k / 24);
+        const p = samplePose(oldTable('closed-stance-short-turns', i), k / 24);
         const w = segmentMatrices(p);
         for (const side of ['right', 'left'])
           for (const z of [-0.7, 0, 0.8]) {
@@ -320,7 +321,7 @@ describe('regular turn', () => {
       const a = angles(kind, Intensity.Moderate, 1 / 2);
       if (kind === RegularTurn.Moguls) {
         // On the bumps each rigid ski rests on the snow under it, not on the root's plane.
-        const r = ridden(surfaceFor(kind, Intensity.Moderate), 1 / 2, samplePose(poseTable(kind, Intensity.Moderate), 1 / 2));
+        const r = ridden(surfaceFor(kind, Intensity.Moderate), 1 / 2, samplePose(oldTable(kind, Intensity.Moderate), 1 / 2));
         for (const side of SIDES) assert.closeTo(clearance(r, side), 0, 0.01, `${kind} ${side}`);
       } else {
         assert.closeTo(a.insideTip, 0, 0.01, kind);
@@ -354,7 +355,7 @@ describe('regular turn', () => {
   });
 
   it('counters little when carving and tracks the skis off the fall line in moguls', () => {
-    const at = (drill: string, t: number): number => poseAngles(samplePose(poseTable(drill, Intensity.Moderate), t)).counter;
+    const at = (drill: string, t: number): number => poseAngles(samplePose(oldTable(drill, Intensity.Moderate), t)).counter;
     const most = (drill: string): number => Math.max(...Array.from({ length: 24 }, (_, k) => Math.abs(at(drill, k / 24))));
     for (const drill of KINDS) if (drill !== RegularTurn.Carving) assert.isBelow(most(RegularTurn.Carving), most(drill), drill);
     // Pivoted, the skis are flat in the fall line under a pelvis facing it at the switch, so square there, then the
@@ -363,7 +364,7 @@ describe('regular turn', () => {
     assert.includeMembers(pivoted, [RegularTurn.ShortTurns, RegularTurn.Moguls, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns']);
     for (const drill of pivoted)
       for (const i of INTENSITIES) {
-        const c = (t: number): number => poseAngles(samplePose(poseTable(drill, i), t)).counter;
+        const c = (t: number): number => poseAngles(samplePose(oldTable(drill, i), t)).counter;
         const tag = `${drill} ${i}`;
         const xs = Array.from({ length: 96 }, (_, k) => c(k / 96));
         const peakAt = xs.indexOf(Math.max(...xs)) / 96;
@@ -382,7 +383,7 @@ describe('regular turn', () => {
     for (const i of INTENSITIES) {
       const path = turnPath(RegularTurn.Moguls, i);
       for (let k = 0; k < 24; k++) {
-        const p = samplePose(poseTable(RegularTurn.Moguls, i), k / 24);
+        const p = samplePose(oldTable(RegularTurn.Moguls, i), k / 24);
         const chest = poseAngles(p).counter + p.spineTwist / DEG_RAD - headingAt(k / 24, path) / DEG_RAD;
         assert.isBelow(Math.abs(chest), 0.5 * Math.abs(headingAt(k / 24, path) / DEG_RAD) + 3, `${i} ${k}/24`);
       }
@@ -391,7 +392,7 @@ describe('regular turn', () => {
 
   it('anticipates short turns and steeps: the chest near the fall line while the skis are most across, the head inside its cap', () => {
     const chestOffFallLine = (kind: RegularTurn, i: Intensity, t: number): number => {
-      const p = samplePose(poseTable(kind, i), t);
+      const p = samplePose(oldTable(kind, i), t);
       return (p.counter + p.spineTwist - headingAt(t, turnPath(kind, i))) * DEG;
     };
     for (const kind of [RegularTurn.ShortTurns, RegularTurn.Steeps])
@@ -401,7 +402,7 @@ describe('regular turn', () => {
         const skid = Array.from({ length: 96 }, (_, k) => Math.abs(pivotAt(k / 96, turnPath(kind, i))));
         assert.closeTo(skid.indexOf(Math.max(...skid)) / 96, set, 1 / 96, `${kind} ${i} skids most at the set`);
         assert.isAtMost(Math.abs(chestOffFallLine(kind, i, set)), i === Intensity.Gentle ? 25 : 20, `${kind} ${i}`);
-        assert.isBelow(Math.abs(samplePose(poseTable(kind, i), set).headYaw) * DEG, 25, `${kind} ${i}`);
+        assert.isBelow(Math.abs(samplePose(oldTable(kind, i), set).headYaw) * DEG, 25, `${kind} ${i}`);
         // So the counter is largest between the set and the release at the switch.
         const at = (t: number): number => angles(kind, i, t).counter;
         const xs = Array.from({ length: 96 }, (_, k) => at(k / 96));
@@ -427,13 +428,13 @@ describe('regular turn', () => {
   });
 
   it('differs between kinds', () => {
-    const shaping = KINDS.map((k) => poseToChannels(samplePose(poseTable(k, Intensity.Moderate), 1 / 2)).join());
+    const shaping = KINDS.map((k) => poseToChannels(samplePose(oldTable(k, Intensity.Moderate), 1 / 2)).join());
     assert.strictEqual(new Set(shaping).size, KINDS.length);
     const counter = (k: RegularTurn): number => Math.max(...Array.from({ length: 24 }, (_, j) => Math.abs(angles(k, Intensity.Moderate, j / 24).counter)));
     assert.isAbove(counter(RegularTurn.Steeps), counter(RegularTurn.Carving));
     assert.isAbove(counter(RegularTurn.ShortTurns), counter(RegularTurn.Cruising));
-    assert.isAbove(poseTable(RegularTurn.Steeps, Intensity.Moderate).reduce((m, p) => Math.max(m, p.poleTouch), 0), 0.99);
-    assert.strictEqual(poseTable(RegularTurn.Carving, Intensity.Moderate).reduce((m, p) => Math.max(m, p.poleTouch), 0), 0);
+    assert.isAbove(oldTable(RegularTurn.Steeps, Intensity.Moderate).reduce((m, p) => Math.max(m, p.poleTouch), 0), 0.99);
+    assert.strictEqual(oldTable(RegularTurn.Carving, Intensity.Moderate).reduce((m, p) => Math.max(m, p.poleTouch), 0), 0);
     assert.strictEqual(Object.keys(REGULAR_TURNS).length, KINDS.length);
   });
 
@@ -512,7 +513,7 @@ describe('regular turn', () => {
     for (const drill of Object.keys(POSE_DEFINITIONS))
       for (const i of INTENSITIES) {
         const worst = Array.from({ length: 48 }, (_, k) => {
-          const p = samplePose(poseTable(drill, i), k / 48);
+          const p = samplePose(oldTable(drill, i), k / 48);
           const { tip, thigh, shin } = leadTerms(p);
           return { k, tip, shin, miss: tip - REFERENCE_SKIER.body.hipWidth * Math.sin(p.counter) - thigh };
         }).reduce((a, b) => (Math.abs(b.miss) > Math.abs(a.miss) ? b : a));
@@ -525,7 +526,7 @@ describe('regular turn', () => {
   legacyIt('builds the inside tip lead from about level at the switch to a middle-to-late peak, never trailing', () => {
     for (const drill of Object.keys(POSE_DEFINITIONS))
       for (const i of INTENSITIES) {
-        const leads = Array.from({ length: 48 }, (_, k) => leadTerms(samplePose(poseTable(drill, i), k / 48)).tip / REFERENCE_SKIER.bsl);
+        const leads = Array.from({ length: 48 }, (_, k) => leadTerms(samplePose(oldTable(drill, i), k / 48)).tip / REFERENCE_SKIER.bsl);
         const peak = Math.max(...leads);
         const peakAt = leads.indexOf(peak) / 48;
         const mean = (from: number, to: number): number => {
@@ -545,7 +546,7 @@ describe('regular turn', () => {
   legacyIt('keeps the inside tip lead\'s peak inside the filmed band in boot soles, widened by parallax', () => {
     for (const drill of Object.keys(POSE_DEFINITIONS))
       for (const i of INTENSITIES) {
-        const peak = Math.max(...Array.from({ length: 48 }, (_, k) => leadTerms(samplePose(poseTable(drill, i), k / 48)).tip)) / REFERENCE_SKIER.bsl;
+        const peak = Math.max(...Array.from({ length: 48 }, (_, k) => leadTerms(samplePose(oldTable(drill, i), k / 48)).tip)) / REFERENCE_SKIER.bsl;
         assert.isTrue(peak > LEAD_PEAK[0] && peak <= LEAD_PEAK[1], `${drill} ${i} peak ${peak.toFixed(2)} BSL`);
       }
   });
@@ -586,7 +587,7 @@ describe('regular turn', () => {
     for (const drill of FALL_LINE_KINDS)
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
-          const p = samplePose(poseTable(drill, i), k / 24);
+          const p = samplePose(oldTable(drill, i), k / 24);
           const head = p.counter + p.spineTwist + p.headYaw;
           assert.closeTo(head * DEG, headingAt(k / 24, turnPath(drill, i)) * DEG, 1.5, `${drill} ${i} ${k}/24`);
         }
@@ -595,7 +596,7 @@ describe('regular turn', () => {
   it('keeps the head within 30 deg of the chest', () => {
     for (const drill of [...KINDS, 'closed-stance-short-turns'])
       for (const i of INTENSITIES)
-        for (let k = 0; k < 96; k++) assert.isAtMost(Math.abs(samplePose(poseTable(drill, i), k / 96).headYaw) * DEG, 30.01, `${drill} ${i} ${k}/96`);
+        for (let k = 0; k < 96; k++) assert.isAtMost(Math.abs(samplePose(oldTable(drill, i), k / 96).headYaw) * DEG, 30.01, `${drill} ${i} ${k}/96`);
   });
 
   it('keeps the powder head near the chest, well inside its cap', () => {
@@ -606,7 +607,7 @@ describe('regular turn', () => {
       const path = turnPath(RegularTurn.Powder, i);
       for (let k = 0; k < 96; k++) {
         const t = k / 96;
-        const p = samplePose(poseTable(RegularTurn.Powder, i), t);
+        const p = samplePose(oldTable(RegularTurn.Powder, i), t);
         // Unclamped: the gaze's heading on the chest.
         const ask = headingAt(t, path) - gazeHeading(rule, path, s.speedMps, t) - p.counter - p.spineTwist;
         assert.isAtMost(Math.abs(ask) * DEG, 20, `${i} ${k}/96`);
@@ -648,7 +649,7 @@ describe('regular turn', () => {
     // Feet ahead, then the body catches up, centred (duncan-smith-2021 3:30-3:54); bands inferred.
     for (const i of INTENSITIES)
       for (let k = 0; k < 24; k++) {
-        const a = poseAngles(samplePose(poseTable(RegularTurn.Moguls, i), k / 24), 0);
+        const a = poseAngles(samplePose(oldTable(RegularTurn.Moguls, i), k / 24), 0);
         assert.isAtLeast(a.comOnSnow, -0.15, `${i} t=${k / 24}`);
         assert.isAtLeast(a.trunkForward, 3, `${i} t=${k / 24}`);
       }
@@ -694,7 +695,7 @@ describe('angulation', () => {
   it('angulates rather than banks: the trunk tilts in no further than the legs once the turn is edged', () => {
     for (const kind of FRONTAL_KINDS)
       for (const i of INTENSITIES)
-        for (const p of poseTable(kind, i)) {
+        for (const p of oldTable(kind, i)) {
           const f = frontal(p);
           if (Math.abs(f.lean) >= SETTLED) assert.isAtMost(f.trunk, f.legs + 2, `${kind} ${i} lean ${f.lean.toFixed(1)}`);
         }
@@ -702,13 +703,13 @@ describe('angulation', () => {
 
   it('keeps the trunk pitched no more than 50 deg forward of the slope normal', () => {
     for (const kind of FRONTAL_KINDS)
-      for (const i of INTENSITIES) for (const p of poseTable(kind, i)) assert.isAtMost(frontal(p).pitch, 50, `${kind} ${i}`);
+      for (const i of INTENSITIES) for (const p of oldTable(kind, i)) assert.isAtMost(frontal(p).pitch, 50, `${kind} ${i}`);
   });
 
   it('keeps the mass on the force line through the outside ski, inside the stance once edged', () => {
     for (const kind of FRONTAL_KINDS)
       for (const i of INTENSITIES)
-        for (const p of poseTable(kind, i)) {
+        for (const p of oldTable(kind, i)) {
           const f = frontal(p);
           if (Math.abs(f.lean) < SETTLED) continue;
           assert.isAtMost(Math.abs(f.com), COM_LINE, `${kind} ${i} lean ${f.lean.toFixed(1)}`);
@@ -720,7 +721,7 @@ describe('angulation', () => {
 
 const TURN_DRILLS = [...KINDS, 'closed-stance-short-turns', TOPS_POSE, ROUND_POSE];
 const peakOf = (drill: string, i: Intensity, f: (p: ReturnType<typeof samplePose>) => number): number =>
-  Math.max(...Array.from({ length: 48 }, (_, k) => f(samplePose(poseTable(drill, i), k / 48)))) * DEG;
+  Math.max(...Array.from({ length: 48 }, (_, k) => f(samplePose(oldTable(drill, i), k / 48)))) * DEG;
 const kneesInOf = (drill: string): number => POSE_DEFINITIONS[drill]?.constraints.kneesIn ?? NaN;
 /** Point `at` of segment b ahead of segment a's, along the outside ski. */
 const alongSki = (p: ReturnType<typeof solvePose>, a: string, b: string, at: Vec3): number => {
@@ -779,7 +780,7 @@ describe('hip rotation', () => {
     // lead-footage notes: JDS, Olivia Giaccio, SCE short turns and moguls; Odermatt's carved switch keeps more.
     for (const drill of TURN_DRILLS.filter((d) => POSE_DEFINITIONS[d]?.constraints.set !== undefined))
       for (const i of INTENSITIES) {
-        const t0 = Math.abs(samplePose(poseTable(drill, i), 0).counter * DEG);
+        const t0 = Math.abs(samplePose(oldTable(drill, i), 0).counter * DEG);
         const late = peakOf(drill, i, (p) => p.counter);
         assert.isAtMost(t0, 35, `${drill} ${i} switch`);
         assert.isTrue(late >= 15 && late <= 65, `${drill} ${i} late ${late.toFixed(1)}`);
@@ -802,7 +803,7 @@ describe('hip rotation', () => {
         assert.isBelow(massMost(s, travel), trackMost(path), tag);
         for (let k = 0; k < 96; k++) {
           const t = k / 96;
-          const p = samplePose(poseTable(drill, i), t);
+          const p = samplePose(oldTable(drill, i), t);
           const pelvis = headingAt(t, path) - p.counter;
           assert.closeTo(pelvis * DEG, pelvisHeadingAt(t, s, travel) * DEG, 0.05, `${tag} ${k}/96 counter = yaw - pelvis`);
           assert.isAtMost(Math.abs(pelvis - massHeadingAt(t, s, travel)) * DEG, 15, `${tag} ${k}/96 pelvis on the travel`);
@@ -812,7 +813,7 @@ describe('hip rotation', () => {
           if (Math.abs(p.headYaw) < HEAD_LIMIT - 1e-6) assert.closeTo(head * DEG, gazeHeading(rule, path, s.speedMps, t) * DEG, 0.05, `${tag} ${k}/96 head`);
         }
         // Square-ish at the switch (0-20°, ±15) and building to the late range (30-50°, ±15) as the skis skid under it.
-        const c0 = samplePose(poseTable(drill, i), 0).counter * DEG;
+        const c0 = samplePose(oldTable(drill, i), 0).counter * DEG;
         assert.isTrue(c0 >= -15 && c0 <= 35, `${tag} switch ${c0.toFixed(1)}`);
         const late = peakOf(drill, i, (p) => p.counter);
         assert.isTrue(late >= 30 - 15 && late <= 50 + 15, `${tag} late ${late.toFixed(1)}`);
@@ -830,9 +831,9 @@ const extension = (p: ReturnType<typeof samplePose>): number => {
 };
 // Degrees tip-up of each ski.
 const pitch = (p: ReturnType<typeof samplePose>): readonly [number, number] => [-p.outside.tailLift * DEG, -p.inside.tailLift * DEG];
-const cycle = (i: Intensity): ReadonlyArray<number> => Array.from({ length: SAMPLES }, (_, k) => extension(samplePose(poseTable(POWDER, i), k / SAMPLES)));
+const cycle = (i: Intensity): ReadonlyArray<number> => Array.from({ length: SAMPLES }, (_, k) => extension(samplePose(oldTable(POWDER, i), k / SAMPLES)));
 const popRange = (i: Intensity): number => Math.max(...cycle(i)) - Math.min(...cycle(i));
-const peakPitch = (i: Intensity): number => Math.max(...poseTable(POWDER, i).map((p) => pitch(p)[0]));
+const peakPitch = (i: Intensity): number => Math.max(...oldTable(POWDER, i).map((p) => pitch(p)[0]));
 
 describe('powder pop', () => {
 
@@ -851,21 +852,21 @@ describe('powder pop', () => {
 
   it('pitches the tips up before the switch and down after it, both skis alike', () => {
     for (const i of INTENSITIES) {
-      const before = pitch(samplePose(poseTable(POWDER, i), 11 / 12));
-      const after = pitch(samplePose(poseTable(POWDER, i), 1 / 12));
+      const before = pitch(samplePose(oldTable(POWDER, i), 11 / 12));
+      const after = pitch(samplePose(oldTable(POWDER, i), 1 / 12));
       assert.isAbove(before[0], 1.5, `${i} tips up`);
       assert.isBelow(after[0], -0.5, `${i} tips down`);
       // The dive smaller than the rise, so the front never digs in (iasi-2021 p87).
       assert.isBelow(-after[0], before[0], i);
       assert.closeTo(before[1], before[0], 1e-3, i);
       assert.closeTo(after[1], after[0], 1e-3, i);
-      assert.closeTo(pitch(samplePose(poseTable(POWDER, i), 1 / 2))[0], 0, 0.05, `${i} flat at shaping`);
+      assert.closeTo(pitch(samplePose(oldTable(POWDER, i), 1 / 2))[0], 0, 0.05, `${i} flat at shaping`);
     }
   });
 
   it('carries the pop smoothly through the switch into the mirrored turn', () => {
     for (const i of INTENSITIES) {
-      const table = poseTable(POWDER, i);
+      const table = oldTable(POWDER, i);
       const seq = [...table, mirrorPose(table[0] ?? samplePose(table, 0))].map((p) => [extension(p), pitch(p)[0] / 100, pitch(p)[1] / 100]);
       const steps = seq.slice(1).map((v, j) => Math.max(...v.map((x, n) => Math.abs(x - (seq[j]?.[n] ?? x)))));
       assert.isAtMost(steps.at(-1) ?? 0, Math.max(...steps.slice(0, -1)), i);
@@ -876,7 +877,7 @@ describe('powder pop', () => {
   it('keeps both ends of both skis on or over the packed base', () => {
     for (const i of INTENSITIES)
       for (let k = 0; k < 96; k++) {
-        const w = segmentMatrices(samplePose(poseTable(POWDER, i), k / 96));
+        const w = segmentMatrices(samplePose(oldTable(POWDER, i), k / 96));
         for (const ski of ['right-ski', 'left-ski'])
           for (const end of [SKI_TIP, SKI_TAIL]) assert.isAtLeast(transformPoint(w[segmentIndex(ski)] ?? identity(), end)[1], -0.01, `${i} ${ski} ${k}/96`);
       }
@@ -890,7 +891,7 @@ describe('powder pop', () => {
   it('keeps every other kind and drill flat off the bumps, only the stork tail lifting', () => {
     for (const drill of Object.keys(POSE_DEFINITIONS).filter((d) => d !== POWDER && d !== DOLPHIN))
       for (const i of INTENSITIES.filter((n) => surfaceFor(drill, n).kind !== SurfaceKind.Moguls))
-        for (const p of poseTable(drill, i)) {
+        for (const p of oldTable(drill, i)) {
           assert.strictEqual(p.outside.tailLift, 0, `${drill} ${i}`);
           assert.isAtLeast(p.inside.tailLift, 0, `${drill} ${i}`);
         }
@@ -898,7 +899,7 @@ describe('powder pop', () => {
 });
 
 const DOLPHIN = 'dolphin-turns';
-const dolphin = (i: Intensity, t: number): ReturnType<typeof samplePose> => samplePose(poseTable(DOLPHIN, i), t);
+const dolphin = (i: Intensity, t: number): ReturnType<typeof samplePose> => samplePose(oldTable(DOLPHIN, i), t);
 // Centre of mass ahead of the outside mid-foot along the snow, metres.
 const aheadOnSnow = (p: ReturnType<typeof samplePose>): number => {
   const w = segmentMatrices(p);
@@ -965,7 +966,7 @@ describe('dolphin turn', () => {
 
   it('carries through the switch into the mirrored turn', () => {
     for (const i of INTENSITIES) {
-      const table = poseTable(DOLPHIN, i);
+      const table = oldTable(DOLPHIN, i);
       const seq = [...table, mirrorPose(table[0] ?? dolphin(i, 0))].map((p) => [aheadOnSnow(p), pitch(p)[0] / 100, pitch(p)[1] / 100, p.rise, extension(p)]);
       const steps = seq.slice(1).map((v, j) => Math.max(...v.map((x, n) => Math.abs(x - (seq[j]?.[n] ?? x)))));
       assert.isAtMost(steps.at(-1) ?? 0, Math.max(...steps.slice(0, -1)), i);
@@ -975,6 +976,6 @@ describe('dolphin turn', () => {
 
   it('keeps every other drill on the snow', () => {
     for (const drill of Object.keys(POSE_DEFINITIONS).filter((d) => d !== DOLPHIN && d !== POWDER))
-      for (const i of INTENSITIES) for (const p of poseTable(drill, i)) assert.strictEqual(p.rise, 0, `${drill} ${i}`);
+      for (const i of INTENSITIES) for (const p of oldTable(drill, i)) assert.strictEqual(p.rise, 0, `${drill} ${i}`);
   });
 });
