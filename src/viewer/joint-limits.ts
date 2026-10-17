@@ -80,3 +80,9 @@ export const CUFF_FORWARD_LEAN: Limit = {
   lower: { value: FORWARD_LEAN_RANGE[0], provenance: Provenance.Equipment, source: 'equipment.ts FORWARD_LEAN_RANGE' },
   upper: { value: FORWARD_LEAN_RANGE[1], provenance: Provenance.Equipment, source: 'equipment.ts FORWARD_LEAN_RANGE' },
 };
+
+/**
+ * Ankle dorsiflexion with the knee flexed and the foot loaded, soleus-limited, as a skier stands in the boot:
+ * the weight-bearing lunge's tibial inclination, barefoot (Soucie's 12.7° is knee-extended, gastrocnemius-limited).
+ */
+export const ANKLE_DORSIFLEXION_KNEE_FLEXED: Bound = sourced(38.8, 'konor-2012 Table 1, weight-bearing lunge, digital inclinometer, mean');

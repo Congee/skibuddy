@@ -633,6 +633,11 @@
   citation: "Soucie JM et al. Range of motion measurements - reference values and a database for comparison studies. Haemophilia. 2011;17:500-7. Reference table as published by CDC."
   url: https://archive.cdc.gov/www_cdc_gov/ncbddd/jointrom/index.html
   read: partial
+- id: konor-2012
+  type: article
+  citation: "Konor MM et al. Reliability of three measures of ankle dorsiflexion range of motion. Int J Sports Phys Ther. 2012;7:279-87."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC3362988/
+  read: partial
 - id: wolan-nieroda-2025
   type: article
   citation: "Wolan-Nieroda A et al. Use of the Zebris ultrasonic three-dimensional motion analysis system to evaluate range of motion of the cervical spine in 61 healthy adults. Med Sci Monit. 2025;31:e948203."
