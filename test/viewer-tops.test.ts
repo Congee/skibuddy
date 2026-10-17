@@ -126,11 +126,14 @@ describe('turns on the tops', () => {
   });
 
   it('comes round to finish heading across the hill, wider than the zipper, tighter than the round line', () => {
-    // As duncan-smith-2021 1:28-1:32; the zipper keeps within 30 deg of the fall line (fis-freestyle-judging-2025 p28).
+    // As duncan-smith-2021 1:28-1:32, most across at the finish, released before the crest (1:31); the zipper keeps
+    // within 30 deg of the fall line (fis-freestyle-judging-2025 p28).
     for (const i of INTENSITIES) {
       const s = surfaceFor(TOPS_POSE, i);
+      const set = s.path.set ?? 1;
+      assert.isTrue(set > 5 / 6 && set < 1, `${i} set ${set}`);
       const headings = TIMES.map((t) => Math.abs(pathAt(s, t).heading));
-      assert.isAtLeast(Math.abs(pathAt(s, 1).heading), Math.max(...headings), `${i} widest at the finish`);
+      assert.isAtLeast(Math.abs(pathAt(s, set).heading), Math.max(...headings), `${i} widest at the set`);
       const tops = transitionHeading(turnPath(TOPS_POSE, i));
       assert.isAbove(tops, transitionHeading(turnPath(RegularTurn.Moguls, i)), `${i} zipper`);
       assert.isBelow(tops, transitionHeading(turnPath(ROUND_POSE, i)), `${i} round line`);

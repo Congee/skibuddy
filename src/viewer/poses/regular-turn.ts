@@ -503,6 +503,9 @@ export const TOPS: TurnStyle = {
   },
   counter: fallLineHeading(5, TOPS_CORRIDOR_SHARE * 5),
   counterGain: COUNTER_GAIN,
+  // Most across at the finish, released on top just before the crest (duncan-smith-2021 1:28-1:32, 1:31).
+  set: TOPS_PLANT,
+  counterCurve: headingKeys(TOPS_PLANT),
   // Tipped early once flat on the backside (duncan-smith-2021 5:26-6:14), edged by the fall line (1:28-1:32).
   early: TOPS_EARLY,
   // Smallest on top, the hips low and the trunk with the shin, not broken at the waist (duncan-smith-2021 4:24-5:07,
