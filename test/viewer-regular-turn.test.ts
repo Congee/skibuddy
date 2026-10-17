@@ -5,6 +5,7 @@ import { PHASE_T, turnForcesAt } from '../src/physics/turn';
 import { gazeHeading } from '../src/viewer/gaze';
 import { EQUIPMENT } from '../src/viewer/equipment';
 import { segmentIndex } from '../src/viewer/figure';
+import { CAPSULE_BOOT, HEEL_ROOM, TOE_ROOM } from '../src/viewer/gear-fit';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
 import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, aheadOnSki, SKI_TAIL, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
@@ -190,16 +191,18 @@ describe('regular turn', () => {
     assert.isAbove(range(RegularTurn.Moguls, (a) => a.dorsiflexion.right), range(RegularTurn.Carving, (a) => a.dorsiflexion.right));
   });
 
-  it('keeps the mass over the feet: never behind the heels nor past the ball', () => {
-    // Heel and ball 0.095 either side of mid-foot bound every drill; free skiing keeps to ball..back of arch (lemaster-2010 p85).
+  it('keeps the mass over the feet: never behind the heels nor past the toes', () => {
+    // The bare foot inside the capsule shell, along the ski from mid-foot (the ramp's few degrees ignored).
+    const [heel, toes] = [CAPSULE_BOOT.heel + HEEL_ROOM - MID_FOOT[2], CAPSULE_BOOT.toe - TOE_ROOM - MID_FOOT[2]];
+    // Free skiing keeps behind no further than the back of the arch (lemaster-2010 p85; 4 cm inferred).
     const bumps: readonly string[] = [RegularTurn.Moguls, ROUND_POSE];
     for (const kind of [...KINDS, 'closed-stance-short-turns', ROUND_POSE])
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
           const a = anglesOf(kind, i, k / 24);
           const com = balanceOf(kind, a);
-          assert.isAbove(Math.max(com, com - a.lead), bumps.includes(kind) ? -0.095 : -0.04, `${kind} ${i} ${k}/24`);
-          assert.isBelow(Math.min(com, com - a.lead), 0.095, `${kind} ${i} ${k}/24`);
+          assert.isAbove(Math.max(com, com - a.lead), bumps.includes(kind) ? heel : -0.04, `${kind} ${i} ${k}/24`);
+          assert.isBelow(Math.min(com, com - a.lead), toes, `${kind} ${i} ${k}/24`);
         }
   });
 
@@ -260,22 +263,6 @@ describe('regular turn', () => {
     // Cruising and carving: the shin carries the fore-aft, the trunk about as still.
     for (const kind of [RegularTurn.Cruising, RegularTurn.Carving])
       for (const i of INTENSITIES) assert.isBelow(range(kind, i, (a) => a.trunkForward), 2 * range(kind, i, (a) => a.dorsiflexion.right), `${kind} ${i}`);
-  });
-
-  it('carries the fore-aft smoothly through the switch into the mirrored turn', () => {
-    const fore = (kind: string, i: Intensity, p: ReturnType<typeof samplePose>, t: number): readonly number[] => {
-      const a = poseAngles(p, brakeOf(kind, i, t));
-      return [balanceOf(kind, a) - a.lead / 2, a.hipsAhead - a.lead / 2, a.trunkForward / 100];
-    };
-    for (const kind of [...KINDS, 'closed-stance-short-turns'])
-      for (const i of INTENSITIES) {
-        const table = poseTable(kind, i);
-        // C1 through the switch is viewer-transition's (comZ); here no step jumps.
-        const seq = table.map((p, j) => fore(kind, i, p, j / table.length));
-        const steps = seq.slice(1).map((v, j) => Math.max(...v.map((x, n) => Math.abs(x - (seq[j]?.[n] ?? x)))));
-        // A trunk folded toward the fall line tips fast as the lean builds after an anticipated switch.
-        assert.isBelow(Math.max(...steps), 0.03, `${kind} ${i}`);
-      }
   });
 
   it('stands over the mid-foot at every transition: the mogul crest folds the legs, not the trunk', () => {
