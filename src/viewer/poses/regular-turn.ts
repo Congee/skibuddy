@@ -685,8 +685,6 @@ const SWITCH: ReadonlyArray<Pick<Phase, 't' | 'hip' | 'under'>> = [
   { t: 11 / 12, hip: 1, under: 0.9 },
 ];
 
-// The inside boot lets its ankle flex a little, so most of the inside leg's extra flex leads its foot (lemaster-2010 p61); inferred.
-const INSIDE_ANKLE_SHARE = 0.3;
 // A faster retraction lifts the skis higher; inferred.
 const CLEARANCE_GAIN = 0.4;
 
@@ -759,7 +757,6 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       crossUnder: style.crossUnder,
       trunkOverShin: style.trunkOverShin * DEG,
       trunkOverShinGain: style.trunkOverShinGain ?? TRUNK_OVER_SHIN_GAIN,
-      insideAnkleShare: INSIDE_ANKLE_SHARE,
       ...(style.set === undefined ? {} : { set: style.set }),
       ...(travel === undefined ? {} : { travel }),
       poleTouch: style.polePlant ? { t: style.poleTouchAt ?? 1 / 24, hold: 0.02, swing: 0.11 } : null,

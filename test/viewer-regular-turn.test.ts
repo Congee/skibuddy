@@ -493,6 +493,18 @@ describe('regular turn', () => {
     for (const drill of [RegularTurn.Cruising, RegularTurn.Carving]) assert.isAtMost(surplus(drill, Intensity.Gentle), 23, drill);
   });
 
+  it('holds the inside ankle with the outside one, the inside leg shortening at hip and knee', () => {
+    // heinrich-2022 Table 1: inside 17.2-21.4, outside 18.3-26.7 deg (RMSD 2.0); heinrich-2023 Fig 2, read off the plot:
+    // inside within about 3 deg below to 2 above the outside through the turn. The 2 deg tracking error added: inferred.
+    for (const drill of [RegularTurn.Cruising, RegularTurn.Carving, RegularTurn.ShortTurns, RegularTurn.Steeps])
+      for (const i of INTENSITIES) {
+        const ankles = Array.from({ length: 48 }, (_, k) => angles(drill, i, k / 48).dorsiflexion);
+        const surplus = Math.max(...ankles.map((a) => a.left - a.right));
+        assert.isAtMost(surplus, INSIDE_ANKLE_SURPLUS, `${drill} ${i}`);
+        assert.isAtMost(Math.max(...ankles.map((a) => a.left)), Math.max(...ankles.map((a) => a.right)) + 2, `${drill} ${i} peak`);
+      }
+  });
+
   it('leads the inside tip by hip width × sin(counter) plus the inside thigh\'s flex over parallel shins', () => {
     // lead-footage notes, Conclusion 5: the counter staggers the hips, the shorter inside leg's thigh carries its knee ahead.
     const off: string[] = [];
@@ -725,12 +737,14 @@ const leadTerms = (p: ReturnType<typeof samplePose>): { tip: number; thigh: numb
   thigh: alongSki(p, 'right-thigh', 'left-thigh', [0, -THIGH, 0]) - alongSki(p, 'right-thigh', 'left-thigh', [0, 0, 0]),
   shin: alongSki(p, 'right-shin', 'left-shin', [0, -SHIN, 0]) - alongSki(p, 'right-thigh', 'left-thigh', [0, -THIGH, 0]),
 });
+/** Inside ankle at most this many deg more dorsiflexed than the outside: Fig 2's +2 plus tracking error. */
+const INSIDE_ANKLE_SURPLUS = 4;
 const bsl = (m: number): string => (m / REFERENCE_SKIER.bsl).toFixed(2);
 // Lead bands in boot sole lengths: the footage was read at a 0.30 m boot sole (lead-footage notes; skiers' sizes not given),
 // so cm / 30 is already body-relative. Single-turn readings carry 5-8 cm of follow-cam parallax; the widest, 8, is added.
 const FILMED_BOOT = 0.3;
 const PARALLAX = 0.08 / FILMED_BOOT;
-/** Shins parallel, the hips and the inside thigh leave only boot and ski geometry: inferred. */
+/** Shins near parallel (heinrich-2022/2023), so the hips and inside thigh leave only boot and ski geometry: inferred. */
 const LEAD_TOLERANCE = 0.05;
 /** 0 ± 5 cm at the switch (all four short-turn skiers), plus parallax. */
 const LEAD_SWITCH = 0.05 / FILMED_BOOT + PARALLAX;

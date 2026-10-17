@@ -125,8 +125,6 @@ export interface PoseConstraints {
   readonly trunkOverShin?: number;
   /** Fraction `trunkOverShin` grows per unit of effort scale, so a harder turn leans the trunk more. */
   readonly trunkOverShinGain?: number;
-  /** Share of the inside leg's extra flexion its ankle takes, so its foot leads less. */
-  readonly insideAnkleShare?: number;
   /** Turn time the pivoted skis are most across, as TurnPath's set; absent, they point along the track. */
   readonly set?: number;
   /** Where the mass travels, and the pelvis with it, over pivoted skis; absent, the keys set the counter. */

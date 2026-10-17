@@ -491,12 +491,11 @@ const solveOn = (
   // Past mid-turn the touch is the next turn's, made by this turn's outside arm.
   const poleTouch = touchShare(c.poleTouch, t) * (wrapTime(t) < 0.5 ? 1 : -1);
   const girdle = { protraction: k.protraction, elevation: k.elevation };
-  // Shin-first: the inside ankle closes with the outside one and takes a share of the inside leg's extra flexion.
+  // Shin-first: the boot holds the inside ankle with the outside one (heinrich-2022 Table 1, lemaster-2010 pp61-62).
   const shinFirst = c.trunkOverShin !== undefined;
   const firm = c.firmSnow === true;
   // Pitched by the bumps, the mass balances over the feet along the snow, not along the ski.
   const alongSnow = firm || bumps;
-  const insideShare = shinFirst ? (c.insideAnkleShare ?? 0) : 0;
   const insideAnkle = (tailLift: number, shin: number): number =>
     (shinFirst ? shin : shinAngle(dorsiflexion + (k.insideDorsiflexion - dorsiflexion) * lifted, EQUIPMENT)) + tailLift;
   // Near the switch the legs share the difference in length, so neither kinks as outside and inside swap.
@@ -537,12 +536,12 @@ const solveOn = (
       rise: 0,
       balance: onAxis,
       // The outside leg gives up its share as the inside one takes it, so the legs swap evenly at the switch.
-      outside: unturned({ hipFlex: hipFlex - split * extra * (1 - insideShare), ankleFlex: ankleFlex - split * extra * insideShare, femurRotation: outsideTurn, tailLift: -pitch - ride.outside, adduction }),
+      outside: unturned({ hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: outsideTurn, tailLift: -pitch - ride.outside, adduction }),
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
       inside: unturned({
-        hipFlex: hipFlex + insideExtra * (1 - insideShare),
-        ankleFlex: insideAnkle(tailLift, ankleFlex) + insideShare * insideExtra,
+        hipFlex: hipFlex + insideExtra,
+        ankleFlex: insideAnkle(tailLift, ankleFlex),
         femurRotation: c.insideFemurShare * femurRotation - c.kneesIn,
         tailLift: tailLift - pitch - ride.inside,
         adduction,
