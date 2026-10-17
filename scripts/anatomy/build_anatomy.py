@@ -49,6 +49,8 @@ def parse_args():
     p.add_argument('--pose', required=True, help='pose track JSON from pose-track.ts')
     p.add_argument('--report', help='optional JSON report path')
     p.add_argument('--save-blend', help='optional path to save the rigged scene')
+    p.add_argument('--skeleton', help='optional ISB skeleton JSON path (src/viewer/skeleton.json)')
+    p.add_argument('--skeleton-only', action='store_true', help='stop after writing --skeleton')
     return p.parse_args(argv)
 
 
@@ -231,6 +233,154 @@ def landmarks(src):
     J['c1'] = src['Atlas (C1)'].mean(axis=0)
     J['crown'] = np.array([J['c1'][0], J['c1'][1], src['skull_top']])
     return J
+
+
+def sphere_fit(v, c0, r0, away):
+    """Least-squares sphere through the vertices around c0, dropping the side toward `away` (the bone's neck)."""
+    c, r = np.asarray(c0, float), r0
+    for band in (0.5, 0.2, 0.1, 0.1):
+        d = np.linalg.norm(v - c, axis=1)
+        keep = (np.abs(d - r) < band * r) & (((v - c) @ away) < 0.3 * r)
+        p = v[keep]
+        A = np.c_[2 * p, np.ones(len(p))]
+        sol = np.linalg.lstsq(A, (p * p).sum(axis=1), rcond=None)[0]
+        c, r = sol[:3], math.sqrt(sol[3] + sol[:3] @ sol[:3])
+    res = np.linalg.norm(p - c, axis=1) - r
+    return dict(centre=c, radius=float(r), rms=float(np.sqrt((res ** 2).mean())), points=int(len(p)))
+
+
+def mesh(src, name):
+    if name not in src:
+        raise SystemExit(f'no bone mesh {name!r}; near: {[k for k in src if name.split()[0].lower() in k.lower()][:12]}')
+    return src[name]
+
+
+def isb_landmarks(src, J):
+    """ISB landmarks (Wu 2002, 2005) as extremes and sphere fits of the bone meshes, Blender space; the body's right is -X."""
+    L, fits = {}, {}
+    for s in ('R', 'L'):
+        lat = -1.0 if s == 'R' else 1.0
+        n = s.lower()
+        femur, tibia, fibula = mesh(src, f'Femur.{n}'), mesh(src, f'Tibia.{n}'), mesh(src, f'Fibula.{n}')
+        hip = J[s]['hip']
+        fits[f'femoral_head.{s}'] = f = sphere_fit(femur[np.linalg.norm(femur - hip, axis=1) < 0.04], hip, 0.024,
+                                                   unit(femur[np.linalg.norm(femur - hip, axis=1) < 0.07].mean(axis=0) - hip))
+        L[f'femoral_head.{s}'] = f['centre']
+        low = femur[femur[:, 2] < femur[:, 2].min() + 0.07]
+        L[f'LE.{s}'], L[f'ME.{s}'] = low[(low[:, 0] * lat).argmax()], low[(low[:, 0] * lat).argmin()]
+        top = tibia[tibia[:, 2] > tibia[:, 2].max() - 0.04]
+        L[f'LC.{s}'], L[f'MC.{s}'] = top[(top[:, 0] * lat).argmax()], top[(top[:, 0] * lat).argmin()]
+        tl, fl = tibia[tibia[:, 2] < tibia[:, 2].min() + 0.05], fibula[fibula[:, 2] < fibula[:, 2].min() + 0.05]
+        # The most prominent points, where a gait lab puts its malleolus markers.
+        L[f'MM.{s}'], L[f'LM.{s}'] = tl[(tl[:, 0] * lat).argmin()], fl[(fl[:, 0] * lat).argmax()]
+        ilium = mesh(src, f'Hip bone.{n}')
+        ilium = ilium[ilium[:, 2] > hip[2] + 0.03]
+        L[f'ASIS.{s}'], L[f'PSIS.{s}'] = ilium[ilium[:, 1].argmin()], ilium[ilium[:, 1].argmax()]
+        humerus, radius, ulna = mesh(src, f'Humerus.{n}'), mesh(src, f'Radius.{n}'), mesh(src, f'Ulna.{n}')
+        gh = J[s]['shoulder']
+        fits[f'humeral_head.{s}'] = f = sphere_fit(humerus[np.linalg.norm(humerus - gh, axis=1) < 0.04], gh, 0.022,
+                                                   unit(humerus[np.linalg.norm(humerus - gh, axis=1) < 0.07].mean(axis=0) - gh))
+        L[f'GH.{s}'] = f['centre']
+        low = humerus[humerus[:, 2] < humerus[:, 2].min() + 0.04]
+        L[f'EL.{s}'], L[f'EM.{s}'] = low[(low[:, 0] * lat).argmax()], low[(low[:, 0] * lat).argmin()]
+        L[f'RS.{s}'], L[f'US.{s}'] = radius[radius[:, 2].argmin()], ulna[ulna[:, 2].argmin()]
+        scap = mesh(src, f'Scapula.{n}')
+        L[f'AI.{s}'] = scap[scap[:, 2].argmin()]
+        upper = scap[scap[:, 2] > gh[2] - 0.06]
+        # Approximations: TS as the upper medial border's most medial point, AA as the most lateral-dorsal one.
+        L[f'TS.{s}'] = upper[(upper[:, 0] * lat).argmin()]
+        acro = scap[scap[:, 2] > gh[2]]
+        L[f'AA.{s}'] = acro[(acro[:, 0] * lat + acro[:, 1]).argmax()]
+    sternum = np.concatenate([v for k, v in src.items() if isinstance(v, np.ndarray) and ('sternum' in k.lower() or 'xiphoid' in k.lower())])
+    mid = sternum[np.abs(sternum[:, 0]) < 0.006]
+    L['IJ'], L['PX'] = mid[mid[:, 2].argmax()], mid[mid[:, 2].argmin()]
+    for k in ('C7', 'T8'):
+        v = mesh(src, f'Vertebra {k}')
+        L[k] = v[v[:, 1].argmax()]
+    # The template is mirror-symmetric; on the midline the vertex picks only add noise.
+    for k in ('IJ', 'PX', 'C7', 'T8'):
+        L[k] = L[k] * np.array([0.0, 1, 1])
+    return L, fits
+
+
+def plane_normal(a, b, c, toward):
+    n = unit(np.cross(b - a, c - a))
+    return n if n @ toward > 0 else -n
+
+
+def isb_frames(J, L):
+    """Per segment: origin at its proximal joint centre (the rig's) and ISB axes, Blender space."""
+    right, front = np.array([-1.0, 0, 0]), np.array([0, -1.0, 0])
+
+    def from_yz(y, z):
+        y = unit(y)
+        z = unit(z - (z @ y) * y)
+        return np.cross(y, z), y, z
+
+    def from_xy(x, y):
+        x = unit(x)
+        y = unit(y - (y @ x) * x)
+        return x, y, np.cross(x, y)
+
+    F = {}
+    z = unit(L['ASIS.R'] - L['ASIS.L'])
+    x = (L['ASIS.R'] + L['ASIS.L']) / 2 - (L['PSIS.R'] + L['PSIS.L']) / 2
+    x = unit(x - (x @ z) * z)
+    F['pelvis'] = ('pelvis', J['pelvis'], (x, np.cross(z, x), z))
+    lower = (L['PX'] + L['T8']) / 2
+    yt = (L['IJ'] + L['C7']) / 2 - lower
+    zt = plane_normal(L['IJ'], L['C7'], lower, right)
+    xt, yt, zt = from_yz(yt, zt)
+    F['lumbar'] = ('lumbar', J['l5s1'], from_yz(J['t12l1'] - J['l5s1'], z))
+    F['thorax'] = ('chest', J['t12l1'], (xt, yt, zt))
+    F['neck'] = ('neck', J['c7t1'], from_yz(J['c1'] - J['c7t1'], zt))
+    F['head'] = ('head', J['c1'], from_yz(J['crown'] - J['c1'], zt))
+    for s in ('R', 'L'):
+        j, k = J[s], (lambda n: L[f'{n}.{s}'])
+        out = 1.0 if s == 'R' else -1.0
+        fe = (k('ME') + k('LE')) / 2
+        F[f'femur.{s}'] = (f'thigh.{s}', j['hip'], from_yz(j['hip'] - fe, out * (k('LE') - k('ME'))))
+        zr = unit(out * (k('LM') - k('MM')))
+        xr = plane_normal((k('MC') + k('LC')) / 2, k('MM'), k('LM'), front)
+        tib = (xr, np.cross(zr, xr), zr)
+        F[f'tibia.{s}'] = (f'shin.{s}', j['knee'], tib)
+        # ISB's calcaneus frame is the tibia's at neutral; the talus is fused to it (subtalar locked by the boot).
+        F[f'foot.{s}'] = (f'foot.{s}', j['ankle'], tib)
+        ts, aa, ai = k('TS'), k('AA'), k('AI')
+        zs = unit(out * (aa - ts))
+        xs = plane_normal(ai, aa, ts, front)
+        F[f'scapula.{s}'] = (f'scapula.{s}', j['sc'], (xs, np.cross(zs, xs), zs))
+        el = (k('EL') + k('EM')) / 2
+        F[f'humerus.{s}'] = (f'upper_arm.{s}', j['shoulder'], from_xy(plane_normal(k('EL'), k('EM'), k('GH'), front), k('GH') - el))
+        fx = plane_normal(k('US'), k('RS'), el, front)
+        F[f'forearm.{s}'] = (f'forearm.{s}', j['elbow'], from_xy(fx, el - k('US')))
+        F[f'hand.{s}'] = (f'hand.{s}', j['wrist'], from_yz(j['wrist'] - j['knuckle'], F[f'forearm.{s}'][2][2]))
+    return F
+
+
+SEGMENT_PARENT = {'pelvis': None, 'lumbar': 'pelvis', 'thorax': 'lumbar', 'neck': 'thorax', 'head': 'neck',
+                  **{f'{seg}.{s}': p.format(s=s) for s in ('R', 'L') for seg, p in (
+                      ('femur', 'pelvis'), ('tibia', 'femur.{s}'), ('foot', 'tibia.{s}'), ('scapula', 'thorax'),
+                      ('humerus', 'scapula.{s}'), ('forearm', 'humerus.{s}'), ('hand', 'forearm.{s}'))}}
+
+
+def skeleton_json(J, L, fits, fit, height):
+    """The ISB skeleton the motion pipeline solves on, in glTF space at the record's height."""
+    r6 = lambda v: [round(float(x), 6) for x in to_gltf(v)]
+    F = isb_frames(J, L)
+    return dict(
+        height=height, space='glTF: +Y up, +Z anterior, the body\'s right is -X; metres',
+        segments={n: dict(parent=SEGMENT_PARENT[n], bone=bone, origin=r6(o), x=r6(a[0]), y=r6(a[1]), z=r6(a[2]))
+                  for n, (bone, o, a) in F.items()},
+        landmarks={k: r6(v) for k, v in sorted(L.items())},
+        joints={**{k: r6(J[k]) for k in ('pelvis', 'l5s1', 't12l1', 'c7t1', 'c1', 'crown')},
+                **{f'{k}.{s}': r6(J[s][k]) for s in ('R', 'L') for k in ('hip', 'knee', 'ankle', 'sc', 'shoulder', 'elbow', 'wrist', 'knuckle')}},
+        fits={k: dict(centre=r6(f['centre']), radius=round(f['radius'], 6), rms=round(f['rms'], 7), points=f['points'],
+                      offset=round(float(np.linalg.norm(f['centre'] - J[k[-1]]['hip' if k.startswith('femoral') else 'shoulder'])), 6))
+              for k, f in fits.items()},
+        body={k: round(v, 6) for k, v in measure(J).items()},
+        gear_fit=fit,
+    )
 
 
 def measure(J):
@@ -946,6 +1096,14 @@ def main():
         offset += len(b['verts'])
     cloud = np.concatenate([x['verts'] for x in bone_meshes + muscles])
     fit = boot_fit(J, cloud)
+    if args.skeleton:
+        L, fits = isb_landmarks(src, J)
+        with open(args.skeleton, 'w') as fh:
+            json.dump(skeleton_json(J, L, fits, fit, posed_track['binding']['height']), fh, indent=1)
+            fh.write('\n')
+        log('skeleton fits: ' + ', '.join(f'{k} r {f["radius"] * 1e3:.1f} rms {f["rms"] * 1e3:.2f} mm ({f["points"]} pts)' for k, f in fits.items()))
+        if args.skeleton_only:
+            return
     ARMS.update(posed_track['arms'])
     POLE.update(posed_track['pole'])
     # The drill scenarios the clips were solved for, so tests can tie the model to the content.

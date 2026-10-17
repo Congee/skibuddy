@@ -618,3 +618,23 @@
   citation: "Spörri J, Kröll J, Gilgien M, Müller E. Sidecut radius and the mechanics of turning - equipment designed to reduce risk of severe traumatic knee injuries in alpine giant slalom ski racing. Br J Sports Med. 2016;50(1):14."
   url: https://doi.org/10.1136/bjsports-2015-095737
   read: full
+- id: wu-2002
+  type: article
+  citation: "Wu G et al. ISB recommendation on definitions of joint coordinate system of various joints for the reporting of human joint motion—part I: ankle, hip, and spine. J Biomech. 2002;35:543-8."
+  url: https://isbweb.org/images/documents/standards/Wu%20et%20al%20J%20Biomech%2035%20(2002)%20543%E2%80%93548.pdf
+  read: full
+- id: wu-2005
+  type: article
+  citation: "Wu G et al. ISB recommendation on definitions of joint coordinate systems of various joints for the reporting of human joint motion—Part II: shoulder, elbow, wrist and hand. J Biomech. 2005;38:981-92."
+  url: https://www.isbweb.org/images/documents/standards/Wu%20et%20al%20J%20Biomech%2038%20(2005)%20981%E2%80%93992.pdf
+  read: partial
+- id: soucie-2011
+  type: article
+  citation: "Soucie JM et al. Range of motion measurements - reference values and a database for comparison studies. Haemophilia. 2011;17:500-7. Reference table as published by CDC."
+  url: https://archive.cdc.gov/www_cdc_gov/ncbddd/jointrom/index.html
+  read: partial
+- id: wolan-nieroda-2025
+  type: article
+  citation: "Wolan-Nieroda A et al. Use of the Zebris ultrasonic three-dimensional motion analysis system to evaluate range of motion of the cervical spine in 61 healthy adults. Med Sci Monit. 2025;31:e948203."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12124152/
+  read: partial
