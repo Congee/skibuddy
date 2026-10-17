@@ -37,7 +37,12 @@ const channels = (pose: Pose, mirror: boolean): Readonly<Record<string, number>>
   const com = centreOfMass(world);
   const sign = mirror ? -1 : 1;
   const side = (s: BodySide): BodySide => (mirror ? other(s) : s);
+  const [hip, neck] = [at(world, SegmentKind.Trunk, BodySide.Center, [0, 0, 0]), at(world, SegmentKind.Trunk, BodySide.Center, [0, 1, 0])];
+  const [rs, ls] = [at(world, SegmentKind.UpperArm, side(BodySide.Right), [0, 0, 0]), at(world, SegmentKind.UpperArm, side(BodySide.Left), [0, 0, 0])];
   return {
+    trunkTilt: sign * Math.atan2(neck[0] - hip[0], neck[1] - hip[1]),
+    trunkPitch: Math.atan2(neck[2] - hip[2], neck[1] - hip[1]),
+    shoulderList: Math.atan2(rs[1] - ls[1], Math.hypot(rs[0] - ls[0], rs[2] - ls[2])),
     lean: sign * pose.lean,
     counter: sign * pose.counter,
     comX: sign * com[0],
