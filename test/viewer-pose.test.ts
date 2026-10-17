@@ -6,10 +6,10 @@ import { EQUIPMENT, FIS_STAND_HEIGHT_MAX, FORWARD_LEAN_RANGE, deltaAngle, minShi
 import type { Equipment } from '../src/viewer/equipment';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { CAPSULE_BOOT, TOE_ROOM } from '../src/viewer/gear-fit';
-import { compose, transformPoint, translation } from '../src/viewer/mat4';
+import { compose, rotationX, rotationY, transformPoint, translation } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
 import { touchShare, windowShare } from '../src/viewer/pose-definition';
-import { FOREARM_FLEXION, MID_FOOT, SKI_TIP as TIP, segmentMatrices, turnDepth } from '../src/viewer/pose';
+import { FOREARM_FLEXION, MID_FOOT, SKI_TIP as TIP, kneeFlex, segmentMatrices, thighPitch, turnDepth } from '../src/viewer/pose';
 import { POSE_SAMPLES, effortOf } from '../src/viewer/pose-solver';
 import { STORK_TURNS } from '../src/viewer/poses/stork-turns';
 import { MODERATE, SCENARIOS, poseAt, solvedPose } from './stork-poses';
@@ -34,6 +34,19 @@ const DEG = Math.PI / 180;
 const ALL = INTENSITIES.map((i) => [i, SCENARIOS[i]] as const);
 
 describe('figure', () => {
+  it('holds the shin at ankleFlex in the cuff however the femur turns, the turn only tilting it sideways', () => {
+    // lemaster-2010 pp61-62, p74: the boot holds the shin's pitch; knee angulation is femoral rotation.
+    for (const [hipFlex, ankleFlex, femurRotation] of [[0.3, 0.25, 0.75], [0.8, 0.4, -0.3], [0.2, 0.5, 0.9], [0.5, 0.3, 0]] as const) {
+      const leg = { hipFlex, ankleFlex, femurRotation, tailLift: 0, adduction: 0 };
+      const knee = kneeFlex(leg);
+      const shin = compose(rotationX(-hipFlex), rotationY(femurRotation), rotationX(knee));
+      const [o, d] = [transformPoint(shin, [0, 0, 0]), transformPoint(shin, [0, -1, 0])];
+      assert.closeTo(d[2] - o[2], -Math.sin(ankleFlex), 1e-6);
+      if (femurRotation === 0) assert.closeTo(knee, hipFlex + ankleFlex, 1e-9);
+      assert.closeTo(thighPitch(knee, ankleFlex, femurRotation), hipFlex, 1e-9);
+    }
+  });
+
   it('lists parents before children', () => {
     SEGMENTS.forEach((s, i) => assert.isTrue(s.parent === null || s.parent < i, s.name));
   });

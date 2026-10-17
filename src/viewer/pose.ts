@@ -259,7 +259,7 @@ const localRotation = (segment: Segment, pose: Pose, lean: number): Mat4 => {
       return compose(inverseRotation(pelvisOf(pose)), rotationZ(-pose.hipAngulation - out * leg.adduction), rotationX(-leg.hipFlex), rotationY(leg.femurRotation));
     case SegmentKind.Shin:
       // A hinge: the knee only flexes.
-      return rotationX(leg.hipFlex + leg.ankleFlex);
+      return rotationX(kneeFlex(leg));
     case SegmentKind.Boot:
       // Set in the body frame by bootRotation instead.
       return identity();
@@ -272,6 +272,22 @@ const localRotation = (segment: Segment, pose: Pose, lean: number): Mat4 => {
 };
 
 const RAMP = totalRamp(EQUIPMENT);
+
+/** The thigh's pitch that, with the shin pitched by ankleFlex and the femur turned, flexes the knee by `knee`: kneeFlex's inverse. */
+export const thighPitch = (knee: number, ankleFlex: number, femurRotation: number): number => {
+  const [a, b] = [Math.cos(femurRotation) * Math.sin(knee), Math.cos(knee)];
+  return Math.acos(Math.sin(ankleFlex) / Math.hypot(a, b)) - Math.atan2(b, a);
+};
+
+/**
+ * The knee's hinge angle that keeps the shin pitched forward by ankleFlex, as the boot's cuff holds it, whatever the
+ * femur's rotation: the rotation then only tilts the shin sideways (lemaster-2010 pp61-62, p74). Inferred from the cuff.
+ * Mirrored in build_anatomy.py.
+ */
+export const kneeFlex = (leg: LegPose): number => {
+  const [a, b] = [Math.cos(leg.hipFlex) * Math.cos(leg.femurRotation), Math.sin(leg.hipFlex)];
+  return Math.atan2(b, a) + Math.asin(Math.sin(leg.ankleFlex) / Math.hypot(a, b));
+};
 
 /** Frontal tilt of a shin toward the inside of the turn, in the body frame. */
 const shinTilt = (shin: Mat4): number => {

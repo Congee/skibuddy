@@ -387,9 +387,10 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
         # The inside leg shortens at the hip, as in solvePose.
         hip, ankle = leg['hipFlex'] + (inside_extra if s == 'L' else 0.0), leg['ankleFlex']
         # Set in the body frame; the femur turns about its own axis.
-        R[f'thigh.{s}'] = (pelvis.inverted() @ rot_z3(-p['hipAngulation'] - sign * leg.get('adduction', 0.0)) @ rot_x(-hip)
-                           @ Matrix.Rotation(leg['femurRotation'], 4, rest['femur'][s]))
-        R[f'shin.{s}'] = rot_x(hip + ankle)
+        frontal = rot_z3(-p['hipAngulation'] - sign * leg.get('adduction', 0.0)) @ rot_x(-hip)
+        femur = Matrix.Rotation(leg['femurRotation'], 4, rest['femur'][s])
+        R[f'thigh.{s}'] = pelvis.inverted() @ frontal @ femur
+        R[f'shin.{s}'] = rot_x(knee_flex(frontal @ femur, frontal, hip + ankle, rest['shin'][s]))
         flex = p.get('armFlexion', ARMS['flexion']) + ARMS['leanShoulder'] * lean + (reach if s == reacher else 0.0)
         girdle = p['outsideGirdle'] if s == 'R' else p['insideGirdle']
         R[f'scapula.{s}'] = rot_y3(-sign * girdle['protraction']) @ rot_z3(sign * girdle['elevation'])
@@ -406,6 +407,19 @@ def local_rotations(p, rest, inside_extra=0.0, reach=0.0):
         R[f'thumb.{s}'] = hand['thumb'][0]
         R[f'thumbtip.{s}'] = hand['thumb'][1]
     return R
+
+
+def knee_flex(thigh, unturned, knee, shin):
+    """kneeFlex in pose.ts: the hinge angle that pitches the shin forward as far as `knee` does with the femur unturned."""
+    def forward(m, k):
+        return -(m.to_3x3() @ rot_x(k).to_3x3() @ shin).y
+    target = forward(unturned, knee)
+    c = forward(thigh, 0.0) - forward(thigh, math.pi)
+    # forward(k) = mid + (c cos k + q sin k) / 2
+    mid, q = (forward(thigh, 0.0) + forward(thigh, math.pi)) / 2, forward(thigh, math.pi / 2) - forward(thigh, -math.pi / 2)
+    phase, r = math.atan2(q, c), math.hypot(c, q) / 2
+    turn = math.acos((target - mid) / r)
+    return min((phase + turn, phase - turn), key=lambda k: abs(k - knee))
 
 
 EDGE_HANDOVER = math.radians(10)
@@ -994,7 +1008,8 @@ def main():
         tips[s] = tuple(float(x) for x in rest_point((0, -thick, zc + 0.8)))
 
     rest = dict(ramp=binding['bootBoardRamp'] + binding['deltaAngle'],
-                femur={s: (Vector(J[s]['hip']) - Vector(J[s]['knee'])).normalized() for s in ('R', 'L')})
+                femur={s: (Vector(J[s]['hip']) - Vector(J[s]['knee'])).normalized() for s in ('R', 'L')},
+                shin={s: Vector(J[s]['ankle']) - Vector(J[s]['knee']) for s in ('R', 'L')})
     # The template's arm hangs back and its elbow is bent; pose.ts's arm hangs straight down at zero. The carrying angle stays.
     down = Vector((0, 0, -1))
     rest['hang'] = {}

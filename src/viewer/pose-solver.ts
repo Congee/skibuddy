@@ -39,8 +39,8 @@ const balanceShare = (lean: number, s: TurnScenario): number => {
   const a = Math.abs(lean);
   return 1 - (1 - fade((a - BALANCE_FROM) / (BALANCE_BY - BALANCE_FROM))) * (1 - fade(a / (BALANCE_PEAK * peakLean(s))));
 };
-import { ARM_ABDUCTION, ARM_FLEXION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TAIL, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, turnDepth } from './pose';
-import type { Pose } from './pose';
+import { ARM_ABDUCTION, ARM_FLEXION, CAPSULE_ARM, CAPSULE_GRIP, PLANT_AHEAD, SKI_TAIL, SKI_TIP, MID_FOOT, aheadOnSki, centreOfMass, outsideWeight, pelvisRotation, poleDirection, poleSize, segmentMatrices, skiIndex, touchSide, thighPitch, turnDepth } from './pose';
+import type { LegPose, Pose } from './pose';
 
 /** How hard the drill is skied, from its physics. */
 export interface Effort {
@@ -499,9 +499,13 @@ const solveOn = (
   // On the zipper, radians the lumbar spine unflexes once the hip is straight, so the trunk still stands up.
   let unflex = 0;
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
+  // Legs built as unturned: hipFlex + ankleFlex is the knee's flexion.
+  const unturned = (leg: LegPose): LegPose => ({ ...leg, hipFlex: thighPitch(leg.hipFlex + leg.ankleFlex, leg.ankleFlex, leg.femurRotation) });
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
-    const pelvisPitch = (folded ? hip + knee - depthKnee : hip) - upright - hipFlex;
+    const outsideTurn = femurRotation + c.kneesIn;
+    // A turned femur flexes the knee out of the shin's plane, so the thigh stands up to keep the knee's flexion.
+    const pelvisPitch = (folded ? hip + knee - depthKnee : hip) - upright - thighPitch(knee, ankleFlex, outsideTurn);
     // A folding hip turns the thighs' draw forward, so absorbing legs squeeze harder to keep the boots together.
     const adduction = c.stance * (c.absorb === undefined ? 1 : 1 + STANCE_SQUEEZE * Math.max(0, knee - SQUEEZE_FROM));
     const insideExtra = (1 - split) * extra;
@@ -522,16 +526,16 @@ const solveOn = (
       rise: 0,
       balance: onAxis,
       // The outside leg gives up its share as the inside one takes it, so the legs swap evenly at the switch.
-      outside: { hipFlex: hipFlex - split * extra * (1 - insideShare), ankleFlex: ankleFlex - split * extra * insideShare, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch - ride.outside, adduction },
+      outside: unturned({ hipFlex: hipFlex - split * extra * (1 - insideShare), ankleFlex: ankleFlex - split * extra * insideShare, femurRotation: outsideTurn, tailLift: -pitch - ride.outside, adduction }),
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
-      inside: {
+      inside: unturned({
         hipFlex: hipFlex + insideExtra * (1 - insideShare),
         ankleFlex: insideAnkle(tailLift, ankleFlex) + insideShare * insideExtra,
         femurRotation: c.insideFemurShare * femurRotation - c.kneesIn,
         tailLift: tailLift - pitch - ride.inside,
         adduction,
-      },
+      }),
       outsideGirdle: girdle,
       insideGirdle: girdle,
     };
