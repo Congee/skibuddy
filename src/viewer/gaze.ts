@@ -1,7 +1,7 @@
 // Build time only: where the head looks through a turn, from the turn's shape on the slope.
 import { HeadAim } from './pose-definition';
 import type { HeadRule } from './pose-definition';
-import { headingAt, transitionHeading } from './turn-heading';
+import { trackHeadingAt, transitionHeading } from './turn-heading';
 import type { TurnPath } from './turn-heading';
 
 const DEG = Math.PI / 180;
@@ -13,8 +13,8 @@ export const HEAD_LAG = 0.25;
 const STEPS = 64;
 const LAG_STEPS = 16;
 
-/** Heading toward the first turn's inside over a run of mirrored turns, turn k spanning turn time [k, k + 1). */
-export const runHeading = (t: number, path: TurnPath): number => (Math.abs(Math.floor(t) % 2) === 0 ? 1 : -1) * headingAt(t, path);
+/** Track heading toward the first turn's inside over a run of mirrored turns, turn k spanning turn time [k, k + 1). */
+export const runHeading = (t: number, path: TurnPath): number => (Math.abs(Math.floor(t) % 2) === 0 ? 1 : -1) * trackHeadingAt(t, path);
 
 /** Seconds per turn: at the fall line the path's heading turns at speed / radius. */
 export const turnSeconds = (path: TurnPath, speed: number): number => {

@@ -81,10 +81,10 @@ export const effortOf = (def: PoseDefinition, scenario: DrillScenario | null): E
 };
 
 /** Head yaw beyond the chest, toward the outside, that `rule` asks for at turn time `t` given the chest's heading on the skis. */
-export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | null, t: number, chest: number): number => {
+export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | null, t: number, chest: number, set?: number): number => {
   if (rule === undefined || rule.aim === HeadAim.Chest || scenario === null || !isTurn(scenario)) return 0;
   const corridor = rule.aim === HeadAim.FallLine ? rule.corridor : CORRIDOR_SHARE * scenario.radiusM;
-  const path = { radius: scenario.radiusM, corridor };
+  const path = { radius: scenario.radiusM, corridor, ...(set === undefined ? {} : { set }) };
   // The gaze lies the skis' heading, less its own, off the fall line toward the outside.
   const yaw = headingAt(t, path) - gazeHeading(rule, path, scenario.speedMps, t) - chest;
   return Math.min(HEAD_LIMIT, Math.max(-HEAD_LIMIT, yaw));
@@ -96,39 +96,6 @@ const insideTipHeight = (pose: Pose): number => {
   const tip = (side: BodySide): number => transformPoint(world[skiIndex(side)] ?? identity(), SKI_TIP)[1];
   return tip(BodySide.Left) - tip(BodySide.Right);
 };
-
-/** How far the inside tip sits ahead of the outside one along the outside ski. */
-const insideTipLead = (pose: Pose): number => {
-  const world = segmentMatrices(pose);
-  const outside = world[skiIndex(BodySide.Right)] ?? identity();
-  return aheadOnSki(world, transformPoint(world[skiIndex(BodySide.Left)] ?? identity(), SKI_TIP), transformPoint(outside, SKI_TIP));
-};
-
-/** Hip joints apart, metres: countered hips set the lead from these, not the boots. */
-const hipX = (side: BodySide): number => SEGMENTS.find((g) => g.kind === SegmentKind.Thigh && g.side === side)?.joint[0] ?? 0;
-const HIP_SPACING = Math.abs(hipX(BodySide.Left) - hipX(BodySide.Right));
-
-/** Turn time the inside tip leads most, between the fall line and the finish. */
-const LEAD_PEAK = 0.7;
-/** The lead's phase rate at the switch and at its peak; slow at the switch, so it builds progressively. */
-const [LEAD_SWITCH_RATE, LEAD_PEAK_RATE] = [0.5, 0.9];
-const hermite = (p0: number, p1: number, m0: number, m1: number, h: number, x: number): number =>
-  (2 * x ** 3 - 3 * x ** 2 + 1) * p0 + (x ** 3 - 2 * x ** 2 + x) * h * m0 + (3 * x ** 2 - 2 * x ** 3) * p1 + (x ** 3 - x ** 2) * h * m1;
-/**
- * Share of its peak the inside tip leads at turn time `u`: level at the switch, growing as the legs turn through the
- * turn to LEAD_PEAK, then back to level; the switch's slope matches the mirrored next turn's.
- */
-const leadShape = (u: number): number =>
-  Math.sin(
-    Math.PI *
-      (u < LEAD_PEAK
-        ? hermite(0, 0.5, LEAD_SWITCH_RATE, LEAD_PEAK_RATE, LEAD_PEAK, u / LEAD_PEAK)
-        : hermite(0.5, 1, LEAD_PEAK_RATE, LEAD_SWITCH_RATE, 1 - LEAD_PEAK, (u - LEAD_PEAK) / (1 - LEAD_PEAK))),
-  );
-/** Most the inside tip leads: Olivia Giaccio's 13 cm peak side-on, within half a boot sole. */
-const LEAD_MAX = Math.min(0.13, EQUIPMENT.soleLength / 2);
-/** Hip to ankle, metres, near enough to step the inside leg's swing toward its lead. */
-const LEG_REACH = 0.8;
 
 /**
  * On firm snow the boots stand `clearance` over it, or higher if a tip-down tip would dip under it; a tip-up ski's
@@ -530,12 +497,6 @@ const solveOn = (
   let upright = 0;
   // On the zipper, radians the lumbar spine unflexes once the hip is straight, so the trunk still stands up.
   let unflex = 0;
-  // Radians the legs scissor about the hips, the knees held: the inside forward, the outside back, half each.
-  let swing = 0;
-  // The lead builds progressively from level at the edge change to about what square boots under the most countered
-  // hips give, the hip spacing times the sine of the counter (Olivia Giaccio side-on).
-  const peakCounter = c.scissor === true ? Math.max(...Array.from({ length: 48 }, (_, j) => keyValuesAt(def.keys, j / 48)).map((v) => v.counter * (1 + (c.gains.counter ?? 0) * effort.scale) + v.counterStep * effort.scale)) : 0;
-  const lead = c.scissor === true ? Math.min(LEAD_MAX, HIP_SPACING * Math.sin(peakCounter)) * leadShape(wrapTime(t)) : null;
   const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
     const hipFlex = knee - ankleFlex;
@@ -560,12 +521,12 @@ const solveOn = (
       rise: 0,
       balance: onAxis,
       // The outside leg gives up its share as the inside one takes it, so the legs swap evenly at the switch.
-      outside: { hipFlex: hipFlex - split * extra * (1 - insideShare) - swing / 2, ankleFlex: ankleFlex - split * extra * insideShare + swing / 2, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch - ride.outside, adduction },
+      outside: { hipFlex: hipFlex - split * extra * (1 - insideShare), ankleFlex: ankleFlex - split * extra * insideShare, femurRotation: femurRotation + c.kneesIn, tailLift: -pitch - ride.outside, adduction },
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
       inside: {
-        hipFlex: hipFlex + insideExtra * (1 - insideShare) + swing / 2,
-        ankleFlex: insideAnkle(tailLift, ankleFlex) + insideShare * insideExtra - swing / 2,
+        hipFlex: hipFlex + insideExtra * (1 - insideShare),
+        ankleFlex: insideAnkle(tailLift, ankleFlex) + insideShare * insideExtra,
         femurRotation: c.insideFemurShare * femurRotation - c.kneesIn,
         tailLift: tailLift - pitch - ride.inside,
         adduction,
@@ -700,15 +661,10 @@ const solveOn = (
       }
     } else knee = balance(inside.extra, inside.tailLift);
     inside = insideLeg(knee, shin);
-    for (let i = 0; lead !== null && i < 3; i++) {
-      const pose = base(knee, inside.extra, inside.tailLift, shin);
-      swing += (lead - insideTipLead(pose)) / LEG_REACH;
-      inside = insideLeg(knee, shin);
-    }
   }
   const solved = base(knee, inside.extra, inside.tailLift, shin);
   // The head moves no mass to speak of, so it turns only once the trunk is set.
-  const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist) };
+  const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist, c.set) };
   const rested = (p: Pose): Pose => (firm ? { ...p, rise: riseOf(p, mild('skiClearance')) } : pitch === 0 ? p : { ...p, rise: baseRiseOf(p) });
   const legs = rested(turned);
   if (legs.poleTouch === 0) return legs;

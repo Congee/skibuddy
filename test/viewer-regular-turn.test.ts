@@ -486,7 +486,7 @@ describe('regular turn', () => {
           assert.isTrue(peakAt >= 0.35 && peakAt <= 0.7, `${tag} peak t ${peakAt.toFixed(2)}`);
         }
         // Where the legs scissor the counter sets the lead; elsewhere the inside leg's flex does, smaller and dipping in gentle carving.
-        const scissor = POSE_DEFINITIONS[drill]?.constraints.scissor === true;
+        const scissor = POSE_DEFINITIONS[drill]?.constraints.set !== undefined;
         if (scissor) {
           // One athlete measured so far (Giaccio 3-13 cm), so only the shape: ahead by 0.3, growing to the peak.
           assert.isAbove(at(0.3), 0, tag);
@@ -559,7 +559,7 @@ describe('regular turn', () => {
     if (rule === undefined) throw new Error(RegularTurn.Powder);
     for (const i of INTENSITIES) {
       const s = TURN_STYLES[RegularTurn.Powder].scenarios[i];
-      const path = { radius: s.radiusM, corridor: CORRIDOR_SHARE * s.radiusM };
+      const path = turnPath(RegularTurn.Powder, i);
       for (let k = 0; k < 96; k++) {
         const t = k / 96;
         const p = samplePose(poseTable(RegularTurn.Powder, i), t);

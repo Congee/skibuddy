@@ -1,4 +1,5 @@
 import type { Intensity } from '../content/schema';
+import { headingPhase } from './poses/regular-turn';
 import { MOGUL_POSE, POWDER_POSE, ROUND_POSE, TOPS_POSE, transitionHeading, turnPath } from './turn-heading';
 import type { TurnPath } from './turn-heading';
 import type { Vec3 } from './mat4';
@@ -82,8 +83,11 @@ const SWELL_ACROSS = 5;
 
 const SAMPLES = 256;
 
-/** The skis' heading off the fall line through one turn, t in 0..1, as headingAt without its wrap at 1. */
+/** The feet's track heading off the fall line through one turn, t in 0..1, as trackHeadingAt without its wrap at 1. */
 const heading = (t: number, most: number): number => -most * Math.cos(Math.PI * t);
+/** The skis' yaw, as headingAt without its wrap at 1: pivoted skis skid across the track. */
+const yaw = (t: number, most: number, path: TurnPath): number =>
+  path.set === undefined ? heading(t + (path.phase ?? 0), most) : -most * Math.cos(Math.PI * headingPhase(t, path.set));
 
 /** Cumulative path offsets per unit speed at SAMPLES + 1 steps through the turn, by the trapezoid rule. */
 const integrate = (most: number): { readonly xs: Float64Array; readonly zs: Float64Array } => {
@@ -337,23 +341,25 @@ export const normalAt = (s: Surface, x: number, z: number): Vec3 => {
   return [-dx / n, 1 / n, -dz / n];
 };
 
-/** The skier on the field at turn time t (0..1): where the skis' centre is and their heading off the fall line. */
+/** The skier on the field at turn time t (0..1): where the skis' centre is on the track and their yaw off the fall line. */
 export interface OnField {
   readonly x: number;
   readonly z: number;
   readonly heading: number;
+  /** The track's heading there; pivoted skis skid off it by heading - track. */
+  readonly track: number;
 }
 
 /** Where the turn's path is at time t: from the centre line at the switch, across to the corridor's edge on the fall line, back to the centre line a spacing down at t = 1. */
 export const pathAt = (s: Surface, t: number): OnField => {
   const most = transitionHeading(s.path);
-  const phase = s.path.phase ?? 0;
   const { xs, zs } = tableFor(most, s.path.phase);
-  const u = Math.min(1, Math.max(0, t)) * SAMPLES;
+  const at = Math.min(1, Math.max(0, t));
+  const u = at * SAMPLES;
   const i = Math.min(SAMPLES - 1, Math.floor(u));
   const f = u - i;
   const lerp = (a: Float64Array): number => ((a[i] ?? 0) * (1 - f) + (a[i + 1] ?? 0) * f) * s.speed;
-  return { x: lerp(xs), z: lerp(zs), heading: heading(Math.min(1, Math.max(0, t)) + phase, most) };
+  return { x: lerp(xs), z: lerp(zs), heading: yaw(at, most, s.path), track: heading(at + (s.path.phase ?? 0), most) };
 };
 
 /** A point under the skier: on the field, the snow's top and the support there, and the top's normal. */

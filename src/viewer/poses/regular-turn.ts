@@ -42,8 +42,8 @@ export interface TurnStyle {
   readonly twist: number;
   /** Share of the peak counter and twist at each phase key. */
   readonly counterCurve: PhaseValues;
-  /** The inside tip leads as the stance width and the countered hips set it, nil at the switch; absent, as the legs fall. */
-  readonly scissor?: boolean;
+  /** Turn time the pivoted skis are most across, flat in the fall line at the switch; absent, across at the switch. */
+  readonly set?: number;
   /** Trunk bent toward the outside ski at shaping. */
   readonly bend: number;
   /** Degrees the trunk leans further forward than the outside shin; the ankle, solved, sets fore-aft (lemaster-2010 p81). */
@@ -178,9 +178,27 @@ export const CORRIDOR_SHARE = 1;
 // it fully only in passing, more on steeper hills (kipp-2024; lemaster-2010 pp74, 128); the spine adds 5-8 (sporri-2016).
 const anticipation = (scenarios: TurnScenarios, share: number): number =>
   Math.min(HIP_TURN, share * pathHeading(scenarios.moderate.radiusM, CORRIDOR_SHARE * scenarios.moderate.radiusM));
-// Signed, as headingAt in turn-heading.ts: -max at the transition, 0 at the fall line, max into the next transition.
-const heading = (t: number): number => -Math.cos(Math.PI * t);
-const HEADING: PhaseValues = [heading(0), heading(1 / 6), heading(1 / 2), heading(0.65), heading(5 / 6)];
+const hermite = (p0: number, p1: number, m0: number, m1: number, h: number, x: number): number =>
+  (2 * x ** 3 - 3 * x ** 2 + 1) * p0 + (x ** 3 - 2 * x ** 2 + x) * h * m0 + (3 * x ** 2 - 2 * x ** 3) * p1 + (x ** 3 - x ** 2) * h * m1;
+/**
+ * The skis' heading phase at turn time t in 0..1, half a cycle per turn: on a carved arc t itself, across at the
+ * switch. Pivoted (`set` given), the skis are flat in the fall line at the switch (0.5) and most across at `set` (1),
+ * at an even rate through the switch so the mirrored next turn joins without a kink.
+ */
+// The unit end slopes, an even phase rate at the switch and the set, are inferred.
+export const headingPhase = (t: number, set?: number): number =>
+  set === undefined ? t : t < set ? hermite(0.5, 1, 1, 1, set, t / set) : hermite(1, 1.5, 1, 1, 1 - set, (t - set) / (1 - set));
+// Signed, as headingAt in turn-heading.ts: from the outside toward the inside, most across at phase 1.
+const heading = (t: number, set?: number): number => -Math.cos(Math.PI * headingPhase(t, set));
+const headingKeys = (set: number): PhaseValues => [heading(0, set), heading(1 / 6, set), heading(1 / 2, set), heading(0.65, set), heading(5 / 6, set)];
+/**
+ * Pivoted short turns: the skis swing under a pelvis facing the fall line, flat in the fall line at the edge change
+ * and most across, most edged, at mid-turn, so the counter is nil at the switch and builds into the turn (Olivia
+ * Giaccio front view, scratchpad lead-footage notes §4; fis-freestyle-judging-2025 p29). Mid-turn for all but the round
+ * line inferred from Giaccio.
+ */
+const PIVOT_SET = 0.5;
+const PIVOTED = { set: PIVOT_SET, counterCurve: headingKeys(PIVOT_SET) } as const;
 
 // The mass runs nearly straight while the legs swing under it (lind-sanders-2004 pp114-115), the feet under the
 // hips (fis-freestyle-judging-2025 p26): its path about 4x the skis' arc, inferred, so the trunk inclines 10-20 deg.
@@ -316,8 +334,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // 36 deg at the switch: pelvis counter 30-40 deg, low confidence (biomechanics.md D12); share inferred.
     counter: anticipation(SHORT, 0.6),
     twist: 6,
-    counterCurve: HEADING,
-    scissor: true,
+    ...PIVOTED,
     bend: 5,
     spineFlex: 22,
     narrow: 0,
@@ -350,8 +367,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Held to the skis' heading off the fall line, which the corridor sets at every intensity.
     counterGain: 0,
     twist: 0,
-    counterCurve: HEADING,
-    scissor: true,
+    ...PIVOTED,
     bend: 3,
     spineFlex: 24,
     // Legs together (fis-freestyle-judging-2025 p26), as the closed stance.
@@ -386,8 +402,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Further down the fall line than short turns (skimag-steeps-2018, kipp-2024); share inferred.
     counter: anticipation(STEEP, 0.65),
     twist: 4,
-    counterCurve: HEADING,
-    scissor: true,
+    ...PIVOTED,
     bend: 1,
     spineFlex: 24,
     narrow: 0,
@@ -417,8 +432,7 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Head on the fall line and near the chest in open powder, so the chest leads well down it; share inferred.
     counter: anticipation(POWDER, 0.7),
     twist: 7,
-    counterCurve: HEADING,
-    scissor: true,
+    ...PIVOTED,
     bend: 2,
     spineFlex: 19,
     narrow: 2,
@@ -459,8 +473,7 @@ export const CLOSED_STANCE: TurnStyle = {
   kneeAngulation: 10,
   counter: fallLineHeading(4.5, CORRIDOR),
   twist: 0,
-  counterCurve: HEADING,
-  scissor: true,
+  ...PIVOTED,
   bend: 1,
   spineFlex: 22,
   narrow: 7,
@@ -525,7 +538,6 @@ export const ROUND_PHASE = 0.35;
 export const ROUND_SET = 1 - ROUND_PHASE;
 /** The braking load runs ahead of the keys, so it peaks on the edge set, a hockey stop against the face (jds-bumps-style 2:12-2:37). */
 export const ROUND_FORCES = PHASE_T.finish - ROUND_SET;
-const roundHeading = (t: number): number => heading(t + ROUND_PHASE);
 // Hands wide and forward (jds-bumps-style frames): the figure's default, not the zipper's hands in.
 const { armAbduction: _handsIn, ...MOGUL_HANDS_WIDE } = TURN_STYLES[RegularTurn.Moguls];
 
@@ -544,7 +556,8 @@ export const ROUND: TurnStyle = {
   // The chest faces downhill (jds-bumps-style frames), so the pelvis turns back by the skis' heading, phased as the path.
   counter: fallLineHeading(3, ROUND_CORRIDOR),
   counterGain: 0,
-  counterCurve: [roundHeading(0), roundHeading(1 / 6), roundHeading(1 / 2), roundHeading(ROUND_SET), roundHeading(5 / 6)],
+  set: ROUND_SET,
+  counterCurve: headingKeys(ROUND_SET),
   // Trunk parallel to the shin at the crest (gellie-2019-moguls-forward).
   trunkOverShin: 0,
   trunkOverShinGain: 0,
@@ -729,7 +742,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       trunkOverShin: style.trunkOverShin * DEG,
       trunkOverShinGain: style.trunkOverShinGain ?? TRUNK_OVER_SHIN_GAIN,
       insideAnkleShare: INSIDE_ANKLE_SHARE,
-      ...(style.scissor === true ? { scissor: true } : {}),
+      ...(style.set === undefined ? {} : { set: style.set }),
       poleTouch: style.polePlant ? { t: style.poleTouchAt ?? 1 / 24, hold: 0.02, swing: 0.11 } : null,
       scapularRhythm: 0.3,
       stance: style.narrow * DEG,

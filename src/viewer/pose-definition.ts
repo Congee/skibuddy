@@ -114,8 +114,8 @@ export interface PoseConstraints {
   readonly trunkOverShinGain?: number;
   /** Share of the inside leg's extra flexion its ankle takes, so its foot leads less. */
   readonly insideAnkleShare?: number;
-  /** The legs scissor so the inside tip leads as the stance and the countered hips set it, nil at the switch; absent, as the legs fall. */
-  readonly scissor?: boolean;
+  /** Turn time the pivoted skis are most across, as TurnPath's set; absent, they point along the track. */
+  readonly set?: number;
   /** Where the head looks; absent, with the chest. */
   readonly head?: HeadRule;
   /** Radians both arms are abducted; absent, ARM_ABDUCTION. */

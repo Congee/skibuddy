@@ -44,10 +44,10 @@ describe('headingAt', () => {
 
 describe('turnPath', () => {
   it('runs the zipper in a rut-wide corridor, the tops line 50° off the fall line and closed stance in 2 m', () => {
-    assert.deepStrictEqual(turnPath(RegularTurn.Moguls, Intensity.Moderate), { radius: 5, corridor: 1.1 });
+    assert.deepStrictEqual(turnPath(RegularTurn.Moguls, Intensity.Moderate), { radius: 5, corridor: 1.1, set: 0.5 });
     // Finishing across the hill (duncan-smith-2021 1:28-1:32); 50° inferred.
     for (const i of [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic]) close(transitionHeading(turnPath(TOPS_POSE, i)), 50 * DEG);
-    assert.deepStrictEqual(turnPath('closed-stance-short-turns', Intensity.Moderate), { radius: 4.5, corridor: 2 });
+    assert.deepStrictEqual(turnPath('closed-stance-short-turns', Intensity.Moderate), { radius: 4.5, corridor: 2, set: 0.5 });
   });
 
   it('keeps the zipper skis within 30° of the fall line (fis-freestyle-judging-2025 p28)', () => {

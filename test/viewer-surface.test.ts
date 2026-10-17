@@ -198,7 +198,7 @@ describe('pathAt', () => {
       const end = pathAt(s, 1);
       close(end.x, 0, 1e-9);
       close(end.z, s.spacing, 1e-9);
-      close(pathAt(s, 0.5).heading, 0, 1e-12);
+      close(pathAt(s, 0.5).track, 0, 1e-12);
     }
   });
 
