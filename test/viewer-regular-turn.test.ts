@@ -111,10 +111,10 @@ describe('regular turn', () => {
 
   it('leans the trunk forward within the measured range', () => {
     // Spine flexion 11-27 deg in racers (sporri-2016) on a pelvis pitched forward; outside hip up to 55-65 deg (gao-2024).
-    // The zipper's trunk follows its shin instead, below.
+    // The zipper's trunk follows its shin instead, below. In the body plane, as measured, not the countered skis'.
     for (const kind of KINDS.filter((k) => k !== RegularTurn.Moguls))
       for (const i of INTENSITIES) {
-        const trunk = angles(kind, i, 1 / 2).trunkForward;
+        const trunk = angles(kind, i, 1 / 2).trunkPitch;
         assert.isTrue(trunk >= 15 && trunk <= 40, `${kind} ${i}: ${trunk.toFixed(1)}`);
       }
   });
