@@ -504,7 +504,7 @@ export const poleDirection = (grip: Vec3, side: typeof BodySide.Left | typeof Bo
 };
 
 /** The capsule figure's fist, in its forearm frame. */
-export const CAPSULE_GRIP: Vec3 = [0, -0.3, 0.01];
+export const CAPSULE_GRIP: Vec3 = [0, -REFERENCE_SKIER.body.grip, 0.01];
 
 const UPPER_ARM = SEGMENTS.findIndex((s) => s.kind === SegmentKind.UpperArm && s.side === BodySide.Left);
 const FOREARM = SEGMENTS.findIndex((s) => s.kind === SegmentKind.Forearm && s.side === BodySide.Left);

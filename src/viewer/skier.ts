@@ -24,6 +24,8 @@ export interface Body {
   readonly trunk: number;
   /** Shoulder to elbow joint centre. */
   readonly upperArm: number;
+  /** Elbow joint centre to the fist's grip on the pole. */
+  readonly grip: number;
 }
 
 /** The skier the figure is built for: body, boot sole and skis by terrain. */
@@ -47,22 +49,24 @@ export const FIGURE_SKIER: ReferenceSkier = {
   // Stature its legs give by de-leva-1996's proportions, and that table's male mass.
   height: 1.776,
   mass: 73,
-  body: { hipWidth: 0.2, thigh: 0.45, shin: 0.43, trunk: 0.74, upperArm: 0.3 },
+  body: { hipWidth: 0.2, thigh: 0.45, shin: 0.43, trunk: 0.74, upperArm: 0.3, grip: 0.3 },
   // About a mondopoint 26.5 shell.
   bsl: 0.305,
   skis: { [Terrain.Groomed]: FIGURE_SKI, [Terrain.Moguls]: FIGURE_SKI },
 };
 
-/** de-leva-1996 Table 4, males: stature and joint-centre lengths, mm. */
-const DE_LEVA_STATURE = 1741;
-const DE_LEVA = { thigh: 422.2, shin: 440.3, trunk: 603.3, upperArm: 281.7 } as const;
-/** Hip joint centres apart per metre of stature; inferred: the old figure's 0.2 m over its 1.776 m (de-leva-1996 gives none). */
-const HIP_WIDTH_SHARE = 0.2 / 1.776;
+/** The Z-Anatomy template's skeleton as build_anatomy.py measures it, left side, unscaled; the bake checks these and scales the mesh by `height / stature`. */
+export const ANATOMY_MESH = {
+  // Skull top to the lowest foot bone, plus an inferred 2 cm of heel pad and scalp.
+  stature: 1.716251,
+  body: { hipWidth: 0.157043, thigh: 0.428491, shin: 0.367634, trunk: 0.583635, upperArm: 0.287273, grip: 0.307788 },
+} as const;
 
-/** Lengths for `height` metres by de-leva-1996's male proportions; hip width inferred. */
-export const deLevaBody = (height: number): Body => {
-  const k = height / DE_LEVA_STATURE;
-  return { hipWidth: HIP_WIDTH_SHARE * height, thigh: DE_LEVA.thigh * k, shin: DE_LEVA.shin * k, trunk: DE_LEVA.trunk * k, upperArm: DE_LEVA.upperArm * k };
+/** The anatomy mesh's lengths, scaled uniformly to `height` metres. */
+export const anatomyBody = (height: number): Body => {
+  const k = height / ANATOMY_MESH.stature;
+  const m = ANATOMY_MESH.body;
+  return { hipWidth: m.hipWidth * k, thigh: m.thigh * k, shin: m.shin * k, trunk: m.trunk * k, upperArm: m.upperArm * k, grip: m.grip * k };
 };
 
 /** Ikuma Horishima, JPN moguls. */
@@ -72,8 +76,8 @@ export const HORISHIMA: ReferenceSkier = {
   height: 1.68,
   // Sourced: Wikipedia en/ja infobox.
   mass: 66,
-  // Derived: de-leva-1996 by height.
-  body: deLevaBody(1.68),
+  // Derived: the anatomy mesh scaled to his height.
+  body: anatomyBody(1.68),
   // User.
   bsl: 0.295,
   skis: {

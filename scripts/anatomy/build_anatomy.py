@@ -233,6 +233,20 @@ def landmarks(src):
     return J
 
 
+def measure(J):
+    """Joint-centre lengths as ReferenceSkier's Body in src/viewer/skier.ts, left side."""
+    l, d = J['L'], lambda a, b: float(np.linalg.norm(a - b))
+    return dict(hipWidth=d(J['R']['hip'], l['hip']), thigh=d(l['hip'], l['knee']), shin=d(l['knee'], l['ankle']),
+                trunk=d(J['pelvis'], J['c7t1']), upperArm=d(l['shoulder'], l['elbow']), grip=d(grip_point(l, 'L'), l['elbow']))
+
+
+def check_lengths(what, got, want, tol):
+    off = {k: (got[k], want[k]) for k in want if abs(got[k] - want[k]) > tol}
+    if off:
+        raise SystemExit(f'{what} lengths differ from ANATOMY_MESH in src/viewer/skier.ts: {off}')
+    log(f'{what} lengths match skier.ts: ' + ', '.join(f'{k} {v:.4f}' for k, v in got.items()))
+
+
 def build_armature(J):
     arm = bpy.data.armatures.new('rig')
     ob = bpy.data.objects.new('rig', arm)
@@ -358,6 +372,8 @@ GRIP_CANT = math.radians(17)
 CURL_KNUCKLE = 1.45
 # Boot sole below the lowest foot bone: heel pad, liner and shell sole.
 BOOT_SOLE = 0.03
+# Heel pad under the lowest foot bone and scalp over the skull, for stature; inferred.
+SOFT_TISSUE = 0.02
 # Subtalar joint below and behind the talus's centre.
 SUBTALAR_BELOW, SUBTALAR_BEHIND = 0.015, 0.01
 
@@ -860,7 +876,18 @@ def main():
         if part == 'head':
             skull_top = max(skull_top, float(v[:, 2].max()))
     src['skull_top'] = skull_top
+    with open(args.pose) as fh:
+        posed_track = json.load(fh)
+    # Uniformly to the reference skier's stature; the solver's lengths are this mesh's, scaled the same.
+    mesh = posed_track['binding']['mesh']
+    feet = np.concatenate([v for k, v in src.items() if k.startswith('foot:')])
+    stature = skull_top - float(feet[:, 2].min()) + SOFT_TISSUE
+    check_lengths('template', dict(stature=stature, **measure(landmarks(src))), dict(stature=mesh['stature'], **mesh['body']), 1e-4)
+    scale = posed_track['binding']['height'] / stature
+    src = {k: v * scale for k, v in src.items()}
     J = landmarks(src)
+    # Fixed-size offsets (the pole's grip radius, landmark bands) don't scale, so allow a millimetre.
+    check_lengths('scaled', measure(J), {k: v * scale for k, v in mesh['body'].items()}, 1e-3)
 
     # Free the source scene so decimation doesn't re-evaluate 7000 objects.
     keep = {id(x['mesh']) for x in muscles + bone_meshes}
@@ -875,6 +902,7 @@ def main():
         for x, a in zip(items, share):
             r = min(1.0, max(budget * a / total, 60) / max(x['tris'], 1))
             x['verts'], x['tris_idx'], x['mats'] = decimate(x['mesh'], r)
+            x['verts'] = x['verts'] * scale
             x['centroid'] = x['verts'].mean(axis=0)
             del x['mesh']
         return sum(len(x['tris_idx']) for x in items)
@@ -918,8 +946,6 @@ def main():
         offset += len(b['verts'])
     cloud = np.concatenate([x['verts'] for x in bone_meshes + muscles])
     fit = boot_fit(J, cloud)
-    with open(args.pose) as fh:
-        posed_track = json.load(fh)
     ARMS.update(posed_track['arms'])
     POLE.update(posed_track['pole'])
     # The drill scenarios the clips were solved for, so tests can tie the model to the content.
@@ -948,7 +974,7 @@ def main():
     if missing:
         raise SystemExit(f'muscle-map.json names meshes not in the blend: {", ".join(missing)}')
 
-    report = dict(groups={})
+    report = dict(groups={}, body=measure(J))
     for key, items in sorted(groups.items()):
         vs, ts, ms, ws, uvs, offset = [], [], [], [], [], 0
         for m in items:

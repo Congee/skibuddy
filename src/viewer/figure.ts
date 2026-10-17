@@ -55,10 +55,11 @@ const scaleOf = (body: Body, key: keyof Body): number => body[key] / FIGURE_SKIE
 const arm = (body: Body, side: BodySide, trunk: number, first: number): ReadonlyArray<Segment> => {
   const t = scaleOf(body, 'trunk');
   const u = scaleOf(body, 'upperArm');
+  const g = scaleOf(body, 'grip');
   return [
     { name: `${side}-girdle`, kind: SegmentKind.Girdle, side, parent: trunk, joint: [sideX(side, STERNOCLAVICULAR), 0.44 * t, 0], shape: capsule(0.05, 0, [sideX(side, CLAVICLE), 0.04, 0]) },
     { name: `${side}-upper-arm`, kind: SegmentKind.UpperArm, side, parent: first, joint: [sideX(side, CLAVICLE), 0.04, 0], shape: capsule(0.045, 0.22 * u, [0, -0.15 * u, 0]) },
-    { name: `${side}-forearm`, kind: SegmentKind.Forearm, side, parent: first + 1, joint: [0, -body.upperArm, 0], shape: capsule(0.04, 0.2, [0, -0.14, 0]) },
+    { name: `${side}-forearm`, kind: SegmentKind.Forearm, side, parent: first + 1, joint: [0, -body.upperArm, 0], shape: capsule(0.04, 0.2 * g, [0, -0.14 * g, 0]) },
   ];
 };
 
