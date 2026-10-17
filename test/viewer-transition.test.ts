@@ -42,6 +42,7 @@ const channels = (pose: Pose, mirror: boolean): Readonly<Record<string, number>>
     counter: sign * pose.counter,
     comX: sign * com[0],
     comY: com[1],
+    comZ: com[2],
     rightLeg: legLength(world, side(BodySide.Right)),
     leftLeg: legLength(world, side(BodySide.Left)),
     rightRoll: sign * skiRoll(world, side(BodySide.Right)),
