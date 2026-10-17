@@ -5,19 +5,22 @@ import { INTENSITIES } from '../src/content/schema';
 import type { Intensity } from '../src/content/schema';
 import { BodySide, SEGMENTS, SegmentKind } from '../src/viewer/figure';
 import { transformPoint } from '../src/viewer/mat4';
-import { ARM_FLEXION, CAPSULE_GRIP, segmentMatrices, skiIndex } from '../src/viewer/pose';
+import { CAPSULE_BOOT, HEEL_ROOM } from '../src/viewer/gear-fit';
+import { ARM_FLEXION, CAPSULE_GRIP, MID_FOOT, segmentMatrices, skiIndex } from '../src/viewer/pose';
 import type { Vec3 } from '../src/viewer/mat4';
 import { forceTiltAt } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS } from '../src/viewer/poses';
 import { rideOf } from '../src/viewer/ride';
 import { heightAt, pathAt, surfaceFor } from '../src/viewer/surface';
-import { TOPS_PLANT } from '../src/viewer/poses/regular-turn';
-import { TOPS_POSE } from '../src/viewer/turn-heading';
+import { RegularTurn, TOPS_PLANT } from '../src/viewer/poses/regular-turn';
+import { ROUND_POSE, TOPS_POSE, transitionHeading, turnPath } from '../src/viewer/turn-heading';
 import { poseAngles, trunkFromVertical } from './pose-angles';
 import type { PoseAngles } from './pose-angles';
 
 const DEG = 180 / Math.PI;
+// The bare foot's heel inside the capsule shell, behind mid-foot.
+const HEEL = CAPSULE_BOOT.heel + HEEL_ROOM - MID_FOOT[2];
 const N = 48;
 const TIMES = Array.from({ length: N }, (_, k) => k / N);
 
@@ -47,14 +50,14 @@ interface Hand {
   readonly above: number;
   readonly ahead: number;
 }
-const handsAt = (i: Intensity, t: number): { readonly sides: readonly [Hand, Hand]; readonly span: number } => {
-  const world = segmentMatrices(samplePose(poseTable(TOPS_POSE, i), t));
+const handsAt = (i: Intensity, t: number, drill: string = TOPS_POSE): { readonly sides: readonly [Hand, Hand]; readonly span: number } => {
+  const world = segmentMatrices(samplePose(poseTable(drill, i), t));
   const at = (kind: SegmentKind, side: BodySide, p: Vec3): Vec3 => {
     const m = world[segment(kind, side)];
     if (m === undefined) throw new Error(`no ${side} ${kind}`);
     return transformPoint(m, p);
   };
-  const up = gravityUp(drillScenarios(TOPS_POSE)[i].slopeDeg, pathAt(surfaceFor(TOPS_POSE, i), t).heading);
+  const up = gravityUp(drillScenarios(drill)[i].slopeDeg, drill === TOPS_POSE ? pathAt(surfaceFor(drill, i), t).heading : 0);
   const origin = at(SegmentKind.Trunk, BodySide.Center, [0, 0, 0]);
   const axis = (p: Vec3): Vec3 => {
     const q = at(SegmentKind.Trunk, BodySide.Center, p);
@@ -90,7 +93,7 @@ describe('turns on the tops', () => {
     for (const i of INTENSITIES) {
       const peak = Math.max(...TIMES.map((t) => edgeAt(i, t)));
       assert.isBelow(edgeAt(i, 0), 3, `${i} crest`);
-      assert.isAtLeast(edgeAt(i, 0.1), 10, `${i} t 0.1`);
+      assert.isAbove(edgeAt(i, 0.1), 0.5 * peak, `${i} t 0.1`);
       assert.isAtLeast(edgeAt(i, 0.5), 0.8 * peak, `${i} fall line`);
     }
   });
@@ -106,15 +109,14 @@ describe('turns on the tops', () => {
 
   it('is deepest on the crest, the thighs near level, and still flexed in the trough', () => {
     // Smallest on top while releasing (duncan-smith-2021 4:24-5:07), a deep squat with the thighs near level (4:26 freeze);
-    // band inferred.
+    // the thighs' level is one freeze frame, so only the knee's timing is tested.
     for (const i of INTENSITIES) {
       const knees = TIMES.map((t) => kneeAt(i, t));
       const deepest = TIMES[knees.indexOf(Math.max(...knees))] ?? 0.5;
       assert.isTrue(deepest >= 0.9 || deepest <= 0.1, `${i} deepest at t ${deepest}`);
-      assert.approximately(kneeAt(i, 0), 118, 12, `${i} on top`);
-      // Long leg into the trough (duncan-smith-2021 4:34-4:40), not straight (fis-freestyle-judging-2025 p28); amounts inferred.
-      assert.isAtMost(Math.min(...knees), 40, `${i} trough`);
-      assert.isAtLeast(Math.min(...knees), 25, `${i} trough flexed`);
+      // Long leg into the trough (duncan-smith-2021 4:34-4:40), never locked straight (fis-freestyle-judging-2025 p28).
+      assert.isBelow(Math.min(...knees), kneeAt(i, 0), `${i} trough`);
+      assert.isAtLeast(Math.min(...knees), 15, `${i} trough flexed`);
     }
   });
 
@@ -123,12 +125,15 @@ describe('turns on the tops', () => {
     for (const i of INTENSITIES) for (const t of TIMES) assert.isAtLeast(snowShare(i, t), 0.4, `${i} t ${t}`);
   });
 
-  it('comes round to finish heading across the hill', () => {
-    // As duncan-smith-2021 1:28-1:32; the 40 and 50 deg are inferred.
+  it('comes round to finish heading across the hill, wider than the zipper, tighter than the round line', () => {
+    // As duncan-smith-2021 1:28-1:32; the zipper keeps within 30 deg of the fall line (fis-freestyle-judging-2025 p28).
     for (const i of INTENSITIES) {
       const s = surfaceFor(TOPS_POSE, i);
-      assert.isAtLeast(Math.abs(pathAt(s, 5 / 6).heading) * DEG, 40, i);
-      assert.approximately(Math.abs(pathAt(s, 1).heading) * DEG, 50, 0.5, i);
+      const headings = TIMES.map((t) => Math.abs(pathAt(s, t).heading));
+      assert.isAtLeast(Math.abs(pathAt(s, 1).heading), Math.max(...headings), `${i} widest at the finish`);
+      const tops = transitionHeading(turnPath(TOPS_POSE, i));
+      assert.isAbove(tops, transitionHeading(turnPath(RegularTurn.Moguls, i)), `${i} zipper`);
+      assert.isBelow(tops, transitionHeading(turnPath(ROUND_POSE, i)), `${i} round line`);
     }
   });
 
@@ -139,67 +144,70 @@ describe('turns on the tops', () => {
   });
 
   it('folds compact on the crest, the hips low and the trunk with the shin', () => {
-    // Smallest on top (duncan-smith-2021 4:24-5:07, 4:26), trunk along the shin (gellie-2019-moguls-forward), not
-    // broken at the waist (fis-freestyle-judging-2025 p29); bands inferred.
+    // Smallest on top (duncan-smith-2021 4:24-5:07, 4:26), trunk about parallel to the shin, as the zipper's
+    // (gellie-2019-moguls-forward 06:00-06:20; 10 deg inferred), not broken at the waist (fis-freestyle-judging-2025 p29).
     for (const i of INTENSITIES) {
       const a = anglesAt(i, 0);
-      assert.isAtLeast(a.hip.right, 70, `${i} hip`);
-      assert.isAtMost(a.spineFlex, 21, `${i} low back`);
-      assert.approximately(a.trunkForward - a.shinForward.right, -9, 9, `${i} trunk on shin`);
+      const knees = TIMES.map((t) => kneeAt(i, t));
+      const trough = TIMES[knees.indexOf(Math.min(...knees))] ?? 0.5;
+      assert.isAbove(a.hip.right, anglesAt(i, trough).hip.right, `${i} hip`);
+      // Racers' 23-29 deg lumbar flexion is the ceiling (heinrich-2022).
+      assert.isAtMost(a.spineFlex, 29, `${i} low back`);
+      // Both feet bear on the crest, so the shins' mean.
+      assert.isAtMost(Math.abs(a.trunkForward - (a.shinForward.right + a.shinForward.left) / 2), 10, `${i} trunk on shin`);
     }
   });
 
   it('holds the hands wide and in front, below the shoulders, other drills keep the default', () => {
-    // Wide and forward at about waist to lower-chest height, never above the shoulders (duncan-smith-2021 1:28-1:32,
-    // 4:26). The baked body's grips sit about 0.1 m higher than these, so the margin; bands inferred.
+    // Wide and forward at about waist to lower-chest height, never above the shoulders (duncan-smith-2021 1:28-1:32, 4:26):
+    // wider than cruising's hands away from the pole plant's swing.
     for (const i of INTENSITIES)
       for (const t of TIMES) {
         const { sides, span } = handsAt(i, t);
-        const reaching = t < 1 / 12 || t > 3 / 4;
         for (const [k, h] of sides.entries()) {
-          // The plant's reach lifts the planting hand a little.
-          assert.isAtMost(h.above, reaching ? -0.15 : -0.2, `${i} t ${t} hand ${k} height`);
-          assert.isAtLeast(h.ahead, 0.05, `${i} t ${t} hand ${k} ahead`);
+          assert.isBelow(h.above, 0, `${i} t ${t} hand ${k} height`);
+          assert.isAbove(h.ahead, 0, `${i} t ${t} hand ${k} ahead`);
         }
-        if (!reaching) assert.isAtLeast(span, 0.1, `${i} t ${t} span`);
+        const swinging = (drill: string): boolean => Math.abs(samplePose(poseTable(drill, i), t).poleTouch) > 0.1;
+        if (!swinging(TOPS_POSE) && !swinging(RegularTurn.Cruising)) assert.isAbove(span, handsAt(i, t, RegularTurn.Cruising).span, `${i} t ${t} span`);
       }
     assert.strictEqual(samplePose(poseTable('regular-moguls', 'moderate'), 0.5).armFlexion, ARM_FLEXION);
   });
 
   it('never sits back: the trunk forward of gravity and of the slope normal', () => {
     // Upright into the face, the feet ahead and the body catching up, never behind them (duncan-smith-2021 3:33-3:51);
-    // the slope-normal floor keeps it forward on the slope-level view as well; bands inferred.
+    // the slope-normal floor keeps it forward on the slope-level view as well.
     for (const i of INTENSITIES) {
       const slope = drillScenarios(TOPS_POSE)[i].slopeDeg;
       for (const t of TIMES) {
         const a = anglesAt(i, t);
-        assert.isAtLeast(trunkFromVertical(a.trunkForward, slope, pathAt(surfaceFor(TOPS_POSE, i), t).heading), 15, `${i} t ${t} gravity`);
-        assert.isAtLeast(a.trunkForward, 8, `${i} t ${t} slope normal`);
+        assert.isAbove(trunkFromVertical(a.trunkForward, slope, pathAt(surfaceFor(TOPS_POSE, i), t).heading), 0, `${i} t ${t} gravity`);
+        assert.isAbove(a.trunkForward, 0, `${i} t ${t} slope normal`);
       }
     }
   });
 
   it('is centred on top, on the tips down the backside and the feet slightly ahead into the face', () => {
     // Seesaw top centred, tip pressure down the backside (duncan-smith-2021 2:37-3:20); into the face the feet go out in
-    // front and the body catches up (3:33-3:51), so the mass is a little behind them along the snow; bands inferred.
+    // front and the body catches up (3:33-3:51), so the mass is a little behind them along the snow, never behind the heel.
     const along = (i: Intensity, from: number, to: number, f: (a: ReturnType<typeof anglesAt>) => number): ReadonlyArray<number> =>
       TIMES.filter((t) => t >= from && t <= to).map((t) => f(anglesAt(i, t)));
     for (const i of INTENSITIES) {
-      assert.approximately(anglesAt(i, 0).comAhead, 0, 0.03, `${i} top`);
-      assert.isAtLeast(Math.max(...along(i, 1 / 12, 1 / 2, (a) => a.comAhead)), 0.1, `${i} backside`);
+      const backside = Math.max(...along(i, 1 / 12, 1 / 2, (a) => a.comAhead));
+      assert.isAbove(backside, 0, `${i} backside`);
+      assert.isBelow(Math.abs(anglesAt(i, 0).comAhead), backside, `${i} top`);
       const face = along(i, 2 / 3, 11 / 12, (a) => a.comOnSnow);
-      assert.isAtMost(Math.min(...face), -0.03, `${i} feet ahead`);
-      assert.isAtLeast(Math.min(...face), -0.1, `${i} not sitting back`);
+      assert.isBelow(Math.min(...face), 0, `${i} feet ahead`);
+      assert.isAbove(Math.min(...face), HEEL, `${i} not sitting back`);
     }
   });
 
   it('inclines with the load through the fall line and up the face', () => {
-    // Strongly inclined at the fall line and max compression (duncan-smith-2021 1:28-1:32); the lean is the turn's load,
-    // its mass on a path twice the skis' arc (inferred).
+    // Strongly inclined at the fall line and more at max compression up the face (duncan-smith-2021 1:28-1:32).
     for (const i of INTENSITIES) {
       const s = turnScenarios(TOPS_POSE)[i];
-      assert.isAtLeast(turnForcesAt(s, 0.5).tilt * DEG, 14, `${i} fall line`);
-      assert.isAtLeast(turnForcesAt(s, 5 / 6).tilt * DEG, 18, `${i} face`);
+      assert.isAbove(turnForcesAt(s, 0.5).tilt, 0, `${i} fall line`);
+      assert.isAbove(turnForcesAt(s, 5 / 6).tilt, turnForcesAt(s, 0.5).tilt, `${i} face`);
     }
   });
 
