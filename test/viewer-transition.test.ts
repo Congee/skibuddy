@@ -42,6 +42,7 @@ const channels = (pose: Pose, mirror: boolean): Readonly<Record<string, number>>
   return {
     trunkTilt: sign * Math.atan2(neck[0] - hip[0], neck[1] - hip[1]),
     trunkPitch: Math.atan2(neck[2] - hip[2], neck[1] - hip[1]),
+    hipZ: hip[2],
     shoulderList: Math.atan2(rs[1] - ls[1], Math.hypot(rs[0] - ls[0], rs[2] - ls[2])),
     lean: sign * pose.lean,
     counter: sign * pose.counter,
@@ -54,7 +55,7 @@ const channels = (pose: Pose, mirror: boolean): Readonly<Record<string, number>>
   };
 };
 
-const CASES = Object.values(RegularTurn).flatMap((drill) => INTENSITIES.map((i) => [drill, i] as const));
+const CASES = [...Object.values(RegularTurn), 'closed-stance-short-turns'].flatMap((drill) => INTENSITIES.map((i) => [drill, i] as const));
 
 describe('turn transition', () => {
   it.each(CASES)('%s %s passes C1 from one turn into the next, either way', (drill, intensity) => {
