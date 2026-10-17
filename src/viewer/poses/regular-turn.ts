@@ -3,7 +3,7 @@ import { PHASE_T, arcLoad, phaseForces, turnForcesAt } from '../../physics/turn'
 import type { TurnScenarios } from '../../physics/turn';
 import { keyValuesAt } from '../pose-definition';
 import { HeadAim } from '../pose-definition';
-import type { HeadRule, PoseDefinition, PoseKey } from '../pose-definition';
+import type { HeadRule, PoseDefinition, PoseKey, Travel } from '../pose-definition';
 
 const DEG = Math.PI / 180;
 
@@ -33,10 +33,11 @@ export interface TurnStyle {
   readonly dynamicDeep?: number;
   /** Peak hip angulation. */
   readonly angulation: number;
-  /** Peak pelvis turn toward the outside of the turn, relative to the skis, and the chest turned further beyond it. */
-  readonly counter: number;
+  /** Peak pelvis turn toward the outside of the turn, relative to the skis; absent with `skid`, the skis' yaw under the mass's travel. */
+  readonly counter?: number;
   /** Share per intensity step the counter grows by; defaults to COUNTER_GAIN. */
   readonly counterGain?: number;
+  /** The chest turned beyond the pelvis at the peak counter; with `skid`, at a TWIST_AT counter. */
   readonly twist: number;
   /** Share of the peak counter and twist at each phase key. */
   readonly counterCurve: PhaseValues;
@@ -173,10 +174,17 @@ const HANDS_IN = 10;
 const pathHeading = (r: number, w: number): number => Math.acos(1 - w / (2 * r)) / DEG;
 /** Corridor as a share of the radius where none is known: a round turn, 60° off the fall line at the transition. */
 export const CORRIDOR_SHARE = 1;
-// Pelvis counter at the switch: a share of the skis' heading off the fall line, so the trunk is biased downhill, facing
-// it fully only in passing, more on steeper hills (kipp-2024; lemaster-2010 pp74, 128); the spine adds 5-8 (sporri-2016).
-const anticipation = (scenarios: TurnScenarios, share: number): number =>
-  share * pathHeading(scenarios.moderate.radiusM, CORRIDOR_SHARE * scenarios.moderate.radiusM);
+// The spine adds 5-8 deg on a 30-40 deg pelvis counter (sporri-2016; biomechanics.md D12): `twist` is given at mid-range.
+const TWIST_AT = 35;
+// The pelvis faces the mass's travel with no lag the footage resolves (±15°): Duncan-Smith's hem print barely changes
+// through the switch, Giaccio's hem stays square (scratchpad lead-footage notes §3-4).
+const PELVIS_LAG = 0;
+
+/** How a timed pivoted turn skidding off its track carries the mass, the pelvis facing its travel; none otherwise. */
+export const travelOf = (style: TurnStyle): Travel | undefined =>
+  style.period === undefined || style.skid === undefined
+    ? undefined
+    : { period: style.period, skid: style.skid * DEG, lag: PELVIS_LAG, twistShare: style.twist / TWIST_AT };
 const hermite = (p0: number, p1: number, m0: number, m1: number, h: number, x: number): number =>
   (2 * x ** 3 - 3 * x ** 2 + 1) * p0 + (x ** 3 - 2 * x ** 2 + x) * h * m0 + (3 * x ** 2 - 2 * x ** 3) * p1 + (x ** 3 - x ** 2) * h * m1;
 /**
@@ -342,8 +350,6 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hipStep: 4,
     hipSpread: 0,
     angulation: 9,
-    // 36 deg at the switch: pelvis counter 30-40 deg, low confidence (biomechanics.md D12); share inferred.
-    counter: anticipation(SHORT, 0.6),
     twist: 6,
     ...GROOMED_PIVOTED,
     bend: 5,
@@ -409,8 +415,6 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     hipStep: 4,
     hipSpread: 0,
     angulation: 14,
-    // Further down the fall line than short turns (skimag-steeps-2018, kipp-2024); share inferred.
-    counter: anticipation(STEEP, 0.65),
     twist: 4,
     ...GROOMED_PIVOTED,
     bend: 1,
@@ -439,8 +443,6 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Gentle a soft rebound, dynamic a clear pop (iasi-2021 p88); inferred.
     hipSpread: 3,
     angulation: 4,
-    // Head on the fall line and near the chest in open powder, so the chest leads well down it; share inferred.
-    counter: anticipation(POWDER, 0.7),
     twist: 7,
     ...GROOMED_PIVOTED,
     bend: 2,
@@ -695,6 +697,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
   const spread = style.hipSpread;
   const load = (i: Intensity): number => arcLoad(style.scenarios[i]);
   const pop = style.rebound;
+  const travel = travelOf(style);
   const popped = (i: number): Partial<PoseKey> => {
     if (pop === undefined) return {};
     const ahead = pop.comAhead?.[i - PHASES.length];
@@ -724,8 +727,9 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       hipUnder: p.under,
       ...popped(i),
       lumbarFlex: (style.spineFlex + (i === 4 ? (style.finishFold ?? 0) : 0)) * DEG,
-      spineTwist: style.twist * (style.counterCurve[i] ?? 0) * DEG,
-      counter: style.counter * (style.counterCurve[i] ?? 0) * DEG,
+      // With a travel, solved from it.
+      spineTwist: travel === undefined ? style.twist * (style.counterCurve[i] ?? 0) * DEG : 0,
+      counter: (style.counter ?? 0) * (style.counterCurve[i] ?? 0) * DEG,
       // Solved from the balance.
       dorsiflexion: 0,
       insideDorsiflexion: 0,
@@ -757,6 +761,7 @@ export const regularTurn = (style: TurnStyle): PoseDefinition => {
       trunkOverShinGain: style.trunkOverShinGain ?? TRUNK_OVER_SHIN_GAIN,
       insideAnkleShare: INSIDE_ANKLE_SHARE,
       ...(style.set === undefined ? {} : { set: style.set }),
+      ...(travel === undefined ? {} : { travel }),
       poleTouch: style.polePlant ? { t: style.poleTouchAt ?? 1 / 24, hold: 0.02, swing: 0.11 } : null,
       scapularRhythm: 0.3,
       stance: style.narrow * DEG,

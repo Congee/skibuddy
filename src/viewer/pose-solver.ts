@@ -8,7 +8,7 @@ import type { Mat4, Vec3 } from './mat4';
 import { HeadAim, keyValuesAt, touchShare, windowShare, wrapTime } from './pose-definition';
 import type { HeadRule, KeyField, PoseDefinition } from './pose-definition';
 import { HEAD_LIMIT, gazeHeading } from './gaze';
-import { CORRIDOR_SHARE, headingAt } from './turn-heading';
+import { CORRIDOR_SHARE, headingAt, pelvisHeadingAt, travelPath } from './turn-heading';
 import type { TurnPath } from './turn-heading';
 import { FLAT_RIDE, rideOf, skiOn } from './ride';
 import type { Ride } from './ride';
@@ -469,7 +469,10 @@ const solveOn = (
   const brake = Math.tan(forceTiltAt(scenario, surface, t, skier));
   const onAxis = turning && c.balanced !== false ? balanceShare(lean, scenario) : 0;
   const angulation = mild('angulation') + k.angulationStep * effort.scale;
-  const counter = mild('counter') + k.counterStep * effort.scale;
+  // With a travel, the skis yaw under a pelvis facing the mass's heading, so the counter is the difference.
+  const run = turning && c.travel !== undefined ? travelPath(scenario, c.set, c.travel) : surface?.path;
+  const counter =
+    turning && c.travel !== undefined && run !== undefined ? headingAt(t, run) - pelvisHeadingAt(t, scenario, c.travel) : mild('counter') + k.counterStep * effort.scale;
   const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];
   const under = Math.min(1, Math.max(0, effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale));
   const dorsiflexion = mild('dorsiflexion') + (c.underAnkle ?? 0) * under * k.hipUnder;
@@ -506,7 +509,7 @@ const solveOn = (
   let upright = 0;
   // On the zipper, radians the lumbar spine unflexes once the hip is straight, so the trunk still stands up.
   let unflex = 0;
-  const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: mild('spineTwist') };
+  const spine = { spineFlex: mild('lumbarFlex'), spineBend: mild('spineBend'), spineTwist: c.travel === undefined ? mild('spineTwist') : c.travel.twistShare * counter };
   // Legs built as unturned: hipFlex + ankleFlex is the knee's flexion.
   const unturned = (leg: LegPose): LegPose => ({ ...leg, hipFlex: thighPitch(leg.hipFlex + leg.ankleFlex, leg.ankleFlex, leg.femurRotation) });
   const base = (knee: number, extra: number, tailLift: number, ankleFlex: number, outward = tip): Pose => {
@@ -677,7 +680,7 @@ const solveOn = (
   }
   const solved = base(knee, inside.extra, inside.tailLift, shin);
   // The head moves no mass to speak of, so it turns only once the trunk is set.
-  const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist, c.set, surface?.path) };
+  const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist, c.set, run) };
   const rested = (p: Pose): Pose => (firm ? { ...p, rise: riseOf(p, mild('skiClearance'), ends) } : pitch === 0 ? p : { ...p, rise: baseRiseOf(p, ends) });
   const legs = rested(turned);
   if (legs.poleTouch === 0) return legs;

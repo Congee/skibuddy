@@ -77,6 +77,19 @@ export type HeadRule =
   | { readonly aim: typeof HeadAim.Arc; readonly lead: number; readonly early: number }
   | { readonly aim: typeof HeadAim.Line; readonly turns: number };
 
+/**
+ * A pivoted turn whose mass runs a sinusoid down the fall line while the skis yaw under it: the pelvis faces the mass's
+ * travel `lag` turn time behind it, so the counter is the skis' yaw less that heading, and the chest turns `twistShare` of it beyond.
+ */
+export interface Travel {
+  /** Seconds per turn. */
+  readonly period: number;
+  /** Skid off the track at the set, radians. */
+  readonly skid: number;
+  readonly lag: number;
+  readonly twistShare: number;
+}
+
 export interface PoseConstraints {
   /** Peak hip angulation and outside femur rotation at moderate intensity. */
   readonly hipAngulation: number;
@@ -116,6 +129,8 @@ export interface PoseConstraints {
   readonly insideAnkleShare?: number;
   /** Turn time the pivoted skis are most across, as TurnPath's set; absent, they point along the track. */
   readonly set?: number;
+  /** Where the mass travels, and the pelvis with it, over pivoted skis; absent, the keys set the counter. */
+  readonly travel?: Travel;
   /** Where the head looks; absent, with the chest. */
   readonly head?: HeadRule;
   /** Radians both arms are abducted; absent, ARM_ABDUCTION. */

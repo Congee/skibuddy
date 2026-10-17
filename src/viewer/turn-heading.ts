@@ -1,8 +1,9 @@
 import type { Intensity } from '../content/schema';
-import { turnForcesAt } from '../physics/turn';
+import { comRadius, turnForcesAt } from '../physics/turn';
 import type { TurnScenario } from '../physics/turn';
 import { SEGMENTS, SegmentKind } from './figure';
-import { CLOSED_STANCE, CORRIDOR_SHARE, ROUND, ROUND_CORRIDOR, ROUND_FORCES, ROUND_PHASE, RegularTurn, TOPS, TOPS_CORRIDOR_SHARE, TURN_STYLES, ZIPPER_CORRIDOR, headingPhase } from './poses/regular-turn';
+import type { Travel } from './pose-definition';
+import { CLOSED_STANCE, CORRIDOR_SHARE, ROUND, ROUND_CORRIDOR, ROUND_FORCES, ROUND_PHASE, RegularTurn, TOPS, TOPS_CORRIDOR_SHARE, TURN_STYLES, ZIPPER_CORRIDOR, headingPhase, travelOf } from './poses/regular-turn';
 import type { TurnStyle } from './poses/regular-turn';
 
 export { CORRIDOR_SHARE };
@@ -38,7 +39,6 @@ export const sinusoidHeading = (corridor: number, length: number): number => Mat
 export const trackMost = (path: TurnPath): number =>
   path.feet === undefined || path.length === undefined ? transitionHeading(path) : sinusoidHeading(path.feet, path.length);
 
-const DEG = Math.PI / 180;
 const wrap = (t: number): number => ((t % 1) + 1) % 1;
 
 /**
@@ -65,8 +65,6 @@ export const headingAt = (t: number, path: TurnPath): number => skisHeading(wrap
 /** How far the skis are yawed off their track at turn time t, radians toward the turn's inside: the skid. */
 export const pivotAt = (t: number, path: TurnPath): number => headingAt(t, path) - trackHeadingAt(t, path);
 
-/** The closed-stance drill runs in a corridor about 2 m wide, as regular-turn.ts sets its counter. */
-const CLOSED_STANCE_CORRIDOR = 2;
 const jointDrop = (kind: SegmentKind): number => Math.abs(SEGMENTS.find((s) => s.kind === kind)?.joint[1] ?? 0);
 /** The figure's hip-to-ankle length, metres. */
 export const LEG_LENGTH = jointDrop(SegmentKind.Shin) + jointDrop(SegmentKind.Boot);
@@ -80,6 +78,8 @@ export const feetCorridor = (s: TurnScenario): number =>
 
 /** For a motion with no turn of its own, such as a drill's: a short turn. */
 const FALLBACK_RADIUS = 7;
+/** The closed-stance drill runs in a corridor about 2 m wide, as regular-turn.ts sets its counter. */
+const CLOSED_STANCE_CORRIDOR = 2;
 
 export const MOGUL_POSE = RegularTurn.Moguls;
 export const POWDER_POSE = RegularTurn.Powder;
@@ -98,10 +98,27 @@ export const turnPath = (pose: string, intensity: Intensity): TurnPath => {
     pose === MOGUL_POSE ? ZIPPER_CORRIDOR : pose === TOPS_POSE ? TOPS_CORRIDOR_SHARE * radius : pose === CLOSED_STANCE_POSE ? CLOSED_STANCE_CORRIDOR : CORRIDOR_SHARE * radius;
   const scenario = style?.scenarios[intensity];
   if (scenario === undefined || style?.period === undefined) return { radius, corridor, ...set };
-  // Pivoted on groomed or loose snow, the mass runs down the fall line and the feet swing about it (arndt-1992, fis-freestyle-judging-2025).
-  const skid = style.skid === undefined ? {} : { skid: style.skid * DEG };
-  return { radius, corridor, ...set, feet: feetCorridor(scenario), length: scenario.speedMps * style.period, ...skid };
+  return { ...travelPath(scenario, style.set, travelOf(style) ?? { period: style.period }), corridor };
 };
+
+/** The feet's path under a mass running down the fall line, the feet swinging about it (arndt-1992, fis-freestyle-judging-2025). */
+export const travelPath = (s: TurnScenario, set: number | undefined, travel: Pick<Travel, 'period'> & Partial<Pick<Travel, 'skid'>>): TurnPath => ({
+  radius: s.radiusM,
+  corridor: CORRIDOR_SHARE * s.radiusM,
+  ...(set === undefined ? {} : { set }),
+  feet: feetCorridor(s),
+  length: s.speedMps * travel.period,
+  ...(travel.skid === undefined ? {} : { skid: travel.skid }),
+});
+
+/** Most heading of the mass's sinusoid off the fall line: v·P downhill per turn, bending no tighter than its radius r, atan(vP / πr). */
+export const massMost = (s: TurnScenario, travel: Travel): number => Math.atan((s.speedMps * travel.period) / (Math.PI * comRadius(s)));
+
+/** The mass's travel heading off the fall line at turn time t, radians toward the inside, in step with the feet's track. */
+export const massHeadingAt = (t: number, s: TurnScenario, travel: Travel): number => -massMost(s, travel) * Math.cos(Math.PI * wrap(t));
+
+/** The pelvis's heading off the fall line, `lag` behind the mass's travel; before the switch, the mirrored last turn's. */
+export const pelvisHeadingAt = (t: number, s: TurnScenario, travel: Travel): number => -massMost(s, travel) * Math.cos(Math.PI * (wrap(t) - travel.lag));
 
 /** A pose's regular-turn style, with its speeds; none for a drill's own motion. */
 export const turnStyle = (pose: string): TurnStyle | undefined => STYLES[pose];

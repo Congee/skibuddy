@@ -1,8 +1,8 @@
 import { assert, describe, it } from '@effect/vitest';
 import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
 import { INTENSITIES, Intensity } from '../src/content/schema';
-import { PHASE_T, turnForcesAt } from '../src/physics/turn';
-import { gazeHeading } from '../src/viewer/gaze';
+import { PHASE_T, isTurn, turnForcesAt } from '../src/physics/turn';
+import { HEAD_LIMIT, gazeHeading } from '../src/viewer/gaze';
 import { EQUIPMENT } from '../src/viewer/equipment';
 import { segmentIndex } from '../src/viewer/figure';
 import { CAPSULE_BOOT, HEEL_ROOM, TOE_ROOM } from '../src/viewer/gear-fit';
@@ -13,7 +13,7 @@ import { forceTiltAt, solvePose } from '../src/viewer/pose-solver';
 import { poseTable, samplePose } from '../src/viewer/pose-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
 import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
-import { CORRIDOR_SHARE, ROUND_POSE, TOPS_POSE, headingAt, pivotAt, turnPath } from '../src/viewer/turn-heading';
+import { CORRIDOR_SHARE, ROUND_POSE, TOPS_POSE, headingAt, massHeadingAt, massMost, pelvisHeadingAt, pivotAt, trackMost, turnPath } from '../src/viewer/turn-heading';
 import { CLOSED_STANCE, OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLES, weightSplit } from '../src/viewer/poses/regular-turn';
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
@@ -756,16 +756,55 @@ describe('hip rotation', () => {
       }
   });
 
+  it('counters timed skidded turns by the yaw of the skis under a pelvis facing the travel of the mass, the head on its gaze', () => {
+    // The pelvis keeps facing the mass while the skis swing under it (lead-footage notes: Duncan-Smith, Giaccio); ±15° readings.
+    const drills = TURN_DRILLS.filter((d) => POSE_DEFINITIONS[d]?.constraints.travel !== undefined);
+    assert.includeMembers(drills, [RegularTurn.ShortTurns, RegularTurn.Steeps, RegularTurn.Powder]);
+    for (const drill of drills)
+      for (const i of INTENSITIES) {
+        const travel = POSE_DEFINITIONS[drill]?.constraints.travel;
+        const rule = POSE_DEFINITIONS[drill]?.constraints.head;
+        const s = drillScenarios(drill)[i];
+        if (travel === undefined || rule === undefined || !isTurn(s)) throw new Error(drill);
+        const path = turnPath(drill, i);
+        const tag = `${drill} ${i}`;
+        // The mass swings less than the feet about the fall line.
+        assert.isBelow(massMost(s, travel), trackMost(path), tag);
+        for (let k = 0; k < 96; k++) {
+          const t = k / 96;
+          const p = samplePose(poseTable(drill, i), t);
+          const pelvis = headingAt(t, path) - p.counter;
+          assert.closeTo(pelvis * DEG, pelvisHeadingAt(t, s, travel) * DEG, 0.05, `${tag} ${k}/96 counter = yaw - pelvis`);
+          assert.isAtMost(Math.abs(pelvis - massHeadingAt(t, s, travel)) * DEG, 15, `${tag} ${k}/96 pelvis on the travel`);
+          // The hips drive the shoulders: the chest turns beyond the pelvis by less than the pelvis beyond the skis.
+          assert.isAtMost(Math.abs(p.spineTwist), Math.abs(p.counter), `${tag} ${k}/96 twist`);
+          const head = pelvis - p.spineTwist - p.headYaw;
+          if (Math.abs(p.headYaw) < HEAD_LIMIT - 1e-6) assert.closeTo(head * DEG, gazeHeading(rule, path, s.speedMps, t) * DEG, 0.05, `${tag} ${k}/96 head`);
+        }
+        // Square-ish at the switch (0-20°, ±15) and building to the late range (30-50°, ±15) as the skis skid under it.
+        const c0 = samplePose(poseTable(drill, i), 0).counter * DEG;
+        assert.isTrue(c0 >= -15 && c0 <= 35, `${tag} switch ${c0.toFixed(1)}`);
+        const late = peakOf(drill, i, (p) => p.counter);
+        assert.isTrue(late >= 30 - 15 && late <= 50 + 15, `${tag} late ${late.toFixed(1)}`);
+      }
+  });
+
   it('leads the inside ski by the counter across the hips, not by the femur rotation', () => {
     // lead-footage notes: lead ≈ hip width × sin(counter) + the inside leg's flex, which may take some of it back.
     for (const drill of [...KINDS.filter((k) => k !== RegularTurn.Moguls), 'closed-stance-short-turns']) {
       const def = POSE_DEFINITIONS[drill];
       if (!def) throw new Error(drill);
       const scenario = drillScenarios(drill)[Intensity.Moderate];
+      // With a travel the counter is solved, so the skis skid further under the same pelvis instead.
+      const travel = def.constraints.travel;
       const vary = (counter: number, femur: number): typeof def => ({
         ...def,
         keys: def.keys.map((k) => ({ ...k, counter: k.counter * counter })),
-        constraints: { ...def.constraints, femurRotation: def.constraints.femurRotation * femur },
+        constraints: {
+          ...def.constraints,
+          femurRotation: def.constraints.femurRotation * femur,
+          ...(travel === undefined ? {} : { travel: { ...travel, skid: travel.skid * counter } }),
+        },
       });
       for (const t of [0.5, 0.65, 0.8]) {
         const tag = `${drill} ${t}`;
