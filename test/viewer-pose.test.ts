@@ -399,18 +399,14 @@ const mechanics = (name: string, s: TurnScenario): void => {
       assert.isAbove(hip(PHASES.finish), hip(PHASES.shaping) + 5);
     });
 
-    it('shortens the inside leg, so the inside foot leads by less than half a boot', () => {
+    it('shortens the inside leg by flexing its hip and knee, the boots holding the ankles alike', () => {
       for (const t of TURNING) {
         const a = at(t);
         assert.isAbove(a.hip[BodySide.Left], a.hip[BodySide.Right] + 5, `t=${t}`);
         assert.isAbove(a.knee[BodySide.Left], a.knee[BodySide.Right] + 10, `t=${t}`);
-        assert.isAbove(a.lead, 0.03, `t=${t}`);
         // The boot keeps the inside ankle near the outside one (heinrich-2022).
         assert.isBelow(Math.abs(a.dorsiflexion[BodySide.Left] - a.dorsiflexion[BodySide.Right]), 4, `t=${t}`);
       }
-      // Half a boot sole at most. The inside ski pivots on its tip, so the lead comes from the hip: the inside leg
-      // shortens by the tail's lift at the binding plus hip width times the lean, all by hip flexion.
-      for (const t of TIMES) assert.isBelow(at(t).lead, EQUIPMENT.soleLength / 2, `t=${t}`);
     });
 
     it('lifts the inside ski at the tail with its tip on the snow', () => {

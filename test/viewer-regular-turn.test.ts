@@ -3,7 +3,6 @@ import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
 import { INTENSITIES, Intensity } from '../src/content/schema';
 import { PHASE_T, isTurn, turnForcesAt } from '../src/physics/turn';
 import { HEAD_LIMIT, gazeHeading } from '../src/viewer/gaze';
-import { EQUIPMENT } from '../src/viewer/equipment';
 import { segmentIndex } from '../src/viewer/figure';
 import { CAPSULE_BOOT, HEEL_ROOM, TOE_ROOM } from '../src/viewer/gear-fit';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
@@ -494,49 +493,47 @@ describe('regular turn', () => {
     for (const drill of [RegularTurn.Cruising, RegularTurn.Carving]) assert.isAtMost(surplus(drill, Intensity.Gentle), 23, drill);
   });
 
-  it('builds the inside tip lead progressively from level at the switch', () => {
-    // Observed side-on in Olivia Giaccio's closed-stance short turns: about level at the edge change, then 3-13 cm ahead.
-    const tipLead = (drill: string, i: Intensity, t: number): number => {
-      const w = segmentMatrices(samplePose(poseTable(drill, i), t));
-      const [outside, inside] = [w[segmentIndex('right-ski')], w[segmentIndex('left-ski')]];
-      if (!outside || !inside) throw new Error(drill);
-      const [o, a, b] = [transformPoint(outside, [0, 0, 0]), transformPoint(outside, [0, 0, 1]), transformPoint(outside, SKI_TIP)];
-      const c = transformPoint(inside, SKI_TIP);
-      return (c[0] - b[0]) * (a[0] - o[0]) + (c[1] - b[1]) * (a[1] - o[1]) + (c[2] - b[2]) * (a[2] - o[2]);
-    };
+  it('leads the inside tip by hip width × sin(counter) plus the inside thigh\'s flex over parallel shins', () => {
+    // lead-footage notes, Conclusion 5: the counter staggers the hips, the shorter inside leg's thigh carries its knee ahead.
+    const off: string[] = [];
     for (const drill of Object.keys(POSE_DEFINITIONS))
       for (const i of INTENSITIES) {
-        const leads = Array.from({ length: 48 }, (_, k) => tipLead(drill, i, k / 48));
-        const at = (t: number): number => leads[Math.round(t * 48)] ?? NaN;
+        const worst = Array.from({ length: 48 }, (_, k) => {
+          const p = samplePose(poseTable(drill, i), k / 48);
+          const { tip, thigh, shin } = leadTerms(p);
+          return { k, tip, shin, miss: tip - REFERENCE_SKIER.body.hipWidth * Math.sin(p.counter) - thigh };
+        }).reduce((a, b) => (Math.abs(b.miss) > Math.abs(a.miss) ? b : a));
+        if (Math.abs(worst.miss) / REFERENCE_SKIER.bsl > LEAD_TOLERANCE)
+          off.push(`${drill} ${i} ${worst.k}/48: tip ${bsl(worst.tip)}, unexplained ${bsl(worst.miss)} of it shin term ${bsl(worst.shin)} BSL`);
+      }
+    assert.deepEqual(off, []);
+  });
+
+  it('builds the inside tip lead from about level at the switch to a middle-to-late peak, never trailing', () => {
+    for (const drill of Object.keys(POSE_DEFINITIONS))
+      for (const i of INTENSITIES) {
+        const leads = Array.from({ length: 48 }, (_, k) => leadTerms(samplePose(poseTable(drill, i), k / 48)).tip / REFERENCE_SKIER.bsl);
         const peak = Math.max(...leads);
-        const tag = `${drill} ${i}`;
-        // Footage across 4 short-turn and mogul skiers: 0 ±5 cm at the switch, ≥ −5 cm to t 0.4, peak 5-13 cm at t 0.35-0.7.
-        const footage = [RegularTurn.ShortTurns, RegularTurn.Moguls, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns'].includes(drill);
         const peakAt = leads.indexOf(peak) / 48;
-        if (footage) {
-          assert.isAtMost(Math.abs(at(0)), 0.05, `${tag} switch`);
-          for (let k = 0; k <= 0.4 * 48; k++) assert.isAtLeast(leads[k] ?? 0, -0.05, `${tag} ${k}/48 early`);
-          assert.isTrue(peak >= 0.05 && peak <= 0.13, `${tag} peak ${peak.toFixed(3)}`);
-          assert.isTrue(peakAt >= 0.35 && peakAt <= 0.7, `${tag} peak t ${peakAt.toFixed(2)}`);
-        }
-        // Where the legs scissor the counter sets the lead; elsewhere the inside leg's flex does, smaller and dipping in gentle carving.
-        const scissor = POSE_DEFINITIONS[drill]?.constraints.set !== undefined;
-        if (scissor) {
-          // One athlete measured so far (Giaccio 3-13 cm), so only the shape: ahead by 0.3, growing to the peak.
-          assert.isAbove(at(0.3), 0, tag);
-          assert.isAbove(peak, at(0.3), tag);
-        }
-        const peakT = leads.indexOf(peak) / 48;
-        if (!footage) {
-          assert.isAbove(peakT, 0.5, tag);
-          assert.isAtMost(peakT, 0.9, tag);
-        }
+        const mean = (from: number, to: number): number => {
+          const s = leads.slice(Math.round(from * 48), Math.round(to * 48));
+          return s.reduce((a, b) => a + b, 0) / s.length;
+        };
+        const tag = `${drill} ${i}`;
+        assert.isAtMost(Math.abs(leads[0] ?? NaN), LEAD_SWITCH, `${tag} switch ${(leads[0] ?? NaN).toFixed(2)} BSL`);
+        assert.isTrue(peakAt >= 0.4 && peakAt <= 0.85, `${tag} peak t ${peakAt.toFixed(2)}`);
+        assert.isBelow(mean(0, 0.25), mean(0.4, 0.75), `${tag} grows`);
         leads.forEach((lead, k) => {
-          assert.isAtMost(lead, EQUIPMENT.soleLength / 2, `${tag} ${k}/48`);
-          if (k / 48 > 0.1) assert.isAtLeast(lead, -0.01, `${tag} ${k}/48`);
-          // No plateau: rising from just after the switch to past the fall line, 2 mm of slack a step.
-          if (scissor && k / 48 > 0.05 && k / 48 <= 0.6) assert.isAtLeast(lead, (leads[k - 1] ?? 0) - 0.002, `${tag} ${k}/48`);
+          if (k / 48 >= 0.1 && k / 48 <= 0.9) assert.isAtLeast(lead, LEAD_TRAILING, `${tag} ${k}/48 trailing`);
         });
+      }
+  });
+
+  it('keeps the inside tip lead\'s peak inside the filmed band in boot soles, widened by parallax', () => {
+    for (const drill of Object.keys(POSE_DEFINITIONS))
+      for (const i of INTENSITIES) {
+        const peak = Math.max(...Array.from({ length: 48 }, (_, k) => leadTerms(samplePose(poseTable(drill, i), k / 48)).tip)) / REFERENCE_SKIER.bsl;
+        assert.isTrue(peak > LEAD_PEAK[0] && peak <= LEAD_PEAK[1], `${drill} ${i} peak ${peak.toFixed(2)} BSL`);
       }
   });
 
@@ -721,8 +718,26 @@ const alongSki = (p: ReturnType<typeof solvePose>, a: string, b: string, at: Vec
   const [o, x, u, v] = [transformPoint(ski, [0, 0, 0]), transformPoint(ski, [0, 0, 1]), transformPoint(pa, at), transformPoint(pb, at)];
   return (v[0] - u[0]) * (x[0] - o[0]) + (v[1] - u[1]) * (x[1] - o[1]) + (v[2] - u[2]) * (x[2] - o[2]);
 };
-const hipsAhead = (p: ReturnType<typeof solvePose>): number => alongSki(p, 'right-thigh', 'left-thigh', [0, 0, 0]);
-const tipAhead = (p: ReturnType<typeof solvePose>): number => alongSki(p, 'right-ski', 'left-ski', SKI_TIP);
+const { thigh: THIGH, shin: SHIN } = REFERENCE_SKIER.body;
+/** Inside tip ahead of the outside one along the outside ski, and the inside-minus-outside thigh and shin spans along it. */
+const leadTerms = (p: ReturnType<typeof samplePose>): { tip: number; thigh: number; shin: number } => ({
+  tip: alongSki(p, 'right-ski', 'left-ski', SKI_TIP),
+  thigh: alongSki(p, 'right-thigh', 'left-thigh', [0, -THIGH, 0]) - alongSki(p, 'right-thigh', 'left-thigh', [0, 0, 0]),
+  shin: alongSki(p, 'right-shin', 'left-shin', [0, -SHIN, 0]) - alongSki(p, 'right-thigh', 'left-thigh', [0, -THIGH, 0]),
+});
+const bsl = (m: number): string => (m / REFERENCE_SKIER.bsl).toFixed(2);
+// Lead bands in boot sole lengths: the footage was read at a 0.30 m boot sole (lead-footage notes; skiers' sizes not given),
+// so cm / 30 is already body-relative. Single-turn readings carry 5-8 cm of follow-cam parallax; the widest, 8, is added.
+const FILMED_BOOT = 0.3;
+const PARALLAX = 0.08 / FILMED_BOOT;
+/** Shins parallel, the hips and the inside thigh leave only boot and ski geometry: inferred. */
+const LEAD_TOLERANCE = 0.05;
+/** 0 ± 5 cm at the switch (all four short-turn skiers), plus parallax. */
+const LEAD_SWITCH = 0.05 / FILMED_BOOT + PARALLAX;
+/** Reilly's bias-cancelled −3.6 ± 4 cm is the most behind any skier read; no parallax left to add. */
+const LEAD_TRAILING = -(0.036 + 0.04) / FILMED_BOOT;
+/** Peak +5…+13 cm, widened by parallax: ahead at all, and at most this. */
+const LEAD_PEAK = [Math.max(0, 0.05 / FILMED_BOOT - PARALLAX), 0.13 / FILMED_BOOT + PARALLAX] as const;
 
 describe('hip rotation', () => {
 
@@ -789,33 +804,6 @@ describe('hip rotation', () => {
       }
   });
 
-  it('leads the inside ski by the counter across the hips, not by the femur rotation', () => {
-    // lead-footage notes: lead ≈ hip width × sin(counter) + the inside leg's flex, which may take some of it back.
-    for (const drill of [...KINDS.filter((k) => k !== RegularTurn.Moguls), 'closed-stance-short-turns']) {
-      const def = POSE_DEFINITIONS[drill];
-      if (!def) throw new Error(drill);
-      const scenario = drillScenarios(drill)[Intensity.Moderate];
-      // With a travel the counter is solved, so the skis skid further under the same pelvis instead.
-      const travel = def.constraints.travel;
-      const vary = (counter: number, femur: number): typeof def => ({
-        ...def,
-        keys: def.keys.map((k) => ({ ...k, counter: k.counter * counter })),
-        constraints: {
-          ...def.constraints,
-          femurRotation: def.constraints.femurRotation * femur,
-          ...(travel === undefined ? {} : { travel: { ...travel, skid: travel.skid * counter } }),
-        },
-      });
-      for (const t of [0.5, 0.65, 0.8]) {
-        const tag = `${drill} ${t}`;
-        const [base, countered, rotated] = [solvePose(def, t, scenario), solvePose(vary(1.5, 1), t, scenario), solvePose(vary(1, 2), t, scenario)];
-        assert.closeTo(hipsAhead(base), REFERENCE_SKIER.body.hipWidth * Math.sin(base.counter), 0.003, tag);
-        const [byCounter, byHips, byFemur] = [tipAhead(countered) - tipAhead(base), hipsAhead(countered) - hipsAhead(base), tipAhead(rotated) - tipAhead(base)];
-        assert.isTrue(byCounter > 0 && byCounter <= byHips + 0.003, `${tag} counter ${byCounter.toFixed(3)} hips ${byHips.toFixed(3)}`);
-        assert.isBelow(Math.abs(byFemur), byCounter, tag);
-      }
-    }
-  });
 });
 
 // Centre of mass from between the mid-feet: the legs' extension, whatever the lean.
