@@ -115,12 +115,12 @@
   citation: Alhammoud M et al. On-field ski kinematic according to leg and discipline in elite alpine skiers. Front Sports Act Living. 2020;2:56.
   url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7739787/
   read: full
-# Mass shares are the paper's table values as widely reproduced; only the abstract was read.
+# Table 4 (male lengths and mass shares) read from the scan at https://ebm.ufabc.edu.br/wp-content/uploads/2013/12/Leva-1996.pdf.
 - id: de-leva-1996
   type: article
   citation: de Leva P. Adjustments to Zatsiorsky-Seluyanov's segment inertia parameters. J Biomech. 1996;29:1223-30.
   url: https://doi.org/10.1016/0021-9290(95)00178-6
-  read: abstract
+  read: partial
 - id: sporri-2015
   type: article
   citation: Spörri J et al. Potential mechanisms leading to overuse injuries of the back in alpine ski racing. Am J Sports Med. 2015;43:2042-8.

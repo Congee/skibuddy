@@ -18,6 +18,10 @@ import { CLOSED_STANCE, OUTSIDE_KNEE_MAX, REGULAR_TURNS, RegularTurn, TURN_STYLE
 import fixture from './anatomy-probe.json';
 import { poseAngles } from './pose-angles';
 import { SIDES, clearance, ridden } from './ride-probes';
+import { FIGURE_SKIER, REFERENCE_SKIER } from '../src/viewer/skier';
+
+/** The chest up the trunk's frame, scaled as figure.ts scales the trunk. */
+const CHEST = (0.45 * REFERENCE_SKIER.body.trunk) / FIGURE_SKIER.body.trunk;
 
 const KINDS = Object.values(RegularTurn);
 const surfaces = new Map<string, ReturnType<typeof surfaceFor>>();
@@ -232,7 +236,7 @@ describe('regular turn', () => {
           const w = segmentMatrices(samplePose(poseTable(drill, i), t));
           const at = (segment: string, point: Vec3): Vec3 => transformPoint(w[segmentIndex(segment)] ?? identity(), point);
           const foot = at('right-boot', MID_FOOT);
-          const gap = aheadOnSki(w, at('trunk', [0, 0.45, 0]), foot) - aheadOnSki(w, at('right-shin', [0, 0, 0]), foot);
+          const gap = aheadOnSki(w, at('trunk', [0, CHEST, 0]), foot) - aheadOnSki(w, at('right-shin', [0, 0, 0]), foot);
           assert.isAtLeast(gap, -0.02, `${drill} ${i} ${k}/${SAMPLES} chest`);
         }
   });
@@ -445,8 +449,8 @@ describe('regular turn', () => {
     // Shoulder 1.45 m up, a 0.3 m upper arm: the elbow, and the fist on the forearm's line, at 1.15 m.
     assert.closeTo(regularPoleReach({ shoulder: 1.45, upperArm: 0.3, fist: 0 }), 1.15, 1e-12);
     assert.closeTo(regularPoleReach({ shoulder: 1.45, upperArm: 0.3, fist: 0.01 }), 1.16, 1e-12);
-    assert.closeTo(CAPSULE_ARM.upperArm, 0.3, 1e-12);
-    assert.closeTo(poleSize(CAPSULE_ARM).reach, CAPSULE_ARM.shoulder - 0.3 + 0.01, 1e-12);
+    assert.closeTo(CAPSULE_ARM.upperArm, REFERENCE_SKIER.body.upperArm, 1e-12);
+    assert.closeTo(poleSize(CAPSULE_ARM).reach, CAPSULE_ARM.shoulder - REFERENCE_SKIER.body.upperArm + 0.01, 1e-12);
     // About two thirds of the figure's height, as poles are sized.
     const anatomy = regularPoleReach(fixture.arm);
     assert.isAbove(anatomy, 1.0);
@@ -662,7 +666,7 @@ const frontal = (p: ReturnType<typeof samplePose>): Frontal => {
   return {
     lean: p.lean * DEG,
     trunk: tilt(...trunk),
-    legs: tilt(at('right-shin', [0, -0.43, 0]), at('right-thigh', [0, 0, 0])),
+    legs: tilt(at('right-shin', [0, -REFERENCE_SKIER.body.shin, 0]), at('right-thigh', [0, 0, 0])),
     pitch: Math.atan2(trunk[1][2] - trunk[0][2], trunk[1][1] - trunk[0][1]) * DEG,
     com: inward(centreOfMass(w)),
     insideFoot: inward(at('left-ski', [0, SKI_TIP[1], 0])),

@@ -14,6 +14,7 @@ import { POSE_SAMPLES, effortOf } from '../src/viewer/pose-solver';
 import { STORK_TURNS } from '../src/viewer/poses/stork-turns';
 import { MODERATE, SCENARIOS, poseAt, solvedPose } from './stork-poses';
 import { poseAngles } from './pose-angles';
+import { REFERENCE_SKIER } from '../src/viewer/skier';
 
 const tailLiftShare = (t: number): number => windowShare(STORK_TURNS.constraints.tailLift, t);
 const poleTouchAt = (t: number): number => touchShare(STORK_TURNS.constraints.poleTouch, t);
@@ -261,7 +262,7 @@ const pitchIn = (frame: Mat4, v: Vec3): number => {
   return Math.atan2(dot(v, axis([0, 0, 1])), dot(v, axis([0, 1, 0])));
 };
 const between = (a: Vec3, b: Vec3): Vec3 => [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
-const SHIN_LENGTH = 0.43;
+const SHIN_LENGTH = REFERENCE_SKIER.body.shin;
 const SHELL = shellInFoot(CAPSULE_BOOT, EQUIPMENT);
 
 /** Height of a point in the shell's frame above the ski base, along the ski's normal. */
@@ -276,7 +277,8 @@ describe('equipment', () => {
   it('defaults to a typical boot and binding', () => {
     assert.isAtLeast(EQUIPMENT.forwardLean, FORWARD_LEAN_RANGE[0]);
     assert.isAtMost(EQUIPMENT.forwardLean, FORWARD_LEAN_RANGE[1]);
-    assert.closeTo(deltaAngle(EQUIPMENT) / DEG, 0.88, 0.01);
+    // ruedl-2022's 4.7 mm delta over the reference skier's sole.
+    assert.closeTo(deltaAngle(EQUIPMENT) / DEG, Math.atan2(0.0047, REFERENCE_SKIER.bsl) / DEG, 0.01);
     assert.closeTo(totalRamp(EQUIPMENT), EQUIPMENT.bootBoardRamp + deltaAngle(EQUIPMENT), 1e-12);
   });
 

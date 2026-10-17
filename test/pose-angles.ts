@@ -3,12 +3,12 @@ import { transformPoint } from '../src/viewer/mat4';
 import type { Mat4, Vec3 } from '../src/viewer/mat4';
 import { MID_FOOT, SKI_TIP, centreOfMass, balanceRoll, comAhead, segmentMatrices } from '../src/viewer/pose';
 import type { Pose } from '../src/viewer/pose';
+import { REFERENCE_SKIER } from '../src/viewer/skier';
 
 export type LegSide = typeof BodySide.Right | typeof BodySide.Left;
 
 const DEG = 180 / Math.PI;
-const SHIN_LENGTH = 0.43;
-const THIGH_LENGTH = 0.45;
+const { shin: SHIN_LENGTH, thigh: THIGH_LENGTH } = REFERENCE_SKIER.body;
 const SKI_TAIL: Vec3 = [0, SKI_TIP[1], -0.7];
 
 const dot = (a: Vec3, b: Vec3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];

@@ -2,16 +2,15 @@ import { BodySide } from '../src/viewer/figure';
 import type { LegSide } from '../src/viewer/gear';
 import { identity, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
-import { SKI_TAIL, SKI_TIP, centreOfMass, segmentMatrices, skiIndex } from '../src/viewer/pose';
+import { SKI_BASE, centreOfMass, segmentMatrices, skiEndPoints, skiIndex } from '../src/viewer/pose';
 import type { Pose } from '../src/viewer/pose';
-import { rideOf } from '../src/viewer/ride';
+import { rideOf, skiOn } from '../src/viewer/ride';
 import type { Ride } from '../src/viewer/ride';
 import { underFoot } from '../src/viewer/surface';
 import type { Surface } from '../src/viewer/surface';
 
 export const SIDES = [BodySide.Right, BodySide.Left] as const;
 export const ALONG = 16;
-const SKI_BASE = SKI_TIP[1];
 
 export interface Ridden {
   readonly ride: Ride;
@@ -27,22 +26,21 @@ export interface Ridden {
   readonly edges: Readonly<Record<LegSide, readonly [ReadonlyArray<Vec3>, ReadonlyArray<Vec3>]>>;
 }
 
-/** Half a ski's width at the binding, metres; inferred. */
-const HALF_WIDTH = 0.05;
-
 /** One sample of a ridden table: the figure on the field, its skis' base lines and the snow under them. */
 export const ridden = (s: Surface, t: number, pose: Pose): Ridden => {
   const ride = rideOf(s, t, pose);
+  const ski = skiOn(s);
+  const { tip, tail } = skiEndPoints(ski);
   const world = segmentMatrices({ ...pose, rise: 0 });
   const raised = (p: Vec3): Vec3 => [p[0], p[1] + ride.lift, p[2]];
   const base = (side: BodySide, across = 0): ReadonlyArray<Vec3> => {
     const m = world[skiIndex(side)] ?? identity();
     return Array.from({ length: ALONG + 1 }, (_, i) => {
       const u = i / ALONG;
-      return raised(transformPoint(m, [across, SKI_BASE, SKI_TAIL[2] + (SKI_TIP[2] - SKI_TAIL[2]) * u]));
+      return raised(transformPoint(m, [across, SKI_BASE, tail[2] + (tip[2] - tail[2]) * u]));
     });
   };
-  const edges = (side: BodySide): readonly [ReadonlyArray<Vec3>, ReadonlyArray<Vec3>] => [base(side, -HALF_WIDTH), base(side, HALF_WIDTH)];
+  const edges = (side: BodySide): readonly [ReadonlyArray<Vec3>, ReadonlyArray<Vec3>] => [base(side, -ski.waist / 2), base(side, ski.waist / 2)];
   const right = base(BodySide.Right);
   const left = base(BodySide.Left);
   // The skis edge as one platform, so the snow is read on the line between them.
