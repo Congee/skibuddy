@@ -1,0 +1,6682 @@
+{
+ "unit": "deg",
+ "turn0": "a left turn, the right leg outside; ω = π(φ + turn), the left side half a cycle later",
+ "drills": {
+  "regular-carving": {
+   "unstated": [
+    {
+     "id": "gs-fis-heinrich-2023",
+     "arcLoad": 1.6842,
+     "indexProvenance": "measured: heinrich-2023 ≈12 m/s, min radius ≈10.7 m, 12.3° slope (the min radius, so the turn’s peak load)",
+     "coordinates": {
+      "pelvis_tx": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_ty": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tz": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tilt": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_list": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_rotation": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "lumbar_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 22.5738,
+        "cos": [0, -0.0424, 0, -0.1535, 0, -0.3249, 0, -0.0032, 0, -0.034, 0, -0.0298],
+        "sin": [0, -0.3729, 0, 0.3047, 0, -0.0307, 0, -0.0768, 0, 0.0637, 0, 0.0102]
+       },
+       "logSigma": {
+        "a0": 2.3032,
+        "cos": [0, 0.0012, 0, 0.0011, 0, 0.0008],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "trunk_pitch.lumbar_flexion_vs_pelvis (whole trunk vs pelvis)",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "OpenSim lumbar_extension (− = flexed) negated; × 0.583, this region's share of the lumbar + thoracic flexion span (inferred)",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "fasel-2017 carpet trunk vs pelvis not used: carpet, short skis"
+        ]
+       }
+      },
+      "lumbar_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [-1.2861, 0, 0.7177, 0, -0.1935, 0, -0.2511, 0, 0.0472, 0, 0.0251, 0],
+        "sin": [5.8469, 0, 3.0833, 0, 0.422, 0, -0.3909, 0, -0.3076, 0, -0.3053, 0]
+       },
+       "logSigma": {
+        "a0": 2.326,
+        "cos": [0, 0.0445, 0, 0.0385, 0, 0.0299],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "trunk_lateral_tilt.lumbar_bend_vs_pelvis (whole trunk vs pelvis)",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "OpenSim lumbar_bending as ISB bending (right +; sign convention not stated in the paper, uncertain); × 0.500 span share (inferred); turn read as a left turn from the rising global pelvis yaw (OpenSim + = left; inferred); a right turn would flip this sign",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "lumbar_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0.3809, 0, -0.5231, 0, -0.2807, 0, -0.119, 0, -0.0645, 0, -0.0221, 0],
+        "sin": [0.5138, 0, -0.2354, 0, 0.0093, 0, 0.0499, 0, 0.0017, 0, -0.015, 0]
+       },
+       "logSigma": {
+        "a0": 2.3027,
+        "cos": [0, 0.0003, 0, 0.0002, 0, 0.0002],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "trunk_lateral_tilt.lumbar_rotation_vs_pelvis (whole trunk vs pelvis)",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "OpenSim lumbar_rotation as ISB rotation (left +; sign convention not stated in the paper, uncertain); × 0.222 span share (inferred); turn read as a left turn from the rising global pelvis yaw (OpenSim + = left; inferred); a right turn would flip this sign",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "thoracic_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 16.1241,
+        "cos": [0, -0.0303, 0, -0.1097, 0, -0.2321, 0, -0.0023, 0, -0.0243, 0, -0.0213],
+        "sin": [0, -0.2664, 0, 0.2176, 0, -0.0219, 0, -0.0549, 0, 0.0455, 0, 0.0073]
+       },
+       "logSigma": {
+        "a0": 2.3029,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "trunk_pitch.lumbar_flexion_vs_pelvis (whole trunk vs pelvis)",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "OpenSim lumbar_extension (− = flexed) negated; × 0.417, this region's share of the lumbar + thoracic flexion span (inferred)",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "thoracic_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [-1.2861, 0, 0.7177, 0, -0.1935, 0, -0.2511, 0, 0.0472, 0, 0.0251, 0],
+        "sin": [5.8469, 0, 3.0833, 0, 0.422, 0, -0.3909, 0, -0.3076, 0, -0.3053, 0]
+       },
+       "logSigma": {
+        "a0": 2.326,
+        "cos": [0, 0.0445, 0, 0.0385, 0, 0.0299],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "trunk_lateral_tilt.lumbar_bend_vs_pelvis (whole trunk vs pelvis)",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "OpenSim lumbar_bending as ISB bending (right +; sign convention not stated in the paper, uncertain); × 0.500 span share (inferred); turn read as a left turn from the rising global pelvis yaw (OpenSim + = left; inferred); a right turn would flip this sign",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "thoracic_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [1.3332, 0, -1.8308, 0, -0.9824, 0, -0.4166, 0, -0.2257, 0, -0.0773, 0],
+        "sin": [1.7982, 0, -0.8239, 0, 0.0325, 0, 0.1748, 0, 0.006, 0, -0.0526, 0]
+       },
+       "logSigma": {
+        "a0": 2.3042,
+        "cos": [0, 0.0031, 0, 0.0027, 0, 0.0022],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "trunk_lateral_tilt.lumbar_rotation_vs_pelvis (whole trunk vs pelvis)",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "OpenSim lumbar_rotation as ISB rotation (left +; sign convention not stated in the paper, uncertain); × 0.778 span share (inferred); turn read as a left turn from the rising global pelvis yaw (OpenSim + = left; inferred); a right turn would flip this sign",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "neck_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": -5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5071,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0.4274, 0, 0.0985, 0, 0.0193, 0, -0.0115, 0, -0.0187, 0, -0.0146, 0]
+       },
+       "logSigma": {
+        "a0": 3.1102,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.2973, 0, 0.76, 0, 0.1485, 0, -0.0884, 0, -0.1446, 0, -0.1125, 0]
+       },
+       "logSigma": {
+        "a0": 3.6126,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 85.1271,
+        "cos": [-3.9033, -13.974, 0.5002, -2.5683, 0.3678, -0.0895, 0.3322, -0.4364, 0.0887, -0.2979, 0.0466, -0.1592],
+        "sin": [-17.5332, -2.3861, -4.3746, -0.9837, -0.6644, 0.2221, 0.4755, 0.1827, 0.5535, -0.1255, 0.4353, -0.1018]
+       },
+       "logSigma": {
+        "a0": 2.3442,
+        "cos": [-0.0294, 0.0791, -0.0263, 0.0678, -0.0209, 0.0519],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "outside hip_flexion",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "flexion +, as ISB",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "inside hip_flexion",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "flexion +, as ISB",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "hip_adduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": -6.722,
+        "cos": [7.716, 1.4068, -0.3397, 0.9933, 0.8562, 0.237, 0.0958, 0.1158, -0.2296, 0.0717, -0.0994, 0.0216],
+        "sin": [-6.0896, 0.3686, -10.5544, -0.2798, -1.5936, 0.0148, 0.7348, -0.0182, 0.9564, 0.0496, 0.7909, 0.0466]
+       },
+       "logSigma": {
+        "a0": 1.974,
+        "cos": [-0.0268, 0.4658, 0.0394, 0.3079, 0.0655, 0.1885],
+        "sin": [-0.6844, -0.0603, -0.0786, -0.0355, 0.0136, 0.0192]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "digitised",
+          "sigma": "between-sources",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "outside hip_abduction",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "abduction + negated to ISB adduction",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           },
+           {
+            "id": "heinrich-2022",
+            "what": "outside hip_abduction min–max, one instructor, GS ≈14 m/s",
+            "status": "range-only measured (Table 1)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "abduction + negated to ISB adduction",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "inside hip_abduction",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "abduction + negated to ISB adduction",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "hip_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 0.5918,
+        "cos": [-10.1662, -2.0376, 2.355, 0.2248, 1.1179, 0.2084, 0.8712, -0.0511, 0.2818, 0.0131, 0.1316, -0.0049],
+        "sin": [29.0593, -0.2679, 5.4361, -0.8656, 0.6423, 0.0515, -0.4096, 0.1187, -0.818, 0.0061, -0.5989, -0.0179]
+       },
+       "logSigma": {
+        "a0": 1.8921,
+        "cos": [0.0964, 0.2422, -0.1123, 0.2501, -0.0016, 0.1828],
+        "sin": [0.1867, -0.377, -0.0073, -0.0171, -0.0155, 0.0166]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "digitised",
+          "sigma": "between-sources",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "outside hip_rotation",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "internal rotation +, as ISB",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           },
+           {
+            "id": "heinrich-2022",
+            "what": "outside hip_rotation min–max, one instructor, GS ≈14 m/s",
+            "status": "range-only measured (Table 1)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "internal rotation +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "digitised",
+          "sigma": "between-sources",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "inside hip_rotation",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "internal rotation +, as ISB",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           },
+           {
+            "id": "heinrich-2022",
+            "what": "inside hip_rotation min–max, one instructor, GS ≈14 m/s",
+            "status": "range-only measured (Table 1)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "internal rotation +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "fasel-2017 carpet hip rotation not used: sign not stated, short skis"
+        ]
+       }
+      },
+      "knee_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 82.7204,
+        "cos": [-1.7975, -6.3671, -1.5116, 1.5299, -0.0651, 0.3751, 0.1455, 0.4603, -0.1536, 0.1544, -0.2312, 0.1679],
+        "sin": [-23.1719, -2.8585, -2.5795, -2.3263, -0.1795, -0.4667, 0.596, 0.1714, 0.3195, 0.1398, 0.3236, 0.0166]
+       },
+       "logSigma": {
+        "a0": 1.9912,
+        "cos": [-0.0101, -0.1396, 0.0744, -0.0428, -0.0051, 0.0719],
+        "sin": [0.3013, -0.2522, -0.1981, -0.0237, -0.0276, 0.0698]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "digitised",
+          "sigma": "between-sources",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "outside knee_flexion",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "flexion +, as ISB",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           },
+           {
+            "id": "heinrich-2022",
+            "what": "outside knee_flexion min–max, one instructor, GS ≈14 m/s",
+            "status": "range-only measured (Table 1)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "flexion +, as ISB",
+            "warp": "none: a range has no timing"
+           },
+           {
+            "id": "kroll-2015",
+            "what": "outside knee flexion, GS, one FIS racer",
+            "status": "eye-read (Fig 1A); its Table 1 extrema measured",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
+            "warp": "none: plotted switch to switch, inside knee max ≈ ½ already"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "digitised",
+          "sigma": "between-sources",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "inside knee_flexion",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "flexion +, as ISB",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           },
+           {
+            "id": "heinrich-2022",
+            "what": "inside knee_flexion min–max, one instructor, GS ≈14 m/s",
+            "status": "range-only measured (Table 1)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "flexion +, as ISB",
+            "warp": "none: a range has no timing"
+           },
+           {
+            "id": "kroll-2015",
+            "what": "inside knee flexion, GS, one FIS racer",
+            "status": "eye-read (Fig 1A); its Table 1 extrema measured",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
+            "warp": "none: plotted switch to switch, inside knee max ≈ ½ already"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 21.1475,
+        "cos": [0.6286, 1.7342, -0.6172, 1.0746, -0.0242, 0.2786, -0.0408, 0.1101, 0.0057, 0.0523, -0.0006, 0.0322],
+        "sin": [1.452, 1.3656, -0.0094, -0.7245, 0.1408, -0.164, -0.0462, -0.0071, -0.0701, 0.0333, -0.0596, 0.0066]
+       },
+       "logSigma": {
+        "a0": 1.1222,
+        "cos": [-0.0256, 0.0449, -0.0231, 0.0387, -0.0187, 0.03],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "digitised",
+          "sigma": "between-sources",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "outside ankle_dorsiflexion",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "dorsiflexion +, as ISB",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           },
+           {
+            "id": "heinrich-2022",
+            "what": "outside ankle_dorsiflexion min–max, one instructor, GS ≈14 m/s",
+            "status": "range-only measured (Table 1)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "dorsiflexion +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "digitised",
+          "sigma": "between-sources",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "inside ankle_dorsiflexion",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "dorsiflexion +, as ISB",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           },
+           {
+            "id": "heinrich-2022",
+            "what": "inside ankle_dorsiflexion min–max, one instructor, GS ≈14 m/s",
+            "status": "range-only measured (Table 1)",
+            "n": 1,
+            "errorDeg": 1,
+            "mapping": "dorsiflexion +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "subtalar_inversion": {
+       "parity": "sided",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         },
+         "inside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "held by the boot"
+        ]
+       }
+      },
+      "scapula_elevation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "scapula_protraction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.1691,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 59.4,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 4.0019,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_abduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 70,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.912,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -10,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6889,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "elbow_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 71.9,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5932,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "forearm_pronation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -4.05,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.7007,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6243,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_deviation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      }
+     },
+     "limitFlags": [
+      {
+       "coordinate": "lumbar_rotation",
+       "phi": [0, 0.063],
+       "value": -10.6,
+       "bound": -10
+      },
+      {
+       "coordinate": "lumbar_rotation",
+       "phi": [0.667, 0.917],
+       "value": -10.7,
+       "bound": -10
+      },
+      {
+       "coordinate": "lumbar_rotation",
+       "phi": [0.083, 0.646],
+       "value": 11.1,
+       "bound": 10
+      },
+      {
+       "coordinate": "lumbar_rotation",
+       "phi": [0.917, 0.979],
+       "value": 10.6,
+       "bound": 10
+      },
+      {
+       "coordinate": "hip_rotation.R",
+       "phi": [0.646, 0.833],
+       "value": 41.2,
+       "bound": 40
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.R",
+       "phi": [0, 0.979],
+       "value": 28.1,
+       "bound": 12.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.L",
+       "phi": [0, 0.979],
+       "value": 28.2,
+       "bound": 12.7
+      }
+     ]
+    }
+   ]
+  },
+  "regular-short-turns": {
+   "unstated": [
+    {
+     "id": "short-sl-kroll-2015-and-reilly",
+     "arcLoad": 1.5081,
+     "indexProvenance": "inferred: the drill’s dynamic scenario (an SL racer and an instructor’s dynamic demo; neither source gives speed and radius)",
+     "coordinates": {
+      "pelvis_tx": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_ty": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tz": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tilt": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_list": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_rotation": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "lumbar_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.6094,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": -5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5071,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0.4274, 0, 0.0985, 0, 0.0193, 0, -0.0115, 0, -0.0187, 0, -0.0146, 0]
+       },
+       "logSigma": {
+        "a0": 3.1102,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.2973, 0, 0.76, 0, 0.1485, 0, -0.0884, 0, -0.1446, 0, -0.1125, 0]
+       },
+       "logSigma": {
+        "a0": 3.6126,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 90.1424,
+        "cos": [0.2314, -4.8264, -0.0896, 1.2543, -0.3937, 0.3819, -0.0315, -0.1919, 0.0293, -0.021, -0.0076, -0.0337],
+        "sin": [-1.2239, -3.964, -1.1354, -0.7026, 0.025, 0.2522, 0.2628, 0.1436, 0.0134, -0.0578, 0.0301, -0.0004]
+       },
+       "logSigma": {
+        "a0": 2.7082,
+        "cos": [0, 0.0003, 0, 0.0003, 0, 0.0002],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "footage",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "footage vXcjdfBXTiI (Reilly McGlashan)",
+            "what": "trunk thigh–outside",
+            "status": "footage: rtmlib RTMPose-x 2D, side-on, 3 turns (scripts/prior/reilly-curves.json)",
+            "n": 1,
+            "errorDeg": 15,
+            "mapping": "image-plane trunk–thigh angle as hip_flexion; it includes the spine flexion, so it overstates the hip (uncertain)",
+            "warp": "phase = time between hand-read switches 4.86 and 5.59 s (lead-footage/notes.md); 4.13 and 6.32 s at the 0.73 s period, inferred"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "footage",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "footage vXcjdfBXTiI (Reilly McGlashan)",
+            "what": "trunk thigh–inside",
+            "status": "footage: rtmlib RTMPose-x 2D, side-on, 3 turns (scripts/prior/reilly-curves.json)",
+            "n": 1,
+            "errorDeg": 15,
+            "mapping": "image-plane trunk–thigh angle as hip_flexion; it includes the spine flexion, so it overstates the hip (uncertain)",
+            "warp": "phase = time between hand-read switches 4.86 and 5.59 s (lead-footage/notes.md); 4.13 and 6.32 s at the 0.73 s period, inferred"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "hip_adduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": -7.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.9312,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.0564,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "knee_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 74.4594,
+        "cos": [-1.8633, -0.3836, -1.0354, 1.7911, 0.5318, 1.0175, -0.5308, -0.3397, 0.1297, 0.541, -0.0079, -0.1383],
+        "sin": [-4.0498, 0.7077, 0.3134, -0.0076, 0.8262, -0.4036, -0.4139, -0.0245, 0.1778, 0.0021, -0.4285, -0.1049]
+       },
+       "logSigma": {
+        "a0": 2.5072,
+        "cos": [0.0169, -0.1998, -0.0151, 0.2311, 0.0139, -0.0121],
+        "sin": [0.1831, 0.0524, -0.0849, -0.0745, 0.071, 0.0308]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "eye-read",
+          "sigma": "between-sources",
+          "sources": [
+           {
+            "id": "kroll-2015",
+            "what": "outside knee flexion, SL, one FIS racer",
+            "status": "eye-read (Fig 1A); its Table 1 extrema measured",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
+            "warp": "none: plotted switch to switch, inside knee max ≈ ½ already"
+           },
+           {
+            "id": "footage vXcjdfBXTiI (Reilly McGlashan)",
+            "what": "knee outside",
+            "status": "footage: rtmlib RTMPose-x 2D, side-on, 3 turns (scripts/prior/reilly-curves.json)",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "image-plane thigh–shank angle as knee_flexion (side view, ±5–10°, spike/video/notes.md)",
+            "warp": "phase = time between hand-read switches 4.86 and 5.59 s (lead-footage/notes.md); 4.13 and 6.32 s at the 0.73 s period, inferred"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "eye-read",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "kroll-2015",
+            "what": "inside knee flexion, SL, one FIS racer",
+            "status": "eye-read (Fig 1A); its Table 1 extrema measured",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
+            "warp": "none: plotted switch to switch, inside knee max ≈ ½ already"
+           },
+           {
+            "id": "footage vXcjdfBXTiI (Reilly McGlashan)",
+            "what": "knee inside",
+            "status": "footage: rtmlib RTMPose-x 2D, side-on, 3 turns (scripts/prior/reilly-curves.json)",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "image-plane thigh–shank angle as knee_flexion (side view, ±5–10°, spike/video/notes.md)",
+            "warp": "phase = time between hand-read switches 4.86 and 5.59 s (lead-footage/notes.md); 4.13 and 6.32 s at the 0.73 s period, inferred"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "footage outside/inside split from the near ski (lead-footage/notes.md); the straighter mid-turn knee disagrees in 2 of 3 turns, so the split is uncertain"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": -20.95,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8229,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "subtalar_inversion": {
+       "parity": "sided",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         },
+         "inside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "held by the boot"
+        ]
+       }
+      },
+      "scapula_elevation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "scapula_protraction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.1691,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 59.4,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 4.0019,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_abduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 70,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.912,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -10,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6889,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "elbow_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 71.9,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5932,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "forearm_pronation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -4.05,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.7007,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6243,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_deviation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      }
+     },
+     "limitFlags": []
+    }
+   ]
+  },
+  "regular-cruising": {
+   "unstated": [
+    {
+     "id": "medium-intermediate-gao-2025",
+     "arcLoad": 1.2394,
+     "indexProvenance": "gao-2025 11.5 m/s and r 17.6 m measured; slope the drill’s moderate one (inferred)",
+     "coordinates": {
+      "pelvis_tx": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_ty": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tz": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tilt": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_list": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_rotation": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "lumbar_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.6094,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": -5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5071,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0.4274, 0, 0.0985, 0, 0.0193, 0, -0.0115, 0, -0.0187, 0, -0.0146, 0]
+       },
+       "logSigma": {
+        "a0": 3.1102,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.2973, 0, 0.76, 0, 0.1485, 0, -0.0884, 0, -0.1446, 0, -0.1125, 0]
+       },
+       "logSigma": {
+        "a0": 3.6126,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 56.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6096,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_adduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": -13.75,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [-7.6325, 0, -1.7594, 0, -0.3438, 0, 0.2046, 0, 0.3348, 0, 0.2603, 0]
+       },
+       "logSigma": {
+        "a0": 2.6309,
+        "cos": [-0.0108, 0.0267, -0.0107, 0.0231, -0.0107, 0.018],
+        "sin": [-0.3981, 0, -0.1276, 0, -0.0714, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "gao-2025",
+            "what": "outside hip abduction ≈20",
+            "status": "range-only (eye, Fig 5)",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "abduction + negated to ISB adduction",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": []
+       }
+      },
+      "hip_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 0.25,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.3583, 0, 0.7741, 0, 0.1513, 0, -0.09, 0, -0.1473, 0, -0.1145, 0]
+       },
+       "logSigma": {
+        "a0": 2.6823,
+        "cos": [-0.0151, 0.0053, -0.0151, 0.0046, -0.015, 0.0037],
+        "sin": [-0.4792, 0, -0.158, 0, -0.0929, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "gao-2025",
+            "what": "outside hip rotation, one intermediate",
+            "status": "range-only (eye, Fig 5)",
+            "n": 1,
+            "errorDeg": 3,
+            "mapping": "internal rotation +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": []
+       }
+      },
+      "knee_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 64.175,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [-5.0985, 0, -1.1753, 0, -0.2297, 0, 0.1366, 0, 0.2236, 0, 0.1739, 0]
+       },
+       "logSigma": {
+        "a0": 2.9298,
+        "cos": [-0.0244, 0.0106, -0.0243, 0.0092, -0.0243, 0.0072],
+        "sin": [-0.79, 0, -0.2594, 0, -0.1515, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "gao-2025",
+            "what": "knee flexion 40–67 right / 40–80 left; which leg is outside is not read",
+            "status": "range-only (eye, Fig 5)",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "flexion +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": []
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": -20.95,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8229,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "subtalar_inversion": {
+       "parity": "sided",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         },
+         "inside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "held by the boot"
+        ]
+       }
+      },
+      "scapula_elevation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "scapula_protraction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.1691,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 59.4,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 4.0019,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_abduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 70,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.912,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -10,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6889,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "elbow_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 71.9,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5932,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "forearm_pronation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -4.05,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.7007,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6243,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_deviation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      }
+     },
+     "limitFlags": []
+    }
+   ]
+  },
+  "regular-moguls": {
+   "unstated": [
+    {
+     "id": "moguls-elite-ranges",
+     "arcLoad": 2.2217,
+     "indexProvenance": "inferred: the drill’s dynamic scenario (elite and WC skiers)",
+     "coordinates": {
+      "pelvis_tx": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_ty": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tz": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tilt": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_list": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_rotation": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "lumbar_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.6094,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": -5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5071,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0.4274, 0, 0.0985, 0, 0.0193, 0, -0.0115, 0, -0.0187, 0, -0.0146, 0]
+       },
+       "logSigma": {
+        "a0": 3.1102,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.2973, 0, 0.76, 0, 0.1485, 0, -0.0884, 0, -0.1446, 0, -0.1125, 0]
+       },
+       "logSigma": {
+        "a0": 3.6126,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 56.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6096,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "arndt-1992 p78: to ≈130 at peak absorption (a peak only, not fitted)"
+        ]
+       }
+      },
+      "hip_adduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": -7.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.9312,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.0564,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "knee_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 70,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.2189,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "ando-2024",
+            "what": "knee 20–120 from max extension (horishima-2019 thesis)",
+            "status": "range-only",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "flexion +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "ando-2024",
+            "what": "knee 20–120 from max extension (horishima-2019 thesis)",
+            "status": "range-only",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "flexion +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "no outside/inside split",
+         "riku-2007: 50–60° change per turn (both knees, 6 WC/EC); an amplitude check, not fitted"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 27.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.3026,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "arndt-1992",
+            "what": "ankle ≈10 → 45, left leg, 3 elite",
+            "status": "range-only measured (pp67-68)",
+            "n": 3,
+            "errorDeg": 5,
+            "mapping": "dorsiflexion +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "arndt-1992",
+            "what": "ankle ≈10 → 45, left leg, 3 elite",
+            "status": "range-only measured (pp67-68)",
+            "n": 3,
+            "errorDeg": 5,
+            "mapping": "dorsiflexion +, as ISB",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "impact-referenced, left leg only: no outside/inside split"
+        ]
+       }
+      },
+      "subtalar_inversion": {
+       "parity": "sided",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         },
+         "inside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "held by the boot"
+        ]
+       }
+      },
+      "scapula_elevation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "scapula_protraction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.1691,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 59.4,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 4.0019,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_abduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 70,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.912,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -10,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6889,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "elbow_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 71.9,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5932,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "forearm_pronation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -4.05,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.7007,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6243,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_deviation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      }
+     },
+     "limitFlags": [
+      {
+       "coordinate": "ankle_dorsiflexion.R",
+       "phi": [0, 0.979],
+       "value": 37.5,
+       "bound": 12.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.L",
+       "phi": [0, 0.979],
+       "value": 37.5,
+       "bound": 12.7
+      }
+     ]
+    }
+   ]
+  },
+  "regular-steeps": {
+   "unstated": [
+    {
+     "id": "neutral",
+     "arcLoad": 1,
+     "indexProvenance": "one neutral example: the index is unused",
+     "coordinates": {
+      "pelvis_tx": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_ty": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tz": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tilt": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_list": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_rotation": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "lumbar_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.6094,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": -5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5071,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0.4274, 0, 0.0985, 0, 0.0193, 0, -0.0115, 0, -0.0187, 0, -0.0146, 0]
+       },
+       "logSigma": {
+        "a0": 3.1102,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.2973, 0, 0.76, 0, 0.1485, 0, -0.0884, 0, -0.1446, 0, -0.1125, 0]
+       },
+       "logSigma": {
+        "a0": 3.6126,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 56.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6096,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_adduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": -7.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.9312,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.0564,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "knee_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 68.35,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.546,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": -20.95,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8229,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "subtalar_inversion": {
+       "parity": "sided",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         },
+         "inside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "held by the boot"
+        ]
+       }
+      },
+      "scapula_elevation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "scapula_protraction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.1691,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 59.4,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 4.0019,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_abduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 70,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.912,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -10,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6889,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "elbow_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 71.9,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5932,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "forearm_pronation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -4.05,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.7007,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6243,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_deviation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      }
+     },
+     "limitFlags": []
+    }
+   ]
+  },
+  "regular-powder": {
+   "unstated": [
+    {
+     "id": "neutral",
+     "arcLoad": 1,
+     "indexProvenance": "one neutral example: the index is unused",
+     "coordinates": {
+      "pelvis_tx": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_ty": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tz": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tilt": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_list": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_rotation": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "lumbar_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.6094,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": -5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5071,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0.4274, 0, 0.0985, 0, 0.0193, 0, -0.0115, 0, -0.0187, 0, -0.0146, 0]
+       },
+       "logSigma": {
+        "a0": 3.1102,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.2973, 0, 0.76, 0, 0.1485, 0, -0.0884, 0, -0.1446, 0, -0.1125, 0]
+       },
+       "logSigma": {
+        "a0": 3.6126,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 56.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6096,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_adduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": -7.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.9312,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.0564,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "knee_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 68.35,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.546,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": -20.95,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8229,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "subtalar_inversion": {
+       "parity": "sided",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         },
+         "inside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "held by the boot"
+        ]
+       }
+      },
+      "scapula_elevation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "scapula_protraction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.1691,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 59.4,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 4.0019,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_abduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 70,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.912,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -10,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6889,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "elbow_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 71.9,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5932,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "forearm_pronation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -4.05,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.7007,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6243,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_deviation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      }
+     },
+     "limitFlags": []
+    }
+   ]
+  },
+  "stork-turns": {
+   "unstated": [
+    {
+     "id": "neutral",
+     "arcLoad": 1,
+     "indexProvenance": "one neutral example: the index is unused",
+     "coordinates": {
+      "pelvis_tx": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_ty": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tz": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tilt": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_list": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_rotation": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "lumbar_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.6094,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": -5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5071,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0.4274, 0, 0.0985, 0, 0.0193, 0, -0.0115, 0, -0.0187, 0, -0.0146, 0]
+       },
+       "logSigma": {
+        "a0": 3.1102,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.2973, 0, 0.76, 0, 0.1485, 0, -0.0884, 0, -0.1446, 0, -0.1125, 0]
+       },
+       "logSigma": {
+        "a0": 3.6126,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 56.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6096,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_adduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": -7.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.9312,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.0564,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "knee_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 68.35,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.546,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": -20.95,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8229,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "subtalar_inversion": {
+       "parity": "sided",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         },
+         "inside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "held by the boot"
+        ]
+       }
+      },
+      "scapula_elevation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "scapula_protraction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.1691,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 59.4,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 4.0019,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_abduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 70,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.912,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -10,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6889,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "elbow_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 71.9,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5932,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "forearm_pronation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -4.05,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.7007,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6243,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_deviation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      }
+     },
+     "limitFlags": []
+    }
+   ]
+  },
+  "dolphin-turns": {
+   "unstated": [
+    {
+     "id": "neutral",
+     "arcLoad": 1,
+     "indexProvenance": "one neutral example: the index is unused",
+     "coordinates": {
+      "pelvis_tx": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_ty": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tz": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_tilt": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_list": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "pelvis_rotation": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+        ]
+       }
+      },
+      "lumbar_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.6094,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": -5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5071,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0.4274, 0, 0.0985, 0, 0.0193, 0, -0.0115, 0, -0.0187, 0, -0.0146, 0]
+       },
+       "logSigma": {
+        "a0": 3.1102,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.2973, 0, 0.76, 0, 0.1485, 0, -0.0884, 0, -0.1446, 0, -0.1125, 0]
+       },
+       "logSigma": {
+        "a0": 3.6126,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 56.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6096,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_adduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": -7.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.9312,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.0564,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "knee_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 68.35,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.546,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": -20.95,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8229,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "subtalar_inversion": {
+       "parity": "sided",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         },
+         "inside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "held by the boot"
+        ]
+       }
+      },
+      "scapula_elevation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "scapula_protraction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.1691,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 59.4,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 4.0019,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_abduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 70,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.912,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -10,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6889,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "elbow_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 71.9,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5932,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "forearm_pronation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -4.05,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.7007,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6243,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_deviation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      }
+     },
+     "limitFlags": []
+    }
+   ]
+  }
+ },
+ "aliases": {
+  "turns-on-the-tops": {
+   "from": "regular-moguls",
+   "why": "inferred: a mogul line; no source measures it alone"
+  },
+  "round-line": {
+   "from": "regular-moguls",
+   "why": "inferred: a mogul line; no source measures it alone"
+  },
+  "closed-stance-short-turns": {
+   "from": "regular-short-turns",
+   "why": "inferred: short turns with the feet closer; no source measures it alone"
+  }
+ },
+ "evidence": {
+  "note": "Range and timing evidence for derived outputs: never prior terms.",
+  "regular-short-turns.trunk_pitch_vs_image_vertical": {
+   "source": "vXcjdfBXTiI (Reilly McGlashan, side-on dynamic short turns, 1080p24)",
+   "status": "footage, image-plane; the camera is not level with the snow, so only the range and timing hold",
+   "phi": [0, 0.0833, 0.1667, 0.25, 0.3333, 0.4167, 0.5, 0.5833, 0.6667, 0.75, 0.8333, 0.9167, 1],
+   "turns": [
+    [42.4, 42.5, 41.6, 41, 39.5, 38.1, 36.7, 35.5, 35, 35.1, 34.8, 33.4, 32.2],
+    [31, 30, 29.6, 30.1, 30.8, 30.6, 29.3, 28.8, 30, 32.1, 33.7, 35.1, 35.9],
+    [35.5, 35.4, 35.3, 36.6, 38, 37.5, 36.2, 35.1, 34.1, 32.9, 30.5, 28.7, 28]
+   ]
+  },
+  "edge_change_style": "No source states cross-over or cross-under; every example is style-unstated and serves both."
+ }
+}
