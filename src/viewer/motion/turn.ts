@@ -305,15 +305,15 @@ const idleLike = (s: Scalar): Scalar => (typeof s === 'number' ? 1 : s.mul(0).ad
  * axis, and the axes' closest pair when it lies inside both (else idle). Their least is the capsule clearance, but
  * each row is smooth where that least is kinked, as for side-by-side skis whose nearest ends swap at parallel.
  */
-const clearance = (fa: Rigid, ca: BootCapsule, fb: Rigid, cb: BootCapsule): Scalar[] => {
-  const [a0, a1, b0, b1] = [transform(fa, ca.a), transform(fa, ca.b), transform(fb, cb.a), transform(fb, cb.b)];
-  const r = ca.radius + cb.radius;
+const clearanceOf = (a0: V3, a1: V3, b0: V3, b1: V3, r: number): Scalar[] => {
   const toAxis = (p: V3, s0: V3, s1: V3): Scalar => sub(distance(p, lerp(s0, s1, nearest(p, s0, s1))), r);
   const ends = [toAxis(a0, b0, b1), toAxis(a1, b0, b1), toAxis(b0, a0, a1), toAxis(b1, a0, a1)];
   const [sP, tQ] = closest(vals(a0), vals(a1), vals(b0), vals(b1));
   const inside = sP > 0 && sP < 1 && tQ > 0 && tQ < 1;
   return [...ends, inside ? sub(distance(lerp(a0, a1, sP), lerp(b0, b1, tQ)), r) : idleLike(ends[0] ?? 0)];
 };
+const clearance = (fa: Rigid, ca: BootCapsule, fb: Rigid, cb: BootCapsule): Scalar[] =>
+  clearanceOf(transform(fa, ca.a), transform(fa, ca.b), transform(fb, cb.a), transform(fb, cb.b), ca.radius + cb.radius);
 
 /** Every ski capsule pair's clearance, right against left. */
 const skiClearances = (world: Readonly<Record<string, Rigid>>, ski: SkiPoints): Scalar[] => {
@@ -477,8 +477,10 @@ export interface SkiGoal {
   readonly required: readonly [number, number];
   /** Outside and inside: pressed at P and bent to the snow, else bridged on its touching points (skiContactOf). */
   readonly pressed: readonly [boolean, boolean];
-  /** Outside and inside at rest on the snow along the heading through the path point. */
+  /** Outside and inside at rest on the snow along the heading through its own place, stance / 2 off the path point. */
   readonly contact: readonly [SkiContact, SkiContact];
+  /** Outside and inside: the snow normal under that ski's own place. */
+  readonly normals: readonly [Vec3, Vec3];
 }
 
 /** The snow's curvature along heading `f` over a ski of `length` at (x, z), concave +, 1/m: the chord value. */
@@ -670,9 +672,13 @@ export const skiGoal = (drill: string, intensity: Intensity, surface: Surface, t
   // The physics' bend where it lays one (moguls: its share of the load square to the base), else each ski's share.
   const bend = phys.bendRadius !== null ? ([phys.bendRadius, phys.bendRadius] as const) : ([bendRadiusOf(phys.load * (1 - insideShare) * REFERENCE_SKIER.mass * G), bendRadiusOf(phys.load * insideShare * REFERENCE_SKIER.mass * G)] as const);
   const pts = skiPointsOf(sk);
-  const contact = bend.map((b) => skiContactOf(surface, p.x, p.z, fwd, pts, b, edge, sk.sidecutRadius)) as unknown as readonly [SkiContact, SkiContact];
-  // The inside ski's edge band is centred on the outside's goal edge, so both skis need the same curvature.
-  const need = requiredCurvature(edge, sk.sidecutRadius, snowCurvature(surface, p.x, p.z, fwd, runningLength(sk)));
+  const stance = surface.kind === SurfaceKind.Moguls ? MOGUL_STANCE_M : HIP_WIDTH;
+  // Each ski on its own snow, the outside away from the turn's inside: on bumps one sits higher on the wall.
+  const spots = [-side, side].map((s) => [p.x + (s * stance * across[0]) / 2, p.z + (s * stance * across[2]) / 2] as const);
+  const contact = bend.map((b, n) => skiContactOf(surface, spots[n]?.[0] ?? p.x, spots[n]?.[1] ?? p.z, fwd, pts, b, edge, sk.sidecutRadius)) as unknown as readonly [SkiContact, SkiContact];
+  // The inside ski's edge band is centred on the outside's goal edge; each needs the curvature of its own snow.
+  const required = spots.map(([x, z]) => requiredCurvature(edge, sk.sidecutRadius, snowCurvature(surface, x, z, fwd, runningLength(sk)))) as unknown as readonly [number, number];
+  const normals = spots.map(([x, z]) => normalAt(surface, x, z)) as unknown as readonly [Vec3, Vec3];
   return {
     t,
     origin,
@@ -696,20 +702,24 @@ export const skiGoal = (drill: string, intensity: Intensity, surface: Surface, t
     foreAft: fa.mean,
     foreAftSigma: fa.sigma,
     phase,
-    stance: surface.kind === SurfaceKind.Moguls ? MOGUL_STANCE_M : HIP_WIDTH,
+    stance,
     rise: kind === null || surface.kind === SurfaceKind.Moguls ? 0 : insideRise(phys.lean, edge),
     clearance: phys.clearance,
     up: g,
     inside: [side * level[0], side * level[1], side * level[2]],
     bend,
-    required: [need, need],
+    required,
     pressed: [contact[0].pressed, contact[1].pressed],
     contact,
+    normals,
   };
 };
 
 /** Edge of a ski frame toward +x off the snow normal: the bank of its across axis. */
 export const edgeOf = (ski: Rigid, normal: Vec3): Scalar => asin(neg(dot3(axisOf(ski, 0), normal)));
+
+/** edgeOf against the snow under the ski's own centre, first order in where that centre is. */
+const edgeOnSnow = (surface: Surface, ski: Rigid, centre: Vec3): Scalar => asin(neg(dot3(axisOf(ski, 0), normalOver(surface, transform(ski, centre)))));
 
 const pelvisOf = (w: Readonly<Record<string, Rigid>>): Rigid => {
   const p = w['pelvis'];
@@ -1033,7 +1043,7 @@ export const buildTurnProblem = (drill: string, intensity: Intensity, options: B
         if (kind === null) {
           const rot = [0, 1, 2].map((i) => cross3(g.axes[i as 0 | 1 | 2], axisOf(out, i as 0 | 1 | 2)));
           r = [0, 1, 2].map((c) => mul(0.5, add(add(rot[0]?.[c] ?? 0, rot[1]?.[c] ?? 0), rot[2]?.[c] ?? 0)));
-        } else r = [dot3(z, a), touch ?? 0, ...(closed ? [sub(edgeOf(out, g.normal), g.edge)] : [])];
+        } else r = [dot3(z, a), touch ?? 0, ...(closed ? [sub(edgeOnSnow(surface, out, ski.centre), g.edge)] : [])];
         const d = sub3(transform(ins, ski.centre), transform(out, ski.centre));
         return [
           ...r,
@@ -1048,7 +1058,7 @@ export const buildTurnProblem = (drill: string, intensity: Intensity, options: B
     if (!closed)
       blocks.push(
         cycle.frameBlock({ name: `edge band ${k}`, group: 'edge band', kind: BlockKind.Inequality, size: 2 }, [k], ([q = []]) => {
-          const e = edgeOf(legs(q).out, g.normal);
+          const e = edgeOnSnow(surface, legs(q).out, ski.centre);
           return [sub(e, g.edgeMin), sub(g.edgeMax, e)] as Dual[];
         }),
       );
@@ -1056,7 +1066,7 @@ export const buildTurnProblem = (drill: string, intensity: Intensity, options: B
       blocks.push(
         cycle.frameBlock({ name: `inside edge ${k}`, group: 'inside edge', kind: BlockKind.Inequality, size: 2 }, [k], ([q = []]) => {
           const { out, ins } = legs(q);
-          const d = sub(edgeOf(ins, g.normal), edgeOf(out, g.normal));
+          const d = sub(edgeOnSnow(surface, ins, ski.centre), edgeOnSnow(surface, out, ski.centre));
           return [sub(INSIDE_EDGE_PLAY, d), add(INSIDE_EDGE_PLAY, d)] as Dual[];
         }),
       );
