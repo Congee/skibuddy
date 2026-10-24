@@ -154,7 +154,9 @@ export const phaseMapOf = (anchors: PhaseAnchors | null, events: CellEvents): Ph
     const phi = anchors?.[name];
     if (phi === undefined) continue;
     const t = events[name];
-    if (pairs.every(([t0, p0]) => Math.sign(t - t0) === Math.sign(phi - p0) && t !== t0)) pairs.push([t, phi]);
+    // A force peak outside the carving arc (engagement to release) is a transition spike, not the arc's peak.
+    const inArc = name !== 'forcePeak' || (t > events.engagement && t < events.release);
+    if (inArc && pairs.every(([t0, p0]) => Math.sign(t - t0) === Math.sign(phi - p0) && t !== t0)) pairs.push([t, phi]);
     else dropped.push(name);
   }
   pairs.sort((a, b) => a[0] - b[0]);

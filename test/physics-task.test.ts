@@ -22,6 +22,13 @@ const RANGES: Record<TurnKind, Record<Intensity, { v: readonly [number, number];
 };
 
 const inside = (x: number, [a, b]: readonly [number, number]): boolean => x >= a - 1e-9 && x <= b + 1e-9;
+// The mirrored ends meet at their inverse-variance mean; the shift ramps linearly from one end to the other.
+const closure = (m: ReadonlyArray<number>, half: readonly [number, number], t: number): number => {
+  const [m0 = 0, m1 = 0] = [m[0], m[m.length - 1]];
+  const [w0, w1] = [1 / half[0] ** 2, 1 / half[1] ** 2];
+  const seam = (m0 * w0 + m1 * w1) / (w0 + w1);
+  return (seam - m0) * (1 - t) + (seam - m1) * t;
+};
 interface Rated { readonly label: string; readonly task: TurnTask; readonly rate: number }
 /** The skis' yaw rate, deg/s: their heading swing over the cycle per period. */
 const yawRateOf = (task: TurnTask): number => {
@@ -299,23 +306,32 @@ describe('fore-aft and moment presets (motion-model §9 F)', () => {
     }
   });
 
-  it('reads the GS curve at its anchors as sporri-2016 Fig 4 in lit-curves', () => {
+  it('reads the GS curve at its anchors as sporri-2016 Fig 4 in lit-curves, closed within 2 SE', () => {
     const c = LIT.gs_carving.fore_aft_cm;
+    const halfAt = (j: number): number => ((c.range[1]?.[j] ?? 0) - (c.range[0]?.[j] ?? 0)) / 2;
+    const ends = [halfAt(0), halfAt(c.t.length - 1)] as const;
     c.t.slice(0, -1).forEach((t, j) => {
       const g = foreAftAt({ curve: 'gs_carving' }, t);
-      assert.closeTo(g.mean * 100, c.mean[j] ?? NaN, 1e-9);
-      assert.closeTo(g.sigma * 100, Math.max(5, ((c.range[1]?.[j] ?? 0) - (c.range[0]?.[j] ?? 0)) / 2), 1e-9);
+      const shift = closure(c.mean, ends, t);
+      assert.closeTo(g.mean * 100, (c.mean[j] ?? NaN) + shift, 1e-9);
+      assert.isAtMost(Math.abs(shift), 2 * halfAt(j), `${t}`);
+      assert.closeTo(g.sigma * 100, Math.max(5, halfAt(j)), 1e-9);
     });
+    assert.closeTo(foreAftAt({ curve: 'gs_carving' }, 1 - 1e-12).mean, foreAftAt({ curve: 'gs_carving' }, 0).mean, 1e-9);
   });
 
-  it("reads SL's three reid-2010 anchors, σ the larger of the floor and the sd", () => {
+  it("reads SL's three reid-2010 anchors closed within one sd, σ the larger of the floor and the sd", () => {
     const c = LIT.slalom.fore_aft_cm as unknown as { t: number[]; mean: number[]; sd: number[] };
     assert.deepStrictEqual(c.t, [0, 0.3, 1]);
+    const ends = [c.sd[0] ?? NaN, c.sd[2] ?? NaN] as const;
     for (const [j, t] of [[0, 0], [1, 0.3]] as const) {
       const g = foreAftAt({ curve: 'slalom' }, t);
-      assert.closeTo(g.mean * 100, c.mean[j] ?? NaN, 1e-9);
+      const shift = closure(c.mean, ends, t);
+      assert.closeTo(g.mean * 100, (c.mean[j] ?? NaN) + shift, 1e-9);
+      assert.isAtMost(Math.abs(shift), c.sd[j] ?? NaN);
       assert.closeTo(g.sigma, 0.05, 1e-12);
     }
-    assert.closeTo(foreAftAt({ curve: 'slalom' }, 0.65).mean * 100, (16.4 + -7.8) / 2, 1e-9);
+    assert.closeTo(foreAftAt({ curve: 'slalom' }, 0.65).mean * 100, (16.4 + -7.8) / 2 + closure(c.mean, ends, 0.65), 1e-9);
+    assert.closeTo(foreAftAt({ curve: 'slalom' }, 1 - 1e-12).mean, foreAftAt({ curve: 'slalom' }, 0).mean, 1e-9);
   });
 });

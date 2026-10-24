@@ -1,6 +1,10 @@
 import { assert, describe, it } from '@effect/vitest';
 import { phaseAt, phaseMapOf, phaseOn } from '../src/viewer/prior/prior';
 import type { CellEvents, PhaseAnchors } from '../src/viewer/prior/prior';
+import { INTENSITIES } from '../src/content/schema';
+import { MIGRATED } from '../src/viewer/motion/migrated';
+import { Q_FRAMES } from '../src/viewer/motion/q-table';
+import { registrationOf } from '../src/viewer/motion/turn';
 
 // regular-gs's canonical anchors (scripts/prior/build.ts EVENTS: sporri-2016, kroll-2015).
 const GS: PhaseAnchors = { engagement: 0.25, fallLine: 0.5, forcePeak: 0.68, release: 0.8, sources: ['sporri-2016', 'kroll-2015'] };
@@ -33,7 +37,10 @@ describe('phase registration', () => {
             const events: CellEvents = { engagement, fallLine, forcePeak, release };
             const map = phaseMapOf(GS, events);
             assert.isTrue(increasing(map.pairs));
+            const inArc = forcePeak > engagement && forcePeak < release;
+            if (!inArc) assert.include(map.dropped, 'forcePeak');
             for (const name of map.dropped as ReadonlyArray<(typeof OPTIONAL)[number]>) {
+              if (name === 'forcePeak' && !inArc) continue;
               const phi = GS[name] ?? 0;
               assert.isFalse(increasing([...map.pairs, [events[name], phi] as const].toSorted((a, b) => a[0] - b[0])), name);
             }
@@ -54,4 +61,19 @@ describe('phase registration', () => {
     assert.closeTo(phaseOn(map, 0.2), 0.25, 1e-12);
     assert.closeTo(phaseOn(map, 0.7), 0.75, 1e-12);
   });
+});
+
+describe('phase registration of the solved cells', () => {
+  it('reaches phase 1 at the seam of every registered goal, with no step larger than one inside the turn', () => {
+    for (const drill of MIGRATED)
+      for (const i of INTENSITIES) {
+        const map = registrationOf(drill, i);
+        if (map === null) continue;
+        const phi = Array.from({ length: Q_FRAMES }, (_, k) => phaseOn(map, k / Q_FRAMES));
+        assert.closeTo(phi[0] ?? NaN, 0, 1e-12, `${drill} ${i}`);
+        assert.closeTo(phaseOn(map, 1 - 1e-12), 1, 1e-9, `${drill} ${i}`);
+        const inside = Math.max(...phi.slice(1).map((p, k) => p - (phi[k] ?? 0)));
+        assert.isAtMost(1 - (phi[Q_FRAMES - 1] ?? 0), inside + 1e-9, `${drill} ${i}`);
+      }
+  }, 600_000);
 });

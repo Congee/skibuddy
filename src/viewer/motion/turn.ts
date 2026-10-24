@@ -530,7 +530,18 @@ export const foreAftAt = (foreAft: ForeAft, phase: number): { readonly mean: num
   const f = (u - (c.t[i] ?? 0)) / ((c.t[i + 1] ?? 1) - (c.t[i] ?? 0));
   const read = (ys: ReadonlyArray<number>): number => (ys[i] ?? 0) + ((ys[i + 1] ?? 0) - (ys[i] ?? 0)) * f;
   const half = c.range !== undefined ? (read(c.range[1]) - read(c.range[0])) / 2 : c.sd !== undefined ? read(c.sd) : 0;
-  return { mean: read(c.mean) / 100, sigma: Math.max(FORE_AFT_SIGMA, half / 100) };
+  const seam = seamOf(c);
+  const closed = read(c.mean) + (seam - (c.mean[0] ?? 0)) * (1 - u) + (seam - (c.mean[c.mean.length - 1] ?? 0)) * u;
+  return { mean: closed / 100, sigma: Math.max(FORE_AFT_SIGMA, half / 100) };
+};
+
+/** Where the mirrored turn's ends must meet: the ends' inverse-variance mean by their sd or band half, cm. */
+const seamOf = (c: ForeAftCurve): number => {
+  const ends = [0, c.mean.length - 1].map((j) => {
+    const half = c.range !== undefined ? ((c.range[1][j] ?? 0) - (c.range[0][j] ?? 0)) / 2 : (c.sd?.[j] ?? 1);
+    return { m: c.mean[j] ?? 0, w: 1 / (half * half) };
+  });
+  return ends.reduce((s, e) => s + e.m * e.w, 0) / ends.reduce((s, e) => s + e.w, 0);
 };
 
 /** The cell's turn time onto its prior's phase by V's events (motion-model §9 F); null on the legacy path. */
