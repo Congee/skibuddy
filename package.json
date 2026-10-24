@@ -17,7 +17,8 @@
     "test:model": "vitest run --config vitest.model.config.ts",
     "check": "bun run content && bun run typecheck && bun run lint && bun run test",
     "priors": "bun scripts/prior/build.ts",
-    "test:solve": "vitest run --config vitest.solve.config.ts"
+    "test:solve": "vitest run --config vitest.solve.config.ts",
+    "bake:carve": "sh scripts/solve/bake.sh"
   },
   "dependencies": {
     "@effect/atom-solid": "4.0.5",

@@ -49,6 +49,9 @@ export const DRAG_AREA_M2 = 0.529;
  */
 export const ANGULATION_MAX_DEG = 30;
 
+/** Lateral over normal snow force, tan λ, an edged ski holds on hard snow; inferred, no grip source read. */
+export const GRIP_RATIO = 2;
+
 /** Most margin the legs reach at counter `counterDeg`, degrees; counter's effect is pending the research lane. */
 export const angulationReach = (_counterDeg: number): number => ANGULATION_MAX_DEG;
 

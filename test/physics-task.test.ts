@@ -13,10 +13,10 @@ const DEG = Math.PI / 180;
 const HEADINGS = [0, Math.PI / 2, (3 * Math.PI) / 4];
 const rule9 = (t: TurnTask): boolean => feasibilityOf(t).find((c) => c.rule === 9)?.ok ?? false;
 
-/** motion-model §3 table: v (the carved kinds' picks), skis' radius (or ε_max for carved kinds), slope, period. */
+/** motion-model §3 table: v (the carved kinds' race-cell mean speeds), skis' radius (or ε_max for carved kinds), slope, period. */
 const RANGES: Record<TurnKind, Record<Intensity, { v: readonly [number, number]; r?: readonly [number, number]; e?: number; th: readonly [number, number]; T?: readonly [number, number] }>> = {
-  [TurnKind.GS]: { gentle: { v: [5.165, 5.175], e: 20, th: [7, 7] }, moderate: { v: [7.165, 7.175], e: 27, th: [8.5, 8.5] }, dynamic: { v: [7.5, 8.5], e: 35, th: [9, 9] } },
-  [TurnKind.SL]: { gentle: { v: [5.025, 5.035], e: 45, th: [7, 7], T: [2, 2.5] }, moderate: { v: [6.825, 6.835], e: 52, th: [8.5, 8.5], T: [1.5, 2] }, dynamic: { v: [7.015, 7.025], e: 58, th: [9, 9], T: [1.2, 1.6] } },
+  [TurnKind.GS]: { gentle: { v: [9, 9], e: 20, th: [18, 18] }, moderate: { v: [11, 11], e: 27, th: [18, 18] }, dynamic: { v: [13, 13], e: 35, th: [18, 18] } },
+  [TurnKind.SL]: { gentle: { v: [8, 8], e: 45, th: [19, 19] }, moderate: { v: [9.5, 9.5], e: 52, th: [19, 19] }, dynamic: { v: [11, 11], e: 58, th: [19, 19] } },
   [TurnKind.Steered]: { gentle: { v: [5, 7], r: [12, 20], th: [10, 15] }, moderate: { v: [6, 8], r: [8, 12], th: [15, 20], T: [1.5, 2] }, dynamic: { v: [6, 8], r: [6, 8], th: [22, 30], T: [1, 1.3] } },
   [TurnKind.Moguls]: { gentle: { v: [4, 6], r: [5, 5], th: [15, 20] }, moderate: { v: [6, 8], r: [5, 5], th: [20, 25] }, dynamic: { v: [9, 10], r: [5, 5], th: [25, 28] } },
 };
@@ -55,18 +55,14 @@ describe('task table', () => {
     }
   });
 
-  it('sits inside the motion-model ranges, GS dynamic moved below them for rule 1', () => {
+  it('sits inside the motion-model ranges', () => {
     for (const kind of TURN_KINDS) {
       for (const i of INTENSITIES) {
         const task = taskFor(kind, i);
         const r = RANGES[kind][i];
         assert.isTrue(inside(task.slopeDeg, r.th), `${kind} ${i} slope`);
         if (r.T !== undefined) assert.isTrue(inside(turnProfile(task, Snow.HardGroomed).periodS, r.T), `${kind} ${i} period`);
-        // v 7.5 at ε_max 35° on the SL ski leans 36.4° on the mass path, past rule 1.
-        // §3's picks are the entry speed the bake seeds from (the task's own speed is the baked cycle's mean).
-        const entry = task.entrySpeedMps ?? task.speedMps;
-        if (kind === TurnKind.GS && i === Intensity.Dynamic) assert.isBelow(entry, r.v[0]);
-        else assert.isTrue(inside(entry, r.v), `${kind} ${i} speed`);
+        assert.isTrue(inside(task.speedMps, r.v), `${kind} ${i} speed`);
         if (r.r !== undefined) assert.isTrue(inside(task.radiusM, r.r), `${kind} ${i} radius`);
         assert.isAbove(presetOf(kind, i).why.length, 0);
       }

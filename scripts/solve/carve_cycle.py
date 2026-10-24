@@ -807,18 +807,21 @@ def r4_cell(fine, coarse, reid):
   return r
 
 
+def identified_of(a, b):
+  """Both starts (r4_cell results) agree on the switch headings within 2° and σ_out within 0.05 rad."""
+  d = {'skisDeg': abs(a['switchSkisOffFallDeg'] - b['switchSkisOffFallDeg']), 'skisStateDeg': abs(a['switchSkisStateOffFallDeg'] - b['switchSkisStateOffFallDeg']),
+       'massDeg': abs(a['switchMassOffFallDeg'] - b['switchMassOffFallDeg']), 'sigmaOut': abs(a['sigmaOut'] - b['sigmaOut'])}
+  return {'ok': d['skisDeg'] <= 2 and d['skisStateDeg'] <= 2 and d['massDeg'] <= 2 and d['sigmaOut'] <= 0.05, **d}
+
+
 def gates_r4(args):
   out = json.load(open(args.out)) if os.path.exists(args.out) else {}
   for name, fine_f, coarse_f in args.cell:
     out[name] = r4_cell(json.load(open(fine_f)), json.load(open(coarse_f)), 'reid' in name)
-  # Identified: both starts agree on the switch headings within 2° and σ_out within 0.05 rad.
   for name in [k for k in out if not k.endswith('-carve') and k + '-carve' in out]:
     a, b = out[name], out[name + '-carve']
-    d = {'skisDeg': abs(a['switchSkisOffFallDeg'] - b['switchSkisOffFallDeg']), 'skisStateDeg': abs(a['switchSkisStateOffFallDeg'] - b['switchSkisStateOffFallDeg']),
-         'massDeg': abs(a['switchMassOffFallDeg'] - b['switchMassOffFallDeg']), 'sigmaOut': abs(a['sigmaOut'] - b['sigmaOut'])}
-    ok = d['skisDeg'] <= 2 and d['skisStateDeg'] <= 2 and d['massDeg'] <= 2 and d['sigmaOut'] <= 0.05
     for x in (a, b):
-      x['gates']['identified'] = {'ok': ok, **d}
+      x['gates']['identified'] = identified_of(a, b)
   for name in out:
     print(json.dumps({name: out[name]['gates']}, default=np_item))
   json.dump(out, open(args.out, 'w'), indent=1, default=np_item)
@@ -877,76 +880,102 @@ def link(args):
   print(json.dumps(link_pair(*(json.load(open(f)) for f in (args.a, args.a_half, args.b, args.b_half)))))
 
 
-def samples_of(sol, c, m):
-  """t 0 (the switch) then every collocation point. At λ 0 the force balance is explicit: F/m = ḧ − h λ̇² + g cos θ."""
-  ns = sol['nodes']
-  n0, u0 = ns[0], ns[1]
-  load0 = (u0['hdd'] - n0['h'] * n0['lamDot'] ** 2 + m.G * m.cos) / m.G
-  force0 = load0 * n0['share'] * c['mass'] * m.G
-  first = {**n0, 'hdd': u0['hdd'], 'epsDot': u0['epsDot'], 'load': load0, 'kappa': float(m.ski_curvature_s(n0['eps'], force0, sol['args']['delta_deg'] * math.pi / 180))}
-  rows = [first] + [n for n in ns if 'load' in n]
-  keys = {'t': 't', 'lam': 'lam', 'lamDot': 'lamDot', 'h': 'h', 'hDot': 'hd', 'hDdot': 'hdd', 'eps': 'eps', 'epsDot': 'epsDot', 'p': 'p', 'pDot': 'pd',
-          'psi': 'psi', 'v': 'v', 'kSki': 'kappa', 'load': 'load', 'share': 'share'}
-  out = {k: [float(r[s]) for r in rows] for k, s in keys.items()}
-  out['pressed'] = [int(m.ski_curvature(r['eps'], r['load'], r['share'])[1]) for r in rows]
-  # Pinned switch nodes: λ 0, and 0 ≤ ε − λ with the mirror ε_T = −ε_0 force ε 0.
+# The baked sample keys and their node fields; psiS the skis' heading, gam the slip angle, om the skis' yaw rate off the carve, slip Π.
+BAKE_KEYS = {'t': 't', 'lam': 'lam', 'lamDot': 'lamDot', 'h': 'h', 'hDot': 'hd', 'hDdot': 'hdd', 'eps': 'eps', 'epsDot': 'epsDot', 'p': 'p', 'pDot': 'pd',
+             'psi': 'psi', 'v': 'v', 'kSki': 'kappa', 'load': 'load', 'share': 'share', 'psiS': 'psiS', 'gam': 'gam', 'om': 'om', 'slip': 'Pi'}
+# Module constants the cycle reads besides the const file; the bake records their live values (src/physics/carve-bake.ts SOLVER_CONSTANTS mirrors them).
+PY_CONSTS = ('GAM_REF', 'OM_DELTA', 'P_DELTA', 'TAUS', 'M_REF_OUT', 'M_REF_IN', 'SKI_MASS', 'BINDING_MASS', 'BOOT_MASS', 'FOOT', 'SHANK', 'BSL', 'SHIN',
+             'STATURE', 'LEVA_STATURE', 'MOUNT', 'GAM_MAX', 'ABS_DELTA')
+# The solve's start, recorded apart and never compared.
+SEED_KEYS = ('lamPeak0', 'speedMps')
+
+
+def bake_samples(sol):
+  """samples_r1 as baked series: share the outside ski's; branch 1 pressed, 0 bridged, 0.5 on the boundary; pressed 1 unless bridged."""
+  rows = samples_r1(sol)
+  out = {k: [float(r[f]) for r in rows] for k, f in BAKE_KEYS.items()}
+  out['branch'] = [1.0 if r['s'] > 0.99 else 0.0 if r['s'] < 0.01 else 0.5 for r in rows]
+  out['pressed'] = [0 if b == 0 else 1 for b in out['branch']]
+  # Pinned switch samples: λ 0, and 0 ≤ ε − λ with the mirror ε_T = −ε_0 force ε 0.
   for k in ('lam', 'eps'):
     out[k][0] = out[k][-1] = 0.0
   return out
 
 
-def gates_of(sol, s, c, m, rep, mesh, lk):
-  """Every gate R2a26 names, from the samples; the grip port is test/physics-edge.test.ts:51-70 with its own 1e-9 slacks."""
-  n = len(s['t'])
-  amax = c['ANGULATION_MAX_DEG'] * math.pi / 180
-  grip = True
-  for i in range(n):
-    if s['share'][i] <= 0.5:
-      continue
-    k = m.ski_curvature(s['eps'][i], s['load'][i], s['share'][i])[0]
-    dd = (s['eps'][i] - s['lam'][i]) * 180 / math.pi
-    grip &= dd > -1e-9 and dd <= amax * 180 / math.pi + 1e-9 and 1 / k <= m.Rsc * math.cos(s['eps'][i]) + 1e-9
-  return {
-    'linked': lk['linked'],
-    'F': max(s['load']) <= c['F_CEIL_G'], 'hDot': max(abs(x) for x in s['hDot']) <= c['HD_MAX'],
-    'reach': all(c['REACH'][0] <= x <= c['REACH'][1] for x in s['h']), 'grip': grip, 'pressed': all(s['pressed']),
-    'lamNonNeg': min(s['lam']) >= 0, 'psi': all(0 <= x <= math.pi for x in s['psi']),
-    'replay': rep['restart'] and rep['reachedT'] >= sol['T'] - 1e-12 and rep['fixedPointStuck'] == 0 and rep['bridgedSamples'] == 0 and rep['maxDLamDeg'] <= mesh,
-  }
+def samples(args):
+  sol = json.load(open(args.sol))
+  cst = json.load(open(sol['args']['const']))
+  json.dump({'file': os.path.basename(args.sol), 'cell': cst['cell'], 'T': sol['T'], 'lamPeak': sol['lamPeak'], 'samples': bake_samples(sol)}, open(args.out, 'w'))
+
+
+def solver_read_keys(cst):
+  """The const keys this file reads as c['…'], the seed apart."""
+  read = set(re.findall(r"c\['(\w+)'\]", open(os.path.abspath(__file__)).read()))
+  return sorted(k for k in cst if k in read and k not in SEED_KEYS)
+
+
+def verdict(name, v):
+  """A gates_r4 entry as {value, ok}; ok None where R4 set no threshold."""
+  if isinstance(v, (bool, np.bool_)):
+    ok = bool(v)
+  elif name in ('mirrorRes', 'courseRes'):
+    ok = all(abs(x) <= 1e-6 for x in v.values())
+  elif name in ('epsMaxima', 'loadMaxima'):
+    ok = len(v) == 1
+  elif name == 'tauReached':
+    ok = v == TAUS[-1]
+  elif name == 'no_load_step':
+    ok = bool(v['shrinks'])
+  elif name == 'identified':
+    ok = bool(v['ok'])
+  else:
+    ok = None
+  return {'value': v, 'ok': ok}
+
+
+def course_args(sol):
+  a = sol['args']
+  return a['const'], a['speed'], a['turn_l'], a['offset'], bool(a.get('free_d'))
 
 
 def bake(args):
-  """Writes the whole carve-cycles file from N and N/2 solves, the other start's pair and the TS restart replays; a cell failing any gate is left out."""
-  cells, failed = {}, []
+  """Writes the whole carve-cycles file from each cell's N and N/2 solves, the other start's pair and the TS restart replay; every cell baked with its verdicts."""
+  cells = {}
   others = {o[0]: o[1:] for o in args.other or []}
   for name, fine_f, coarse_f, rep_f in args.cell:
     fine, coarse, rep = json.load(open(fine_f)), json.load(open(coarse_f)), json.load(open(rep_f))
-    c = json.load(open(fine['args']['const']))
-    if fine['args']['const'] != coarse['args']['const'] or fine['args']['head'] != coarse['args']['head'] or rep['file'] != os.path.basename(fine_f):
+    if course_args(fine) != course_args(coarse) or rep['file'] != os.path.basename(fine_f):
       sys.exit(f'{name}: solves or replay do not match')
-    m = Model(c)
-    s = samples_of(fine, c, m)
-    mesh = mesh_change_lam(fine, coarse)
+    cst = json.load(open(fine['args']['const']))
+    r = r4_cell(fine, coarse, False)
+    gates = dict(r['gates'])
     if name in others:
       ob, obc = (json.load(open(f)) for f in others[name])
-      if ob['args']['const'] != fine['args']['const'] or ob['args']['head'] != fine['args']['head']:
+      if course_args(ob) != course_args(fine) or course_args(obc) != course_args(fine):
         sys.exit(f'{name}: the other start does not match')
-      lk = link_pair(fine, coarse, ob, obc)
-    else:
-      lk = {'linked': linked_of(fine, coarse)['linked'], 'startsDLamDeg': None}
-    gates = gates_of(fine, s, c, m, rep, mesh, lk)
-    print(json.dumps({'cell': name, 'meshChangeLamDeg': mesh, 'replayLamDeg': rep['maxDLamDeg'], 'replayLoadG': rep['maxDLoadG'], 'Fmax': max(s['load']),
-                      'hDotMax': max(abs(x) for x in s['hDot']), 'starts': 2 if name in others else 1, 'startsDLamDeg': lk['startsDLamDeg'], 'gates': gates}))
-    if not all(gates.values()):
-      failed.append(name)
-      continue
-    cells[name] = {'inputs': c, 'switchHeadingDeg': fine['args']['head'], 'periodS': fine['T'], 'speedMps': fine['v0'], 'lamPeak': fine['lamPeak'],
-                   'defectDegS': fine['defectDegS'], 'nodes': fine['args']['N'], 'meshChangeLamDeg': mesh, 'replayLamDeg': rep['maxDLamDeg'],
-                   'replayLoadG': rep['maxDLoadG'], 'samples': s}
-  if failed:
-    print(json.dumps({'leftOut': failed}))
+      gates['identified'] = identified_of(r, r4_cell(ob, obc, False))
+    mesh = mesh_change_lam(fine, coarse)
+    rv = rep['maxDLamDeg']
+    replay = {'value': rv, 'ok': rv is not None and math.isfinite(rv) and rv <= mesh}
+    _, speed, turn_l, offset, free_d = course_args(fine)
+    s = bake_samples(fine)
+    cell = {
+      'inputs': {'cell': cst['cell'], 'solver': {k: cst[k] for k in solver_read_keys(cst)},
+                 'course': {'meanSpeedMps': speed, 'turnLM': turn_l, 'offsetM': offset, 'dSolved': free_d}, 'python': {k: globals()[k] for k in PY_CONSTS}},
+      'seed': {k: cst[k] for k in SEED_KEYS},
+      'switchSkisOffFallDeg': 90 - fine['psiS0'] * DEG, 'switchMassOffFallDeg': 90 - fine['psi0'] * DEG,
+      'course': {'meanSpeedMps': fine['meanSpeed'], 'turnLM': fine['L'], 'dM': fine['D']},
+      'periodS': fine['T'], 'speedMps': fine['v0'], 'lamPeak': fine['lamPeak'], 'defectDegS': fine['defectDegS'], 'nodes': fine['args']['N'],
+      'meshChangeLamDeg': mesh,
+      'startsAgreement': verdict('identified', gates['identified']) if 'identified' in gates else {'value': None, 'ok': None},
+      'gates': {k: verdict(k, v) for k, v in gates.items()}, 'replay': replay, 'samples': s,
+    }
+    cells[name] = cell
+    print(json.dumps({'cell': name, 'skisDeg': cell['switchSkisOffFallDeg'], 'massDeg': cell['switchMassOffFallDeg'], 'epsPeakDeg': r['epsPeakDeg'],
+                      'loadPeak': max(s['load']), 'D': fine['D'], 'replay': replay, 'meshChangeLamDeg': mesh,
+                      'failing': [k for k, g in cell['gates'].items() if g['ok'] is False]}, default=np_item))
   with open(args.out, 'w') as f:
-    json.dump({'version': 1, 'cells': cells}, f, separators=(',', ':'), ensure_ascii=False)
+    json.dump({'version': 2, 'cells': cells}, f, separators=(',', ':'), ensure_ascii=False, allow_nan=False, default=np_item)
 
 
 def main():
@@ -984,12 +1013,15 @@ def main():
   lp = sp.add_parser('link', help='both starts linked and agreeing, each against its N/2 solve')
   for k in ('a', 'a_half', 'b', 'b_half'):
     lp.add_argument(k)
-  bk = sp.add_parser('bake', help='src/physics/carve-cycles.json from the gated solves')
+  sa = sp.add_parser('samples', help="a solve's baked samples, for scripts/solve/replay.ts")
+  sa.add_argument('sol')
+  sa.add_argument('out')
+  bk = sp.add_parser('bake', help='src/physics/carve-cycles.json from the solves, each cell with its R4 gates and replay verdicts')
   bk.add_argument('out')
   bk.add_argument('--cell', nargs=4, action='append', required=True, metavar=('NAME', 'SOL_N', 'SOL_HALF_N', 'REPLAY'))
-  bk.add_argument('--other', nargs=3, action='append', metavar=('NAME', 'SOL_N', 'SOL_HALF_N'), help='the second start at the same heading')
+  bk.add_argument('--other', nargs=3, action='append', metavar=('NAME', 'SOL_N', 'SOL_HALF_N'), help="the other start's solves, for identified")
   args = ap.parse_args()
-  {'port': port, 'cycle': cycle, 'gates_r2': gates_r2, 'gates_r3': gates_r3, 'gates_r4': gates_r4, 'link': link, 'bake': bake}[args.cmd](args)
+  {'port': port, 'cycle': cycle, 'gates_r2': gates_r2, 'gates_r3': gates_r3, 'gates_r4': gates_r4, 'link': link, 'samples': samples, 'bake': bake}[args.cmd](args)
 
 
 if __name__ == '__main__':

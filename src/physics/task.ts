@@ -1,8 +1,7 @@
 import { Intensity } from '../content/schema';
 import { CARVING_SKIS, REFERENCE_SKIER, Terrain, skiFor } from '../viewer/skier';
-import CYCLES from './carve-cycles.json';
 import type { CarvingKind, Ski } from '../viewer/skier';
-import { ANGULATION_MAX_DEG, Snow, marginBandDeg } from './edge';
+import { ANGULATION_MAX_DEG, GRIP_RATIO, Snow, marginBandDeg } from './edge';
 import type { Snow as SnowT } from './edge';
 import { REACH } from './moguls';
 import type { MogulMass } from './moguls';
@@ -85,13 +84,17 @@ export interface TaskLegacy {
 export interface TurnTask {
   /** The cycle's time-mean speed on the mass path (motion-model §9 V); it was the constant speed. */
   readonly speedMps: number;
-  /** Carved: the switch speed the forward march enters at and the bake's seed (its inputs' speedMps); absent: speedMps. */
+  /** The forward march's switch speed; absent (every preset): speedMps. */
   readonly entrySpeedMps?: number;
   /** Bumps: the skis' arc; groomed: legacy, unread; carved presets: 0, unread (the profile's skiRadius is the carved radius). */
   readonly radiusM: number;
   readonly slopeDeg: number;
-  /** Turn size L: the mass path's fall-line distance per turn, metres; groomed only, the bump spacing sets the bumps'. */
+  /** Turn size L: the mass path's fall-line distance per turn, metres; carved: the solver's course; bumps: the spacing. */
   readonly turnSizeM: number;
+  /** Carved: the gate offset D, the mass's lateral travel per turn, metres; the solver's course (its seed when solved). */
+  readonly gateOffsetM?: number;
+  /** Carved: D solved by the energy balance, gateOffsetM only its seed. */
+  readonly gateOffsetSolved?: boolean;
   /** Legacy, unread: the groomed mass path comes from the balance. */
   readonly massRadiusM?: number;
   /** Legacy, unread: the turn size and the closure set the period. */
@@ -192,24 +195,22 @@ const TRANSITION_PHASE: Readonly<Record<CarvingKind, number>> = { [K.GS]: 0.5, [
 export const skiForKind = (kind: TurnKind): Ski =>
   kind === K.SL || kind === K.GS ? CARVING_SKIS[kind] : skiFor(REFERENCE_SKIER, kind === K.Moguls ? Terrain.Moguls : Terrain.Groomed);
 
-/** A baked carved cell's time-mean speed (trapezoids on its own samples); null without a cell. */
-const bakedMeanSpeedOf = (key: string): number | null => {
-  const cell = (CYCLES as { readonly cells: Readonly<Record<string, { readonly samples: { readonly t: ReadonlyArray<number>; readonly v: ReadonlyArray<number> } }>> }).cells[key];
-  if (cell === undefined) return null;
-  const { t, v } = cell.samples;
-  let sum = 0;
-  for (let k = 1; k < t.length; k++) sum += (((t[k] ?? 0) - (t[k - 1] ?? 0)) * ((v[k] ?? 0) + (v[k - 1] ?? 0))) / 2;
-  return sum / (t[t.length - 1] ?? Number.NaN);
-};
+/** A carved preset's course as the whole-turn solver runs it (scripts/solve/carve_cycle.py cycle --speed --turn-l --offset --free-d). */
+interface CarveCourse {
+  readonly meanSpeedMps: number;
+  readonly turnLM: number;
+  readonly offsetM: number;
+  readonly dSolved: boolean;
+}
 
-// M: hip angulation, degrees; the turn's size is solved (solveCarved), so turnSizeM is 0 and unread. No counter in a carve.
-// v seeds the bake and the march; the speed is the baked cycle's (test/carve-bake.test.ts fails a stale cell).
-const carved = (kind: CarvingKind, intensity: Intensity, v: number, slopeDeg: number, angulationDeg: number, loadBand: LoadBand, why: string): Preset => {
+// M: hip angulation, degrees. No counter in a carve. The bake's inputs carry slope and course (test/carve-bake.test.ts fails a stale cell).
+const carved = (kind: CarvingKind, intensity: Intensity, course: CarveCourse, slopeDeg: number, angulationDeg: number, loadBand: LoadBand, why: string): Preset => {
   const ski = skiForKind(kind);
   return {
     kind, intensity, why,
     task: {
-      speedMps: bakedMeanSpeedOf(`${kind}-${intensity}`) ?? v, entrySpeedMps: v, radiusM: 0, slopeDeg, turnSizeM: 0, bumpSpacingM: 0, bumpHeightM: 0, ski, skidShare: 0,
+      speedMps: course.meanSpeedMps, radiusM: 0, slopeDeg, turnSizeM: course.turnLM, gateOffsetM: course.offsetM, gateOffsetSolved: course.dSolved,
+      bumpSpacingM: 0, bumpHeightM: 0, ski, skidShare: 0,
       style: { ...GROOMED_STYLE, angulationDeg, outsideShare: CARVE_OUTSIDE_SHARE, transitionPhase: TRANSITION_PHASE[kind] },
       legacy: {
         marginBandDeg: [0, ANGULATION_MAX_DEG], loadBand, counterToleranceDeg: COUNTER_TOLERANCE, foreAft: FORE_AFT[kind],
@@ -218,6 +219,15 @@ const carved = (kind: CarvingKind, intensity: Intensity, v: number, slopeDeg: nu
     },
   };
 };
+
+// D seeds the solve; the energy balance solves it (the baked cell's course.dM).
+const raceCourse = (meanSpeedMps: number, turnLM: number, offsetM: number): CarveCourse => ({ meanSpeedMps, turnLM, offsetM, dSolved: true });
+const SL_SLOPE_DEG = 19;
+const SL_WHY = 'θ 19° inside FIS SL 18–24° (fis-icr-alpine-2026 §802.1.1), the pick inferred; course reid-2010 10 m × 2 m (lit-curves slalom._context): L √(10² − 2²) 9.80 m, D 2 m the seed';
+const slCourse = (v: number): CarveCourse => raceCourse(v, 9.79796, 2);
+const GS_SLOPE_DEG = 18;
+const GS_WHY = 'θ 18° from the World Cup GS terrain median 17.8° (gilgien-2015 Table 1), inferred; course gilgien-2015 Table 1 medians (the R1 brief: 26.24 m apart, 7.47 m aside; biomechanics.md: 26 m, 7.5 m): L 25.15 m, D 7.47 m the seed';
+const gsCourse = (v: number): CarveCourse => raceCourse(v, 25.15, 7.47);
 
 const steered = (intensity: Intensity, v: number, r: number, slopeDeg: number, skidShare: number, turnSizeM: number, why: string): Preset => ({
   kind: K.Steered, intensity, why,
@@ -251,14 +261,14 @@ const moguls = (intensity: Intensity, v: number, slopeDeg: number, why: string):
 
 export const PRESETS: Readonly<Record<TurnKind, Readonly<Record<Intensity, Preset>>>> = {
   [K.GS]: {
-    [I.Gentle]: carved(K.GS, I.Gentle, 5.17, 7, 5, MEAN_LOAD, 'θ 7°, M 5°, v 5.17 m/s: the steady speed on hard groomed snow at friction 0.064 (kaps-1996), CdA 0.529 (wolfsperger-2021), outside share 0.68'),
-    [I.Moderate]: carved(K.GS, I.Moderate, 7.17, 8.5, 10, MEAN_LOAD, 'θ 8.5°, M 10°, v 7.17 m/s: the steady speed on hard groomed snow at friction 0.064 (kaps-1996), CdA 0.529 (wolfsperger-2021), outside share 0.68'),
-    [I.Dynamic]: carved(K.GS, I.Dynamic, 7.44, 9, 15, MEAN_LOAD, 'θ 9°, M 15°, v 7.44 m/s: the steady speed on hard groomed snow at friction 0.064 (kaps-1996), CdA 0.529 (wolfsperger-2021), outside share 0.68'),
+    [I.Gentle]: carved(K.GS, I.Gentle, gsCourse(9), GS_SLOPE_DEG, 5, MEAN_LOAD, `${GS_WHY}; M 5°, mean speed 9 m/s inferred`),
+    [I.Moderate]: carved(K.GS, I.Moderate, gsCourse(11), GS_SLOPE_DEG, 10, MEAN_LOAD, `${GS_WHY}; M 10°, mean speed 11 m/s inferred`),
+    [I.Dynamic]: carved(K.GS, I.Dynamic, gsCourse(13), GS_SLOPE_DEG, 15, MEAN_LOAD, `${GS_WHY}; M 15°, mean speed 13 m/s inferred`),
   },
   [K.SL]: {
-    [I.Gentle]: carved(K.SL, I.Gentle, 5.03, 7, 5, MEAN_LOAD, 'θ 7°, M 5°, v 5.03 m/s: the steady speed on hard groomed snow at friction 0.064 (kaps-1996), CdA 0.529 (wolfsperger-2021), outside share 0.68'),
-    [I.Moderate]: carved(K.SL, I.Moderate, 6.83, 8.5, 10, MEAN_LOAD, 'θ 8.5°, M 10°, v 6.83 m/s: the steady speed on hard groomed snow at friction 0.064 (kaps-1996), CdA 0.529 (wolfsperger-2021), outside share 0.68'),
-    [I.Dynamic]: carved(K.SL, I.Dynamic, 7.02, 9, 15, CARVED_PEAK, 'θ 9°, M 15°, v 7.02 m/s: the steady speed on hard groomed snow at friction 0.064 (kaps-1996), CdA 0.529 (wolfsperger-2021), outside share 0.68'),
+    [I.Gentle]: carved(K.SL, I.Gentle, slCourse(8), SL_SLOPE_DEG, 5, MEAN_LOAD, `${SL_WHY}; M 5°, mean speed 8 m/s inferred`),
+    [I.Moderate]: carved(K.SL, I.Moderate, slCourse(9.5), SL_SLOPE_DEG, 10, MEAN_LOAD, `${SL_WHY}; M 10°, mean speed 9.5 m/s inferred`),
+    [I.Dynamic]: carved(K.SL, I.Dynamic, slCourse(11), SL_SLOPE_DEG, 15, CARVED_PEAK, `${SL_WHY}; M 15°, mean speed 11 m/s inferred`),
   },
   [K.Steered]: {
     [I.Gentle]: steered(I.Gentle, 6, 14, 12, 0.3, 26.693, 'inferred, middle of §3 (recreational medium skidded turns); mean 1.01 at the foot of nakazato-2011 1.0–1.3'),
@@ -301,8 +311,7 @@ const f1 = (x: number): string => x.toFixed(1);
 const f2 = (x: number): string => x.toFixed(2);
 const f3 = (x: number): string => x.toFixed(3);
 
-/** Lateral over normal snow force, tan λ, an edged ski holds on hard snow; inferred, no grip source read. */
-export const GRIP_RATIO = 2;
+export { GRIP_RATIO } from './edge';
 
 // Rule 8, groomed and bumps alike: the force peak inside the task's measured window.
 const forcePeakRule = (task: TurnTask, peak: number): FeasibilityCheck => {

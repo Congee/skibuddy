@@ -92,15 +92,14 @@ anchors, all inferred. The turn size is quoted as the 2026-10-21 cells set it; `
 
 | Preset | v m/s, gentle / moderate / dynamic | turn size | θ ° | σ | h | Anchors |
 |---|---|---|---|---|---|---|
-| GS | 5.17 / 7.17 / 7.44 (steady) | solved; ε_max 20.5 / 37.7 / 47.1° on the Racetiger 173, M 5 / 10 / 15° | 7 / 8.5 / 9 | 0 | 0 | GS racing (sporri-2016, heinrich-2022) is the ceiling |
-| SL | 5.03 / 6.83 / 7.02 (steady) | solved; ε_max 22 / 40.6 / 50.7° on the Laser SL 165, M 5 / 10 / 15° | 7 / 8.5 / 9 | 0 | 0 | slalom racing (reid-2020, edge 66–70°) is the ceiling |
+| GS | 9 / 11 / 13 (course mean) | L 25.15 m, D solved (7.47 m seed); M 5 / 10 / 15° on the Racetiger 173 | 18 | 0 | 0 | gilgien-2015 World Cup GS terrain and course medians |
+| SL | 8 / 9.5 / 11 (course mean) | L 9.80 m, D solved (2 m seed); M 5 / 10 / 15° on the Laser SL 165 | 19 | 0 | 0 | FIS SL 18–24° (fis-icr-alpine-2026 §802.1.1), reid-2010 10 m × 2 m course |
 | Steered | 5–7 / 6–8 / 6–8 | r 12–20 / 8–12 / 6–8 m | 10–15 / 15–20 / 22–30 | above 0 | 0 | nakazato-2011, nakazato-2016, bon-2021 (recreational, measured) |
 | Moguls | 4–6 / 6–8 / 9–10 | s 3.5–4 m | 15–20 / 20–25 / 25–28 | above 0 | above 0 | FIS pace 9.0–10.3 m/s on 25–28° courses is the ceiling |
 
-The carved rows (2026-10-24) are `task.ts`'s six presets: the speed is the steady one of §4.3 rule 4 on hard groomed snow
-(edge friction, CdA 0.529), the pitch and the angulation M inferred picks inside the steady band (the ε_max is the
-solved peak, read only to label the preset). The kinds' skis differ, the physics does not. Each preset's L is the value its current cell solves to, measured in the physics lane. **[L per preset: to be measured
-in the physics lane; no number here.]**
+The carved rows (2026-10-24) are `task.ts`'s six race cells: slope and course from the sources named, the mean speeds
+inferred. The whole-turn solve (`scripts/solve/carve_cycle.py`, baked by `bun run bake:carve`) solves D, the switch
+headings and the edge; `src/physics/carve-cycles.json` holds each cell with its gate verdicts.
 
 Measured curves and bands (sporri-2016's GS edge and fore-aft curves, reid-2020's SL edge curve,
 falda-buscaiot-2017's phases, kroll-2015, reid-2010, nakazato-2011 and bon-2021 loads and force-peak times,
