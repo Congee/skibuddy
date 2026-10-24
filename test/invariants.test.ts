@@ -5,10 +5,8 @@ import type { Intensity } from '../src/content/schema';
 import { edgeGoalAt, Snow } from '../src/physics/edge';
 import { taskFor } from '../src/physics/task';
 import { isTurn, turnForcesAt, turnProfile, type TurnScenario } from '../src/physics/turn';
-import { bootFitFrom } from '../src/viewer/gear-fit';
 import { MIGRATED } from '../src/viewer/motion/q-table';
-import { bootSegmentsOf } from '../src/viewer/motion/turn';
-import { SKELETON_DATA, Side } from '../src/viewer/skeleton';
+import { Side } from '../src/viewer/skeleton';
 import { EQUIPMENT, minShinAngle } from '../src/viewer/equipment';
 import { BodySide, segmentIndex } from '../src/viewer/figure';
 import { HEAD_LIMIT } from '../src/viewer/gaze';
@@ -21,6 +19,7 @@ import { solvePose } from '../src/viewer/pose-solver';
 import { POSE_DEFINITIONS } from '../src/viewer/poses';
 import { RegularTurn, kindOfDrill } from '../src/viewer/poses/regular-turn';
 import { surfaceFor } from '../src/viewer/surface';
+import { bootParts, segmentDistance } from './clearance-parts';
 import { failsUntil } from './legacy';
 import { ALONG, SIDES, ridden } from './ride-probes';
 import type { Ridden } from './ride-probes';
@@ -42,16 +41,6 @@ const SETTLED = 5;
 /** Metres the whole figure stands off its ski in an airborne phase (dolphin): contact and balance drop there. */
 const AIRBORNE = 0.005;
 const CARVED = new Set<string>([RegularTurn.GS, RegularTurn.Steered]);
-const BOOT_SEGMENTS = { [Side.Right]: bootSegmentsOf(bootFitFrom(SKELETON_DATA.gear_fit[Side.Right])), [Side.Left]: bootSegmentsOf(bootFitFrom(SKELETON_DATA.gear_fit[Side.Left])) } as const;
-// The solver's fitted boot (bootSegmentsOf), sole and cuff capsules per side.
-const bootParts = (m: Mat4, side: Side): ReadonlyArray<readonly [Vec3, Vec3, number]> => {
-  const b = BOOT_SEGMENTS[side];
-  const on = ([p, q]: readonly [Vec3, Vec3]): readonly [Vec3, Vec3] => [transformPoint(m, p), transformPoint(m, q)];
-  return [
-    [...on(b.sole), b.soleR],
-    [...on(b.cuff), b.cuffR],
-  ];
-};
 
 interface Sample {
   readonly pose: Pose;
@@ -246,16 +235,3 @@ describe('invariants', () => {
     assert.isEmpty(bad, bad.join('; '));
   });
 });
-
-const clamp = (x: number): number => Math.min(1, Math.max(0, x));
-/** Shortest distance between segments ab and cd. */
-const segmentDistance = (a: Vec3, b: Vec3, c: Vec3, d: Vec3): number => {
-  const [u, v, w] = [sub(b, a), sub(d, c), sub(a, c)];
-  const [uu, uv, vv, uw, vw] = [dot(u, u), dot(u, v), dot(v, v), dot(u, w), dot(v, w)];
-  const den = uu * vv - uv * uv;
-  let s = den < 1e-12 ? 0 : clamp((uv * vw - vv * uw) / den);
-  const t = clamp((uv * s + vw) / vv);
-  s = clamp((uv * t - uw) / uu);
-  const p = sub([a[0] + u[0] * s, a[1] + u[1] * s, a[2] + u[2] * s], [c[0] + v[0] * t, c[1] + v[1] * t, c[2] + v[2] * t]);
-  return Math.hypot(...p);
-};
