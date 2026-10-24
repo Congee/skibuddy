@@ -713,8 +713,9 @@ export const skiGoal = (drill: string, intensity: Intensity, surface: Surface, t
   const bend = phys.bendRadius !== null ? ([phys.bendRadius, phys.bendRadius] as const) : ([bendRadiusOf(phys.load * (1 - insideShare) * REFERENCE_SKIER.mass * G), bendRadiusOf(phys.load * insideShare * REFERENCE_SKIER.mass * G)] as const);
   const pts = skiPointsOf(sk);
   const stance = surface.kind === SurfaceKind.Moguls ? MOGUL_STANCE_M : HIP_WIDTH;
-  // Each ski on its own snow, the outside away from the turn's inside: on bumps one sits higher on the wall.
-  const spots = [-side, side].map((s) => [p.x + (s * stance * across[0]) / 2, p.z + (s * stance * across[2]) / 2] as const);
+  // Each ski on its own snow at its mount, the ankles on the path point; the outside away from the turn's inside.
+  const ahead = SKI_MOUNT - ANKLE_ALONG;
+  const spots = [-side, side].map((s) => [p.x + (s * stance * across[0]) / 2 + ahead * fwd[0], p.z + (s * stance * across[2]) / 2 + ahead * fwd[2]] as const);
   const contact = bend.map((b, n) => skiContactOf(surface, spots[n]?.[0] ?? p.x, spots[n]?.[1] ?? p.z, fwd, pts, b, edge, sk.sidecutRadius)) as unknown as readonly [SkiContact, SkiContact];
   // The inside ski's edge band is centred on the outside's goal edge; each needs the curvature of its own snow.
   const required = spots.map(([x, z]) => requiredCurvature(edge, sk.sidecutRadius, snowCurvature(surface, x, z, fwd, runningLength(sk)))) as unknown as readonly [number, number];
