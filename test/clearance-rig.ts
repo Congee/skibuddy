@@ -8,6 +8,7 @@ import type { Mat4, Vec3 } from '../src/viewer/mat4';
 import { axisOf, skiFrame, transform } from '../src/viewer/motion/fk';
 import type { Rigid } from '../src/viewer/motion/fk';
 import { qTable, rootWorlds } from '../src/viewer/motion/q-table';
+import { solvedFigure } from '../src/viewer/motion/solved-figure';
 import { bootCapsules, runningLength, skiGoal } from '../src/viewer/motion/turn';
 import { MID_FOOT, segmentMatrices, skiIndex } from '../src/viewer/pose';
 import { poseTable } from '../src/viewer/pose-table';
@@ -81,16 +82,19 @@ const shapeOf = (name: string): { readonly c: Vec3; readonly half: number; reado
 /** Length of the bone that ends where `child` joins. */
 const boneBefore = (child: string): number => -(SEGMENTS[segmentIndex(child)]?.joint[1] ?? Number.NaN);
 
-/** The pose table's frames as the capsule viewer draws them: segmentMatrices of each pose. */
+/** The frames as the capsule viewer draws them: the solve's placement for a migrated drill, else segmentMatrices of each pose. */
 const drawn = (drill: string, i: Intensity): ReadonlyArray<Frame> => {
   const ski = skiOfDrill(drill, i);
   const table = poseTable(drill, i);
   return table.map((pose, k) => {
-    const world = segmentMatrices({ ...pose, rise: 0 });
+    const legacy = segmentMatrices({ ...pose, rise: 0 });
+    const solved = solvedFigure(drill, i, k / table.length, legacy);
+    const world = solved?.world ?? legacy;
+    const bend = solved?.bend ?? [pose.outside.bend, pose.inside.bend];
     const at = (name: string): Mat4 => world[segmentIndex(name)] ?? identity();
     const skis = SIDES.map((side, n): SkiPose => {
       const m = world[skiIndex(side)] ?? identity();
-      return { origin: transformPoint(m, [0, 0, 0]), across: axis(m, [1, 0, 0]), up: axis(m, [0, 1, 0]), along: axis(m, [0, 0, 1]), bend: (n === 0 ? pose.outside : pose.inside).bend, ski };
+      return { origin: transformPoint(m, [0, 0, 0]), across: axis(m, [1, 0, 0]), up: axis(m, [0, 1, 0]), along: axis(m, [0, 0, 1]), bend: bend[n] ?? 0, ski };
     });
     const leg = (side: LegSide): ReadonlyArray<Cap> =>
       ['thigh', 'shin'].map((part): Cap => {

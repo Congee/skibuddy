@@ -17,7 +17,7 @@ import { skiGoal } from './turn';
  */
 
 /** Capsule segment, ISB segment, weight; arms count less, their legacy rig being coarser. The girdles keep the old table's. */
-const PAIRS: ReadonlyArray<readonly [string, string, number]> = [
+export const PAIRS: ReadonlyArray<readonly [string, string, number]> = [
   ['pelvis', 'pelvis', 1],
   ['trunk', 'thorax', 1],
   ['head', 'head', 0.5],
@@ -47,7 +47,7 @@ const transpose = (a: ReadonlyArray<number>): number[] => [0, 3, 6, 1, 4, 7, 2, 
 /** The capsule figure's rest frames, where the ISB rest pose maps. */
 const LEGACY_REST = segmentMatrices(poseFromChannels(POSE_CHANNELS.map(() => 0)), false);
 /** Per pair: ISB rest → capsule rest, so a target is R_isb · this. */
-const ALIGN = PAIRS.map(([, isb], k) => {
+export const ALIGN = PAIRS.map(([, isb], k) => {
   const r = REST_WORLD[isb];
   if (r === undefined) throw new Error(`no segment ${isb}`);
   return mul3(transpose(r.R.map(Number)), rot(LEGACY_REST[INDEX[k] ?? 0] ?? new Float32Array(16)));

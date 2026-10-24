@@ -47,6 +47,7 @@ import { compose, transformPoint, translation } from './mat4';
 import { CAPSULE_ARM, CAPSULE_GRIP, poleDirection, poleSize, poleTouchOf, segmentMatrices } from './pose';
 import { poleTrimOf } from './poses';
 import { poseTable, samplePose } from './pose-table';
+import { solvedFigure } from './motion/solved-figure';
 import { markChanges } from './highlight';
 import { fillSlotLevels, musclePartAt } from './slots';
 import type { SlotTable } from './slots';
@@ -254,6 +255,7 @@ export const createCapsuleFigure = (parent: Object3D, table: SlotTable, muscles:
   const toWorld = new Matrix4();
   let marked: ReadonlyArray<number> = [];
   let poses = poseTable(null, Intensity.Moderate);
+  let motion: { readonly drill: string; readonly intensity: Intensity } | null = null;
   let size = poleSize(CAPSULE_ARM);
   // The box foot reads as a block through the translucent shell, so the boot stands in for it.
   let footShown = false;
@@ -261,15 +263,19 @@ export const createCapsuleFigure = (parent: Object3D, table: SlotTable, muscles:
   return {
     setMotion: (drill: string | null, intensity: Intensity) => {
       poses = poseTable(drill, intensity);
+      motion = drill === null ? null : { drill, intensity };
       size = poleSize(CAPSULE_ARM, poleTrimOf(drill));
       gear.setPole(size);
     },
     pose: (t: number) => samplePose(poses, t),
     update: (t: number, levels: ReadonlyArray<MuscleLevel>) => {
       const pose = samplePose(poses, t);
-      const world = segmentMatrices(pose);
-      material.bends[SKI_RIGHT] = pose.outside.bend;
-      material.bends[SKI_LEFT] = pose.inside.bend;
+      const legacy = segmentMatrices(pose);
+      // A migrated drill stands as solved; the pose's channels still time the poles.
+      const solved = motion === null ? null : solvedFigure(motion.drill, motion.intensity, t, legacy);
+      const world = solved?.world ?? legacy;
+      material.bends[SKI_RIGHT] = solved?.bend[0] ?? pose.outside.bend;
+      material.bends[SKI_LEFT] = solved?.bend[1] ?? pose.inside.bend;
       world.forEach((m, k) => {
         const target = material.matrices[k];
         if (target === undefined) return;
@@ -278,7 +284,7 @@ export const createCapsuleFigure = (parent: Object3D, table: SlotTable, muscles:
       });
       for (const [parts, local] of [[[...gear.shells, ...gear.soles], SHELL], [[...gear.plates, ...gear.bindings], CAPSULE_BINDING]] as const) {
         for (const { mesh, side } of parts) {
-          const foot = world[segmentOf(SegmentKind.Boot, side)];
+          const foot = solved?.shells[side] ?? world[segmentOf(SegmentKind.Boot, side)];
           if (foot !== undefined) mesh.matrix.fromArray(compose(foot, local));
         }
       }

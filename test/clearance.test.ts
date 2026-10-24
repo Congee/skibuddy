@@ -63,27 +63,23 @@ const LEGACY = 'powder and steeps migration onto the whole-turn solve';
 type Known = ReadonlyArray<{ readonly step: string; readonly cases: ReadonlyArray<string> }>;
 const all = (...drills: ReadonlyArray<string>): ReadonlyArray<string> => drills.flatMap((d) => INTENSITIES.map((i) => `${d} ${i}`));
 const MOGUL_DRILLS = all('regular-moguls', 'turns-on-the-tops', 'round-line', 'closed-stance-short-turns');
-const MIGRATED_DRAWN = all('regular-steered', 'regular-gs', 'regular-sl');
 // Cases that fail on the current tables, keyed by invariant, each with the pipeline step expected to fix it.
 const KNOWN: Readonly<Record<string, Known>> = {
   'the skis never intersect': [
     { step: MOGULS, cases: MOGUL_DRILLS },
     { step: LEGACY, cases: all('regular-powder') },
-    { step: R1, cases: [...MIGRATED_DRAWN, 'regular-steered gentle (q)'] },
+    { step: R1, cases: ['regular-steered gentle', 'regular-steered gentle (q)'] },
   ],
-  'the boots never intersect': [
-    { step: MOGULS, cases: MOGUL_DRILLS },
-    { step: R1, cases: MIGRATED_DRAWN },
-  ],
+  'the boots never intersect': [{ step: MOGULS, cases: MOGUL_DRILLS }],
   'the legs never intersect': [
     { step: MOGULS, cases: MOGUL_DRILLS },
     { step: LEGACY, cases: all('regular-powder') },
-    { step: R1, cases: [...MIGRATED_DRAWN, 'regular-gs gentle (q)'] },
+    { step: R1, cases: ['regular-gs gentle', 'regular-gs gentle (q)'] },
   ],
   'the inside ski is never behind the outside': [
     { step: MOGULS, cases: all('regular-moguls', 'turns-on-the-tops', 'round-line') },
     { step: LEGACY, cases: all('regular-powder', 'regular-steeps') },
-    { step: R1, cases: ['regular-gs moderate', 'regular-sl moderate', 'regular-steered moderate', 'regular-steered dynamic', ...['regular-gs moderate', 'regular-sl moderate', 'regular-steered dynamic'].map((c) => `${c} (q)`)] },
+    { step: R1, cases: ['regular-gs moderate', 'regular-sl moderate', 'regular-steered dynamic'].flatMap((c) => [c, `${c} (q)`]) },
   ],
 };
 const check = (invariant: string, body: (drill: string, i: Intensity, source: Source) => void): void => {
