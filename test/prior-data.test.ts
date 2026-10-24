@@ -27,7 +27,7 @@ describe('committed priors', () => {
   });
 
   it('cover the sourced, aliased and neutral drills', () => {
-    for (const d of [RegularTurn.Carving, RegularTurn.ShortTurns, RegularTurn.Cruising, RegularTurn.Moguls, ...NEUTRAL_DRILLS, ...Object.keys(ALIASES)]) assert.isAbove(examples(d).length, 0, d);
+    for (const d of [RegularTurn.GS, RegularTurn.SL, RegularTurn.Steered, RegularTurn.Moguls, ...NEUTRAL_DRILLS, ...Object.keys(ALIASES)]) assert.isAbove(examples(d).length, 0, d);
   });
 });
 
@@ -64,10 +64,11 @@ describe('provenance', () => {
         }
   });
 
-  it('puts no prior on the root pose, which the constraints place (list, lead, comAhead)', () => {
+  // Pelvis tilt on the heading-relative root is the measured pelvis pitch, so it alone may carry a prior.
+  it('puts no prior on the root pose but its tilt, which the constraints place (list, lead, comAhead)', () => {
     for (const drill of DRILLS)
       for (const ex of examples(drill))
-        for (const base of BASE_NAMES.filter((b) => b.startsWith('pelvis_'))) {
+        for (const base of BASE_NAMES.filter((b) => b.startsWith('pelvis_') && b !== 'pelvis_tilt')) {
           assert.isNull(ex.coordinates[base]?.mu, `${drill} ${base}`);
           assert.strictEqual(ex.coordinates[base]?.provenance.roles.turn?.evidence, Evidence.None);
         }
@@ -88,7 +89,8 @@ describe('provenance', () => {
             const t = combine(sources, limitDeg(base));
             const least = Math.min(...t.sigma);
             if (t.provenance.sigma === SigmaFrom.BetweenSources) assert.isAtLeast(least, SIGMA_FLOOR, base);
-            if (sources.length === 1) assert.isAtLeast(least, SINGLE_WIDE, base);
+            const sd = sources[0]?.sdDeg;
+            if (sources.length === 1) assert.isAtLeast(least, sd ?? SINGLE_WIDE, base);
           }
   });
 });
@@ -106,7 +108,7 @@ describe('joint limits', () => {
   });
 
   it('keeps the measured GS ankle dorsiflexion past the model limit, flagged (heinrich-2022 17–27°, limit 12.7°)', () => {
-    const [ex] = examples(RegularTurn.Carving);
+    const [ex] = examples(RegularTurn.GS);
     const ankle = ex?.coordinates['ankle_dorsiflexion'];
     assert.isAbove(ankle === undefined ? 0 : (evalDeg(ankle, 'ankle_dorsiflexion.R', 0.5)?.mu ?? 0), limitDeg('ankle_dorsiflexion')[1]);
     assert.isTrue(ex?.limitFlags.some((f) => f.coordinate === 'ankle_dorsiflexion.R' && f.value > f.bound));
@@ -118,7 +120,7 @@ describe('Fourier fit', () => {
   it('reproduces the registered sources within their stated error, the seam blend aside', () => {
     for (const [drill, defs] of Object.entries(EXAMPLES))
       for (const def of defs) {
-        const ex = PRIOR_FILE.drills[drill]?.[EdgeChange.Unstated]?.find((x) => x.id === def.id);
+        const ex = PRIOR_FILE.drills[drill]?.[def.style ?? EdgeChange.Unstated]?.find((x) => x.id === def.id);
         for (const [base, cd] of Object.entries(def.coordinates)) {
           const c = ex?.coordinates[base];
           if (c?.mu == null) continue;
@@ -137,7 +139,7 @@ describe('Fourier fit', () => {
   });
 
   it('reads a single curve source back exactly before the fit', () => {
-    const def = EXAMPLES[RegularTurn.Carving]?.[0];
+    const def = EXAMPLES[RegularTurn.GS]?.[0];
     const src = def?.coordinates['hip_flexion']?.roles.outside;
     const t = src === undefined ? null : combine(src, limitDeg('hip_flexion'));
     assert.approximately(t?.mu[0] ?? Number.NaN, 57, 1.5);

@@ -6,7 +6,7 @@ import type { Pose } from './pose';
 import { wrapTime } from './pose-definition';
 import { SurfaceKind, skiRest } from './surface';
 import type { SkiRest, Surface } from './surface';
-import { REFERENCE_SKIER, Terrain, skiFor } from './skier';
+import { REFERENCE_SKIER, SKI_MOUNT, Terrain, skiFor } from './skier';
 import type { ReferenceSkier, Ski } from './skier';
 
 /** The ski `skier` takes onto `s`'s snow. */
@@ -32,14 +32,16 @@ export const FLAT_RIDE: Ride = { outside: 0, inside: 0, outsideBank: 0, insideBa
 const skiRests = (s: Surface, t: number, pose: Pose, ski: Ski): { readonly outside: SkiRest; readonly inside: SkiRest; readonly lift: number } => {
   const world = segmentMatrices({ ...pose, rise: 0 });
   const { tip, tail } = skiEndPoints(ski);
-  const binding = (side: BodySide): Vec3 => transformPoint(world[skiIndex(side)] ?? identity(), [0, SKI_BASE, 0]);
+  // The mount, where the solve bends the ski about (SkiPoints.centre).
+  const binding = (side: BodySide): Vec3 => transformPoint(world[skiIndex(side)] ?? identity(), [0, SKI_BASE, SKI_MOUNT]);
   const right = binding(BodySide.Right);
   const left = binding(BodySide.Left);
   // Pressed together, the skis edge as one platform: the snow's slope across the stance goes to the edges, not the legs.
   const across = (right[0] + left[0]) / 2;
-  const rest = ([, , z]: Vec3): SkiRest => skiRest(s, wrapTime(t), [across, z], tip[2], -tail[2]);
-  const outside = rest(right);
-  const inside = rest(left);
+  // Each ski at its baked bend, so the drawn base rests where the physics' boot track has it.
+  const rest = ([, , z]: Vec3, curvature: number): SkiRest => skiRest(s, wrapTime(t), [across, z], tip[2] - SKI_MOUNT, SKI_MOUNT - tail[2], curvature);
+  const outside = rest(right, pose.outside.bend);
+  const inside = rest(left, pose.inside.bend);
   // Both rest when the legs meet the snow; when the inside leg falls short, it rests and the outside floats.
   return { outside, inside, lift: Math.max(outside.base - right[1], inside.base - left[1]) };
 };

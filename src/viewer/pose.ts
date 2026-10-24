@@ -61,6 +61,8 @@ export interface LegPose {
   readonly tailLift: number;
   /** Thigh drawn toward the other leg in the body frame. */
   readonly adduction: number;
+  /** The ski's bend, 1/m: its base rises u² · bend / 2 along its normal at u from the boot (bendCurvatureOf). */
+  readonly bend: number;
 }
 
 /** The shoulder blade and collarbone on the chest. */
@@ -103,6 +105,8 @@ export const POSE_CHANNELS = [
   'rise',
   'balance',
   'armFlexion',
+  'outside.bend',
+  'inside.bend',
 ] as const;
 
 export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
@@ -136,6 +140,8 @@ export const poseToChannels = (p: Pose): ReadonlyArray<number> => [
   p.rise,
   p.balance,
   p.armFlexion,
+  p.outside.bend,
+  p.inside.bend,
 ];
 
 /** The inverse of `poseToChannels`, reading `channels` from `at`. */
@@ -153,8 +159,8 @@ export const poseFromChannels = (c: ArrayLike<number>, at = 0): Pose => {
     spineTwist: v(8),
     poleTouch: v(9),
     reach: v(10),
-    outside: { hipFlex: v(11), ankleFlex: v(12), femurRotation: v(13), tailLift: v(14), adduction: v(15) },
-    inside: { hipFlex: v(16), ankleFlex: v(17), femurRotation: v(18), tailLift: v(19), adduction: v(20) },
+    outside: { hipFlex: v(11), ankleFlex: v(12), femurRotation: v(13), tailLift: v(14), adduction: v(15), bend: v(30) },
+    inside: { hipFlex: v(16), ankleFlex: v(17), femurRotation: v(18), tailLift: v(19), adduction: v(20), bend: v(31) },
     outsideGirdle: { protraction: v(21), elevation: v(22) },
     insideGirdle: { protraction: v(23), elevation: v(24) },
     headYaw: v(25),

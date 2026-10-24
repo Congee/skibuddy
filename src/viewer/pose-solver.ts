@@ -12,7 +12,7 @@ import { CORRIDOR_SHARE, headingAt, pelvisHeadingAt, travelPath } from './turn-h
 import type { TurnPath } from './turn-heading';
 import { FLAT_RIDE, rideOf, skiOn } from './ride';
 import type { Ride } from './ride';
-import { MogulLine, SurfaceKind, trackRest } from './surface';
+import { MogulLine, SurfaceKind, massHeadingAt, pathAt, trackRest } from './surface';
 import type { Surface } from './surface';
 import { REFERENCE_SKIER, skiEnds } from './skier';
 import type { ReferenceSkier, Ski } from './skier';
@@ -83,10 +83,22 @@ export const effortOf = (def: PoseDefinition, scenario: DrillScenario | null): E
   return { hipMin, hipMax, scale: span === 0 ? 0 : (hipMin - mid) / span };
 };
 
+/** On the moguls one path at a turn time: the skis' heading (line plus attack) and the mass path's, radians off the fall line. */
+export interface MogulHeadings {
+  readonly skis: number;
+  readonly mass: number;
+}
+
+/** The moguls one path's headings at turn time t; none off it. */
+export const mogulHeadingsAt = (surface: Surface | null, t: number): MogulHeadings | undefined =>
+  surface?.mogul === undefined ? undefined : { skis: pathAt(surface, wrapTime(t)).heading, mass: massHeadingAt(surface, wrapTime(t)) };
+
 /** Head yaw beyond the chest, toward the outside, that `rule` asks for at turn time `t` given the chest's heading on the skis. */
-export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | null, t: number, chest: number, set?: number, run?: TurnPath): number => {
+export const headYawOf = (rule: HeadRule | undefined, scenario: DrillScenario | null, t: number, chest: number, set?: number, run?: TurnPath, line?: MogulHeadings): number => {
   if (rule === undefined || rule.aim === HeadAim.Chest || scenario === null || !isTurn(scenario)) return 0;
-  const corridor = rule.aim === HeadAim.FallLine ? rule.corridor : CORRIDOR_SHARE * scenario.radiusM;
+  // Down the mass's travel: the skis' line less the mass path's heading.
+  if (rule.aim === HeadAim.FallLine && rule.corridor === undefined && line !== undefined) return Math.min(HEAD_LIMIT, Math.max(-HEAD_LIMIT, line.skis - line.mass - chest));
+  const corridor = rule.aim === HeadAim.FallLine ? (rule.corridor ?? CORRIDOR_SHARE * scenario.radiusM) : CORRIDOR_SHARE * scenario.radiusM;
   const path = rule.aim !== HeadAim.FallLine && run !== undefined ? run : { radius: scenario.radiusM, corridor, ...(set === undefined ? {} : { set }) };
   // The gaze lies the skis' heading, less its own, off the fall line toward the outside.
   const yaw = headingAt(t, path) - gazeHeading(rule, path, scenario.speedMps, t) - chest;
@@ -156,6 +168,8 @@ const balanceAhead = (world: ReadonlyArray<Mat4>, t: number, firm: boolean, brak
  */
 export const brakingTiltAt = (scenario: DrillScenario | null, surface: Surface | null, t: number): number => {
   if (scenario === null || !isTurn(scenario) || (scenario.brakingShare ?? 0) === 0) return 0;
+  const line = mogulHeadingsAt(surface, t);
+  if (line !== undefined) return brakingTilt(scenario, line.skis, line.mass, pathForcesAt(scenario, surface, t).load);
   const path = surface?.path ?? { radius: scenario.radiusM, corridor: CORRIDOR_SHARE * scenario.radiusM };
   const ski = headingAt(t, path);
   return brakingTilt(scenario, ski, (ski * scenario.radiusM) / comRadius(scenario), pathForcesAt(scenario, surface, t).load);
@@ -471,8 +485,14 @@ const solveOn = (
   const angulation = mild('angulation') + k.angulationStep * effort.scale;
   // With a travel, the skis yaw under a pelvis facing the mass's heading, so the counter is the difference.
   const run = turning && c.travel !== undefined ? travelPath(scenario, c.set, c.travel) : surface?.path;
+  // On the moguls one path the pelvis faces the mass's travel over the skis' line.
+  const line = turning ? mogulHeadingsAt(surface, t) : undefined;
   const counter =
-    turning && c.travel !== undefined && run !== undefined ? headingAt(t, run) - pelvisHeadingAt(t, scenario, c.travel) : mild('counter') + k.counterStep * effort.scale;
+    turning && c.travel !== undefined && run !== undefined
+      ? headingAt(t, run) - pelvisHeadingAt(t, scenario, c.travel)
+      : line !== undefined
+        ? line.skis - line.mass
+        : mild('counter') + k.counterStep * effort.scale;
   const [gentle, moderate, dynamic] = c.crossUnder ?? [0, 0, 0];
   const under = Math.min(1, Math.max(0, effort.scale < 0 ? moderate + (moderate - gentle) * effort.scale : moderate + (dynamic - moderate) * effort.scale));
   const dorsiflexion = mild('dorsiflexion') + (c.underAnkle ?? 0) * under * k.hipUnder;
@@ -536,7 +556,7 @@ const solveOn = (
       rise: 0,
       balance: onAxis,
       // The outside leg gives up its share as the inside one takes it, so the legs swap evenly at the switch.
-      outside: unturned({ hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: outsideTurn, tailLift: -pitch - ride.outside, adduction }),
+      outside: unturned({ hipFlex: hipFlex - split * extra, ankleFlex, femurRotation: outsideTurn, tailLift: -pitch - ride.outside, adduction, bend: 0 }),
       // The inside leg shortens, its foot leading as a result (lemaster-2010 pp61-62); the shin stays
       // forward on the tongue as the ski pitches tip-down under it.
       inside: unturned({
@@ -545,6 +565,7 @@ const solveOn = (
         femurRotation: c.insideFemurShare * femurRotation - c.kneesIn,
         tailLift: tailLift - pitch - ride.inside,
         adduction,
+        bend: 0,
       }),
       outsideGirdle: girdle,
       insideGirdle: girdle,
@@ -679,7 +700,7 @@ const solveOn = (
   }
   const solved = base(knee, inside.extra, inside.tailLift, shin);
   // The head moves no mass to speak of, so it turns only once the trunk is set.
-  const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist, c.set, run) };
+  const turned = { ...solved, headYaw: headYawOf(c.head, scenario, t, solved.counter + solved.spineTwist, c.set, run, line) };
   const rested = (p: Pose): Pose => (firm ? { ...p, rise: riseOf(p, mild('skiClearance'), ends) } : pitch === 0 ? p : { ...p, rise: baseRiseOf(p, ends) });
   const legs = rested(turned);
   if (legs.poleTouch === 0) return legs;

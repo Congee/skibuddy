@@ -2,11 +2,12 @@
  "unit": "deg",
  "turn0": "a left turn, the right leg outside; ω = π(φ + turn), the left side half a cycle later",
  "drills": {
-  "regular-carving": {
+  "regular-gs": {
    "unstated": [
     {
      "id": "gs-fis-heinrich-2023",
      "arcLoad": 1.6842,
+     "lean": 54.5413,
      "indexProvenance": "measured: heinrich-2023 ≈12 m/s, min radius ≈10.7 m, 12.3° slope (the min radius, so the turn’s peak load)",
      "coordinates": {
       "pelvis_tx": {
@@ -22,7 +23,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -39,7 +40,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -56,24 +57,43 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
       "pelvis_tilt": {
        "parity": "even",
-       "mu": null,
-       "logSigma": null,
+       "mu": {
+        "a0": 25.6897,
+        "cos": [0, -3.2389, 0, -0.6184, 0, 0.2063, 0, -0.2448, 0, -0.1265, 0, -0.0351],
+        "sin": [0, 13.2799, 0, 2.3134, 0, -0.1192, 0, -0.5832, 0, -0.7114, 0, -0.4263]
+       },
+       "logSigma": {
+        "a0": 2.5299,
+        "cos": [0, 0.0855, 0, 0.0733, 0, 0.0562],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
        "provenance": {
         "roles": {
          "turn": {
-          "evidence": "none",
-          "sigma": null,
-          "sources": []
+          "evidence": "digitised",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "heinrich-2023",
+            "what": "global pelvis tilt",
+            "status": "digitised (Fig 2, grey = measured)",
+            "n": 1,
+            "errorDeg": 12,
+            "mapping": "OpenSim pelvis_tilt (+ posterior) negated to anterior +; lab-level vs slope-frame tilt differs by up to the 12.3° slope, so ±12° (inferred); the root turns relative to the outside ski’s heading frame in ISB order (tilt, list, rotation), so tilt is pitch about the track’s across axis, while H23’s is about the lab’s lateral axis (inferred equivalent)",
+            "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           }
+          ]
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "sporri-2015: trunk bending ≈39° at peak force in GS; a peak only, not fitted",
+         "sam3d (SAM 3D Body) pelvis tilt and the pelvis/spine split not used: posterior pelvis against the literature’s anterior in every clip, a model bias (sam3d/notes.md)"
         ]
        }
       },
@@ -90,7 +110,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -107,27 +127,27 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
       "lumbar_flexion": {
        "parity": "even",
        "mu": {
-        "a0": 22.5738,
-        "cos": [0, -0.0424, 0, -0.1535, 0, -0.3249, 0, -0.0032, 0, -0.034, 0, -0.0298],
-        "sin": [0, -0.3729, 0, 0.3047, 0, -0.0307, 0, -0.0768, 0, 0.0637, 0, 0.0102]
+        "a0": 19.1619,
+        "cos": [0, -0.0212, 0, -0.0768, 0, -0.1625, 0, -0.0016, 0, -0.017, 0, -0.0149],
+        "sin": [0, -0.1865, 0, 0.1523, 0, -0.0153, 0, -0.0384, 0, 0.0318, 0, 0.0051]
        },
        "logSigma": {
-        "a0": 2.3032,
-        "cos": [0, 0.0012, 0, 0.0011, 0, 0.0008],
-        "sin": [0, 0, 0, 0, 0, 0]
+        "a0": 1.6218,
+        "cos": [0, 0.0052, 0, -0.0015, 0, 0.0061],
+        "sin": [0, -0.0089, 0, 0.0102, 0, 0.0086]
        },
        "provenance": {
         "roles": {
          "turn": {
           "evidence": "digitised",
-          "sigma": "single-source-wide",
+          "sigma": "between-sources",
           "sources": [
            {
             "id": "heinrich-2023",
@@ -137,6 +157,15 @@
             "errorDeg": 1,
             "mapping": "OpenSim lumbar_extension (− = flexed) negated; × 0.583, this region's share of the lumbar + thoracic flexion span (inferred)",
             "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           },
+           {
+            "id": "sporri-2016",
+            "what": "trunk frontal bending GS, sacrum to sternum, mean after the gate",
+            "status": "range-only measured (text)",
+            "n": 6,
+            "errorDeg": 5,
+            "mapping": "forward bending as flexion; × 0.583 span share (inferred)",
+            "warp": "none: a range has no timing"
            }
           ]
          }
@@ -215,12 +244,12 @@
       "thoracic_flexion": {
        "parity": "even",
        "mu": {
-        "a0": 16.1241,
-        "cos": [0, -0.0303, 0, -0.1097, 0, -0.2321, 0, -0.0023, 0, -0.0243, 0, -0.0213],
-        "sin": [0, -0.2664, 0, 0.2176, 0, -0.0219, 0, -0.0549, 0, 0.0455, 0, 0.0073]
+        "a0": 13.6871,
+        "cos": [0, -0.0151, 0, -0.0548, 0, -0.1161, 0, -0.0011, 0, -0.0121, 0, -0.0107],
+        "sin": [0, -0.1332, 0, 0.1088, 0, -0.011, 0, -0.0274, 0, 0.0227, 0, 0.0036]
        },
        "logSigma": {
-        "a0": 2.3029,
+        "a0": 1.6098,
         "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
         "sin": [0, 0, 0, 0, 0, 0]
        },
@@ -228,7 +257,7 @@
         "roles": {
          "turn": {
           "evidence": "digitised",
-          "sigma": "single-source-wide",
+          "sigma": "between-sources",
           "sources": [
            {
             "id": "heinrich-2023",
@@ -238,6 +267,15 @@
             "errorDeg": 1,
             "mapping": "OpenSim lumbar_extension (− = flexed) negated; × 0.417, this region's share of the lumbar + thoracic flexion span (inferred)",
             "warp": "window start = edge change (pelvis list ≈0 there), inside knee max t 0.525 → ½, window end → 1; piecewise linear"
+           },
+           {
+            "id": "sporri-2016",
+            "what": "trunk frontal bending GS, sacrum to sternum, mean after the gate",
+            "status": "range-only measured (text)",
+            "n": 6,
+            "errorDeg": 5,
+            "mapping": "forward bending as flexion; × 0.417 span share (inferred)",
+            "warp": "none: a range has no timing"
            }
           ]
          }
@@ -562,14 +600,14 @@
       "knee_flexion": {
        "parity": "sided",
        "mu": {
-        "a0": 82.7204,
-        "cos": [-1.7975, -6.3671, -1.5116, 1.5299, -0.0651, 0.3751, 0.1455, 0.4603, -0.1536, 0.1544, -0.2312, 0.1679],
-        "sin": [-23.1719, -2.8585, -2.5795, -2.3263, -0.1795, -0.4667, 0.596, 0.1714, 0.3195, 0.1398, 0.3236, 0.0166]
+        "a0": 82.8095,
+        "cos": [-2.5239, -6.434, -1.781, 2.0879, 0.1277, 0.5815, 0.3046, 0.5606, -0.1253, 0.2086, -0.2485, 0.198],
+        "sin": [-21.927, -3.3466, -2.6998, -2.8207, -0.0748, -0.5479, 0.5452, 0.2636, 0.213, 0.2085, 0.2448, 0.0292]
        },
        "logSigma": {
-        "a0": 1.9912,
-        "cos": [-0.0101, -0.1396, 0.0744, -0.0428, -0.0051, 0.0719],
-        "sin": [0.3013, -0.2522, -0.1981, -0.0237, -0.0276, 0.0698]
+        "a0": 1.9854,
+        "cos": [-0.058, -0.0999, 0.0563, 0.0069, -0.018, 0.011],
+        "sin": [0.227, -0.1637, -0.0876, -0.0081, 0.0047, 0.0356]
        },
        "provenance": {
         "roles": {
@@ -603,6 +641,16 @@
             "errorDeg": 5,
             "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
             "warp": "none: plotted switch to switch, inside knee max ≈ ½ already"
+           },
+           {
+            "id": "footage ligety GS slow-mo (YouTube id not recorded; no candidate matches its 142 s)",
+            "what": "knee outside, 2 turns (0.67–15.28 s, L outside; 15.28–19.69 s, R outside)",
+            "status": "range-only measured: video-3d (SAM 3D Body), every 10th slow-mo frame, p5–p95",
+            "n": 1,
+            "errorDeg": 6,
+            "mapping": "MHR 3D thigh–shank angle as knee_flexion",
+            "method": "video-3d (SAM 3D Body)",
+            "warp": "none: a range has no timing"
            }
           ]
          },
@@ -636,11 +684,62 @@
             "errorDeg": 5,
             "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
             "warp": "none: plotted switch to switch, inside knee max ≈ ½ already"
+           },
+           {
+            "id": "footage ligety GS slow-mo (YouTube id not recorded; no candidate matches its 142 s)",
+            "what": "knee inside, 2 turns (0.67–15.28 s, L outside; 15.28–19.69 s, R outside)",
+            "status": "range-only measured: video-3d (SAM 3D Body), every 10th slow-mo frame, p5–p95",
+            "n": 1,
+            "errorDeg": 6,
+            "mapping": "MHR 3D thigh–shank angle as knee_flexion",
+            "method": "video-3d (SAM 3D Body)",
+            "warp": "none: a range has no timing"
            }
           ]
          }
         },
         "notes": []
+       }
+      },
+      "knee_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 4.4117,
+        "cos": [-2.2145, -0.1666, -0.2729, 0.0289, 0.0671, 0.0319, 0.0406, 0.0028, 0.0256, 0.0068, 0.0235, -0.0082],
+        "sin": [5.4605, -1.5157, 1.1102, -0.5828, 0.2163, -0.0448, -0.1252, 0.1077, -0.2259, 0.1204, -0.1649, 0.0978]
+       },
+       "logSigma": {
+        "a0": 1.7445,
+        "cos": [-0.0833, 0.0825, -0.0755, 0.0683, -0.062, 0.0488],
+        "sin": [-0.7566, -0.0134, -0.2279, -0.0239, -0.1132, -0.0296]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "measured",
+          "sigma": "source-sd",
+          "sources": [
+           {
+            "id": "zorko-2015",
+            "what": "outside knee internal rotation per phase, 6 skilled skiers, carved turns on 65 mm skis (Table 1)",
+            "status": "measured (Table 1 phase means)",
+            "n": 6,
+            "errorDeg": 1,
+            "mapping": "internal rotation +, as ISB",
+            "warp": "weight transition → switch; I ends at engagement, S1 at the gate ≈ fall line, S2 at release (quarters where the drill has no event, inferred)"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "zorko-2015 SD 2–4° in steering: σ 3°",
+         "no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)"
+        ]
        }
       },
       "ankle_dorsiflexion": {
@@ -794,61 +893,97 @@
       "shoulder_flexion": {
        "parity": "sided",
        "mu": {
-        "a0": 59.4,
+        "a0": 35,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 4.0019,
+        "a0": 2.5257,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "outside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "arm carried forward, hands in view",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          },
          "inside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "arm carried forward, hands in view",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          }
         },
-        "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
-        ]
+        "notes": []
        }
       },
       "shoulder_abduction": {
        "parity": "sided",
        "mu": {
-        "a0": 70,
+        "a0": 25,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 3.912,
+        "a0": 2.3026,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "outside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "hands wide so the poles clear the body",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          },
          "inside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "hands wide so the poles clear the body",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          }
         },
-        "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
-        ]
+        "notes": []
        }
       },
       "shoulder_rotation": {
@@ -1002,6 +1137,82 @@
        }
       }
      },
+     "derived": {
+      "trunk_pitch": {
+       "parity": "even",
+       "mu": {
+        "a0": 21.45,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.3026,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "footage ligety GS slow-mo (YouTube id not recorded; no candidate matches its 142 s)",
+            "what": "trunk pitch, 2 turns (0.67–15.28 s, L outside; 15.28–19.69 s, R outside)",
+            "status": "range-only measured: video-3d (SAM 3D Body), every 10th slow-mo frame, p5–p95",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "pelvis root → neck vs the mean boot-sole normal, in the plane of the mean foot axis, + forward; turn.ts trunkPitchOf",
+            "method": "video-3d (SAM 3D Body)",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "the sole normal is unreliable at high edge angles (sam3d/notes.md): wide"
+        ]
+       }
+      },
+      "trunk_across": {
+       "parity": "even",
+       "mu": {
+        "a0": 19.6,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.7114,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "footage ligety GS slow-mo (YouTube id not recorded; no candidate matches its 142 s)",
+            "what": "trunk across, 2 turns (0.67–15.28 s, L outside; 15.28–19.69 s, R outside)",
+            "status": "range-only measured: video-3d (SAM 3D Body), every 10th slow-mo frame, p5–p95",
+            "n": 1,
+            "errorDeg": 12,
+            "mapping": "pelvis root → neck in the plane of camera up and the across-heading axis, + toward the CoM’s side; turn.ts trunkAcrossOf",
+            "method": "video-3d (SAM 3D Body)",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "footage slope unknown; evidence is gravity-referenced: the head and trunk orient to gravity (a choice), not converted to the snow normal",
+         "lig front-oblique: the across axis lies near the image plane; gate poles keep camera roll within ±3°",
+         "lig total off gravity not used: its forward part is depth"
+        ]
+       }
+      }
+     },
      "limitFlags": [
       {
        "coordinate": "lumbar_rotation",
@@ -1034,6 +1245,24 @@
        "bound": 40
       },
       {
+       "coordinate": "knee_rotation.R",
+       "phi": [0.792, 0.917],
+       "value": 15.7,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "knee_rotation.R",
+       "phi": [0.979, 0.979],
+       "value": 14.9,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "knee_rotation.L",
+       "phi": [0, 0.063],
+       "value": 15.8,
+       "bound": 14.7
+      },
+      {
        "coordinate": "ankle_dorsiflexion.R",
        "phi": [0, 0.979],
        "value": 28.1,
@@ -1049,11 +1278,12 @@
     }
    ]
   },
-  "regular-short-turns": {
+  "regular-sl": {
    "unstated": [
     {
-     "id": "short-sl-kroll-2015-and-reilly",
+     "id": "short-reilly-sam3d",
      "arcLoad": 1.5081,
+     "lean": 51.4574,
      "indexProvenance": "inferred: the drill’s dynamic scenario (an SL racer and an instructor’s dynamic demo; neither source gives speed and radius)",
      "coordinates": {
       "pelvis_tx": {
@@ -1069,7 +1299,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -1086,7 +1316,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -1103,7 +1333,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -1120,7 +1350,8 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root",
+         "sam3d (SAM 3D Body) pelvis tilt and the pelvis/spine split not used: posterior pelvis against the literature’s anterior in every clip, a model bias (sam3d/notes.md)"
         ]
        }
       },
@@ -1137,7 +1368,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -1154,33 +1385,41 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
       "lumbar_flexion": {
        "parity": "even",
        "mu": {
-        "a0": 15,
+        "a0": 6.4167,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 2.8622,
+        "a0": 2.3026,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "turn": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "sporri-2016",
+            "what": "trunk frontal bending SL, sacrum to sternum, mean after the gate",
+            "status": "range-only measured (text)",
+            "n": 6,
+            "errorDeg": 5,
+            "mapping": "forward bending as flexion; × 0.583 span share (inferred)",
+            "warp": "none: a range has no timing"
+           }
+          ]
          }
         },
-        "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
-        ]
+        "notes": []
        }
       },
       "lumbar_bending": {
@@ -1236,26 +1475,34 @@
       "thoracic_flexion": {
        "parity": "even",
        "mu": {
-        "a0": 5,
+        "a0": 4.5833,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 2.5257,
+        "a0": 2.3026,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "turn": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "sporri-2016",
+            "what": "trunk frontal bending SL, sacrum to sternum, mean after the gate",
+            "status": "range-only measured (text)",
+            "n": 6,
+            "errorDeg": 5,
+            "mapping": "forward bending as flexion; × 0.417 span share (inferred)",
+            "warp": "none: a range has no timing"
+           }
+          ]
          }
         },
-        "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
-        ]
+        "notes": []
        }
       },
       "thoracic_bending": {
@@ -1408,6 +1655,7 @@
             "n": 1,
             "errorDeg": 15,
             "mapping": "image-plane trunk–thigh angle as hip_flexion; it includes the spine flexion, so it overstates the hip (uncertain)",
+            "style": "cross-over",
             "warp": "phase = time between hand-read switches 4.86 and 5.59 s (lead-footage/notes.md); 4.13 and 6.32 s at the 0.73 s period, inferred"
            }
           ]
@@ -1423,6 +1671,7 @@
             "n": 1,
             "errorDeg": 15,
             "mapping": "image-plane trunk–thigh angle as hip_flexion; it includes the spine flexion, so it overstates the hip (uncertain)",
+            "style": "cross-over",
             "warp": "phase = time between hand-read switches 4.86 and 5.59 s (lead-footage/notes.md); 4.13 and 6.32 s at the 0.73 s period, inferred"
            }
           ]
@@ -1494,80 +1743,109 @@
       "knee_flexion": {
        "parity": "sided",
        "mu": {
-        "a0": 74.4594,
-        "cos": [-1.8633, -0.3836, -1.0354, 1.7911, 0.5318, 1.0175, -0.5308, -0.3397, 0.1297, 0.541, -0.0079, -0.1383],
-        "sin": [-4.0498, 0.7077, 0.3134, -0.0076, 0.8262, -0.4036, -0.4139, -0.0245, 0.1778, 0.0021, -0.4285, -0.1049]
+        "a0": 77.5967,
+        "cos": [0.3084, -7.2654, 0.8926, -0.4094, 0.3219, 0.4064, -0.6045, 0.8074, -0.1824, 0.1376, 0.0055, -0.2273],
+        "sin": [-5.5127, -4.9535, 1.6034, 3.0941, -0.7725, 0.0692, -0.3712, 0.1415, 0.0335, -0.2033, 0.3056, -0.0031]
        },
        "logSigma": {
-        "a0": 2.5072,
-        "cos": [0.0169, -0.1998, -0.0151, 0.2311, 0.0139, -0.0121],
-        "sin": [0.1831, 0.0524, -0.0849, -0.0745, 0.071, 0.0308]
+        "a0": 2.3027,
+        "cos": [0.0001, 0.0003, 0.0001, 0.0003, 0.0001, 0.0002],
+        "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "outside": {
-          "evidence": "eye-read",
-          "sigma": "between-sources",
+          "evidence": "measured",
+          "sigma": "single-source-wide",
           "sources": [
            {
-            "id": "kroll-2015",
-            "what": "outside knee flexion, SL, one FIS racer",
-            "status": "eye-read (Fig 1A); its Table 1 extrema measured",
+            "id": "footage-mcglashan-short-turns",
+            "what": "knee outside, 2 turns (0.33–0.83 s, L outside; 0.83–1.71 s, R outside)",
+            "status": "measured: video-3d (SAM 3D Body), side-on, 1080p24, figure 420–800 px",
             "n": 1,
-            "errorDeg": 5,
-            "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
-            "warp": "none: plotted switch to switch, inside knee max ≈ ½ already"
-           },
-           {
-            "id": "footage vXcjdfBXTiI (Reilly McGlashan)",
-            "what": "knee outside",
-            "status": "footage: rtmlib RTMPose-x 2D, side-on, 3 turns (scripts/prior/reilly-curves.json)",
-            "n": 1,
-            "errorDeg": 10,
-            "mapping": "image-plane thigh–shank angle as knee_flexion (side view, ±5–10°, spike/video/notes.md)",
-            "warp": "phase = time between hand-read switches 4.86 and 5.59 s (lead-footage/notes.md); 4.13 and 6.32 s at the 0.73 s period, inferred"
+            "errorDeg": 6,
+            "mapping": "MHR 3D thigh–shank angle as knee_flexion",
+            "method": "video-3d (SAM 3D Body)",
+            "style": "cross-over",
+            "warp": "phase = (t − edge change) / (next − edge change); edge change = SAM3D inclination zero crossing (3-frame mean)"
            }
           ]
          },
          "inside": {
-          "evidence": "eye-read",
+          "evidence": "measured",
           "sigma": "single-source-wide",
           "sources": [
            {
-            "id": "kroll-2015",
-            "what": "inside knee flexion, SL, one FIS racer",
-            "status": "eye-read (Fig 1A); its Table 1 extrema measured",
+            "id": "footage-mcglashan-short-turns",
+            "what": "knee inside, 2 turns (0.33–0.83 s, L outside; 0.83–1.71 s, R outside)",
+            "status": "measured: video-3d (SAM 3D Body), side-on, 1080p24, figure 420–800 px",
             "n": 1,
-            "errorDeg": 5,
-            "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
-            "warp": "none: plotted switch to switch, inside knee max ≈ ½ already"
-           },
-           {
-            "id": "footage vXcjdfBXTiI (Reilly McGlashan)",
-            "what": "knee inside",
-            "status": "footage: rtmlib RTMPose-x 2D, side-on, 3 turns (scripts/prior/reilly-curves.json)",
-            "n": 1,
-            "errorDeg": 10,
-            "mapping": "image-plane thigh–shank angle as knee_flexion (side view, ±5–10°, spike/video/notes.md)",
-            "warp": "phase = time between hand-read switches 4.86 and 5.59 s (lead-footage/notes.md); 4.13 and 6.32 s at the 0.73 s period, inferred"
+            "errorDeg": 6,
+            "mapping": "MHR 3D thigh–shank angle as knee_flexion",
+            "method": "video-3d (SAM 3D Body)",
+            "style": "cross-over",
+            "warp": "phase = (t − edge change) / (next − edge change); edge change = SAM3D inclination zero crossing (3-frame mean)"
            }
           ]
          }
         },
         "notes": [
-         "footage outside/inside split from the near ski (lead-footage/notes.md); the straighter mid-turn knee disagrees in 2 of 3 turns, so the split is uncertain"
+         "cross-over (Reilly, tall at the switch); kroll-2015 SL is cross-under, in the cross-under example: the styles are never pooled",
+         "footage vXcjdfBXTiI: SAM 3D Body replaces the RTMPose 2D knee from the same clip; its outside leg comes from the 3D inclination, not the hand-read near ski (which the knees contradicted in 2 of 3 turns)"
+        ]
+       }
+      },
+      "knee_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 4.4625,
+        "cos": [-2.2711, -0.1864, -0.2267, 0, 0.0818, 0.0208, 0.0467, 0, 0.0284, 0.0076, 0.0172, 0],
+        "sin": [5.5364, -1.5892, 1.1339, -0.5773, 0.2089, -0.0368, -0.1349, 0.1153, -0.2339, 0.1309, -0.1733, 0.1012]
+       },
+       "logSigma": {
+        "a0": 1.7445,
+        "cos": [-0.0833, 0.0825, -0.0755, 0.0683, -0.062, 0.0488],
+        "sin": [-0.7566, -0.0134, -0.2279, -0.0239, -0.1132, -0.0296]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "measured",
+          "sigma": "source-sd",
+          "sources": [
+           {
+            "id": "zorko-2015",
+            "what": "outside knee internal rotation per phase, 6 skilled skiers, carved turns on 65 mm skis (Table 1)",
+            "status": "measured (Table 1 phase means)",
+            "n": 6,
+            "errorDeg": 1,
+            "mapping": "internal rotation +, as ISB",
+            "warp": "weight transition → switch; I ends at engagement, S1 at the gate ≈ fall line, S2 at release (quarters where the drill has no event, inferred)"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "zorko-2015 SD 2–4° in steering: σ 3°",
+         "zorko-2015 carved on a GS-like slope; regular-sl an inferred transfer",
+         "no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)"
         ]
        }
       },
       "ankle_dorsiflexion": {
        "parity": "sided",
        "mu": {
-        "a0": -20.95,
+        "a0": 20.5557,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 2.8229,
+        "a0": 1.3703,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
@@ -1585,7 +1863,7 @@
          }
         },
         "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+         "in a ski boot: neutral μ mid the cuff’s range, ±2σ that range (equipment.ts forward lean, typical, inferred, + CUFF_FLEX_RANGE, demsar-2015, inferred)"
         ]
        }
       },
@@ -1674,61 +1952,97 @@
       "shoulder_flexion": {
        "parity": "sided",
        "mu": {
-        "a0": 59.4,
+        "a0": 35,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 4.0019,
+        "a0": 2.5257,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "outside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "arm carried forward, hands in view",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          },
          "inside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "arm carried forward, hands in view",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          }
         },
-        "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
-        ]
+        "notes": []
        }
       },
       "shoulder_abduction": {
        "parity": "sided",
        "mu": {
-        "a0": 70,
+        "a0": 25,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 3.912,
+        "a0": 2.3026,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "outside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "hands wide so the poles clear the body",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          },
          "inside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "hands wide so the poles clear the body",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          }
         },
-        "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
-        ]
+        "notes": []
        }
       },
       "shoulder_rotation": {
@@ -1882,16 +2196,124 @@
        }
       }
      },
-     "limitFlags": []
+     "derived": {
+      "trunk_gravity": {
+       "parity": "even",
+       "mu": {
+        "a0": 33.6084,
+        "cos": [0, -1.144, 0, 0.259, 0, -0.3531, 0, -0.1785, 0, 0.0155, 0, -0.0069],
+        "sin": [0, 1.1654, 0, 0.406, 0, -0.3464, 0, -0.0504, 0, -0.0312, 0, -0.0109]
+       },
+       "logSigma": {
+        "a0": 2.3027,
+        "cos": [0, 0.0001, 0, 0.0001, 0, 0.0001],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "measured",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "footage-mcglashan-short-turns",
+            "what": "trunk gravity, 2 turns (0.33–0.83 s, L outside; 0.83–1.71 s, R outside)",
+            "status": "measured: video-3d (SAM 3D Body), side-on, 1080p24, figure 420–800 px",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "pelvis root → neck off camera up, taken as gravity up; turn.ts trunkGravityOf",
+            "method": "video-3d (SAM 3D Body)",
+            "style": "cross-over",
+            "warp": "phase = (t − edge change) / (next − edge change); edge change = SAM3D inclination zero crossing (3-frame mean)"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "footage slope unknown; evidence is gravity-referenced: the head and trunk orient to gravity (a choice), not converted to the snow normal",
+         "camera up checked against tree trunks"
+        ]
+       }
+      },
+      "trunk_across": {
+       "parity": "even",
+       "mu": {
+        "a0": 7.5438,
+        "cos": [0, -4.5919, 0, -0.7274, 0, -0.1185, 0, -0.0259, 0, 0.2367, 0, 0.0638],
+        "sin": [0, -2.1673, 0, 0.6761, 0, 0.4923, 0, 0.4815, 0, 0.5233, 0, 0.0009]
+       },
+       "logSigma": {
+        "a0": 2.4849,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "measured",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "footage-mcglashan-short-turns",
+            "what": "trunk across, 2 turns (0.33–0.83 s, L outside; 0.83–1.71 s, R outside)",
+            "status": "measured: video-3d (SAM 3D Body), side-on, 1080p24, figure 420–800 px",
+            "n": 1,
+            "errorDeg": 12,
+            "mapping": "pelvis root → neck in the plane of camera up and the across-heading axis, + toward the CoM’s side; turn.ts trunkAcrossOf",
+            "method": "video-3d (SAM 3D Body)",
+            "style": "cross-over",
+            "warp": "phase = (t − edge change) / (next − edge change); edge change = SAM3D inclination zero crossing (3-frame mean)"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "footage slope unknown; evidence is gravity-referenced: the head and trunk orient to gravity (a choice), not converted to the snow normal",
+         "side-on: depth-based, σ 12° (errorDeg)"
+        ]
+       }
+      }
+     },
+     "limitFlags": [
+      {
+       "coordinate": "knee_rotation.R",
+       "phi": [0.771, 0.917],
+       "value": 16,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "knee_rotation.R",
+       "phi": [0.979, 0.979],
+       "value": 14.9,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "knee_rotation.L",
+       "phi": [0, 0.063],
+       "value": 15.8,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.R",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.L",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      }
+     ]
     }
-   ]
-  },
-  "regular-cruising": {
-   "unstated": [
+   ],
+   "cross-under": [
     {
-     "id": "medium-intermediate-gao-2025",
-     "arcLoad": 1.2394,
-     "indexProvenance": "gao-2025 11.5 m/s and r 17.6 m measured; slope the drill’s moderate one (inferred)",
+     "id": "short-cross-under-kroll-2015",
+     "arcLoad": 1.5081,
+     "lean": 51.4574,
+     "indexProvenance": "inferred: the drill’s dynamic scenario (an SL racer; the source gives no speed or radius)",
      "coordinates": {
       "pelvis_tx": {
        "parity": "odd",
@@ -1906,7 +2328,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -1923,7 +2345,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -1940,7 +2362,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -1957,7 +2379,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -1974,7 +2396,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -1991,7 +2413,939 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
+        ]
+       }
+      },
+      "lumbar_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 6.4167,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.3026,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "sporri-2016",
+            "what": "trunk frontal bending SL, sacrum to sternum, mean after the gate",
+            "status": "range-only measured (text)",
+            "n": 6,
+            "errorDeg": 5,
+            "mapping": "forward bending as flexion; × 0.583 span share (inferred)",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "lumbar_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "lumbar_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.6094,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": 4.5833,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.3026,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "sporri-2016",
+            "what": "trunk frontal bending SL, sacrum to sternum, mean after the gate",
+            "status": "range-only measured (text)",
+            "n": 6,
+            "errorDeg": 5,
+            "mapping": "forward bending as flexion; × 0.417 span share (inferred)",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "thoracic_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "thoracic_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.8622,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_flexion": {
+       "parity": "even",
+       "mu": {
+        "a0": -5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5071,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_bending": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0.4274, 0, 0.0985, 0, 0.0193, 0, -0.0115, 0, -0.0187, 0, -0.0146, 0]
+       },
+       "logSigma": {
+        "a0": 3.1102,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "neck_rotation": {
+       "parity": "odd",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [3.2973, 0, 0.76, 0, 0.1485, 0, -0.0884, 0, -0.1446, 0, -0.1125, 0]
+       },
+       "logSigma": {
+        "a0": 3.6126,
+        "cos": [0, 0.0006, 0, 0.0005, 0, 0.0004],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 56.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6096,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_adduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": -7.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.9312,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "hip_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.0564,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "knee_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 75.4675,
+        "cos": [-1.6884, 8.3818, 0.2255, 0.9761, 0.3717, 0.5837, -0.3448, 0.2164, 0.2053, 0.2697, -0.0563, 0.1493],
+        "sin": [-11.0158, -1.4537, 2.5821, -0.3599, 0.2608, 0.3903, -0.1212, -0.223, -0.4021, 0.1809, -0.2078, 0.0078]
+       },
+       "logSigma": {
+        "a0": 2.3215,
+        "cos": [-0.0142, 0.036, -0.0128, 0.0311, -0.0105, 0.0243],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "eye-read",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "kroll-2015",
+            "what": "outside knee flexion, SL, one FIS racer",
+            "status": "eye-read (Fig 1A); its Table 1 extrema measured",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
+            "style": "cross-under",
+            "warp": "none: plotted switch to switch, inside knee max ≈ ½ already"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "kroll-2015",
+            "what": "inside knee flexion 62–100, SL, one FIS racer (Table 1)",
+            "status": "range-only measured (Table 1)",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "flexion = 180 − knee angle, as ISB knee_flexion",
+            "style": "cross-under",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "kroll-2015 Fig 1A inside knee is read only to t 0.55 (\"flexes\" after), so the inside takes its Table 1 range",
+         "cross-under: legs fold through the edge change (flexion transition); a cross-under SAM 3D clip is still to come"
+        ]
+       }
+      },
+      "knee_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 4.4625,
+        "cos": [-2.2711, -0.1864, -0.2267, 0, 0.0818, 0.0208, 0.0467, 0, 0.0284, 0.0076, 0.0172, 0],
+        "sin": [5.5364, -1.5892, 1.1339, -0.5773, 0.2089, -0.0368, -0.1349, 0.1153, -0.2339, 0.1309, -0.1733, 0.1012]
+       },
+       "logSigma": {
+        "a0": 1.7445,
+        "cos": [-0.0833, 0.0825, -0.0755, 0.0683, -0.062, 0.0488],
+        "sin": [-0.7566, -0.0134, -0.2279, -0.0239, -0.1132, -0.0296]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "measured",
+          "sigma": "source-sd",
+          "sources": [
+           {
+            "id": "zorko-2015",
+            "what": "outside knee internal rotation per phase, 6 skilled skiers, carved turns on 65 mm skis (Table 1)",
+            "status": "measured (Table 1 phase means)",
+            "n": 6,
+            "errorDeg": 1,
+            "mapping": "internal rotation +, as ISB",
+            "warp": "weight transition → switch; I ends at engagement, S1 at the gate ≈ fall line, S2 at release (quarters where the drill has no event, inferred)"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "zorko-2015 SD 2–4° in steering: σ 3°",
+         "zorko-2015 carved on a GS-like slope; regular-sl an inferred transfer",
+         "no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 20.5557,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.3703,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "in a ski boot: neutral μ mid the cuff’s range, ±2σ that range (equipment.ts forward lean, typical, inferred, + CUFF_FLEX_RANGE, demsar-2015, inferred)"
+        ]
+       }
+      },
+      "subtalar_inversion": {
+       "parity": "sided",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         },
+         "inside": {
+          "evidence": "locked",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "held by the boot"
+        ]
+       }
+      },
+      "scapula_elevation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 15,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "scapula_protraction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 2.5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.1691,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "shoulder_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 35,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "arm carried forward, hands in view",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "arm carried forward, hands in view",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "shoulder_abduction": {
+       "parity": "sided",
+       "mu": {
+        "a0": 25,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.3026,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "hands wide so the poles clear the body",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "hands wide so the poles clear the body",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
+         }
+        },
+        "notes": []
+       }
+      },
+      "shoulder_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -10,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6889,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "elbow_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 71.9,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.5932,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "forearm_pronation": {
+       "parity": "sided",
+       "mu": {
+        "a0": -4.05,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.7007,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_flexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 3.6243,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      },
+      "wrist_deviation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 5,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.5257,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+        ]
+       }
+      }
+     },
+     "derived": {},
+     "limitFlags": [
+      {
+       "coordinate": "knee_rotation.R",
+       "phi": [0.771, 0.917],
+       "value": 16,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "knee_rotation.R",
+       "phi": [0.979, 0.979],
+       "value": 14.9,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "knee_rotation.L",
+       "phi": [0, 0.063],
+       "value": 15.8,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.R",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.L",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      }
+     ]
+    }
+   ]
+  },
+  "regular-steered": {
+   "unstated": [
+    {
+     "id": "medium-intermediate-gao-2025",
+     "arcLoad": 1.2394,
+     "lean": 38.1717,
+     "indexProvenance": "gao-2025 11.5 m/s and r 17.6 m measured; slope the drill’s moderate one (inferred)",
+     "coordinates": {
+      "pelvis_tx": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
+        ]
+       }
+      },
+      "pelvis_ty": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
+        ]
+       }
+      },
+      "pelvis_tz": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
+        ]
+       }
+      },
+      "pelvis_tilt": {
+       "parity": "even",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root",
+         "sam3d (SAM 3D Body) pelvis tilt and the pelvis/spine split not used: posterior pelvis against the literature’s anterior in every clip, a model bias (sam3d/notes.md)"
+        ]
+       }
+      },
+      "pelvis_list": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
+        ]
+       }
+      },
+      "pelvis_rotation": {
+       "parity": "odd",
+       "mu": null,
+       "logSigma": null,
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "none",
+          "sigma": null,
+          "sources": []
+         }
+        },
+        "notes": [
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -2329,20 +3683,20 @@
       "knee_flexion": {
        "parity": "sided",
        "mu": {
-        "a0": 64.175,
-        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        "sin": [-5.0985, 0, -1.1753, 0, -0.2297, 0, 0.1366, 0, 0.2236, 0, 0.1739, 0]
+        "a0": 54.8762,
+        "cos": [-1.8381, -0.8789, 1.5169, -0.8272, -0.3616, 0.151, 0.5442, 0.1535, 0.5398, -0.1578, 0.1526, -0.3692],
+        "sin": [-0.4133, -10.4899, -1.0106, 0.4177, 0.1698, -0.1888, 0.1273, -1.3333, 0.2906, 0.0695, 0.2554, 0.0538]
        },
        "logSigma": {
-        "a0": 2.9298,
-        "cos": [-0.0244, 0.0106, -0.0243, 0.0092, -0.0243, 0.0072],
-        "sin": [-0.79, 0, -0.2594, 0, -0.1515, 0]
+        "a0": 2.2178,
+        "cos": [-0.2083, -0.0175, 0.1155, -0.0455, -0.0222, 0.0167],
+        "sin": [-0.0969, -0.2342, -0.0256, 0.0229, -0.0653, -0.0366]
        },
        "provenance": {
         "roles": {
          "outside": {
-          "evidence": "range-only",
-          "sigma": "range",
+          "evidence": "measured",
+          "sigma": "between-sources",
           "sources": [
            {
             "id": "gao-2025",
@@ -2352,6 +3706,68 @@
             "errorDeg": 5,
             "mapping": "flexion +, as ISB",
             "warp": "none: a range has no timing"
+           },
+           {
+            "id": "footage-sce-instructor",
+            "what": "knee outside, 1 turn (32.41–33.01 s, R outside)",
+            "status": "measured: video-3d (SAM 3D Body), rear-oblique follow-cam, 720p30, figure 280–310 px",
+            "n": 1,
+            "errorDeg": 6,
+            "mapping": "MHR 3D thigh–shank angle as knee_flexion",
+            "method": "video-3d (SAM 3D Body)",
+            "warp": "phase = (t − edge change) / (next − edge change); edge change = SAM3D inclination zero crossing (3-frame mean)"
+           }
+          ]
+         },
+         "inside": {
+          "evidence": "measured",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "footage-sce-instructor",
+            "what": "knee inside, 1 turn (32.41–33.01 s, R outside)",
+            "status": "measured: video-3d (SAM 3D Body), rear-oblique follow-cam, 720p30, figure 280–310 px",
+            "n": 1,
+            "errorDeg": 6,
+            "mapping": "MHR 3D thigh–shank angle as knee_flexion",
+            "method": "video-3d (SAM 3D Body)",
+            "warp": "phase = (t − edge change) / (next − edge change); edge change = SAM3D inclination zero crossing (3-frame mean)"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "sce (jBsWS4hpivY) skis short/medium turns, period ≈0.66 s (lead-footage/notes.md); used for cruising, an inferred transfer",
+         "sce figure ≈300 px, under the 400 px the side-on check covers: σ stays single-source wide"
+        ]
+       }
+      },
+      "knee_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 4.4625,
+        "cos": [-2.2711, -0.1864, -0.2267, 0, 0.0818, 0.0208, 0.0467, 0, 0.0284, 0.0076, 0.0172, 0],
+        "sin": [5.5364, -1.5892, 1.1339, -0.5773, 0.2089, -0.0368, -0.1349, 0.1153, -0.2339, 0.1309, -0.1733, 0.1012]
+       },
+       "logSigma": {
+        "a0": 1.7445,
+        "cos": [-0.0833, 0.0825, -0.0755, 0.0683, -0.062, 0.0488],
+        "sin": [-0.7566, -0.0134, -0.2279, -0.0239, -0.1132, -0.0296]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "measured",
+          "sigma": "source-sd",
+          "sources": [
+           {
+            "id": "zorko-2015",
+            "what": "outside knee internal rotation per phase, 6 skilled skiers, carved turns on 65 mm skis (Table 1)",
+            "status": "measured (Table 1 phase means)",
+            "n": 6,
+            "errorDeg": 1,
+            "mapping": "internal rotation +, as ISB",
+            "warp": "weight transition → switch; I ends at engagement, S1 at the gate ≈ fall line, S2 at release (quarters where the drill has no event, inferred)"
            }
           ]
          },
@@ -2361,18 +3777,22 @@
           "sources": []
          }
         },
-        "notes": []
+        "notes": [
+         "zorko-2015 SD 2–4° in steering: σ 3°",
+         "zorko-2015 carved on a GS-like slope; regular-steered an inferred transfer",
+         "no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)"
+        ]
        }
       },
       "ankle_dorsiflexion": {
        "parity": "sided",
        "mu": {
-        "a0": -20.95,
+        "a0": 20.5557,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 2.8229,
+        "a0": 1.3703,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
@@ -2390,7 +3810,7 @@
          }
         },
         "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+         "in a ski boot: neutral μ mid the cuff’s range, ±2σ that range (equipment.ts forward lean, typical, inferred, + CUFF_FLEX_RANGE, demsar-2015, inferred)"
         ]
        }
       },
@@ -2479,61 +3899,97 @@
       "shoulder_flexion": {
        "parity": "sided",
        "mu": {
-        "a0": 59.4,
+        "a0": 35,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 4.0019,
+        "a0": 2.5257,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "outside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "arm carried forward, hands in view",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          },
          "inside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "range",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "arm carried forward, hands in view",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          }
         },
-        "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
-        ]
+        "notes": []
        }
       },
       "shoulder_abduction": {
        "parity": "sided",
        "mu": {
-        "a0": 70,
+        "a0": 25,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 3.912,
+        "a0": 2.3026,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "outside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "hands wide so the poles clear the body",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          },
          "inside": {
-          "evidence": "neutral",
-          "sigma": "neutral",
-          "sources": []
+          "evidence": "range-only",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "lemaster-2010",
+            "what": "hands wide so the poles clear the body",
+            "status": "range-only qualitative (text): arms forward, hands wide and in view",
+            "n": 1,
+            "errorDeg": 10,
+            "mapping": "humerus on the thorax, ISB; range inferred from the text",
+            "warp": "none: a range has no timing"
+           }
+          ]
          }
         },
-        "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
-        ]
+        "notes": []
        }
       },
       "shoulder_rotation": {
@@ -2687,7 +4143,77 @@
        }
       }
      },
-     "limitFlags": []
+     "derived": {
+      "trunk_pitch": {
+       "parity": "even",
+       "mu": {
+        "a0": 15.1583,
+        "cos": [0, 2.3603, 0, 1.4472, 0, -0.5436, 0, 0.0461, 0, 0.7764, 0, 0.2008],
+        "sin": [0, 6.1415, 0, -1.3991, 0, -0.543, 0, 0.8867, 0, 0.2208, 0, -0.0409]
+       },
+       "logSigma": {
+        "a0": 2.3036,
+        "cos": [0, 0.002, 0, 0.0017, 0, 0.0014],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "turn": {
+          "evidence": "measured",
+          "sigma": "single-source-wide",
+          "sources": [
+           {
+            "id": "footage-sce-instructor",
+            "what": "trunk pitch, 1 turn (32.41–33.01 s, R outside)",
+            "status": "measured: video-3d (SAM 3D Body), rear-oblique follow-cam, 720p30, figure 280–310 px",
+            "n": 1,
+            "errorDeg": 5,
+            "mapping": "pelvis root → neck vs the mean boot-sole normal, in the plane of the mean foot axis, + forward; turn.ts trunkPitchOf",
+            "method": "video-3d (SAM 3D Body)",
+            "warp": "phase = (t − edge change) / (next − edge change); edge change = SAM3D inclination zero crossing (3-frame mean)"
+           }
+          ]
+         }
+        },
+        "notes": [
+         "sce (jBsWS4hpivY) skis short/medium turns, period ≈0.66 s (lead-footage/notes.md); used for cruising, an inferred transfer",
+         "sce trunk vs gravity not used: a follow-cam that rolls with its own skier’s turns, no vertical reference"
+        ]
+       }
+      }
+     },
+     "limitFlags": [
+      {
+       "coordinate": "knee_rotation.R",
+       "phi": [0.771, 0.917],
+       "value": 16,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "knee_rotation.R",
+       "phi": [0.979, 0.979],
+       "value": 14.9,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "knee_rotation.L",
+       "phi": [0, 0.063],
+       "value": 15.8,
+       "bound": 14.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.R",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.L",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      }
+     ]
     }
    ]
   },
@@ -2696,6 +4222,7 @@
     {
      "id": "moguls-elite-ranges",
      "arcLoad": 2.2217,
+     "lean": 66.5832,
      "indexProvenance": "inferred: the drill’s dynamic scenario (elite and WC skiers)",
      "coordinates": {
       "pelvis_tx": {
@@ -2711,7 +4238,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -2728,7 +4255,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -2745,7 +4272,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -2762,7 +4289,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -2779,7 +4306,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -2796,7 +4323,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -3166,6 +4693,36 @@
         ]
        }
       },
+      "knee_rotation": {
+       "parity": "sided",
+       "mu": {
+        "a0": 0,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 2.3026,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)"
+        ]
+       }
+      },
       "ankle_dorsiflexion": {
        "parity": "sided",
        "mu": {
@@ -3509,6 +5066,7 @@
        }
       }
      },
+     "derived": {},
      "limitFlags": [
       {
        "coordinate": "ankle_dorsiflexion.R",
@@ -3531,6 +5089,7 @@
     {
      "id": "neutral",
      "arcLoad": 1,
+     "lean": 0,
      "indexProvenance": "one neutral example: the index is unused",
      "coordinates": {
       "pelvis_tx": {
@@ -3546,7 +5105,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -3563,7 +5122,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -3580,7 +5139,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -3597,7 +5156,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -3614,7 +5173,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -3631,7 +5190,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -3980,15 +5539,15 @@
         ]
        }
       },
-      "ankle_dorsiflexion": {
+      "knee_rotation": {
        "parity": "sided",
        "mu": {
-        "a0": -20.95,
+        "a0": 0,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 2.8229,
+        "a0": 2.3026,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
@@ -4006,7 +5565,37 @@
          }
         },
         "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+         "no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 20.5557,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.3703,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "in a ski boot: neutral μ mid the cuff’s range, ±2σ that range (equipment.ts forward lean, typical, inferred, + CUFF_FLEX_RANGE, demsar-2015, inferred)"
         ]
        }
       },
@@ -4303,7 +5892,21 @@
        }
       }
      },
-     "limitFlags": []
+     "derived": {},
+     "limitFlags": [
+      {
+       "coordinate": "ankle_dorsiflexion.R",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.L",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      }
+     ]
     }
    ]
   },
@@ -4312,6 +5915,7 @@
     {
      "id": "neutral",
      "arcLoad": 1,
+     "lean": 0,
      "indexProvenance": "one neutral example: the index is unused",
      "coordinates": {
       "pelvis_tx": {
@@ -4327,7 +5931,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -4344,7 +5948,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -4361,7 +5965,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -4378,7 +5982,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -4395,7 +5999,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -4412,7 +6016,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -4761,15 +6365,15 @@
         ]
        }
       },
-      "ankle_dorsiflexion": {
+      "knee_rotation": {
        "parity": "sided",
        "mu": {
-        "a0": -20.95,
+        "a0": 0,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 2.8229,
+        "a0": 2.3026,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
@@ -4787,7 +6391,37 @@
          }
         },
         "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+         "no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 20.5557,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.3703,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "in a ski boot: neutral μ mid the cuff’s range, ±2σ that range (equipment.ts forward lean, typical, inferred, + CUFF_FLEX_RANGE, demsar-2015, inferred)"
         ]
        }
       },
@@ -5084,7 +6718,21 @@
        }
       }
      },
-     "limitFlags": []
+     "derived": {},
+     "limitFlags": [
+      {
+       "coordinate": "ankle_dorsiflexion.R",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.L",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      }
+     ]
     }
    ]
   },
@@ -5093,6 +6741,7 @@
     {
      "id": "neutral",
      "arcLoad": 1,
+     "lean": 0,
      "indexProvenance": "one neutral example: the index is unused",
      "coordinates": {
       "pelvis_tx": {
@@ -5108,7 +6757,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5125,7 +6774,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5142,7 +6791,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5159,7 +6808,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5176,7 +6825,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5193,7 +6842,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5542,15 +7191,15 @@
         ]
        }
       },
-      "ankle_dorsiflexion": {
+      "knee_rotation": {
        "parity": "sided",
        "mu": {
-        "a0": -20.95,
+        "a0": 0,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 2.8229,
+        "a0": 2.3026,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
@@ -5568,7 +7217,37 @@
          }
         },
         "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+         "no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 20.5557,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.3703,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "in a ski boot: neutral μ mid the cuff’s range, ±2σ that range (equipment.ts forward lean, typical, inferred, + CUFF_FLEX_RANGE, demsar-2015, inferred)"
         ]
        }
       },
@@ -5865,7 +7544,21 @@
        }
       }
      },
-     "limitFlags": []
+     "derived": {},
+     "limitFlags": [
+      {
+       "coordinate": "ankle_dorsiflexion.R",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.L",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      }
+     ]
     }
    ]
   },
@@ -5874,6 +7567,7 @@
     {
      "id": "neutral",
      "arcLoad": 1,
+     "lean": 0,
      "indexProvenance": "one neutral example: the index is unused",
      "coordinates": {
       "pelvis_tx": {
@@ -5889,7 +7583,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5906,7 +7600,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5923,7 +7617,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5940,7 +7634,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5957,7 +7651,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -5974,7 +7668,7 @@
          }
         },
         "notes": [
-         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)"
+         "root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root"
         ]
        }
       },
@@ -6323,15 +8017,15 @@
         ]
        }
       },
-      "ankle_dorsiflexion": {
+      "knee_rotation": {
        "parity": "sided",
        "mu": {
-        "a0": -20.95,
+        "a0": 0,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 2.8229,
+        "a0": 2.3026,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
@@ -6349,7 +8043,37 @@
          }
         },
         "notes": [
-         "no source: weak neutral prior (μ mid-range, ±2σ the joint limits)"
+         "no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)"
+        ]
+       }
+      },
+      "ankle_dorsiflexion": {
+       "parity": "sided",
+       "mu": {
+        "a0": 20.5557,
+        "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       },
+       "logSigma": {
+        "a0": 1.3703,
+        "cos": [0, 0, 0, 0, 0, 0],
+        "sin": [0, 0, 0, 0, 0, 0]
+       },
+       "provenance": {
+        "roles": {
+         "outside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         },
+         "inside": {
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
+         }
+        },
+        "notes": [
+         "in a ski boot: neutral μ mid the cuff’s range, ±2σ that range (equipment.ts forward lean, typical, inferred, + CUFF_FLEX_RANGE, demsar-2015, inferred)"
         ]
        }
       },
@@ -6646,7 +8370,21 @@
        }
       }
      },
-     "limitFlags": []
+     "derived": {},
+     "limitFlags": [
+      {
+       "coordinate": "ankle_dorsiflexion.R",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      },
+      {
+       "coordinate": "ankle_dorsiflexion.L",
+       "phi": [0, 0.979],
+       "value": 24.5,
+       "bound": 12.7
+      }
+     ]
     }
    ]
   }
@@ -6661,13 +8399,35 @@
    "why": "inferred: a mogul line; no source measures it alone"
   },
   "closed-stance-short-turns": {
-   "from": "regular-short-turns",
+   "from": "regular-sl",
    "why": "inferred: short turns with the feet closer; no source measures it alone"
+  }
+ },
+ "events": {
+  "regular-gs": {
+   "engagement": 0.25,
+   "fallLine": 0.5,
+   "forcePeak": 0.68,
+   "release": 0.8,
+   "sources": [
+    "engagement: sporri-2016 Fig 4 edge plateau start",
+    "forcePeak: kroll-2015 Fig 1B, eye-read; another skier than sporri-2016, so the cross-source pairing is inferred",
+    "release: sporri-2016 Fig 4 edge falls from t 0.8"
+   ]
+  },
+  "regular-sl": {
+   "engagement": 0.25,
+   "fallLine": 0.5,
+   "forcePeak": 0.51,
+   "sources": [
+    "engagement: reid-2010 skid peak t 0.2–0.3, its middle taken as the edge set (inferred)",
+    "forcePeak: reid-2010 grf_max, 10 m course (our SL cells run the short end)"
+   ]
   }
  },
  "evidence": {
   "note": "Range and timing evidence for derived outputs: never prior terms.",
-  "regular-short-turns.trunk_pitch_vs_image_vertical": {
+  "regular-sl.trunk_pitch_vs_image_vertical": {
    "source": "vXcjdfBXTiI (Reilly McGlashan, side-on dynamic short turns, 1080p24)",
    "status": "footage, image-plane; the camera is not level with the snow, so only the range and timing hold",
    "phi": [0, 0.0833, 0.1667, 0.25, 0.3333, 0.4167, 0.5, 0.5833, 0.6667, 0.75, 0.8333, 0.9167, 1],
@@ -6677,6 +8437,6 @@
     [35.5, 35.4, 35.3, 36.6, 38, 37.5, 36.2, 35.1, 34.1, 32.9, 30.5, 28.7, 28]
    ]
   },
-  "edge_change_style": "No source states cross-over or cross-under; every example is style-unstated and serves both."
+  "edge_change_style": "unstated holds a drill’s default examples; a cross-over or cross-under key holds examples whose sources show that style, never pooled across styles. regular-sl: the default is cross-over (Reilly), cross-under from kroll-2015 SL. The drills’ crossUnder-by-intensity is not read here."
  }
 }

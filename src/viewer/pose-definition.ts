@@ -73,7 +73,8 @@ export type HeadAim = (typeof HeadAim)[keyof typeof HeadAim];
  */
 export type HeadRule =
   | { readonly aim: typeof HeadAim.Chest }
-  | { readonly aim: typeof HeadAim.FallLine; readonly corridor: number }
+  // Without a corridor, down the moguls mass path's travel (Surface.mogul).
+  | { readonly aim: typeof HeadAim.FallLine; readonly corridor?: number }
   | { readonly aim: typeof HeadAim.Arc; readonly lead: number; readonly early: number }
   | { readonly aim: typeof HeadAim.Line; readonly turns: number };
 

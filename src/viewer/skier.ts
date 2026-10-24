@@ -90,6 +90,17 @@ export const HORISHIMA: ReferenceSkier = {
 
 export const REFERENCE_SKIER: ReferenceSkier = HORISHIMA;
 
+/** The carved turn kinds, each on its own race ski; values match TurnKind's. */
+export const CarvingKind = { SL: 'sl', GS: 'gs' } as const;
+export type CarvingKind = (typeof CarvingKind)[keyof typeof CarvingKind];
+
+export const CARVING_SKIS: Readonly<Record<CarvingKind, Ski>> = {
+  // Sourced: stoeckli.ch/usen/ski/ski/race/laser-sl, 165 cm.
+  [CarvingKind.SL]: { model: 'Stöckli Laser SL', length: 1.65, sidecutRadius: 13.6, tip: 0.12, waist: 0.066, tail: 0.098 },
+  // Sourced: volkl.com/en-us/p/racetiger-gs-skis-2026, 173 cm.
+  [CarvingKind.GS]: { model: 'Völkl Racetiger GS 2026', length: 1.73, sidecutRadius: 16.4, tip: 0.115, waist: 0.067, tail: 0.098 },
+};
+
 /** Ahead of the ski segment's origin under the binding, the ski's centre; inferred. */
 export const SKI_MOUNT = 0.05;
 

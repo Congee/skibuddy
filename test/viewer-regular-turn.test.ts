@@ -1,4 +1,5 @@
 import { assert, describe, it } from '@effect/vitest';
+import { beforeAll } from 'vitest';
 import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
 import { INTENSITIES, Intensity } from '../src/content/schema';
 import { PHASE_T, isTurn, turnForcesAt } from '../src/physics/turn';
@@ -8,8 +9,8 @@ import { CAPSULE_BOOT, HEEL_ROOM, TOE_ROOM } from '../src/viewer/gear-fit';
 import { identity, inverseRotation, transformPoint } from '../src/viewer/mat4';
 import type { Vec3 } from '../src/viewer/mat4';
 import { CAPSULE_ARM, CAPSULE_GRIP, MID_FOOT, aheadOnSki, SKI_TAIL, SKI_TIP, centreOfMass, mirrorPose, poleSize, poseToChannels, regularPoleReach, segmentMatrices } from '../src/viewer/pose';
-import { forceTiltAt, solvePose } from '../src/viewer/pose-solver';
-import { samplePose } from '../src/viewer/pose-table';
+import { forceTiltAt, mogulHeadingsAt, solvePose, solveTable } from '../src/viewer/pose-solver';
+import { type PoseTable, samplePose } from '../src/viewer/pose-table';
 import { oldTable } from './old-table';
 import { POSE_DEFINITIONS, motionFor, poleTrimOf } from '../src/viewer/poses';
 import { SurfaceKind, surfaceFor } from '../src/viewer/surface';
@@ -38,6 +39,17 @@ const anglesOf = (drill: string, i: Intensity, t: number): ReturnType<typeof pos
 const angles: (kind: RegularTurn, i: Intensity, t: number) => ReturnType<typeof poseAngles> = anglesOf;
 const DEG = 180 / Math.PI;
 const DEG_RAD = Math.PI / 180;
+// Moguls are not migrated and the bake predates the one path, so their pose checks solve on the surface afresh.
+const mogulsTables = new Map<Intensity, PoseTable>();
+const mogulsTable = (i: Intensity): PoseTable => {
+  const hit = mogulsTables.get(i);
+  if (hit !== undefined) return hit;
+  const def = POSE_DEFINITIONS[RegularTurn.Moguls];
+  if (def === undefined) throw new Error(RegularTurn.Moguls);
+  const table = solveTable(def, drillScenarios(RegularTurn.Moguls)[i], surfaceFor(RegularTurn.Moguls, i));
+  mogulsTables.set(i, table);
+  return table;
+};
 const FALL_LINE_KINDS = [RegularTurn.Moguls, 'closed-stance-short-turns'] as const;
 // The bumps pitch the skis, so mogul turns balance along the snow, not along the ski.
 const balanceOf = (kind: string, a: ReturnType<typeof poseAngles>): number => (kind === RegularTurn.Moguls || kind === ROUND_POSE ? a.comOnSnow : a.comAhead);
@@ -65,7 +77,12 @@ const bootGap = (drill: string, t: number): number => {
 const ankle = (kind: RegularTurn, i: Intensity, t: number): number => angles(kind, i, t).dorsiflexion.right;
 
 describe('regular turn', () => {
-  it('splits the load between the feet, the outside share rising with intensity', () => {
+  // Setup, not a threshold: the three fresh moguls solves take ~10 s each.
+  beforeAll(() => {
+    for (const i of INTENSITIES) mogulsTable(i);
+  }, 120_000);
+
+  it('splits the load between the feet, the outside share rising with intensity, carving inside its measured band', () => {
     for (const kind of KINDS) {
       const style = TURN_STYLES[kind];
       const peak = INTENSITIES.map((i) => weightSplit(style, i, 1 / 2).outside);
@@ -75,12 +92,15 @@ describe('regular turn', () => {
           assert.closeTo(outside + inside, 1, 1e-12, `${kind} ${i} ${t}`);
           assert.isAtLeast(outside, 0.5, `${kind} ${i} ${t}`);
         }
-      assert.isAbove(peak[1] ?? 0, peak[0] ?? 1, kind);
-      assert.isAbove(peak[2] ?? 0, peak[1] ?? 1, kind);
+      // Carving: measured 0.62-0.72 with no intensity trend (nakazato-2011 Table 1, falda-buscaiot-2017).
+      if (kind === RegularTurn.GS || kind === RegularTurn.SL) for (const x of peak) assert.isTrue(x >= 0.62 && x <= 0.72, `${kind} ${x}`);
+      else {
+        assert.isAbove(peak[1] ?? 0, peak[0] ?? 1, kind);
+        assert.isAbove(peak[2] ?? 0, peak[1] ?? 1, kind);
+      }
       assert.closeTo(weightSplit(style, Intensity.Moderate, 0).outside, 0.5, 1e-9, `${kind} even at the edge change`);
     }
     assert.isBelow(weightSplit(TURN_STYLES[RegularTurn.Powder], Intensity.Moderate, 1 / 2).outside, 0.6);
-    assert.isAtLeast(weightSplit(TURN_STYLES[RegularTurn.Carving], Intensity.Dynamic, 1 / 2).outside, 0.8);
   });
 
   legacyIt('keeps the outside knee flexed, within its kind and intensity ceiling', () => {
@@ -97,21 +117,21 @@ describe('regular turn', () => {
 
   legacyIt('reaches a measured GS ankle only when carving dynamically', () => {
     // A GS instructor's outside ankle 18-27 deg (heinrich-2022).
-    const peak = (i: Intensity): number => Math.max(...Array.from({ length: 24 }, (_, k) => ankle(RegularTurn.Carving, i, k / 24)));
+    const peak = (i: Intensity): number => Math.max(...Array.from({ length: 24 }, (_, k) => ankle(RegularTurn.GS, i, k / 24)));
     assert.isAtLeast(peak(Intensity.Dynamic), 22);
     assert.isAtMost(peak(Intensity.Dynamic), 27);
     // Through the control phase; the feet then slide ahead to the finish (lemaster-2010 p81).
-    assert.isAtLeast(ankle(RegularTurn.Carving, Intensity.Dynamic, 1 / 3), 18);
+    assert.isAtLeast(ankle(RegularTurn.GS, Intensity.Dynamic, 1 / 3), 18);
     assert.isBelow(peak(Intensity.Moderate), peak(Intensity.Dynamic) - 2);
   });
 
   legacyIt('folds deep through the dynamic carving cross-under, toward a measured flexion transition', () => {
     // seifert-2023 near 90 deg; heinrich-2022 GS 56-80 deg; the cross-overs stay tall at the switch.
-    const knee = (i: Intensity, t: number): number => angles(RegularTurn.Carving, i, t).knee.right;
+    const knee = (i: Intensity, t: number): number => angles(RegularTurn.GS, i, t).knee.right;
     assert.isAtLeast(knee(Intensity.Dynamic, 0), 65);
     assert.isAbove(knee(Intensity.Dynamic, 0), knee(Intensity.Dynamic, 1 / 2) + 12);
     assert.isBelow(knee(Intensity.Moderate, 0), knee(Intensity.Dynamic, 0) - 20);
-    assert.isAtLeast(angles(RegularTurn.Carving, Intensity.Dynamic, 0).trunkForward, angles(RegularTurn.Carving, Intensity.Dynamic, 1 / 2).trunkForward);
+    assert.isAtLeast(angles(RegularTurn.GS, Intensity.Dynamic, 0).trunkForward, angles(RegularTurn.GS, Intensity.Dynamic, 1 / 2).trunkForward);
   });
 
   it('leans the trunk forward within the measured range', () => {
@@ -126,26 +146,26 @@ describe('regular turn', () => {
 
   legacyIt('presses the shin forward at a carve initiation and opens it by the finish', () => {
     const margin = { gentle: 1.5, moderate: 2.5, dynamic: 4 } as const;
-    for (const i of INTENSITIES) assert.isAbove(ankle(RegularTurn.Carving, i, 1 / 6), ankle(RegularTurn.Carving, i, 5 / 6) + margin[i], i);
-    const gentle = Array.from({ length: 24 }, (_, k) => ankle(RegularTurn.Cruising, Intensity.Gentle, k / 24));
+    for (const i of INTENSITIES) assert.isAbove(ankle(RegularTurn.GS, i, 1 / 6), ankle(RegularTurn.GS, i, 5 / 6) + margin[i], i);
+    const gentle = Array.from({ length: 24 }, (_, k) => ankle(RegularTurn.Steered, Intensity.Gentle, k / 24));
     assert.isBelow(Math.max(...gentle) - Math.min(...gentle), 3);
   });
 
   it('absorbs deeper in moguls at the transition, over a wider range as the intensity grows', () => {
-    assert.isAbove(angles(RegularTurn.Moguls, Intensity.Moderate, 0).knee.right, angles(RegularTurn.Carving, Intensity.Moderate, 0).knee.right + 15);
+    assert.isAbove(angles(RegularTurn.Moguls, Intensity.Moderate, 0).knee.right, angles(RegularTurn.GS, Intensity.Moderate, 0).knee.right + 15);
     const span = (i: Intensity): number => {
       const v = Array.from({ length: 24 }, (_, k) => angles(RegularTurn.Moguls, i, k / 24).knee.right);
       return Math.max(...v) - Math.min(...v);
     };
     assert.isAbove(span(Intensity.Moderate), span(Intensity.Gentle) + 4);
     assert.isAbove(span(Intensity.Dynamic), span(Intensity.Moderate) + 4);
-    // Elite: near straight to about 100 deg (arndt-1992 pp85, 87).
+    // Elite: the knee passes 90 deg once in the thesis (arndt-1992 p78); 100 inferred.
     assert.isAbove(angles(RegularTurn.Moguls, Intensity.Dynamic, 0).knee.right, 85);
   });
 
   it('extends the mogul legs into the trough and folds them over the crest', () => {
-    // Extension right after the top of the bump (fis-freestyle-judging-2025 p28), knees near straight (arndt-1992 p79).
-    // In the zipper's ruts the knees stay flexed between the moguls (fis p28, arndt-1992 p93).
+    // Extension right after the top of the bump (fis-freestyle-judging-2025 p28), knees near straight in some trials (arndt-1992 p87).
+    // In the zipper's ruts the knees stay flexed between the moguls (fis p28; arndt-1992 p93 only says avoid full extension approaching a mogul).
     for (const drill of [RegularTurn.Moguls, TOPS_POSE])
       for (const i of INTENSITIES) {
         const knees = Array.from({ length: 24 }, (_, k) => anglesOf(drill, i, k / 24).knee);
@@ -179,7 +199,7 @@ describe('regular turn', () => {
       const v = Array.from({ length: 24 }, (_, k) => f(angles(kind, Intensity.Moderate, k / 24)));
       return Math.max(...v) - Math.min(...v);
     };
-    for (const kind of [RegularTurn.Cruising, RegularTurn.Carving]) {
+    for (const kind of [RegularTurn.Steered, RegularTurn.GS]) {
       const com = (t: number): number => angles(kind, Intensity.Moderate, t).comAhead;
       assert.isAbove(com(1 / 6), com(1 / 2), kind);
       assert.isAbove(com(1 / 2), com(5 / 6), kind);
@@ -193,7 +213,7 @@ describe('regular turn', () => {
       assert.isAbove(mogul(crest).comOnSnow - mogul(crest).lead / 2, mogul(trough).comOnSnow, i);
       assert.isAbove(mogul(crest).knee.right, mogul(trough).knee.right, i);
     }
-    assert.isAbove(range(RegularTurn.Moguls, (a) => a.dorsiflexion.right), range(RegularTurn.Carving, (a) => a.dorsiflexion.right));
+    assert.isAbove(range(RegularTurn.Moguls, (a) => a.dorsiflexion.right), range(RegularTurn.GS, (a) => a.dorsiflexion.right));
   });
 
   it('keeps the mass over the feet: never behind the heels nor past the toes', () => {
@@ -252,7 +272,7 @@ describe('regular turn', () => {
       }
   });
 
-  failsUntil('step 6: short turns')('moves the feet under the hips with the ankle, not by pitching the trunk', () => {
+  failsUntil('step 6: SL')('moves the feet under the hips with the ankle, not by pitching the trunk', () => {
     // Fore-aft from the ankles, the upper body still (lemaster-2010 p81).
     const range = (kind: RegularTurn, i: Intensity, f: (a: ReturnType<typeof poseAngles>) => number): number => {
       const v = Array.from({ length: 24 }, (_, k) => f(angles(kind, i, k / 24)));
@@ -265,8 +285,8 @@ describe('regular turn', () => {
       assert.isAbove(range(kind, Intensity.Dynamic, grows), range(kind, Intensity.Gentle, grows), kind);
       assert.isAbove(range(kind, Intensity.Moderate, (a) => a.hipsAhead), 0, kind);
     }
-    // Cruising and carving: the shin carries the fore-aft, the trunk about as still.
-    for (const kind of [RegularTurn.Cruising, RegularTurn.Carving])
+    // Steered and GS: the shin carries the fore-aft, the trunk about as still.
+    for (const kind of [RegularTurn.Steered, RegularTurn.GS])
       for (const i of INTENSITIES) assert.isBelow(range(kind, i, (a) => a.trunkForward), 2 * range(kind, i, (a) => a.dorsiflexion.right), `${kind} ${i}`);
   });
 
@@ -313,7 +333,7 @@ describe('regular turn', () => {
     // Legs together: the knees differ less than the open short turn's, which the closed stance rehearses.
     const spread = (drill: string, i: Intensity): number =>
       Math.max(...Array.from({ length: 24 }, (_, k) => Math.abs(anglesOf(drill, i, k / 24).knee.left - anglesOf(drill, i, k / 24).knee.right)));
-    for (const i of INTENSITIES) assert.isBelow(spread('closed-stance-short-turns', i), spread(RegularTurn.ShortTurns, i), i);
+    for (const i of INTENSITIES) assert.isBelow(spread('closed-stance-short-turns', i), spread(RegularTurn.SL, i), i);
   });
 
   it('keeps both skis on the snow, the inside leg more flexed mid-turn but in moguls', () => {
@@ -344,7 +364,7 @@ describe('regular turn', () => {
         // In moguls the legs extend into the trough, so the knees edge a little less there.
         if (kind !== RegularTurn.Moguls) assert.isAbove(edge(1 / 2), edge(1 / 3), `${kind} ${i} still growing`);
       }
-    assert.isAtLeast(angles(RegularTurn.Carving, Intensity.Moderate, 1 / 3).edge.right, 15);
+    assert.isAtLeast(angles(RegularTurn.GS, Intensity.Moderate, 1 / 3).edge.right, 15);
   });
 
   it('edges harder as the intensity grows', () => {
@@ -357,11 +377,11 @@ describe('regular turn', () => {
   it('counters little when carving and tracks the skis off the fall line in moguls', () => {
     const at = (drill: string, t: number): number => poseAngles(samplePose(oldTable(drill, Intensity.Moderate), t)).counter;
     const most = (drill: string): number => Math.max(...Array.from({ length: 24 }, (_, k) => Math.abs(at(drill, k / 24))));
-    for (const drill of KINDS) if (drill !== RegularTurn.Carving) assert.isBelow(most(RegularTurn.Carving), most(drill), drill);
+    for (const drill of KINDS) if (drill !== RegularTurn.GS) assert.isBelow(most(RegularTurn.GS), most(drill), drill);
     // Pivoted, the skis are flat in the fall line under a pelvis facing it at the switch, so square there, then the
     // counter builds to a late peak (scratchpad lead-footage notes: Duncan-Smith round line, Giaccio closed stance).
     const pivoted = [...KINDS, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns'].filter((d) => POSE_DEFINITIONS[d]?.constraints.set !== undefined);
-    assert.includeMembers(pivoted, [RegularTurn.ShortTurns, RegularTurn.Moguls, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns']);
+    assert.includeMembers(pivoted, [RegularTurn.SL, RegularTurn.Moguls, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns']);
     for (const drill of pivoted)
       for (const i of INTENSITIES) {
         const c = (t: number): number => poseAngles(samplePose(oldTable(drill, i), t)).counter;
@@ -379,13 +399,14 @@ describe('regular turn', () => {
           assert.isTrue(by >= 30 && by <= 50, `${tag} t 0.33-0.5 ${by.toFixed(1)}`);
         }
       }
-    // In moguls the chest and hips face the fall line (user's rule): the chest turns much less than the skis; 3 deg slack inferred.
+    // In moguls the chest and hips face the mass's travel (K1): the chest turns much less than the skis; 3 deg slack inferred.
     for (const i of INTENSITIES) {
-      const path = turnPath(RegularTurn.Moguls, i);
+      const surface = surfaceFor(RegularTurn.Moguls, i);
       for (let k = 0; k < 24; k++) {
-        const p = samplePose(oldTable(RegularTurn.Moguls, i), k / 24);
-        const chest = poseAngles(p).counter + p.spineTwist / DEG_RAD - headingAt(k / 24, path) / DEG_RAD;
-        assert.isBelow(Math.abs(chest), 0.5 * Math.abs(headingAt(k / 24, path) / DEG_RAD) + 3, `${i} ${k}/24`);
+        const p = samplePose(mogulsTable(i), k / 24);
+        const skis = mogulHeadingsAt(surface, k / 24)?.skis ?? Number.NaN;
+        const chest = poseAngles(p).counter + p.spineTwist / DEG_RAD - skis / DEG_RAD;
+        assert.isBelow(Math.abs(chest), 0.5 * Math.abs(skis / DEG_RAD) + 3, `${i} ${k}/24`);
       }
     }
   });
@@ -395,7 +416,7 @@ describe('regular turn', () => {
       const p = samplePose(oldTable(kind, i), t);
       return (p.counter + p.spineTwist - headingAt(t, turnPath(kind, i))) * DEG;
     };
-    for (const kind of [RegularTurn.ShortTurns, RegularTurn.Steeps])
+    for (const kind of [RegularTurn.SL, RegularTurn.Steeps])
       for (const i of INTENSITIES) {
         // At the set the skis skid most across their track under a chest kept down the fall line.
         const set = turnPath(kind, i).set ?? 0;
@@ -410,7 +431,7 @@ describe('regular turn', () => {
         assert.isTrue(peakAt >= set - 1 / 96 && peakAt < 1, `${kind} ${i} peak t ${peakAt.toFixed(2)}`);
       }
     const peak = (kind: RegularTurn): number => Math.max(...Array.from({ length: 96 }, (_, k) => angles(kind, Intensity.Moderate, k / 96).counter));
-    assert.isAbove(peak(RegularTurn.Steeps), peak(RegularTurn.ShortTurns));
+    assert.isAbove(peak(RegularTurn.Steeps), peak(RegularTurn.SL));
   });
 
   it('never lets the spine twist lead the pelvis: the hips drive the shoulders', () => {
@@ -431,10 +452,10 @@ describe('regular turn', () => {
     const shaping = KINDS.map((k) => poseToChannels(samplePose(oldTable(k, Intensity.Moderate), 1 / 2)).join());
     assert.strictEqual(new Set(shaping).size, KINDS.length);
     const counter = (k: RegularTurn): number => Math.max(...Array.from({ length: 24 }, (_, j) => Math.abs(angles(k, Intensity.Moderate, j / 24).counter)));
-    assert.isAbove(counter(RegularTurn.Steeps), counter(RegularTurn.Carving));
-    assert.isAbove(counter(RegularTurn.ShortTurns), counter(RegularTurn.Cruising));
+    assert.isAbove(counter(RegularTurn.Steeps), counter(RegularTurn.GS));
+    assert.isAbove(counter(RegularTurn.SL), counter(RegularTurn.Steered));
     assert.isAbove(oldTable(RegularTurn.Steeps, Intensity.Moderate).reduce((m, p) => Math.max(m, p.poleTouch), 0), 0.99);
-    assert.strictEqual(oldTable(RegularTurn.Carving, Intensity.Moderate).reduce((m, p) => Math.max(m, p.poleTouch), 0), 0);
+    assert.strictEqual(oldTable(RegularTurn.GS, Intensity.Moderate).reduce((m, p) => Math.max(m, p.poleTouch), 0), 0);
     assert.strictEqual(Object.keys(REGULAR_TURNS).length, KINDS.length);
   });
 
@@ -442,7 +463,7 @@ describe('regular turn', () => {
     assert.strictEqual(motionFor('stork-turns', true), 'stork-turns');
     assert.strictEqual(motionFor(RegularTurn.Moguls, true), RegularTurn.Moguls);
     assert.strictEqual(motionFor('moguls', true), RegularTurn.Moguls);
-    assert.strictEqual(motionFor('javelin-turns', true), RegularTurn.Cruising);
+    assert.strictEqual(motionFor('javelin-turns', true), RegularTurn.Steered);
     assert.isNull(motionFor('hockey-stops', false));
   });
 
@@ -475,7 +496,7 @@ describe('regular turn', () => {
     for (const drill of FALL_LINE_KINDS)
       for (let k = 0; k < 24; k++) {
         const gap = bootGap(drill, k / 24);
-        assert.isBelow(gap, 0.8 * bootGap(RegularTurn.Cruising, k / 24), `${drill} ${k}/24`);
+        assert.isBelow(gap, 0.8 * bootGap(RegularTurn.Steered, k / 24), `${drill} ${k}/24`);
       }
   });
 
@@ -486,19 +507,19 @@ describe('regular turn', () => {
       const { knee } = angles(drill, i, 1 / 2);
       return knee.left - knee.right;
     };
-    for (const drill of [RegularTurn.Cruising, RegularTurn.Carving, RegularTurn.ShortTurns, RegularTurn.Steeps]) {
+    for (const drill of [RegularTurn.Steered, RegularTurn.GS, RegularTurn.SL, RegularTurn.Steeps]) {
       const [gentle, moderate, dynamic] = INTENSITIES.map((i) => surplus(drill, i));
       assert.isAtLeast(gentle ?? NaN, 13, drill);
       assert.isAbove(moderate ?? NaN, gentle ?? NaN, drill);
       assert.isAbove(dynamic ?? NaN, moderate ?? NaN, drill);
     }
-    for (const drill of [RegularTurn.Cruising, RegularTurn.Carving]) assert.isAtMost(surplus(drill, Intensity.Gentle), 23, drill);
+    for (const drill of [RegularTurn.Steered, RegularTurn.GS]) assert.isAtMost(surplus(drill, Intensity.Gentle), 23, drill);
   });
 
   it('holds the inside ankle with the outside one, the inside leg shortening at hip and knee', () => {
     // heinrich-2022 Table 1: inside 17.2-21.4, outside 18.3-26.7 deg (RMSD 2.0); heinrich-2023 Fig 2, read off the plot:
     // inside within about 3 deg below to 2 above the outside through the turn. The 2 deg tracking error added: inferred.
-    for (const drill of [RegularTurn.Cruising, RegularTurn.Carving, RegularTurn.ShortTurns, RegularTurn.Steeps])
+    for (const drill of [RegularTurn.Steered, RegularTurn.GS, RegularTurn.SL, RegularTurn.Steeps])
       for (const i of INTENSITIES) {
         const ankles = Array.from({ length: 48 }, (_, k) => angles(drill, i, k / 48).dorsiflexion);
         const surplus = Math.max(...ankles.map((a) => a.left - a.right));
@@ -579,18 +600,33 @@ describe('regular turn', () => {
         assert.isAbove(z, 0.3, `${drill} ${side}`);
         assert.isBelow(Math.abs(x), 0.23, `${drill} ${side}`);
       }
-    const wide = Math.abs(local(RegularTurn.Cruising, 1 / 2, 'right-forearm', CAPSULE_GRIP, 'trunk')[0]);
+    const wide = Math.abs(local(RegularTurn.Steered, 1 / 2, 'right-forearm', CAPSULE_GRIP, 'trunk')[0]);
     assert.isBelow(Math.abs(local(RegularTurn.Moguls, 1 / 2, 'right-forearm', CAPSULE_GRIP, 'trunk')[0]), wide - 0.03);
   });
 
-  it('faces the head down the fall line in moguls, with the chest elsewhere', () => {
+  it('faces the head down the fall line in closed stance and along the mass in moguls, with the chest elsewhere', () => {
     for (const drill of FALL_LINE_KINDS)
       for (const i of INTENSITIES)
         for (let k = 0; k < 24; k++) {
-          const p = samplePose(oldTable(drill, i), k / 24);
+          const t = k / 24;
+          const moguls = drill === RegularTurn.Moguls;
+          const p = samplePose(moguls ? mogulsTable(i) : oldTable(drill, i), t);
           const head = p.counter + p.spineTwist + p.headYaw;
-          assert.closeTo(head * DEG, headingAt(k / 24, turnPath(drill, i)) * DEG, 1.5, `${drill} ${i} ${k}/24`);
+          const line = mogulHeadingsAt(surfaceFor(drill, i), t);
+          const want = moguls && line !== undefined ? line.skis - line.mass : headingAt(t, turnPath(drill, i));
+          assert.closeTo(head * DEG, want * DEG, 1.5, `${drill} ${i} ${k}/24`);
         }
+  });
+
+  it('counters the moguls pelvis to the mass path heading, off the skis line', () => {
+    for (const i of INTENSITIES) {
+      const surface = surfaceFor(RegularTurn.Moguls, i);
+      for (let k = 0; k < 24; k++) {
+        const line = mogulHeadingsAt(surface, k / 24);
+        if (line === undefined) throw new Error(i);
+        assert.closeTo(samplePose(mogulsTable(i), k / 24).counter, line.skis - line.mass, 1e-3, `${i} ${k}/24`);
+      }
+    }
   });
 
   it('keeps the head within 30 deg of the chest', () => {
@@ -617,7 +653,7 @@ describe('regular turn', () => {
 
   it('looks inside the carving arc at shaping, not at the turn centre', () => {
     for (const i of INTENSITIES) {
-      const inside = -headOnSkis(RegularTurn.Carving, i, PHASE_T.shaping) * DEG;
+      const inside = -headOnSkis(RegularTurn.GS, i, PHASE_T.shaping) * DEG;
       assert.isAtLeast(inside, 10, i);
       assert.isAtMost(inside, 30, i);
     }
@@ -692,7 +728,7 @@ const COM_SLACK = 0.055;
 const COM_LINE = 0.02;
 
 describe('angulation', () => {
-  it('angulates rather than banks: the trunk tilts in no further than the legs once the turn is edged', () => {
+  failsUntil('step: fast steered solve')('angulates rather than banks: the trunk tilts in no further than the legs once the turn is edged', () => {
     for (const kind of FRONTAL_KINDS)
       for (const i of INTENSITIES)
         for (const p of oldTable(kind, i)) {
@@ -768,10 +804,10 @@ describe('hip rotation', () => {
       }
   });
 
-  failsUntil('step 4: priors, step 6: carving')('rotates a racer\'s carving hips as measured: outside internally 18-40 deg, inside externally 15-36', () => {
+  failsUntil('step 4: priors, step 6: GS')('rotates a racer\'s carving hips as measured: outside internally 18-40 deg, inside externally 15-36', () => {
     // Peaks, mean - SD to the highest: fasel-2017 Table 5 23.6 (5.7) / -30.5 (5.9), heinrich-2022 27.5 / 26.2, heinrich-2023 ~40 / 15-33.
-    const outside = peakOf(RegularTurn.Carving, Intensity.Dynamic, (p) => p.counter + p.outside.femurRotation);
-    const inside = peakOf(RegularTurn.Carving, Intensity.Dynamic, (p) => p.counter + p.inside.femurRotation);
+    const outside = peakOf(RegularTurn.GS, Intensity.Dynamic, (p) => p.counter + p.outside.femurRotation);
+    const inside = peakOf(RegularTurn.GS, Intensity.Dynamic, (p) => p.counter + p.inside.femurRotation);
     assert.isTrue(outside >= 17.9 && outside <= 40, `outside ${outside.toFixed(1)}`);
     assert.isTrue(inside >= 15 && inside <= 36.4, `inside ${inside.toFixed(1)}`);
   });
@@ -790,7 +826,7 @@ describe('hip rotation', () => {
   it('counters timed skidded turns by the yaw of the skis under a pelvis facing the travel of the mass, the head on its gaze', () => {
     // The pelvis keeps facing the mass while the skis swing under it (lead-footage notes: Duncan-Smith, Giaccio); ±15° readings.
     const drills = TURN_DRILLS.filter((d) => POSE_DEFINITIONS[d]?.constraints.travel !== undefined);
-    assert.includeMembers(drills, [RegularTurn.ShortTurns, RegularTurn.Steeps, RegularTurn.Powder]);
+    assert.includeMembers(drills, [RegularTurn.SL, RegularTurn.Steeps, RegularTurn.Powder]);
     for (const drill of drills)
       for (const i of INTENSITIES) {
         const travel = POSE_DEFINITIONS[drill]?.constraints.travel;

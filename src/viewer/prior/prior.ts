@@ -44,7 +44,7 @@ export const Evidence = {
 } as const;
 export type Evidence = (typeof Evidence)[keyof typeof Evidence];
 
-export const SigmaFrom = { BetweenSources: 'between-sources', SingleSourceWide: 'single-source-wide', Range: 'range', Neutral: 'neutral' } as const;
+export const SigmaFrom = { BetweenSources: 'between-sources', SingleSourceWide: 'single-source-wide', SourceSd: 'source-sd', Range: 'range', Neutral: 'neutral' } as const;
 export type SigmaFrom = (typeof SigmaFrom)[keyof typeof SigmaFrom];
 
 export interface SourceUse {
@@ -56,6 +56,10 @@ export interface SourceUse {
   readonly errorDeg: number;
   /** The source's angle convention onto the ISB coordinate. */
   readonly mapping: string;
+  /** How a measured source was taken, e.g. video-3d (SAM 3D Body). */
+  readonly method?: string;
+  /** The transition style the source shows; absent = unstated. */
+  readonly style?: EdgeChange;
   /** Time warp onto the phase events. */
   readonly warp: string;
 }
@@ -95,9 +99,13 @@ export interface Example {
   readonly id: string;
   /** Interpolation key: the turn's fall-line load (turn.ts arcLoad). */
   readonly arcLoad: number;
+  /** Balance-axis lean at the fall line, degrees (§4.1): the odd harmonics' scale below the lightest example. */
+  readonly lean: number;
   readonly indexProvenance: string;
   /** Keyed by coordinate base name (without the side). */
   readonly coordinates: Readonly<Record<string, CoordinatePrior>>;
+  /** Measured derived quantities (Derived), each a soft per-frame target. */
+  readonly derived?: Readonly<Record<string, CoordinatePrior>>;
   /** μ ± σ past a joint limit; kept, not clipped. */
   readonly limitFlags: ReadonlyArray<LimitFlag>;
 }
@@ -109,7 +117,65 @@ export interface PriorFile {
   /** Drills that borrow another drill's examples, and why. */
   readonly aliases: Readonly<Record<string, { readonly from: string; readonly why: string }>>;
   readonly evidence: Readonly<Record<string, unknown>>;
+  /** Canonical event phases per drill whose sources time them; absent: the fall line alone registers. */
+  readonly events?: Readonly<Record<string, PhaseAnchors>>;
 }
+
+/** A drill's canonical event phases φ on the prior's axis (the fall line at ½); a missing event has no anchor. */
+export interface PhaseAnchors {
+  readonly engagement?: number;
+  readonly fallLine: number;
+  readonly forcePeak?: number;
+  readonly release?: number;
+  readonly sources: ReadonlyArray<string>;
+}
+
+/** The cell's events, turn time in [0, 1). */
+export interface CellEvents {
+  readonly engagement: number;
+  readonly fallLine: number;
+  readonly forcePeak: number;
+  readonly release: number;
+}
+
+/** The map's (t, φ) pairs in t order and the anchors dropped for breaking monotonicity. */
+export interface PhaseMap {
+  readonly pairs: ReadonlyArray<readonly [number, number]>;
+  readonly dropped: ReadonlyArray<string>;
+}
+
+const OPTIONAL = ['engagement', 'forcePeak', 'release'] as const;
+
+/** (0, 0), (fallLine, ½), (1, 1), plus each canonical anchor that keeps both axes strictly increasing. */
+export const phaseMapOf = (anchors: PhaseAnchors | null, events: CellEvents): PhaseMap => {
+  const pairs: Array<readonly [number, number]> = [[0, 0], [events.fallLine, 0.5], [1, 1]];
+  const dropped: string[] = [];
+  for (const name of OPTIONAL) {
+    const phi = anchors?.[name];
+    if (phi === undefined) continue;
+    const t = events[name];
+    if (pairs.every(([t0, p0]) => Math.sign(t - t0) === Math.sign(phi - p0) && t !== t0)) pairs.push([t, phi]);
+    else dropped.push(name);
+  }
+  pairs.sort((a, b) => a[0] - b[0]);
+  return { pairs, dropped };
+};
+
+/** Piecewise linear through the map's pairs: the cell's turn time `t` onto the prior phase φ. */
+export const phaseOn = (map: PhaseMap, t: number): number => {
+  const u = ((t % 1) + 1) % 1;
+  const { pairs } = map;
+  const i = Math.max(0, Math.min(pairs.length - 2, pairs.findIndex(([x]) => x > u) - 1));
+  const [t0, p0] = pairs[i] ?? [0, 0];
+  const [t1, p1] = pairs[i + 1] ?? [1, 1];
+  return p0 + ((p1 - p0) * (u - t0)) / (t1 - t0);
+};
+
+/** The cell's turn time `t` registered to the prior's phase by the events (motion-model §9 F). */
+export const phaseAt = (anchors: PhaseAnchors | null, events: CellEvents, t: number): number => phaseOn(phaseMapOf(anchors, events), t);
+
+/** The drill's canonical anchors, through its alias; null when its sources time no event. */
+export const anchorsFor = (drill: string, file: PriorFile = PRIOR_FILE): PhaseAnchors | null => file.events?.[file.aliases[drill]?.from ?? drill] ?? file.events?.[drill] ?? null;
 
 export const PRIOR_FILE = PRIORS as unknown as PriorFile;
 
@@ -152,14 +218,31 @@ export const evalDeg = (c: CoordinatePrior, name: string, phi: number, turn = 0)
 /** The coordinate's mirror image in the next turn: sides swapped, odd coordinates negated. */
 export const mirrorName = (name: string): string => (name.endsWith('.R') ? `${baseName(name)}.L` : name.endsWith('.L') ? `${baseName(name)}.R` : name);
 
+/** Derived quantities a prior may target; turn.ts computes each from the pose. */
+export const Derived = {
+  /** Pelvis origin → neck origin vs the mean ski-base normal, in the plane of the mean ski axis, + forward. */
+  TrunkPitch: 'trunk_pitch',
+  /** Pelvis origin → neck origin off gravity up. */
+  TrunkGravity: 'trunk_gravity',
+  /** The same in the plane of gravity up and the across-heading axis, + toward the turn's inside. */
+  TrunkAcross: 'trunk_across',
+} as const;
+export type Derived = (typeof Derived)[keyof typeof Derived];
+
 export interface PriorAt {
   readonly coordinates: Readonly<Record<string, CoordinatePrior>>;
+  readonly derived: Readonly<Record<string, CoordinatePrior>>;
   /** The examples blended, and the weight of the second. */
   readonly between: readonly [string, string];
   readonly weight: number;
   /** The arcLoad used: the query held to the examples' range. */
   readonly arcLoad: number;
+  /** Factor on every μ's odd harmonics: λ_cell / λ_example below the lightest example, else 1. */
+  readonly scale: number;
 }
+
+/** Balance-axis lean from the slope normal at the fall line, degrees: there the load is cos θ / cos λ (§4.1). */
+export const fallLineLean = (load: number, slopeDeg: number): number => Math.acos(Math.min(1, Math.cos(slopeDeg * DEG) / load)) / DEG;
 
 const at = (x: ReadonlyArray<number>, i: number): number => x[i] ?? 0;
 
@@ -179,11 +262,23 @@ const lerpPrior = (a: CoordinatePrior, b: CoordinatePrior, w: number): Coordinat
   return { parity: a.parity, mu: lerpSeries(a.mu, b.mu, w), logSigma: lerpSeries(a.logSigma, b.logSigma, w), provenance: w < 0.5 ? a.provenance : b.provenance };
 };
 
+// The side-against-side part (odd k) flips with the turn, so it is odd in the lean; even k and σ are shared.
+const oddScaled = (s: Series, f: number): Series => ({ a0: s.a0, cos: s.cos.map((v, i) => (i % 2 === 0 ? v * f : v)), sin: s.sin.map((v, i) => (i % 2 === 0 ? v * f : v)) });
+
+// Derived quantities signed toward the turn's inside: the whole μ flips with the turn, so a0 scales too.
+export const WHOLE_SCALED_DERIVED: ReadonlySet<string> = new Set([Derived.TrunkAcross]);
+
+const wholeScaled = (s: Series, f: number): Series => ({ a0: s.a0 * f, cos: s.cos.map((v) => v * f), sin: s.sin.map((v) => v * f) });
+
+const leanScaled = (c: CoordinatePrior, f: number, whole = false): CoordinatePrior =>
+  f === 1 || c.mu === null ? c : { ...c, mu: whole ? wholeScaled(c.mu, f) : oddScaled(c.mu, f) };
+
 /**
- * Linear between the two examples around `arcLoad`. Outside them the nearest example holds: this
- * selects the input, it doesn't clamp an output, and the constraints carry the change beyond it.
+ * Linear between the two examples around `arcLoad`. Above the heaviest it holds: this selects the input,
+ * it doesn't clamp an output, and the constraints carry the change beyond it. Below the lightest, its μ odd
+ * harmonics (the whole μ of WHOLE_SCALED_DERIVED) scale by the fall-line leans `lean / λ_example` in [0, 1] (motion-model §5).
  */
-export const interpolate = (examples: ReadonlyArray<Example>, arcLoad: number): PriorAt => {
+export const interpolate = (examples: ReadonlyArray<Example>, arcLoad: number, lean: number): PriorAt => {
   const sorted = examples.toSorted((x, y) => x.arcLoad - y.arcLoad);
   const first = sorted[0];
   const last = sorted[sorted.length - 1];
@@ -194,8 +289,10 @@ export const interpolate = (examples: ReadonlyArray<Example>, arcLoad: number): 
   const a = sorted[i] ?? first;
   const b = sorted[i + 1] ?? a;
   const w = b.arcLoad > a.arcLoad ? (x - a.arcLoad) / (b.arcLoad - a.arcLoad) : 0;
-  const coordinates = Object.fromEntries(Object.entries(a.coordinates).map(([k, c]) => [k, lerpPrior(c, b.coordinates[k] ?? c, w)]));
-  return { coordinates, between: [a.id, b.id], weight: w, arcLoad: x };
+  const f = arcLoad < first.arcLoad && lean < first.lean ? Math.max(0, lean / first.lean) : 1;
+  const coordinates = Object.fromEntries(Object.entries(a.coordinates).map(([k, c]) => [k, leanScaled(lerpPrior(c, b.coordinates[k] ?? c, w), f)]));
+  const derived = Object.fromEntries(Object.entries(a.derived ?? {}).map(([k, c]) => [k, leanScaled(lerpPrior(c, b.derived?.[k] ?? c, w), f, WHOLE_SCALED_DERIVED.has(k))]));
+  return { coordinates, derived, between: [a.id, b.id], weight: w, arcLoad: x, scale: f };
 };
 
 /** The drill's examples for the style, else the style-unstated ones. */
@@ -207,6 +304,13 @@ export const examplesFor = (drill: string, style: EdgeChange = EdgeChange.Unstat
 /** μ and σ in radians for a skeleton coordinate, or null where it has no prior term. */
 export const priorAt = (prior: PriorAt, name: string, phi: number, turn = 0): { readonly mu: number; readonly sigma: number } | null => {
   const c = prior.coordinates[baseName(name)];
+  const v = c === undefined ? null : evalDeg(c, name, phi, turn);
+  return v === null ? null : { mu: v.mu * DEG, sigma: v.sigma * DEG };
+};
+
+/** μ and σ in radians for a derived quantity, or null where the drill has none. */
+export const derivedAt = (prior: PriorAt, name: Derived, phi: number, turn = 0): { readonly mu: number; readonly sigma: number } | null => {
+  const c = prior.derived[name];
   const v = c === undefined ? null : evalDeg(c, name, phi, turn);
   return v === null ? null : { mu: v.mu * DEG, sigma: v.sigma * DEG };
 };

@@ -4,7 +4,8 @@ import { parse } from 'yaml';
 import { INTENSITIES } from '../../src/content/schema';
 import type { Intensity } from '../../src/content/schema';
 import { isTurn } from '../../src/physics/turn';
-import type { DrillScenario, TurnScenario, TurnScenarios } from '../../src/physics/turn';
+import type { TurnScenarios } from '../../src/physics/task';
+import type { DrillScenario, TurnScenario } from '../../src/physics/turn';
 import { TURN_STYLES, isRegularTurn } from '../../src/viewer/poses/regular-turn';
 
 export const drillFile = (drill: string): URL => new URL(`../../content/drills/${drill}.yaml`, import.meta.url);

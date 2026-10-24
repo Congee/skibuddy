@@ -39,13 +39,14 @@ export const encodeTable = (poses: PoseTable): string => {
   return toBase64(new Uint8Array(values.buffer));
 };
 
-export const decodeTable = (text: string): PoseTable => {
+/** `channels` names the stored run's channels; one it lacks reads 0 (a table baked before the ski bend: straight). */
+export const decodeTable = (text: string, channels: ReadonlyArray<string> = POSE_CHANNELS): PoseTable => {
   const bytes = fromBase64(text);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const n = POSE_CHANNELS.length;
+  const n = channels.length;
   const count = bytes.byteLength / 2 / n;
-  const values = Array.from({ length: count * n }, (_, i) => view.getInt16(i * 2, true) * TABLE_SCALE);
-  return Array.from({ length: count }, (_, i) => poseFromChannels(values, i * n));
+  const at = POSE_CHANNELS.map((c) => channels.indexOf(c));
+  return Array.from({ length: count }, (_, i) => poseFromChannels(at.map((j) => (j < 0 ? 0 : view.getInt16((i * n + j) * 2, true) * TABLE_SCALE))));
 };
 
 const stored: PoseTables = TABLES;
@@ -54,7 +55,7 @@ const decoded = new Map<string, PoseTable>();
 const cached = (key: string, text: string): PoseTable => {
   let table = decoded.get(key);
   if (table === undefined) {
-    table = decodeTable(text);
+    table = decodeTable(text, stored.channels);
     decoded.set(key, table);
   }
   return table;
@@ -64,7 +65,7 @@ const cached = (key: string, text: string): PoseTable => {
 export const poseTable = (drill: string | null, intensity: Intensity, tables: PoseTables = stored): PoseTable => {
   const text = drill === null ? undefined : tables.drills[drill]?.[intensity];
   if (text === undefined || drill === null) return cached('neutral', tables.neutral);
-  return tables === stored ? cached(`${drill}/${intensity}`, text) : decodeTable(text);
+  return tables === stored ? cached(`${drill}/${intensity}`, text) : decodeTable(text, tables.channels);
 };
 
 /** The table has the drill's own motion. */

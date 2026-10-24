@@ -30,10 +30,49 @@ const sourced = (deg: number, source: string): Bound => ({ value: deg * DEG, pro
 const inferred = (deg: number, why: string): Bound => ({ value: deg * DEG, provenance: Provenance.Inferred, source: why });
 const free: Bound = { value: Number.POSITIVE_INFINITY, provenance: Provenance.Free, source: 'root: unbounded' };
 const freeLimit: Limit = { lower: { ...free, value: Number.NEGATIVE_INFINITY }, upper: free };
-const locked: Limit = { lower: { value: 0, provenance: Provenance.Locked, source: 'held by the boot' }, upper: { value: 0, provenance: Provenance.Locked, source: 'held by the boot' } };
 const both = (lower: Bound, upper: Bound): Limit => ({ lower, upper });
 
 const TYPICAL = 'inferred: typical clinical ROM, no source read';
+/** Shin roll off the ski inside the boot: cuff, liner and foot; carried by the shell; inferred. Degrees. */
+export const BOOT_LATERAL_PLAY = 6;
+const BOOT_PLAY = 'inferred: cuff lateral flex, liner and foot in the shell, no source read';
+
+/** Tibial rotation's total arc by knee flexion, degrees: [flexion, arc]; zero at the standing pose. */
+export const KNEE_ROTATION_ARC: ReadonlyArray<readonly [number, number]> = [
+  // puah-2018 (read): cadaver tibial-tubercle bone marker, total arc (IR + ER) at 3 N·m.
+  [0, 16.3],
+  [30, 33.1],
+  [45, 40.3],
+  [60, 34.7],
+  // mossberg-1983 (abstract only): active total arc, 85 women; held past 110°.
+  [70, 35],
+  [90, 40],
+  [110, 44],
+];
+/** Internal share of the arc: mossberg-1983 "ER about twice IR" (abstract only), so the split is inferred. */
+export const KNEE_INTERNAL_SHARE = 1 / 3;
+const KNEE_ARC_MAX = Math.max(...KNEE_ROTATION_ARC.map((r) => r[1]));
+const KNEE_ARC_WHY = 'inferred: puah-2018 / mossberg-1983 (abstract only) total arc, split ⅓ internal, linear in flexion';
+
+/** The arc at knee flexion `flexion` (radians), linear between rows and held past either end, with its slope; radians. */
+export const kneeRotationArc = (flexion: number): { readonly arc: number; readonly slope: number } => {
+  const f = flexion / DEG;
+  const rows = KNEE_ROTATION_ARC;
+  const first = rows[0] ?? [0, 0];
+  const last = rows[rows.length - 1] ?? first;
+  if (f <= first[0]) return { arc: first[1] * DEG, slope: 0 };
+  if (f >= last[0]) return { arc: last[1] * DEG, slope: 0 };
+  const j = rows.findIndex((r) => r[0] > f);
+  const [a, b] = [rows[j - 1] ?? first, rows[j] ?? last];
+  const slope = (b[1] - a[1]) / (b[0] - a[0]);
+  return { arc: (a[1] + slope * (f - a[0])) * DEG, slope };
+};
+
+/** knee_rotation's limit at knee flexion `flexion`, radians; internal positive. */
+export const kneeRotationLimit = (flexion: number): Limit => {
+  const { arc } = kneeRotationArc(flexion);
+  return both(inferred(-(1 - KNEE_INTERNAL_SHARE) * arc / DEG, KNEE_ARC_WHY), inferred((KNEE_INTERNAL_SHARE * arc) / DEG, KNEE_ARC_WHY));
+};
 
 /** Per coordinate base name (without the side), lower and upper in the name's positive sense. */
 const BASE: Readonly<Record<string, Limit>> = {
@@ -57,8 +96,10 @@ const BASE: Readonly<Record<string, Limit>> = {
   hip_adduction: both(inferred(-45, TYPICAL), inferred(30, TYPICAL)),
   hip_rotation: both(inferred(-45, TYPICAL), inferred(40, TYPICAL)),
   knee_flexion: both(sourced(-1.0, `${SOUCIE} (knee extension)`), sourced(137.7, `${SOUCIE} (knee flexion)`)),
+  // The widest of kneeRotationLimit's: the bound; the flexion-dependent limit is the solver's barrier.
+  knee_rotation: both(inferred(-(1 - KNEE_INTERNAL_SHARE) * KNEE_ARC_MAX, KNEE_ARC_WHY), inferred(KNEE_INTERNAL_SHARE * KNEE_ARC_MAX, KNEE_ARC_WHY)),
   ankle_dorsiflexion: both(sourced(-54.6, `${SOUCIE} (plantar flexion)`), sourced(12.7, `${SOUCIE} (dorsiflexion)`)),
-  subtalar_inversion: locked,
+  subtalar_inversion: both(inferred(-BOOT_LATERAL_PLAY, BOOT_PLAY), inferred(BOOT_LATERAL_PLAY, BOOT_PLAY)),
   scapula_elevation: both(inferred(-10, TYPICAL), inferred(40, TYPICAL)),
   scapula_protraction: both(inferred(-15, TYPICAL), inferred(20, TYPICAL)),
   shoulder_flexion: both(inferred(-50, TYPICAL), sourced(168.8, `${SOUCIE} (shoulder flexion)`)),

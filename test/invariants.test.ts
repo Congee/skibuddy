@@ -2,8 +2,13 @@ import { assert, describe } from '@effect/vitest';
 import { drillScenarios } from '../scripts/anatomy/drill-scenarios';
 import { INTENSITIES } from '../src/content/schema';
 import type { Intensity } from '../src/content/schema';
-import { isTurn, turnForcesAt, type TurnScenario } from '../src/physics/turn';
-import { CAPSULE_BOOT } from '../src/viewer/gear-fit';
+import { edgeGoalAt, Snow } from '../src/physics/edge';
+import { taskFor } from '../src/physics/task';
+import { isTurn, turnForcesAt, turnProfile, type TurnScenario } from '../src/physics/turn';
+import { bootFitFrom } from '../src/viewer/gear-fit';
+import { MIGRATED } from '../src/viewer/motion/q-table';
+import { bootSegmentsOf } from '../src/viewer/motion/turn';
+import { SKELETON_DATA, Side } from '../src/viewer/skeleton';
 import { EQUIPMENT, minShinAngle } from '../src/viewer/equipment';
 import { BodySide, segmentIndex } from '../src/viewer/figure';
 import { HEAD_LIMIT } from '../src/viewer/gaze';
@@ -14,7 +19,7 @@ import type { Pose } from '../src/viewer/pose';
 import { TABLE_SCALE, hasTable, poseTable } from '../src/viewer/pose-table';
 import { solvePose } from '../src/viewer/pose-solver';
 import { POSE_DEFINITIONS } from '../src/viewer/poses';
-import { RegularTurn } from '../src/viewer/poses/regular-turn';
+import { RegularTurn, kindOfDrill } from '../src/viewer/poses/regular-turn';
 import { surfaceFor } from '../src/viewer/surface';
 import { failsUntil } from './legacy';
 import { ALONG, SIDES, ridden } from './ride-probes';
@@ -36,7 +41,17 @@ const FORCE_LINE = 3;
 const SETTLED = 5;
 /** Metres the whole figure stands off its ski in an airborne phase (dolphin): contact and balance drop there. */
 const AIRBORNE = 0.005;
-const CARVED = new Set<string>([RegularTurn.Carving, RegularTurn.Cruising]);
+const CARVED = new Set<string>([RegularTurn.GS, RegularTurn.Steered]);
+const BOOT_SEGMENTS = { [Side.Right]: bootSegmentsOf(bootFitFrom(SKELETON_DATA.gear_fit[Side.Right])), [Side.Left]: bootSegmentsOf(bootFitFrom(SKELETON_DATA.gear_fit[Side.Left])) } as const;
+// The solver's fitted boot (bootSegmentsOf), sole and cuff capsules per side.
+const bootParts = (m: Mat4, side: Side): ReadonlyArray<readonly [Vec3, Vec3, number]> => {
+  const b = BOOT_SEGMENTS[side];
+  const on = ([p, q]: readonly [Vec3, Vec3]): readonly [Vec3, Vec3] => [transformPoint(m, p), transformPoint(m, q)];
+  return [
+    [...on(b.sole), b.soleR],
+    [...on(b.cuff), b.cuffR],
+  ];
+};
 
 interface Sample {
   readonly pose: Pose;
@@ -99,12 +114,11 @@ const fmt = (x: number, digits = 3): string => x.toFixed(digits);
 // Cases the current sub-solves fail, keyed by invariant, each with the pipeline step expected to fix it.
 const all = (drill: string): ReadonlyArray<string> => INTENSITIES.map((i) => `${drill} ${i}`);
 const KNOWN: Readonly<Record<string, { readonly step: string; readonly cases: ReadonlyArray<string> }>> = {
-  'joints stay within the boot and the head within its cap': { step: 'step 2: bounded solve with barriers; cruising: step 6, invariants on q', cases: ['regular-powder gentle', ...all('turns-on-the-tops'), ...all('regular-cruising')] },
+  'joints stay within the boot and the head within its cap': { step: 'step 2: bounded solve with barriers; Steered: step 6, invariants on q', cases: ['regular-powder gentle'] },
   'no ski edge sinks into the snow': { step: 'step 3: contact inequalities', cases: CASES.map(([d, i]) => `${d} ${i}`) },
-  'the boots never intersect': { step: 'step 3: boot capsules', cases: ['regular-carving moderate', 'regular-carving dynamic', ...all('regular-moguls'), 'regular-steeps moderate', 'regular-steeps dynamic', ...all('regular-powder'), ...all('turns-on-the-tops'), ...all('round-line'), ...all('closed-stance-short-turns'), 'dolphin-turns dynamic'] },
-  'the mass sits on the resultant through the pressure centre': { step: 'step 3: force-line balance; cruising: step 6, invariants on q', cases: [...all('stork-turns'), ...all('regular-cruising'), 'regular-carving dynamic', 'regular-steeps moderate', 'regular-steeps dynamic'] },
-  'the outside ski touches the snow': { step: 'step 3: contact inequalities', cases: [...all('regular-moguls')] },
-  'the seam is no rougher than the interior': { step: 'step 2: cycle solve with mirror boundary', cases: [...all('stork-turns'), ...all('regular-cruising'), ...all('regular-carving'), ...all('regular-short-turns'), ...all('regular-steeps'), ...all('regular-powder'), ...all('turns-on-the-tops'), ...all('round-line'), ...all('closed-stance-short-turns'), ...all('dolphin-turns')] },
+  'the boots never intersect': { step: 'step 3: boot capsules', cases: [...all('regular-moguls'), ...all('turns-on-the-tops'), ...all('round-line'), ...all('closed-stance-short-turns')] },
+  'the mass sits on the resultant through the pressure centre': { step: 'step 3: force-line balance; Steered: step 6, invariants on q', cases: [...all('stork-turns'), ...all('regular-steered'), 'regular-gs dynamic', 'regular-steeps moderate', 'regular-steeps dynamic'] },
+  'the seam is no rougher than the interior': { step: 'step 2: cycle solve with mirror boundary', cases: [...all('stork-turns'), ...all('regular-steered'), ...all('regular-gs'), ...all('regular-sl'), ...all('regular-steeps'), ...all('regular-powder'), ...all('turns-on-the-tops'), ...all('round-line'), ...all('closed-stance-short-turns'), ...all('dolphin-turns')] },
   'the turn ends on the mirror of its start': { step: 'step 2: mirror boundary', cases: [...all('regular-powder')] },
 };
 const check = (invariant: string, body: (drill: string, i: Intensity) => void): void => {
@@ -129,6 +143,21 @@ describe('invariants', () => {
   });
 
   check('a carved outside edge holds the resultant', (drill, i) => {
+    const kind = kindOfDrill(drill);
+    if (kind !== null && MIGRATED.has(drill)) {
+      // Module A's model: the loaded margin ε − λ inside the task's band (motion-model §4.2).
+      const task = taskFor(kind, i);
+      const profile = turnProfile(task, task.snow ?? Snow.HardGroomed);
+      const [lo, hi] = task.legacy.marginBandDeg;
+      const margin = (x: Sample): number | null => (profile.at(x.t).arcShare > 0.5 ? outsideEdge(x) - edgeGoalAt(task, x.t).leanDeg : null);
+      const over = worst(samples(drill, i), (x) => {
+        const m = margin(x);
+        return m === null ? null : Math.max(lo - m, m - hi);
+      });
+      const ms = samples(drill, i).flatMap((x) => margin(x) ?? []);
+      assert.isAtMost(over.value, 0, `edge - lean ${fmt(Math.min(...ms), 1)}..${fmt(Math.max(...ms), 1)} deg leaves ${lo}..${hi} by ${fmt(over.value, 1)} at t=${fmt(over.t)}`);
+      return;
+    }
     // Edge at least the resultant's tilt less the friction angle, or the carve slides out; skidded drills are exempt.
     const s = scenarioOf(drill, i);
     if (!CARVED.has(drill) || s === null) return;
@@ -174,22 +203,11 @@ describe('invariants', () => {
   });
 
   check('the boots never intersect', (drill, i) => {
-    // Gear-fit boot as a sole capsule heel to toe and a cuff capsule ankle to cuff top, lateral radii; inferred shapes.
-    const fit = CAPSULE_BOOT;
-    const solePath = (m: Mat4): readonly [Vec3, Vec3] => [
-      transformPoint(m, [fit.centreX, fit.sole + fit.halfWidth, fit.heel + fit.halfWidth]),
-      transformPoint(m, [fit.centreX, fit.sole + fit.halfWidth, fit.toe - fit.halfWidth]),
-    ];
-    const cuffPath = (m: Mat4): readonly [Vec3, Vec3] => [transformPoint(m, [fit.cuffX, 0, fit.cuffZ]), transformPoint(m, [fit.cuffX, fit.cuffTop, fit.cuffZ])];
     const w = worst(samples(drill, i), (s) => {
-      const [r, l] = [s.world[segmentIndex('right-boot')] ?? identity(), s.world[segmentIndex('left-boot')] ?? identity()];
-      const parts = [
-        [solePath, fit.halfWidth],
-        [cuffPath, fit.cuffRx],
-      ] as const;
+      const r = bootParts(s.world[segmentIndex('right-boot')] ?? identity(), Side.Right);
+      const l = bootParts(s.world[segmentIndex('left-boot')] ?? identity(), Side.Left);
       let overlap = -Infinity;
-      for (const [pa, ra] of parts)
-        for (const [pb, rb] of parts) overlap = Math.max(overlap, ra + rb - segmentDistance(...pa(r), ...pb(l)));
+      for (const [a, b, ra] of r) for (const [c, d, rb] of l) overlap = Math.max(overlap, ra + rb - segmentDistance(a, b, c, d));
       return overlap;
     });
     assert.isAtMost(w.value, 0, `boots overlap ${fmt(w.value)} m at t=${fmt(w.t)}`);

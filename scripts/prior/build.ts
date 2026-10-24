@@ -5,13 +5,15 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { PHASE_T, arcLoad } from '../../src/physics/turn';
 import type { TurnScenario } from '../../src/physics/turn';
 import { JOINT_LIMITS } from '../../src/viewer/joint-limits';
+import { CUFF } from '../../src/viewer/motion/cuff';
 import { fitSeries, peakPhase, register, sample } from '../../src/viewer/prior/fit';
 import type { Curve } from '../../src/viewer/prior/fit';
-import { BASE_NAMES, EdgeChange, Evidence, Parity, Role, SigmaFrom, evalDeg, parityOf } from '../../src/viewer/prior/prior';
-import type { CoordinatePrior, Example, LimitFlag, PriorFile, RoleProvenance, SourceUse } from '../../src/viewer/prior/prior';
+import { BASE_NAMES, EdgeChange, Evidence, Parity, Role, SigmaFrom, evalDeg, fallLineLean, parityOf } from '../../src/viewer/prior/prior';
+import type { CoordinatePrior, Example, LimitFlag, PhaseAnchors, PriorFile, RoleProvenance, SourceUse } from '../../src/viewer/prior/prior';
 import { RegularTurn, TURN_STYLES } from '../../src/viewer/poses/regular-turn';
 import LIT from './lit-curves.json';
 import REILLY from './reilly-curves.json';
+import SAM3D from './sam3d-curves.json';
 
 export const PRIORS_FILE = new URL('../../src/viewer/prior/priors.json', import.meta.url);
 
@@ -35,7 +37,12 @@ interface Base {
   readonly evidence: Evidence;
   readonly n: number;
   readonly errorDeg: number;
+  /** The source's own between-subject SD; a single source's σ then, in place of SINGLE_WIDE. */
+  readonly sdDeg?: number;
   readonly mapping: string;
+  readonly method?: string;
+  /** The transition style the source shows; absent = unstated. combine() never pools two styles. */
+  readonly style?: EdgeChange;
 }
 interface CurveSource extends Base {
   readonly curve: Curve;
@@ -57,8 +64,14 @@ interface CoordinateDef {
 export interface ExampleDef {
   readonly id: string;
   readonly arcLoad: number;
+  /** Fall-line lean, degrees, from the same scenario as `arcLoad`. */
+  readonly lean: number;
   readonly indexProvenance: string;
   readonly coordinates: Readonly<Record<string, CoordinateDef>>;
+  /** Derived quantities a solver block targets (prior.ts DERIVED); unsided, keyed by name. */
+  readonly derived?: Readonly<Record<string, CoordinateDef>>;
+  /** The prior file's style key; absent = unstated, the drill's default. */
+  readonly style?: EdgeChange;
 }
 
 // --- Sources -------------------------------------------------------------------------------------
@@ -102,6 +115,21 @@ const h23Spine = (region: 'lumbar' | 'thoracic', axis: 'flexion' | 'bending' | '
   return { ...H23, what: `${key} (whole trunk vs pelvis)`, curve: curveAt(`gs_carving.${key}`, sign * share), mapping };
 };
 
+// sporri-2016: sacrum-to-sternum frontal bending after the gate, IMU; the whole spine, shared out by the limit spans (inferred).
+const sporriSpine = (region: 'lumbar' | 'thoracic', what: string, deg: number): RangeSource => {
+  const share = spineShare(region, 'flexion');
+  return range('sporri-2016', `trunk frontal bending ${what}, sacrum to sternum, mean after the gate`, [deg * share, deg * share], 'range-only measured (text)', 5, `forward bending as flexion; × ${share.toFixed(3)} span share (inferred)`, 6);
+};
+
+// OpenSim pelvis_tilt is + posterior about the lab's lateral axis; the lab is level, the slope frame 12.3° off it (uncertain).
+const H23_PELVIS_TILT: CurveSource = {
+  ...H23,
+  what: 'global pelvis tilt',
+  errorDeg: 12,
+  curve: curveAt('gs_carving.pelvis_tilt', -1),
+  mapping: 'OpenSim pelvis_tilt (+ posterior) negated to anterior +; lab-level vs slope-frame tilt differs by up to the 12.3° slope, so ±12° (inferred); the root turns relative to the outside ski’s heading frame in ISB order (tilt, list, rotation), so tilt is pitch about the track’s across axis, while H23’s is about the lab’s lateral axis (inferred equivalent)',
+};
+
 const h23Leg = (role: 'outside' | 'inside', channel: string, mapping: string, scale = 1): CurveSource => ({
   ...H23,
   what: `${role} ${channel}`,
@@ -121,6 +149,7 @@ const kroll = (path: string, role: string, span?: readonly [number, number]): Cu
   curve: curveAt(path),
   warp: 'none: plotted switch to switch, inside knee max ≈ ½ already',
   mapping: 'flexion = 180 − knee angle, as ISB knee_flexion',
+  ...(path.startsWith('slalom') ? { style: EdgeChange.CrossUnder } : {}),
   ...(span === undefined ? {} : { span }),
 });
 
@@ -140,6 +169,7 @@ const REILLY_SRC = {
   n: 1,
   anchors: IDENTITY,
   warp: 'phase = time between hand-read switches 4.86 and 5.59 s (lead-footage/notes.md); 4.13 and 6.32 s at the 0.73 s period, inferred',
+  style: EdgeChange.CrossOver,
 } as const;
 const reilly = (key: 'knee_outside' | 'knee_inside' | 'trunk_thigh_outside' | 'trunk_thigh_inside'): CurveSource =>
   key.startsWith('knee')
@@ -151,6 +181,62 @@ const reilly = (key: 'knee_outside' | 'knee_inside' | 'trunk_thigh_outside' | 't
         errorDeg: 15,
         mapping: 'image-plane trunk–thigh angle as hip_flexion; it includes the spine flexion, so it overstates the hip (uncertain)',
       };
+
+// SAM 3D Body: one clip a drill, its full turns' mean; outside leg from the inclination sign (scripts/prior/sam3d-curves.ts).
+type Sam3dKey = 'knee_outside' | 'knee_inside' | 'trunk_pitch' | 'trunk_gravity' | 'trunk_across';
+type Sam3dClip = 'reilly' | 'sce' | 'lig';
+const SAM3D_METHOD = 'video-3d (SAM 3D Body)';
+const SAM3D_ID: Readonly<Record<Sam3dClip, string>> = { reilly: 'footage-mcglashan-short-turns', sce: 'footage-sce-instructor', lig: 'footage ligety GS slow-mo (YouTube id not recorded; no candidate matches its 142 s)' };
+const SAM3D_MAP: Readonly<Record<Sam3dKey, { readonly errorDeg: number; readonly mapping: string }>> = {
+  // hypot(MAD vs RTMPose 2D side-on up to 5.3°, jitter ≈3°/frame) (sam3d/notes.md).
+  knee_outside: { errorDeg: 6, mapping: 'MHR 3D thigh–shank angle as knee_flexion' },
+  knee_inside: { errorDeg: 6, mapping: 'MHR 3D thigh–shank angle as knee_flexion' },
+  // Within 0.6° of the 2D trunk side-on; the sole normal stands in for the snow (inferred error).
+  trunk_pitch: { errorDeg: 5, mapping: 'pelvis root → neck vs the mean boot-sole normal, in the plane of the mean foot axis, + forward; turn.ts trunkPitchOf' },
+  // Camera up as gravity, checked against tree trunks; roll within ±3° (inferred error).
+  trunk_gravity: { errorDeg: 5, mapping: 'pelvis root → neck off camera up, taken as gravity up; turn.ts trunkGravityOf' },
+  // Side-on, the across axis is depth: the same clip's CoM inclination reads a median 9.7°, too little for short turns.
+  trunk_across: { errorDeg: 12, mapping: 'pelvis root → neck in the plane of camera up and the across-heading axis, + toward the CoM’s side; turn.ts trunkAcrossOf' },
+};
+interface Sam3dTurn {
+  readonly start_s: number;
+  readonly end_s: number;
+  readonly outside_label: string;
+  readonly p5_p95: Readonly<Record<Sam3dKey, readonly [number, number]>>;
+  readonly knee_outside?: ReadonlyArray<number>;
+}
+const sam3dTurns = (clip: Sam3dClip): ReadonlyArray<Sam3dTurn & Partial<Record<Sam3dKey, ReadonlyArray<number>>>> =>
+  (SAM3D.clips as unknown as Record<Sam3dClip, { turns: ReadonlyArray<Sam3dTurn & Partial<Record<Sam3dKey, ReadonlyArray<number>>>> }>)[clip].turns;
+const sam3dBase = (clip: Sam3dClip, key: Sam3dKey): Base => {
+  const turns = sam3dTurns(clip);
+  return {
+    id: SAM3D_ID[clip],
+    what: `${key.replace('_', ' ')}, ${turns.length} turn${turns.length === 1 ? '' : 's'} (${turns.map((t) => `${t.start_s}–${t.end_s} s, ${t.outside_label} outside`).join('; ')})`,
+    status: `measured: ${SAM3D_METHOD}, ${(SAM3D.clips as Record<string, { view: string }>)[clip]?.view ?? ''}`,
+    evidence: Evidence.Measured,
+    n: 1,
+    method: SAM3D_METHOD,
+    ...(clip === 'reilly' ? { style: EdgeChange.CrossOver } : {}),
+    ...SAM3D_MAP[key],
+  };
+};
+const sam3d = (clip: Sam3dClip, key: Sam3dKey): CurveSource => {
+  const turns = sam3dTurns(clip);
+  return {
+    ...sam3dBase(clip, key),
+    curve: { t: SAM3D.phi, v: SAM3D.phi.map((_, i) => turns.reduce((s, t) => s + (t[key]?.[i] ?? 0), 0) / turns.length) },
+    anchors: IDENTITY,
+    warp: 'phase = (t − edge change) / (next − edge change); edge change = SAM3D inclination zero crossing (3-frame mean)',
+  };
+};
+// Sparse samples (every 10th slow-mo frame): the union of the part turns' p5–p95 only.
+const sam3dRange = (clip: Sam3dClip, key: Sam3dKey): RangeSource => {
+  const rs = sam3dTurns(clip).map((t) => t.p5_p95[key]);
+  return { ...sam3dBase(clip, key), status: `range-only measured: ${SAM3D_METHOD}, every 10th slow-mo frame, p5–p95`, evidence: Evidence.RangeOnly, range: [Math.min(...rs.map((r) => r[0])), Math.max(...rs.map((r) => r[1]))] };
+};
+const GRAVITY_TRANSFER = 'footage slope unknown; evidence is gravity-referenced: the head and trunk orient to gravity (a choice), not converted to the snow normal';
+const SCE_TRANSFER = 'sce (jBsWS4hpivY) skis short/medium turns, period ≈0.66 s (lead-footage/notes.md); used for cruising, an inferred transfer';
+const SAM3D_PELVIS = 'sam3d (SAM 3D Body) pelvis tilt and the pelvis/spine split not used: posterior pelvis against the literature’s anterior in every clip, a model bias (sam3d/notes.md)';
 
 const range = (id: string, what: string, r: readonly [number, number], status: string, errorDeg: number, mapping: string, n = 1): RangeSource => ({
   id,
@@ -165,15 +251,84 @@ const range = (id: string, what: string, r: readonly [number, number], status: s
 
 const scenario = (kind: RegularTurn, key: 'gentle' | 'moderate' | 'dynamic'): TurnScenario => TURN_STYLES[kind].scenarios[key];
 
+/** The interpolation key and the fall-line lean of an example's skiing (§4.1). */
+const keyOf = (s: TurnScenario): { readonly arcLoad: number; readonly lean: number } => ({ arcLoad: arcLoad(s), lean: fallLineLean(arcLoad(s), s.slopeDeg) });
+
 const both = (sources: ReadonlyArray<Source>): Partial<Record<Role, ReadonlyArray<Source>>> => ({ [Role.Outside]: sources, [Role.Inside]: sources });
 
+// No study measures arm carriage in turns; lemaster-2010 only says forward, in view, hands wide. Ranges inferred, so σ wide.
+const carried = (what: string, r: readonly [number, number]): RangeSource =>
+  range('lemaster-2010', what, r, 'range-only qualitative (text): arms forward, hands wide and in view', SINGLE_WIDE, 'humerus on the thorax, ISB; range inferred from the text');
+const ARMS: Readonly<Record<string, CoordinateDef>> = {
+  shoulder_flexion: { roles: both([carried('arm carried forward, hands in view', [10, 60])]) },
+  shoulder_abduction: { roles: both([carried('hands wide so the poles clear the body', [10, 40])]) },
+};
+
+/** The turn times a lit-curves.json event string names ("t ≈0.68", "t 0.25-0.75"): first, or the range's middle. */
+const litT = (path: string, middle = false): number => {
+  const text = path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], lit);
+  const m = typeof text === 'string' ? /t\s*≈?\s*(\d*\.\d+)(?:\s*-\s*(\d*\.\d+))?/.exec(text) : null;
+  if (m === null) throw new Error(`no event time in lit-curves.json ${path}`);
+  const a = Number(m[1]);
+  return middle && m[2] !== undefined ? (a + Number(m[2])) / 2 : a;
+};
+
+/** Canonical event phases of each drill's prior axis (motion-model §9 F); drills absent here register by the fall line alone. */
+export const EVENTS: Readonly<Record<string, PhaseAnchors>> = {
+  [RegularTurn.GS]: {
+    engagement: litT('gs_carving.events.edge_angle_max'),
+    fallLine: 0.5,
+    forcePeak: litT('gs_carving.events.grf_peak'),
+    release: litT('gs_carving.events.release'),
+    sources: [
+      'engagement: sporri-2016 Fig 4 edge plateau start',
+      'forcePeak: kroll-2015 Fig 1B, eye-read; another skier than sporri-2016, so the cross-source pairing is inferred',
+      'release: sporri-2016 Fig 4 edge falls from t 0.8',
+    ],
+  },
+  [RegularTurn.SL]: {
+    engagement: litT('slalom.events.skid_peak', true),
+    fallLine: 0.5,
+    forcePeak: litT('slalom.events.grf_max'),
+    sources: ['engagement: reid-2010 skid peak t 0.2–0.3, its middle taken as the edge set (inferred)', 'forcePeak: reid-2010 grf_max, 10 m course (our SL cells run the short end)'],
+  },
+};
+
+// zorko-2015 Table 1, 65 mm skis (ours 68 mm): its phases I, S1, S2, C as quarters, each mean at the quarter's middle.
+const ZORKO_KNEE: Curve = { t: [0.125, 0.375, 0.625, 0.875], v: [3.9, 8.1, 10.4, 13.3] };
+const kneeRotation = (kind: RegularTurn): CoordinateDef => {
+  const e = EVENTS[kind];
+  return {
+    roles: {
+      outside: [
+        {
+          id: 'zorko-2015',
+          what: 'outside knee internal rotation per phase, 6 skilled skiers, carved turns on 65 mm skis (Table 1)',
+          status: 'measured (Table 1 phase means)',
+          evidence: Evidence.Measured,
+          n: 6,
+          errorDeg: 1,
+          sdDeg: 3,
+          curve: ZORKO_KNEE,
+          anchors: [[0, 0], [0.25, e?.engagement ?? 0.25], [0.5, 0.5], [0.75, e?.release ?? 0.75], [1, 1]],
+          warp: 'weight transition → switch; I ends at engagement, S1 at the gate ≈ fall line, S2 at release (quarters where the drill has no event, inferred)',
+          mapping: ROT,
+        },
+      ],
+    },
+    notes: ['zorko-2015 SD 2–4° in steering: σ 3°', ...(kind === RegularTurn.GS ? [] : [`zorko-2015 carved on a GS-like slope; ${kind} an inferred transfer`])],
+  };
+};
+
 export const EXAMPLES: Readonly<Record<string, ReadonlyArray<ExampleDef>>> = {
-  [RegularTurn.Carving]: [
+  [RegularTurn.GS]: [
     {
       id: 'gs-fis-heinrich-2023',
-      arcLoad: arcLoad({ speedMps: 12, radiusM: 10.7, slopeDeg: 12.3 }),
+      ...keyOf({ speedMps: 12, radiusM: 10.7, slopeDeg: 12.3 }),
       indexProvenance: 'measured: heinrich-2023 ≈12 m/s, min radius ≈10.7 m, 12.3° slope (the min radius, so the turn’s peak load)',
       coordinates: {
+        ...ARMS,
+        knee_rotation: kneeRotation(RegularTurn.GS),
         hip_flexion: { roles: { outside: [h23Leg('outside', 'hip_flexion', FLEX)], inside: [h23Leg('inside', 'hip_flexion', FLEX)] } },
         hip_adduction: {
           roles: { outside: [h23Leg('outside', 'hip_abduction', ABD, -1), h22('outside', 'hip_abduction', ABD, -1)], inside: [h23Leg('inside', 'hip_abduction', ABD, -1)] },
@@ -184,8 +339,8 @@ export const EXAMPLES: Readonly<Record<string, ReadonlyArray<ExampleDef>>> = {
         },
         knee_flexion: {
           roles: {
-            outside: [h23Leg('outside', 'knee_flexion', FLEX), h22('outside', 'knee_flexion', FLEX), kroll('gs_carving.outside.knee_flexion_kroll', 'outside')],
-            inside: [h23Leg('inside', 'knee_flexion', FLEX), h22('inside', 'knee_flexion', FLEX), kroll('gs_carving.inside.knee_flexion_kroll', 'inside')],
+            outside: [h23Leg('outside', 'knee_flexion', FLEX), h22('outside', 'knee_flexion', FLEX), kroll('gs_carving.outside.knee_flexion_kroll', 'outside'), sam3dRange('lig', 'knee_outside')],
+            inside: [h23Leg('inside', 'knee_flexion', FLEX), h22('inside', 'knee_flexion', FLEX), kroll('gs_carving.inside.knee_flexion_kroll', 'inside'), sam3dRange('lig', 'knee_inside')],
           },
         },
         ankle_dorsiflexion: {
@@ -194,50 +349,98 @@ export const EXAMPLES: Readonly<Record<string, ReadonlyArray<ExampleDef>>> = {
             inside: [h23Leg('inside', 'ankle_dorsiflexion', 'dorsiflexion +, as ISB'), h22('inside', 'ankle_dorsiflexion', 'dorsiflexion +, as ISB')],
           },
         },
-        lumbar_flexion: { roles: { turn: [h23Spine('lumbar', 'flexion')] }, notes: ['fasel-2017 carpet trunk vs pelvis not used: carpet, short skis'] },
-        thoracic_flexion: { roles: { turn: [h23Spine('thoracic', 'flexion')] } },
+        lumbar_flexion: { roles: { turn: [h23Spine('lumbar', 'flexion'), sporriSpine('lumbar', 'GS', 27)] }, notes: ['fasel-2017 carpet trunk vs pelvis not used: carpet, short skis'] },
+        thoracic_flexion: { roles: { turn: [h23Spine('thoracic', 'flexion'), sporriSpine('thoracic', 'GS', 27)] } },
+        pelvis_tilt: { roles: { turn: [H23_PELVIS_TILT] }, notes: ['sporri-2015: trunk bending ≈39° at peak force in GS; a peak only, not fitted', SAM3D_PELVIS] },
         lumbar_bending: { roles: { turn: [h23Spine('lumbar', 'bending')] } },
         thoracic_bending: { roles: { turn: [h23Spine('thoracic', 'bending')] } },
         lumbar_rotation: { roles: { turn: [h23Spine('lumbar', 'rotation')] } },
         thoracic_rotation: { roles: { turn: [h23Spine('thoracic', 'rotation')] } },
       },
-    },
-  ],
-  [RegularTurn.ShortTurns]: [
-    {
-      id: 'short-sl-kroll-2015-and-reilly',
-      arcLoad: arcLoad(scenario(RegularTurn.ShortTurns, 'dynamic')),
-      indexProvenance: 'inferred: the drill’s dynamic scenario (an SL racer and an instructor’s dynamic demo; neither source gives speed and radius)',
-      coordinates: {
-        knee_flexion: {
-          roles: {
-            outside: [kroll('slalom.outside.knee_flexion', 'outside'), reilly('knee_outside')],
-            inside: [kroll('slalom.inside.knee_flexion', 'inside', [0, 0.55]), reilly('knee_inside')],
-          },
-          notes: ['footage outside/inside split from the near ski (lead-footage/notes.md); the straighter mid-turn knee disagrees in 2 of 3 turns, so the split is uncertain'],
+      derived: {
+        trunk_pitch: { roles: { turn: [sam3dRange('lig', 'trunk_pitch')] }, notes: ['the sole normal is unreliable at high edge angles (sam3d/notes.md): wide'] },
+        trunk_across: {
+          roles: { turn: [sam3dRange('lig', 'trunk_across')] },
+          notes: [GRAVITY_TRANSFER, 'lig front-oblique: the across axis lies near the image plane; gate poles keep camera roll within ±3°', 'lig total off gravity not used: its forward part is depth'],
         },
-        hip_flexion: { roles: { outside: [reilly('trunk_thigh_outside')], inside: [reilly('trunk_thigh_inside')] } },
       },
     },
   ],
-  [RegularTurn.Cruising]: [
+  [RegularTurn.SL]: [
+    {
+      id: 'short-reilly-sam3d',
+      ...keyOf(scenario(RegularTurn.SL, 'dynamic')),
+      indexProvenance: 'inferred: the drill’s dynamic scenario (an SL racer and an instructor’s dynamic demo; neither source gives speed and radius)',
+      coordinates: {
+        ...ARMS,
+        knee_rotation: kneeRotation(RegularTurn.SL),
+        knee_flexion: {
+          roles: {
+            outside: [sam3d('reilly', 'knee_outside')],
+            inside: [sam3d('reilly', 'knee_inside')],
+          },
+          notes: [
+            'cross-over (Reilly, tall at the switch); kroll-2015 SL is cross-under, in the cross-under example: the styles are never pooled',
+            'footage vXcjdfBXTiI: SAM 3D Body replaces the RTMPose 2D knee from the same clip; its outside leg comes from the 3D inclination, not the hand-read near ski (which the knees contradicted in 2 of 3 turns)',
+          ],
+        },
+        hip_flexion: { roles: { outside: [reilly('trunk_thigh_outside')], inside: [reilly('trunk_thigh_inside')] } },
+        lumbar_flexion: { roles: { turn: [sporriSpine('lumbar', 'SL', 11)] } },
+        thoracic_flexion: { roles: { turn: [sporriSpine('thoracic', 'SL', 11)] } },
+        pelvis_tilt: { roles: {}, notes: [SAM3D_PELVIS] },
+      },
+      // The ski-frame trunk pitch ignores the across lean: replaced by the trunk against gravity.
+      derived: {
+        trunk_gravity: { roles: { turn: [sam3d('reilly', 'trunk_gravity')] }, notes: [GRAVITY_TRANSFER, 'camera up checked against tree trunks'] },
+        trunk_across: { roles: { turn: [sam3d('reilly', 'trunk_across')] }, notes: [GRAVITY_TRANSFER, 'side-on: depth-based, σ 12° (errorDeg)'] },
+      },
+    },
+    {
+      id: 'short-cross-under-kroll-2015',
+      style: EdgeChange.CrossUnder,
+      ...keyOf(scenario(RegularTurn.SL, 'dynamic')),
+      indexProvenance: 'inferred: the drill’s dynamic scenario (an SL racer; the source gives no speed or radius)',
+      coordinates: {
+        ...ARMS,
+        knee_rotation: kneeRotation(RegularTurn.SL),
+        knee_flexion: {
+          roles: {
+            outside: [kroll('slalom.outside.knee_flexion', 'outside')],
+            inside: [{ ...range('kroll-2015', 'inside knee flexion 62–100, SL, one FIS racer (Table 1)', [62, 100], 'range-only measured (Table 1)', 5, 'flexion = 180 − knee angle, as ISB knee_flexion'), style: EdgeChange.CrossUnder }],
+          },
+          notes: ['kroll-2015 Fig 1A inside knee is read only to t 0.55 ("flexes" after), so the inside takes its Table 1 range', 'cross-under: legs fold through the edge change (flexion transition); a cross-under SAM 3D clip is still to come'],
+        },
+        lumbar_flexion: { roles: { turn: [sporriSpine('lumbar', 'SL', 11)] } },
+        thoracic_flexion: { roles: { turn: [sporriSpine('thoracic', 'SL', 11)] } },
+      },
+    },
+  ],
+  [RegularTurn.Steered]: [
     {
       id: 'medium-intermediate-gao-2025',
-      arcLoad: arcLoad({ ...scenario(RegularTurn.Cruising, 'moderate'), speedMps: 11.5, radiusM: 17.6 }),
+      ...keyOf({ ...scenario(RegularTurn.Steered, 'moderate'), speedMps: 11.5, radiusM: 17.6 }),
       indexProvenance: 'gao-2025 11.5 m/s and r 17.6 m measured; slope the drill’s moderate one (inferred)',
       coordinates: {
+        ...ARMS,
+        knee_rotation: kneeRotation(RegularTurn.Steered),
         hip_rotation: { roles: { outside: [range('gao-2025', 'outside hip rotation, one intermediate', [-4, 10], 'range-only (eye, Fig 5)', 3, ROT)] } },
         hip_adduction: { roles: { outside: [range('gao-2025', 'outside hip abduction ≈20', [-20, -20], 'range-only (eye, Fig 5)', 5, ABD)] } },
         knee_flexion: {
-          roles: { outside: [range('gao-2025', 'knee flexion 40–67 right / 40–80 left; which leg is outside is not read', [40, 80], 'range-only (eye, Fig 5)', 5, FLEX)] },
+          roles: {
+            outside: [range('gao-2025', 'knee flexion 40–67 right / 40–80 left; which leg is outside is not read', [40, 80], 'range-only (eye, Fig 5)', 5, FLEX), sam3d('sce', 'knee_outside')],
+            inside: [sam3d('sce', 'knee_inside')],
+          },
+          notes: [SCE_TRANSFER, 'sce figure ≈300 px, under the 400 px the side-on check covers: σ stays single-source wide'],
         },
+        pelvis_tilt: { roles: {}, notes: [SAM3D_PELVIS] },
       },
+      derived: { trunk_pitch: { roles: { turn: [sam3d('sce', 'trunk_pitch')] }, notes: [SCE_TRANSFER, 'sce trunk vs gravity not used: a follow-cam that rolls with its own skier’s turns, no vertical reference'] } },
     },
   ],
   [RegularTurn.Moguls]: [
     {
       id: 'moguls-elite-ranges',
-      arcLoad: arcLoad(scenario(RegularTurn.Moguls, 'dynamic')),
+      ...keyOf(scenario(RegularTurn.Moguls, 'dynamic')),
       indexProvenance: 'inferred: the drill’s dynamic scenario (elite and WC skiers)',
       coordinates: {
         knee_flexion: {
@@ -258,7 +461,7 @@ export const EXAMPLES: Readonly<Record<string, ReadonlyArray<ExampleDef>>> = {
 export const ALIASES: Readonly<Record<string, { readonly from: string; readonly why: string }>> = {
   'turns-on-the-tops': { from: RegularTurn.Moguls, why: 'inferred: a mogul line; no source measures it alone' },
   'round-line': { from: RegularTurn.Moguls, why: 'inferred: a mogul line; no source measures it alone' },
-  'closed-stance-short-turns': { from: RegularTurn.ShortTurns, why: 'inferred: short turns with the feet closer; no source measures it alone' },
+  'closed-stance-short-turns': { from: RegularTurn.SL, why: 'inferred: short turns with the feet closer; no source measures it alone' },
 };
 
 /** Turning drills with no source: every coordinate neutral. */
@@ -273,6 +476,20 @@ export const limitDeg = (base: string): readonly [number, number] => {
 };
 
 export const isSided = (base: string): boolean => JOINT_LIMITS[`${base}.R`] !== undefined;
+
+/** Where the gear holds a coordinate tighter than the joint, or its neutral is not mid-limit: the neutral prior's range. */
+const GEAR_RANGE: Readonly<Record<string, { readonly range: readonly [number, number]; readonly note: string }>> = {
+  ankle_dorsiflexion: {
+    range: [(CUFF['ankle_dorsiflexion.R']?.[0] ?? 0) / DEG, (CUFF['ankle_dorsiflexion.R']?.[1] ?? 0) / DEG],
+    note: 'in a ski boot: neutral μ mid the cuff’s range, ±2σ that range (equipment.ts forward lean, typical, inferred, + CUFF_FLEX_RANGE, demsar-2015, inferred)',
+  },
+  knee_rotation: {
+    range: [-2 * SINGLE_WIDE, 2 * SINGLE_WIDE],
+    note: 'no source for this role: neutral μ 0 at the standing pose, σ SINGLE_WIDE (inferred)',
+  },
+};
+/** The range a sourceless role's neutral prior spans: the gear's where it binds, else the joint's. */
+export const neutralRange = (base: string): readonly [number, number] => GEAR_RANGE[base]?.range ?? limitDeg(base);
 const isRoot = (base: string): boolean => base.startsWith('pelvis_');
 const isLocked = (base: string): boolean => base === 'subtalar_inversion';
 
@@ -301,6 +518,8 @@ const use = (s: Source): SourceUse => ({
   n: s.n,
   errorDeg: s.errorDeg,
   mapping: s.mapping,
+  ...(s.method === undefined ? {} : { method: s.method }),
+  ...(s.style === undefined ? {} : { style: s.style }),
   warp: isCurve(s) ? s.warp : 'none: a range has no timing',
 });
 
@@ -312,6 +531,8 @@ export const combine = (sources: ReadonlyArray<Source>, limits: readonly [number
     const [lo, hi] = limits;
     return { mu: CLOSED.map(() => (lo + hi) / 2), sigma: CLOSED.map(() => (hi - lo) / 4), provenance: { evidence: Evidence.Neutral, sigma: SigmaFrom.Neutral, sources: [] } };
   }
+  const styles = new Set(sources.flatMap((s) => (s.style === undefined ? [] : [s.style])));
+  if (styles.size > 1) throw new Error(`combine: ${sources.map((s) => s.id).join(', ')} mix transition styles ${[...styles].join(', ')}`);
   const curves = sources.filter(isCurve).map(sourceValues);
   const shape = CLOSED.map((_, j) => {
     const xs = curves.map((c) => c[j] ?? Number.NaN).filter(Number.isFinite);
@@ -336,10 +557,10 @@ export const combine = (sources: ReadonlyArray<Source>, limits: readonly [number
     if (xs.length >= 2) {
       between++;
       sigma.push(Math.max(sd(xs), err, SIGMA_FLOOR));
-    } else sigma.push(Math.max(SINGLE_WIDE, err, rangeSigma));
+    } else sigma.push(Math.max(only?.sdDeg ?? SINGLE_WIDE, err, rangeSigma));
   });
   const evidence = STRENGTH.find((e) => sources.some((s) => s.evidence === e)) ?? Evidence.Inferred;
-  const sigmaFrom = single ? (rangeSigma >= SINGLE_WIDE ? SigmaFrom.Range : SigmaFrom.SingleSourceWide) : between === CLOSED.length ? SigmaFrom.BetweenSources : SigmaFrom.SingleSourceWide;
+  const sigmaFrom = single ? (only?.sdDeg !== undefined ? SigmaFrom.SourceSd : rangeSigma >= SINGLE_WIDE ? SigmaFrom.Range : SigmaFrom.SingleSourceWide) : between === CLOSED.length ? SigmaFrom.BetweenSources : SigmaFrom.SingleSourceWide;
   return { mu, sigma, provenance: { evidence, sigma: sigmaFrom, sources: sources.map(use) } };
 };
 
@@ -385,24 +606,29 @@ export const cycleSamples = (base: string, targets: Readonly<Partial<Record<Role
   return out;
 };
 
-export const ROOT_NOTE = 'root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead)';
+export const NEUTRAL_NOTE = 'no source: weak neutral prior (μ mid-range, ±2σ the joint limits)';
+export const ROOT_NOTE =
+  'root pose: placed by the ski and balance constraints; a prior here would target derived outputs (list, lead, comAhead); pelvis_tilt alone may carry one, the measured pelvis pitch on the heading-relative root';
 
 export const buildCoordinate = (base: string, def: CoordinateDef | undefined): CoordinatePrior => {
   const parity = isSided(base) ? Parity.Sided : parityOf(base);
-  if (isRoot(base)) return { parity, mu: null, logSigma: null, provenance: { roles: { turn: { evidence: Evidence.None, sigma: null, sources: [] } }, notes: [ROOT_NOTE] } };
+  const sourced = Object.values(def?.roles ?? {}).some((r) => r.length > 0);
+  // Pelvis tilt is an orientation a source can measure; the root's other coordinates are derived outputs.
+  if (isRoot(base) && !(base === 'pelvis_tilt' && sourced))
+    return { parity, mu: null, logSigma: null, provenance: { roles: { turn: { evidence: Evidence.None, sigma: null, sources: [] } }, notes: [ROOT_NOTE, ...(def?.notes ?? [])] } };
   if (isLocked(base)) {
     return { parity, mu: null, logSigma: null, provenance: { roles: { outside: { evidence: Evidence.Locked, sigma: null, sources: [] }, inside: { evidence: Evidence.Locked, sigma: null, sources: [] } }, notes: ['held by the boot'] } };
   }
-  const limits = limitDeg(base);
   const roles: ReadonlyArray<Role> = isSided(base) ? [Role.Outside, Role.Inside] : [Role.Turn];
-  const targets = Object.fromEntries(roles.map((r) => [r, combine(def?.roles[r] ?? [], limits)])) as Partial<Record<Role, RoleTarget>>;
+  const targets = Object.fromEntries(roles.map((r) => [r, combine(def?.roles[r] ?? [], neutralRange(base))])) as Partial<Record<Role, RoleTarget>>;
+  const gear = roles.some((r) => (def?.roles[r] ?? []).length === 0) ? GEAR_RANGE[base]?.note : undefined;
   const c = cycleSamples(base, targets);
   const sigmaParity = parity === Parity.Sided ? Parity.Sided : Parity.Even;
   return {
     parity,
     mu: fitSeries(c.omega, c.mu, parity, MU_ORDER),
     logSigma: fitSeries(c.omega, c.sigma.map(Math.log), sigmaParity, SIGMA_ORDER),
-    provenance: { roles: Object.fromEntries(roles.map((r) => [r, targets[r]?.provenance])), notes: def?.notes ?? (def === undefined ? ['no source: weak neutral prior (μ mid-range, ±2σ the joint limits)'] : []) },
+    provenance: { roles: Object.fromEntries(roles.map((r) => [r, targets[r]?.provenance])), notes: def === undefined ? [gear ?? NEUTRAL_NOTE] : [...(def.notes ?? []), ...(gear === undefined ? [] : [gear])] },
   };
 };
 
@@ -438,16 +664,33 @@ export const limitFlags = (coordinates: Readonly<Record<string, CoordinatePrior>
   return out;
 };
 
-export const buildExample = (def: ExampleDef): Example => {
-  const coordinates = Object.fromEntries(BASE_NAMES.map((b) => [b, buildCoordinate(b, def.coordinates[b])]));
-  return { id: def.id, arcLoad: Math.round(def.arcLoad * 1e4) / 1e4, indexProvenance: def.indexProvenance, coordinates, limitFlags: limitFlags(coordinates) };
+/** A derived quantity's prior: unsided and even, so turn 1 repeats turn 0. */
+export const buildDerived = (name: string, def: CoordinateDef): CoordinatePrior => {
+  const t = combine(def.roles[Role.Turn] ?? [], [-90, 90]);
+  const c = cycleSamples(name, { [Role.Turn]: t });
+  return {
+    parity: Parity.Even,
+    mu: fitSeries(c.omega, c.mu, Parity.Even, MU_ORDER),
+    logSigma: fitSeries(c.omega, c.sigma.map(Math.log), Parity.Even, SIGMA_ORDER),
+    provenance: { roles: { turn: t.provenance }, notes: def.notes ?? [] },
+  };
 };
 
-const NEUTRAL_EXAMPLE: ExampleDef = { id: 'neutral', arcLoad: 1, indexProvenance: 'one neutral example: the index is unused', coordinates: {} };
+export const buildExample = (def: ExampleDef): Example => {
+  const coordinates = Object.fromEntries(BASE_NAMES.map((b) => [b, buildCoordinate(b, def.coordinates[b])]));
+  const derived = Object.fromEntries(Object.entries(def.derived ?? {}).map(([k, d]) => [k, buildDerived(k, d)]));
+  return { id: def.id, arcLoad: Math.round(def.arcLoad * 1e4) / 1e4, lean: Math.round(def.lean * 1e4) / 1e4, indexProvenance: def.indexProvenance, coordinates, derived, limitFlags: limitFlags(coordinates) };
+};
+
+const NEUTRAL_EXAMPLE: ExampleDef = { id: 'neutral', arcLoad: 1, lean: 0, indexProvenance: 'one neutral example: the index is unused', coordinates: {} };
 
 export const buildPriors = (): PriorFile => {
   const drills: Record<string, Partial<Record<EdgeChange, ReadonlyArray<Example>>>> = {};
-  for (const [drill, defs] of Object.entries(EXAMPLES)) drills[drill] = { [EdgeChange.Unstated]: defs.map(buildExample) };
+  for (const [drill, defs] of Object.entries(EXAMPLES)) {
+    const sets: Partial<Record<EdgeChange, Example[]>> = {};
+    for (const d of defs) (sets[d.style ?? EdgeChange.Unstated] ??= []).push(buildExample(d));
+    drills[drill] = sets;
+  }
   for (const drill of NEUTRAL_DRILLS) drills[drill] = { [EdgeChange.Unstated]: [buildExample(NEUTRAL_EXAMPLE)] };
   const turns = REILLY.turns;
   return {
@@ -455,15 +698,16 @@ export const buildPriors = (): PriorFile => {
     turn0: 'a left turn, the right leg outside; ω = π(φ + turn), the left side half a cycle later',
     drills,
     aliases: ALIASES,
+    events: EVENTS,
     evidence: {
       note: 'Range and timing evidence for derived outputs: never prior terms.',
-      'regular-short-turns.trunk_pitch_vs_image_vertical': {
+      'regular-sl.trunk_pitch_vs_image_vertical': {
         source: REILLY.clip,
         status: 'footage, image-plane; the camera is not level with the snow, so only the range and timing hold',
         phi: REILLY.phi,
         turns: turns.map((t) => t.trunk_pitch),
       },
-      edge_change_style: 'No source states cross-over or cross-under; every example is style-unstated and serves both.',
+      edge_change_style: 'unstated holds a drill’s default examples; a cross-over or cross-under key holds examples whose sources show that style, never pooled across styles. regular-sl: the default is cross-over (Reilly), cross-under from kroll-2015 SL. The drills’ crossUnder-by-intensity is not read here.',
     },
   };
 };

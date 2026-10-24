@@ -55,6 +55,15 @@ export const totalRamp = (eq: Equipment): number => eq.bootBoardRamp + deltaAngl
 export const minShinAngle = (eq: Equipment): number => eq.forwardLean + deltaAngle(eq);
 
 /**
+ * The shin's travel past the cuff's rest: the ankle's 15° in loaded squats in boots, shell and liner
+ * together (demsar-2015); taken as the boot's range, inferred.
+ */
+export const CUFF_FLEX_RANGE = 15 * DEG;
+
+/** Most shin angle from the ski-base normal the boot lets through. */
+export const maxShinAngle = (eq: Equipment): number => minShinAngle(eq) + CUFF_FLEX_RANGE;
+
+/**
  * Shin angle from the ski-base normal for an ankle dorsiflexed `dorsiflexion` from
  * the foot; the cuff holds the shin at its lean until the skier flexes past it.
  */

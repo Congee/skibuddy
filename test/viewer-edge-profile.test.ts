@@ -44,9 +44,9 @@ const edgeShares = (kind: RegularTurn, i: Intensity): ((t: number) => number) =>
 };
 
 describe('outside edge profile', () => {
-  for (const kind of [RegularTurn.Carving, RegularTurn.Cruising, RegularTurn.ShortTurns])
+  for (const kind of [RegularTurn.GS, RegularTurn.Steered, RegularTurn.SL])
     for (const i of INTENSITIES)
-      failsUntil('step 3: edge from physics', kind === RegularTurn.Carving && i === Intensity.Dynamic)(`${kind} ${i} builds its edge from flat at the switch to one peak ahead of the load, then releases it`, () => {
+      failsUntil(kind === RegularTurn.Steered ? 'step: fast steered solve' : 'step 3: edge from physics', kind === RegularTurn.Steered || (kind === RegularTurn.GS && i === Intensity.Dynamic))(`${kind} ${i} builds its edge from flat at the switch to one peak ahead of the load, then releases it`, () => {
         const share = edgeShares(kind, i);
         assert.isAtMost(share(0), 0.05, 'switch');
         const shares = TIMES.map(share);

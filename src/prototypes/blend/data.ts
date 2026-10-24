@@ -1,6 +1,7 @@
 import { Schema } from 'effect';
 import { Drill, Exercise, INTENSITIES, Movement, MovementId, Muscle, PHASES, Phase, Source, levelAt } from '../../content/schema';
 import type { Activation, EffortLevel, Intensity, LevelBySetting } from '../../content/schema';
+import { derivedActivations } from '../../content/effort';
 import { RegularTurn } from '../../viewer/poses/regular-turn';
 import { MogulLine } from '../../viewer/surface';
 
@@ -67,9 +68,9 @@ const TRUNK = new Set(['rectus-abdominis', 'transversus-abdominis', 'external-ob
 const FOOT = new Set(['tibialis-anterior', 'toe-extensors', 'peroneals', 'tibialis-posterior', 'foot-intrinsics']);
 
 export const KINDS: ReadonlyArray<Kind> = [
-  { id: KindId.Cruising, name: 'Cruising', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns', pose: RegularTurn.Cruising, shift: () => -1 },
-  { id: KindId.Carving, name: 'Carving', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns', pose: RegularTurn.Carving },
-  { id: KindId.ShortTurns, name: 'Short turns', base: 'short-radius-turn', drill: 'short-radius-turns', pose: RegularTurn.ShortTurns },
+  { id: KindId.Cruising, name: 'Steered', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns', pose: RegularTurn.Steered, shift: () => -1 },
+  { id: KindId.Carving, name: 'GS', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns', pose: RegularTurn.GS },
+  { id: KindId.ShortTurns, name: 'SL', base: 'short-radius-turn', drill: 'short-radius-turns', pose: RegularTurn.SL },
   {
     id: KindId.Moguls,
     name: 'Moguls',
@@ -121,6 +122,8 @@ const shifted = (a: Activation, shift: Shift): Activation => {
 /** A kind's movement: its draft, or a placeholder derived from one. */
 export const kindMovement = (kind: Kind, data: BlendData): Movement | undefined => {
   const base = data.movements.get(kind.base);
+  const derived = base === undefined ? null : derivedActivations(kind.pose, base.activations);
+  if (base !== undefined && derived !== null) return { ...base, id: decode(MovementId)(`${kind.id}-derived`), name: kind.name, activations: derived };
   if (base === undefined || kind.shift === undefined) return base;
   const shift = kind.shift;
   return {

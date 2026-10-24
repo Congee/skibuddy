@@ -1,19 +1,19 @@
 import type { Intensity } from '../../content/schema';
-import { COORDINATES, REST_POSE, Side } from '../skeleton';
+import { COORDINATES, REST_POSE, SEGMENT_NAMES, Side } from '../skeleton';
 import { Terrain } from '../skier';
-import { surfaceFor } from '../surface';
+import { pathAt, surfaceFor } from '../surface';
 import { forward, skiFrame, transform } from './fk';
 import type { Rigid, V3 } from './fk';
 import { NAMES, skiGoal, skiPoints } from './turn';
 import Q_TABLES from './q-tables.json';
 
 /** Drills whose motion comes from the whole-turn solve; the rest keep the pose-solver tables. */
-export const MIGRATED: ReadonlySet<string> = new Set(['regular-cruising']);
+export const MIGRATED: ReadonlySet<string> = new Set(['regular-steered', 'regular-gs', 'regular-sl']);
 
 /** Solved frames per turn: a multiple of the bake's 24, so its frames are exact. */
 export const Q_FRAMES = 48;
 /** Radians or metres per stored unit, as the pose tables'. */
-const Q_SCALE = 1e-4;
+export const Q_SCALE = 1e-4;
 
 /** Per migrated drill and intensity, one base64 int16 run of frames × NAMES; `hash` is the solve's inputs'. */
 export interface QTables {
@@ -21,6 +21,8 @@ export interface QTables {
   readonly frames: number;
   readonly hash: string;
   readonly drills: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** Per drill and intensity, the solve's inside-ski edges, tip then tail per frame, as TurnProblem.insideEdges. */
+  readonly edges: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 export const encodeQ = (frames: ReadonlyArray<ArrayLike<number>>): string => {
@@ -38,19 +40,29 @@ export const encodeQ = (frames: ReadonlyArray<ArrayLike<number>>): string => {
   return btoa(s);
 };
 
-export const decodeQ = (text: string): ReadonlyArray<Float64Array> => {
+/** Frames stored over `names` onto today's NAMES; a coordinate the store lacks reads 0. */
+export const decodeQ = (text: string, names: ReadonlyArray<string> = NAMES): ReadonlyArray<Float64Array> => {
   const bytes = Uint8Array.from(atob(text), (ch) => ch.charCodeAt(0));
   const view = new DataView(bytes.buffer);
-  const n = NAMES.length;
-  return Array.from({ length: bytes.byteLength / 2 / n }, (_, k) => Float64Array.from({ length: n }, (__, i) => view.getInt16((k * n + i) * 2, true) * Q_SCALE));
+  const n = names.length;
+  const from = NAMES.map((name) => names.indexOf(name));
+  return Array.from({ length: bytes.byteLength / 2 / n }, (_, k) => Float64Array.from(from, (i) => (i < 0 ? 0 : view.getInt16((k * n + i) * 2, true) * Q_SCALE)));
 };
 
+export const encodeEdges = (edges: ArrayLike<number>): string => Array.from(edges, String).join('');
+
 export const STORED_Q: QTables = Q_TABLES;
+
+/** The inside edges the drill's stored solve settled on, or null when it is not migrated or not yet solved. */
+export const qEdges = (drill: string, intensity: Intensity, tables: QTables = STORED_Q): Uint8Array | null => {
+  const text = MIGRATED.has(drill) ? tables.edges[drill]?.[intensity] : undefined;
+  return text === undefined ? null : Uint8Array.from(text, Number);
+};
 
 /** The drill's solved turn, one q per frame from t = 0, or null when it is not migrated or not yet solved. */
 export const qTable = (drill: string, intensity: Intensity, tables: QTables = STORED_Q): ReadonlyArray<Float64Array> | null => {
   const text = MIGRATED.has(drill) ? tables.drills[drill]?.[intensity] : undefined;
-  return text === undefined ? null : decodeQ(text);
+  return text === undefined ? null : decodeQ(text, tables.names);
 };
 
 
@@ -68,15 +80,19 @@ export const REST_WORLD: Readonly<Record<string, Rigid>> = forward(COORDINATES.m
  * (x across toward the inside, y the snow normal, z along), its centre at the rest ski's place.
  */
 export const rootWorlds = (drill: string, intensity: Intensity, q: ArrayLike<number>, t: number): Readonly<Record<string, Rigid>> => {
-  const g = skiGoal(drill, intensity, surfaceFor(drill, intensity), t);
+  const surface = surfaceFor(drill, intensity);
+  const g = skiGoal(drill, intensity, surface, t);
   // Rows of the slope → root rotation.
   const Rr = [...g.across, ...g.normal, ...g.forward];
-  const w = forward(Array.from({ length: COORDINATES.length }, (_, i) => q[i] ?? 0), g.origin);
+  // The root rides pathAt; on moguls the skis sit off it on their line.
+  const root = pathAt(surface, t);
+  const at = [root.x, g.origin[1], root.z];
+  const w = forward(Array.from({ length: COORDINATES.length }, (_, i) => q[i] ?? 0), g.origin, SEGMENT_NAMES, g.ref);
   return Object.fromEntries(
     Object.entries(w).map(([name, m]) => {
       const R = m.R.map(Number);
       const rows = [0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => (Rr[3 * r] ?? 0) * (R[c] ?? 0) + (Rr[3 * r + 1] ?? 0) * (R[3 + c] ?? 0) + (Rr[3 * r + 2] ?? 0) * (R[6 + c] ?? 0)));
-      const d = [0, 1, 2].map((k) => Number(m.p[k as 0 | 1 | 2]) - (g.origin[k] ?? 0));
+      const d = [0, 1, 2].map((k) => Number(m.p[k as 0 | 1 | 2]) - (at[k] ?? 0));
       const p = [0, 1, 2].map((r) => (Rr[3 * r] ?? 0) * (d[0] ?? 0) + (Rr[3 * r + 1] ?? 0) * (d[1] ?? 0) + (Rr[3 * r + 2] ?? 0) * (d[2] ?? 0) + (REST_SKI[r] ?? 0));
       return [name, { R: rows, p: p as unknown as V3 }];
     }),

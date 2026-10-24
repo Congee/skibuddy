@@ -1,6 +1,7 @@
 import { Intensity } from '../../content/schema';
-import { PHASE_T, arcLoad, phaseForces, turnForcesAt } from '../../physics/turn';
-import type { TurnScenarios } from '../../physics/turn';
+import { MOGUL_COM, MOGUL_OUTSIDE_SHARE, PHASE_T, arcLoad } from '../../physics/turn';
+import { CARVE_OUTSIDE_SHARE, TurnKind, ZIPPER_SCENARIOS, outsideShareAt } from '../../physics/task';
+import type { TurnScenarios } from '../../physics/task';
 import { keyValuesAt } from '../pose-definition';
 import { HeadAim } from '../pose-definition';
 import type { HeadRule, PoseDefinition, PoseKey, Travel } from '../pose-definition';
@@ -9,14 +10,23 @@ const DEG = Math.PI / 180;
 
 /** The kinds of skiing a regular two-footed turn is shown for; each is a pose id. */
 export const RegularTurn = {
-  Cruising: 'regular-cruising',
-  Carving: 'regular-carving',
-  ShortTurns: 'regular-short-turns',
+  Steered: 'regular-steered',
+  GS: 'regular-gs',
+  SL: 'regular-sl',
   Moguls: 'regular-moguls',
   Steeps: 'regular-steeps',
   Powder: 'regular-powder',
 } as const;
 export type RegularTurn = (typeof RegularTurn)[keyof typeof RegularTurn];
+
+const KIND_OF_DRILL: Readonly<Record<string, TurnKind>> = {
+  [RegularTurn.Steered]: TurnKind.Steered,
+  [RegularTurn.GS]: TurnKind.GS,
+  [RegularTurn.SL]: TurnKind.SL,
+  [RegularTurn.Moguls]: TurnKind.Moguls,
+};
+/** The drill's turn kind (motion-model §3); null keeps the legacy scenario path. */
+export const kindOfDrill = (drill: string): TurnKind | null => KIND_OF_DRILL[drill] ?? null;
 
 /** How one kind of skiing turns: data only, read by `regularTurn`. Angles in degrees. */
 export interface TurnStyle {
@@ -157,8 +167,6 @@ export const TOPS_PLANT = 0.9;
 const HANDS_WIDE = 35;
 // Upper arms forward, the hands at waist to lower chest (duncan-smith-2021 1:28-1:32, 4:26); inferred.
 const HANDS_FORWARD = 25;
-/** The zipper line swings about a rut's width across, between two mogul columns; inferred. */
-export const ZIPPER_CORRIDOR = 1.1;
 // The head stays still, facing downhill (fis-freestyle-judging-2025 p29).
 const DOWNHILL: HeadRule = { aim: HeadAim.FallLine, corridor: CORRIDOR };
 // The head leads the path by about 1 s (land-tatler-2001, lappi-2025) and the gaze moves to the next gate about 0.5 s
@@ -213,19 +221,6 @@ const PIVOT_SKID = 37.5;
 // The skis cross the hill with the track at the switch in groomed short turns (Reilly, SCE), so the skid builds from there.
 const GROOMED_PIVOTED = { ...PIVOTED, period: SHORT_TURN_SECONDS, skid: PIVOT_SKID } as const;
 
-// The mass runs nearly straight while the legs swing under it (lind-sanders-2004 pp114-115), the feet under the
-// hips (fis-freestyle-judging-2025 p26): its path about 4x the skis' arc, inferred, so the trunk inclines 10-20 deg.
-const MOGUL_COM = 4;
-
-// FIS course angles: FIS level 25 ± 3°, World Cup 28 ± 4° (fis-course-standards-2023 p3); gentle's 18° inferred.
-// Dynamic nears the pace speeds, 9.0 and 10.3 m/s down the course (fis-icr-book6-2025 §4207.2), 235 m in 25-30 s (fis-moguls-101-2026):
-// one radius at every intensity keeps one turn per mogul on the course's 3.5 m spacing (surface.ts), 1.6, 2.1 and 2.7 turns a second.
-// A quarter of the braking is fore-aft at the feet, inferred: at a level hip line the faces average none, the edges skidding take the rest.
-const ZIPPER_SCENARIOS: TurnScenarios = {
-  gentle: { speedMps: 6, radiusM: 5, slopeDeg: 18, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
-  moderate: { speedMps: 8, radiusM: 5, slopeDeg: 25, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
-  dynamic: { speedMps: 10, radiusM: 5, slopeDeg: 28, comRadiusM: MOGUL_COM * 5, brakingShare: 0.25 },
-};
 
 const SHORT: TurnScenarios = {
   gentle: { speedMps: 6, radiusM: 6, slopeDeg: 12 },
@@ -246,12 +241,12 @@ const POWDER: TurnScenarios = {
 /**
  * Outside knee flexion ceiling over the whole turn, degrees. Gentle and moderate are recreational: about 30-45 at shaping
  * (video reference), folding deeper through a flexed transition and over bumps (inferred). Dynamic takes the measured
- * ceiling: a GS instructor's 56-80 (heinrich-2022), elite moguls little past 100 (arndt-1992 p85).
+ * ceiling: a GS instructor's 56-80 (heinrich-2022), an elite mogul skier's knee passed 90 once (arndt-1992 p78), 100 inferred.
  */
 export const OUTSIDE_KNEE_MAX: Readonly<Record<RegularTurn, Readonly<Record<Intensity, number>>>> = {
-  [RegularTurn.Cruising]: { gentle: 55, moderate: 55, dynamic: 80 },
-  [RegularTurn.Carving]: { gentle: 58, moderate: 58, dynamic: 85 },
-  [RegularTurn.ShortTurns]: { gentle: 65, moderate: 65, dynamic: 80 },
+  [RegularTurn.Steered]: { gentle: 55, moderate: 55, dynamic: 80 },
+  [RegularTurn.GS]: { gentle: 58, moderate: 58, dynamic: 85 },
+  [RegularTurn.SL]: { gentle: 65, moderate: 65, dynamic: 80 },
   [RegularTurn.Moguls]: { gentle: 80, moderate: 90, dynamic: 100 },
   [RegularTurn.Steeps]: { gentle: 65, moderate: 65, dynamic: 80 },
   [RegularTurn.Powder]: { gentle: 60, moderate: 60, dynamic: 80 },
@@ -272,11 +267,11 @@ const COM_AHEAD_GAIN = 0.4;
 /**
  * Per kind. Trunk 17-40 deg forward of the slope normal, the chest over the outside knee (inferred); outside hip
  * flexion peaks at 55-65 deg (gao-2024). Outside knee within OUTSIDE_KNEE_MAX; outside share 0.6 gentle to 0.85
- * dynamic (heinrich-2022), powder near even.
+ * dynamic (heinrich-2022), the carve its measured 0.68, powder near even.
  */
 export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   // Skidded and tall: less edge, less speed.
-  [RegularTurn.Cruising]: {
+  [RegularTurn.Steered]: {
     scenarios: {
       gentle: { speedMps: 7, radiusM: 16, slopeDeg: 10 },
       moderate: { speedMps: 8.5, radiusM: 14, slopeDeg: 13 },
@@ -309,9 +304,10 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     head: NEXT_APEX,
   },
   // High edge, long outside leg, angulation from the hip.
-  [RegularTurn.Carving]: {
+  [RegularTurn.GS]: {
     scenarios: LONG,
-    outsideShare: [0.65, 0.88],
+    // The carve's measured peak, 0.62-0.72 (nakazato-2011, falda-buscaiot-2017); the solve reads the task's.
+    outsideShare: [CARVE_OUTSIDE_SHARE, CARVE_OUTSIDE_SHARE],
     hip: [34, 40],
     hipStep: 2,
     hipSpread: 0,
@@ -343,9 +339,10 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     head: ALONG_ARC,
   },
   // Legs flex and extend under a quiet trunk biased down the fall line.
-  [RegularTurn.ShortTurns]: {
+  [RegularTurn.SL]: {
     scenarios: SHORT,
-    outsideShare: [0.62, 0.85],
+    // The carve's measured peak, 0.62-0.72 (nakazato-2011, falda-buscaiot-2017); the solve reads the task's.
+    outsideShare: [CARVE_OUTSIDE_SHARE, CARVE_OUTSIDE_SHARE],
     hip: [30, 44],
     hipStep: 4,
     hipSpread: 0,
@@ -372,15 +369,14 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
   // Compact, on the zipper line; the legs fold deep up each bump's face.
   [RegularTurn.Moguls]: {
     scenarios: ZIPPER_SCENARIOS,
-    outsideShare: [0.6, 0.75],
-    // Elite mogul skiers fold the hip much deeper over the bump than the knee (arndt-1992 p85); the range widens with intensity.
+    outsideShare: MOGUL_OUTSIDE_SHARE,
+    // Elite mogul skiers fold the hip much deeper over the bump than the knee (arndt-1992 pp78, 85: hip to about -130, knee flexed far less); the range widens with intensity.
     hip: [30, 72],
     hipStep: 5,
     hipSpread: 3,
     // The lower leg's angulation sets the radius (fis-freestyle-judging-2025 p26): FEMUR_VS_SKI on the flexed knee.
     angulation: 1,
-    counter: pathHeading(5, ZIPPER_CORRIDOR),
-    // Held to the skis' heading off the fall line, which the corridor sets at every intensity.
+    // The pelvis faces the mass's travel: the counter is the line's heading less it (pose-solver, surface.mogul).
     counterGain: 0,
     twist: 0,
     ...PIVOTED,
@@ -399,12 +395,13 @@ export const TURN_STYLES: Readonly<Record<RegularTurn, TurnStyle>> = {
     // Cross-under: the legs retract over the crest so the mass travels straight (lind-sanders-2004 pp114-115).
     crossUnder: [1, 1, 1],
     // Absorb up to the top of each bump, extend right after it, pressure on the snow even (fis-freestyle-judging-2025 p28);
-    // knees long after a mogul (arndt-1992 pp79, 87), never locked: legs straight between moguls is a fault (fis p28); 30 inferred.
+    // legs extend after the mogul (arndt-1992 p79), never locked: legs straight between moguls is a fault (fis p28); 30 inferred.
     absorb: { open: 30, deep: OUTSIDE_KNEE_MAX[RegularTurn.Moguls] },
     polePlant: true,
     // Shorter for quick plants on the bumps' backs.
     poleTrim: 0.05,
-    head: { ...DOWNHILL, corridor: ZIPPER_CORRIDOR },
+    // Down the mass's travel on the cell's own line (surface.mogul).
+    head: { aim: HeadAim.FallLine },
     armAbduction: HANDS_IN,
   },
   // Strong counter and angulation, a firm pole plant.
@@ -526,8 +523,8 @@ export const TOPS: TurnStyle = {
   // Trunk parallel to the shin, as the round line's (gellie-2019-moguls-forward).
   trunkOverShin: 0,
   trunkOverShinGain: 0,
-  // A deep squat on the crest, thighs near level (duncan-smith-2021 4:26); never straight in the trough (fis p28,
-  // arndt-1992 pp79, 87, 93); amounts inferred.
+  // A deep squat on the crest, thighs near level (duncan-smith-2021 4:26); never straight in the trough (fis p28;
+  // arndt-1992 p93: avoid full extension approaching a mogul); amounts inferred.
   absorb: { open: 30, deep: { gentle: 110, moderate: 118, dynamic: 122 } },
   // Along the snow, so the bumps' pitch sets the contact: centred on top, tip down the backside, feet slightly
   // ahead into the face (duncan-smith-2021 2:37-3:57); amounts inferred.
@@ -648,7 +645,7 @@ export const DOLPHIN: TurnStyle = {
 export const isRegularTurn = (id: string): id is RegularTurn => Object.hasOwn(TURN_STYLES, id);
 
 /** The regular turn shown for a turning drill without its own pose. */
-export const DEFAULT_REGULAR_TURN: RegularTurn = RegularTurn.Cruising;
+export const DEFAULT_REGULAR_TURN: RegularTurn = RegularTurn.Steered;
 
 /** One key of the shared turn shape: shares of each kind's peaks; `share` null takes the kind's early edge. */
 interface Phase {
@@ -791,17 +788,11 @@ export const REGULAR_TURNS: Readonly<Record<RegularTurn, PoseDefinition>> = Obje
   Object.entries(TURN_STYLES).map(([id, style]) => [id, regularTurn(style)]),
 ) as Record<RegularTurn, PoseDefinition>;
 
-const STEP: Readonly<Record<Intensity, number>> = { gentle: 0, moderate: 0.5, dynamic: 1 };
-
 /**
  * Load share of each foot at turn time `t`: even through the edge change, the outside foot's
  * share growing with the turn's tilt to the kind's mid-turn split at this intensity.
  */
 export const weightSplit = (style: TurnStyle, intensity: Intensity, t: number): { readonly outside: number; readonly inside: number } => {
-  const [gentle, dynamic] = style.outsideShare;
-  const peak = gentle + (dynamic - gentle) * STEP[intensity];
-  const s = style.scenarios[intensity];
-  const tilt = turnForcesAt(s, t).tilt / Math.max(1e-9, phaseForces(s).shaping.tilt);
-  const outside = 0.5 + (peak - 0.5) * Math.min(1, Math.max(0, tilt));
+  const outside = outsideShareAt(style.outsideShare, intensity, style.scenarios[intensity], t);
   return { outside, inside: 1 - outside };
 };

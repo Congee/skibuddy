@@ -39,7 +39,7 @@ describe('figure', () => {
   it('holds the shin at ankleFlex in the cuff however the femur turns, the turn only tilting it sideways', () => {
     // lemaster-2010 pp61-62, p74: the boot holds the shin's pitch; knee angulation is femoral rotation.
     for (const [hipFlex, ankleFlex, femurRotation] of [[0.3, 0.25, 0.75], [0.8, 0.4, -0.3], [0.2, 0.5, 0.9], [0.5, 0.3, 0]] as const) {
-      const leg = { hipFlex, ankleFlex, femurRotation, tailLift: 0, adduction: 0 };
+      const leg = { hipFlex, ankleFlex, femurRotation, tailLift: 0, adduction: 0, bend: 0 };
       const knee = kneeFlex(leg);
       const shin = compose(rotationX(-hipFlex), rotationY(femurRotation), rotationX(knee));
       const [o, d] = [transformPoint(shin, [0, 0, 0]), transformPoint(shin, [0, -1, 0])];

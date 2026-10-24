@@ -65,8 +65,11 @@ const arm = (body: Body, side: BodySide, trunk: number, first: number): Readonly
 
 /** The capsule boot's binding frame in its foot's, as `bindingInFoot`. */
 export const CAPSULE_BINDING: Mat4 = bindingInFoot(CAPSULE_BOOT, EQUIPMENT);
+const SKI_SETBACK = 0.015;
 /** The ski segment origin: mid-thickness under the binding, 15 mm behind the boot centre. */
-const SKI_ORIGIN: Vec3 = transformPoint(CAPSULE_BINDING, [0, -EQUIPMENT.skiThickness / 2, -0.015]);
+const SKI_ORIGIN: Vec3 = transformPoint(CAPSULE_BINDING, [0, -EQUIPMENT.skiThickness / 2, -SKI_SETBACK]);
+/** Where the capsule ski bends, ride.ts's mount, along the binding's frame from its origin: SKI_MOUNT ahead of the ski's origin. */
+export const SKI_MOUNT_IN_BINDING = SKI_MOUNT - SKI_SETBACK;
 
 const leg = (body: Body, ski: Ski, side: BodySide, first: number): ReadonlyArray<Segment> => {
   const t = scaleOf(body, 'trunk');

@@ -9,13 +9,22 @@ import {
   normalAt,
   skiRest,
   pathAt,
+  skisAt,
   supportAt,
   surfaceFor,
   SurfaceKind,
   trackRest,
   underFoot,
 } from '../src/viewer/surface';
-import { CLOSED_STANCE_POSE, TOPS_POSE } from '../src/viewer/turn-heading';
+import { CLOSED_STANCE_POSE, TOPS_POSE, headingAt } from '../src/viewer/turn-heading';
+import { mogulHeadingsAt } from '../src/viewer/pose-solver';
+import { GLIDING_FRICTION, Snow } from '../src/physics/edge';
+import { TurnKind, taskFor } from '../src/physics/task';
+import { mogulLineFor, mogulTrackOf, turnProfile } from '../src/physics/turn';
+import { bootTrackOf } from '../src/physics/moguls';
+import { ZIPPER, bumpsField, lineHeading, scaleOf, trackX, zipperField } from '../src/physics/zipper';
+import { skiGoal } from '../src/viewer/motion/turn';
+import { realTurnSeconds } from '../src/viewer/turn-time';
 import { failsUntil } from './legacy';
 
 const close = (a: number, b: number, eps = 1e-9): void => assert.isBelow(Math.abs(a - b), eps, `${a} vs ${b}`);
@@ -23,7 +32,12 @@ const INTENSITIES = [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic] as
 const moguls = surfaceFor(RegularTurn.Moguls, Intensity.Moderate);
 const tops = surfaceFor(TOPS_POSE, Intensity.Moderate);
 const powder = surfaceFor(RegularTurn.Powder, Intensity.Moderate);
-const groomed = surfaceFor(RegularTurn.Carving, Intensity.Moderate);
+const groomed = surfaceFor(RegularTurn.GS, Intensity.Moderate);
+// The course's bumps without the rut, metres.
+const bumps = (s: Surface, x: number, z: number): number => {
+  const c = { spacing: s.spacing, relief: s.relief, swing: s.swing ?? 0 };
+  return bumpsField(c, x, z)[0] * scaleOf(c);
+};
 const POINTS: ReadonlyArray<readonly [number, number]> = [
   [0, 0],
   [0.7, 1.3],
@@ -52,6 +66,31 @@ describe('surfaceFor', () => {
     }
     assert.strictEqual(moguls.depth, 0);
     assert.strictEqual(powder.relief, 0);
+  });
+
+  it('sizes the moguls cell\'s zipper by its task: the bumps\' relief down the line, the track cresting at the switch', () => {
+    for (const i of INTENSITIES) {
+      const task = taskFor(TurnKind.Moguls, i);
+      const s = surfaceFor(RegularTurn.Moguls, i);
+      assert.strictEqual(s.spacing, task.bumpSpacingM, i);
+      assert.strictEqual(s.relief, task.bumpHeightM, i);
+      close(bumps(s, 0, ZIPPER.crestAt * s.spacing) - bumps(s, 0, (0.5 + ZIPPER.crestAt) * s.spacing), task.bumpHeightM, 1e-12);
+      // The rut follows each cell's own line, so the track's crest to trough is the cell's, not pinned to the relief.
+      const h = Array.from({ length: 96 }, (_, k) => {
+        const p = skisAt(s, k / 96);
+        return heightAt(s, p.x, p.z);
+      });
+      assert.strictEqual(h.indexOf(Math.max(...h)), 0, `${i} crest at the switch`);
+      assert.closeTo(h.indexOf(Math.min(...h)) / 96, 0.5, 2 / 96, `${i} trough mid-turn`);
+    }
+  });
+
+  it('draws a groomed task\'s corridor as wide as its mass path swings', () => {
+    for (const i of INTENSITIES) {
+      const s = surfaceFor('regular-gs', i);
+      const most = Math.max(...Array.from({ length: 257 }, (_, k) => Math.abs(pathAt(s, k / 256).x)));
+      assert.closeTo(s.path.corridor / 2, most, 1e-2 * most, i);
+    }
   });
 });
 
@@ -92,7 +131,7 @@ describe('heightAt', () => {
     }
   });
 
-  failsUntil('step 6: moguls on a C1 surface')('tops a mogul at each switch and drops into the rut mid-turn (fis-freestyle-judging-2025 p26, p28)', () => {
+  failsUntil('step 6: moguls on a C1 surface', false)('tops a mogul at each switch and drops into the rut mid-turn (fis-freestyle-judging-2025 p26, p28)', () => {
     // p28: absorb up to the top, extend right after it, into the rut (p26) mid-turn.
     for (const i of INTENSITIES) {
       const s = surfaceFor(RegularTurn.Moguls, i);
@@ -116,8 +155,9 @@ describe('heightAt', () => {
       close(s.spacing, moguls.spacing, 1e-9);
       assert.isAbove(s.spacing, 3.4, i);
       assert.isBelow(s.spacing, 3.6, i);
-      assert.strictEqual(s.relief, 1);
-      for (const [x, z] of POINTS) close(heightAt(s, x, z), heightAt(moguls, x, z), 1e-12);
+      assert.strictEqual(s.relief, taskFor(TurnKind.Moguls, i).bumpHeightM);
+      assert.strictEqual(s.relief, moguls.relief, i);
+      for (const [x, z] of POINTS) close(bumps(s, x, z), bumps(moguls, x, z), 1e-12);
     }
   });
 
@@ -145,7 +185,7 @@ describe('heightAt', () => {
     assert.isAbove(here[0] * next[0], -0.25);
     assert.isBelow(here[0] * next[0], 0);
     close(heightAt(s, here[0], here[1] + 2 * s.spacing), here[2], 1e-9);
-    // Crests 0.8-1.2 m (kurpiers-2010 p10) over the trough on the line.
+    // Crest over the trough: the derived relief (MOGUL_RELIEF_M, ridableReliefOf), not a measured height.
     close(here[2] - heightAt(s, 0, here[1] + s.spacing / 2), s.relief, 0.2);
   });
 
@@ -166,6 +206,24 @@ describe('heightAt', () => {
         close(heightAt(s, x, z), s.depth, 0.031);
         assert.strictEqual(supportAt(s, x, z), 0);
       }
+    }
+  });
+
+  it('draws the zipper physics/zipper.ts lays, and the physics times the moguls on the snow the skis ride', () => {
+    const n = 720;
+    for (const i of INTENSITIES) {
+      const s = surfaceFor(RegularTurn.Moguls, i);
+      const course = { spacing: s.spacing, relief: s.relief, swing: s.swing ?? 0 };
+      for (const [x, z] of POINTS) assert.strictEqual(heightAt(s, x, z), zipperField(course, x, z)[0], i);
+      const along = Array.from({ length: n }, (_, k) => {
+        const { z } = pathAt(s, k / n);
+        return heightAt(s, trackX(course, z), z);
+      });
+      const track = mogulTrackOf(taskFor(TurnKind.Moguls, i));
+      along.forEach((h, k) => close(track.height[k] ?? NaN, h, 1e-5));
+      // Within one sample of the height maximum along the skis' track.
+      const top = along.indexOf(Math.max(...along)) / n;
+      assert.isAtMost(Math.abs(track.crest - top), 1 / n, i);
     }
   });
 
@@ -190,25 +248,65 @@ describe('normalAt', () => {
 });
 
 describe('pathAt', () => {
-  it('starts on the centre line, reaches the corridor edge mid-turn and ends a spacing down', () => {
+  it('joins the mirrored next turn without a lateral step, reaches the corridor edge mid-turn and ends a spacing down', () => {
     for (const s of [moguls, powder, groomed]) {
       const start = pathAt(s, 0);
-      close(start.x, 0);
-      close(start.z, 0);
-      close(pathAt(s, 0.5).x, -(s.path.feet ?? s.path.corridor) / 2, 1e-9);
       const end = pathAt(s, 1);
-      close(end.x, 0, 1e-9);
+      close(start.z, 0);
       close(end.z, s.spacing, 1e-9);
+      if (s.task !== null || s.mogul !== undefined) {
+        close(start.x + end.x, 0, 1e-9);
+        continue;
+      }
+      close(start.x, 0);
+      const reach = Math.max(...Array.from({ length: 2001 }, (_, i) => Math.abs(pathAt(s, i / 2000).x)));
+      close(reach, (s.path.feet ?? s.path.corridor) / 2, 1e-9);
+      close(end.x, 0, 1e-9);
       close(pathAt(s, 0.5).track, 0, 1e-12);
     }
   });
 
-  it('moves at a steady speed', () => {
+  it('moves the moguls skis along their line at a steady speed', () => {
     const n = 200;
     for (let k = 0; k < n; k++) {
-      const a = pathAt(moguls, k / n);
-      const b = pathAt(moguls, (k + 1) / n);
+      const a = skisAt(moguls, k / n);
+      const b = skisAt(moguls, (k + 1) / n);
       close(Math.hypot(b.x - a.x, b.z - a.z) * n, moguls.speed, 1e-3);
+    }
+  });
+});
+
+describe('moguls one path', () => {
+  it("rides the root on the physics' mass path, the skis' track along the cell's line and their yaw the pivot's", () => {
+    for (const i of INTENSITIES) {
+      const s = surfaceFor(RegularTurn.Moguls, i);
+      const task = taskFor(TurnKind.Moguls, i);
+      const { swing, ride } = mogulLineFor(task);
+      const n = ride.mass.across.length;
+      assert.strictEqual(s.swing, swing, i);
+      const course = { spacing: s.spacing, relief: s.relief, swing };
+      for (let k = 0; k < n; k += 7) {
+        const p = pathAt(s, k / n);
+        close(p.x, ride.mass.across[k] ?? Number.NaN, 1e-9);
+        close(p.z, ride.track.down[k] ?? Number.NaN, 1e-9);
+        close(p.track, lineHeading(course, p.z), 1e-12);
+        close(p.heading, headingAt(k / n, s.path), 1e-12);
+        close(skisAt(s, k / n).x, trackX(course, p.z), 1e-12);
+      }
+    }
+  });
+  it('keys the moguls skis on the one attack: their yaw less the line is γ, along the line at the switch', () => {
+    for (const i of INTENSITIES) {
+      const s = surfaceFor(RegularTurn.Moguls, i);
+      const p = turnProfile(taskFor(TurnKind.Moguls, i), Snow.HardGroomed);
+      const n = p.attack.length;
+      for (let k = 0; k < n; k += 5) {
+        const at = pathAt(s, k / n);
+        close(mogulHeadingsAt(s, k / n)?.skis ?? Number.NaN, headingAt(k / n, s.path), 1e-12);
+        close(at.heading - at.track, (p.attack[k] ?? Number.NaN) * (Math.PI / 180), 1e-9);
+      }
+      // γ is near off at the switch, so the skis cross the fall line along the line, not flat in it.
+      for (const t of [0, 1 - 1e-9]) assert.isBelow(Math.abs(headingAt(t, s.path) - pathAt(s, t).track), 0.5 * (Math.PI / 180), `${i} ${t}`);
     }
   });
 });
@@ -253,17 +351,45 @@ describe('skiRest', () => {
     }
   });
 
-  it('touches the support without cutting it, pitched along the chord from tail to tip', () => {
-    for (let k = 0; k < 24; k++) {
-      const t = k / 24;
-      const r = skiRest(moguls, t, [0.1, 0], 0.85, 0.75);
-      const c = Math.cos(r.pitch);
-      const gaps = Array.from({ length: 33 }, (_, i) => {
-        const x = (-0.75 + (1.6 * i) / 32) * c;
-        return r.base + x * Math.tan(r.pitch) - along(moguls, t, x);
-      });
-      close(Math.min(...gaps), 0, 1e-9);
-      close(Math.tan(r.pitch), (along(moguls, t, 0.85 * c) - along(moguls, t, -0.75 * c)) / (1.6 * c), 1e-3);
+  // thorwartl-2023's reference bend and the physics' moguls bend (P5); 0 straight.
+  const CURVATURES = [0, 1 / 3.85, 1 / 2.3];
+  const U = Array.from({ length: 33 }, (_, i) => -0.75 + (1.6 * i) / 32);
+
+  it('keeps the bent base on or above the support at every sample, touching at the boot or at a point either side', () => {
+    for (const c of CURVATURES)
+      for (let k = 0; k < 24; k++) {
+        const t = k / 24;
+        const r = skiRest(moguls, t, [0.1, 0], 0.85, 0.75, c);
+        const p = Math.tan(r.pitch);
+        const gaps = U.map((u) => r.base + p * u + (c * u * u) / 2 - along(moguls, t, u));
+        close(Math.min(...gaps), 0, 1e-9);
+        const touching = U.filter((_, i) => (gaps[i] ?? 1) < 1e-9);
+        // Bridged: one touch at or behind the boot, one at or ahead of it.
+        if (!touching.includes(0)) assert.isTrue(touching.some((u) => u < 0) && touching.some((u) => u > 0), `t ${t} c ${c}`);
+      }
+  });
+
+  it("rests the ski where the physics' boot track has it, on the same snow and bend", () => {
+    const h = 1.6 / 32;
+    // A window 3 m long round the boot, one turn of bootTrackOf's repeat.
+    const n = Math.round(3 / h);
+    const s0 = Math.floor(n / 2) * h - 1.5;
+    for (const c of CURVATURES)
+      for (const t of [0, 0.2, 0.45, 0.7]) {
+        const snow = Float64Array.from({ length: n }, (_, j) => along(moguls, t, j * h - 1.5 - s0));
+        const bridge = { along: Float64Array.from({ length: n }, (_, j) => j * h), length: n * h, tail: -0.75, tip: 0.85, massKg: 66 };
+        const radius = new Float64Array(n).fill(c === 0 ? Infinity : 1 / c);
+        const track = bootTrackOf(snow, bridge, radius);
+        close(skiRest(moguls, t, [0.1, 0], 0.85, 0.75, c).base, track[Math.floor(n / 2)] ?? NaN, 1e-9);
+      }
+  });
+
+  it('reduces to the base on the snow at the boot on groomed snow, bent or not', () => {
+    for (const c of CURVATURES) {
+      const r = skiRest(groomed, 0.3, [0.1, 0], 0.85, 0.75, c);
+      close(r.base, 0);
+      close(r.pitch, 0);
+      close(r.tip, (c * 0.85 * 0.85) / 2);
     }
   });
 
@@ -289,5 +415,42 @@ describe('fieldMesh', () => {
       const y = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
       assert.isAbove(y, 0);
     }
+  });
+});
+
+const dot = (a: ReadonlyArray<number>, b: ReadonlyArray<number>): number => (a[0] ?? 0) * (b[0] ?? 0) + (a[1] ?? 0) * (b[1] ?? 0) + (a[2] ?? 0) * (b[2] ?? 0);
+
+describe('the profile path (motion-model §9 V)', () => {
+  it("times a migrated turn by its profile's period", () => {
+    for (const i of INTENSITIES) {
+      const task = taskFor(TurnKind.GS, i);
+      assert.strictEqual(realTurnSeconds(RegularTurn.GS, i), turnProfile(task, Snow.HardGroomed).periodS, i);
+    }
+  });
+
+  it("runs a groomed task cell's path one profile path length per cycle, its ends mirrored", () => {
+    for (const i of INTENSITIES) {
+      const s = surfaceFor(RegularTurn.GS, i);
+      const total = turnProfile(taskFor(TurnKind.GS, i), Snow.HardGroomed).pathM.at(-1) ?? 0;
+      const n = 720;
+      let length = 0;
+      for (let k = 0; k < n; k++) {
+        const a = pathAt(s, k / n);
+        const b = pathAt(s, (k + 1) / n);
+        length += Math.hypot(b.x - a.x, b.z - a.z);
+      }
+      assert.isBelow(Math.abs(length / total - 1), 0.01, i);
+      close(pathAt(s, 0).x, -pathAt(s, 1).x, 1e-9);
+      close(pathAt(s, 1).z, s.spacing, 1e-9);
+    }
+  });
+
+  it('brakes along the skis by gliding friction: down the fall line the resultant leans μ_k cos γ to the tail', () => {
+    const task = taskFor(TurnKind.GS, Intensity.Moderate);
+    const p = turnProfile(task, Snow.HardGroomed);
+    const t = p.events.fallLine;
+    const g = skiGoal(RegularTurn.GS, Intensity.Moderate, surfaceFor(RegularTurn.GS, Intensity.Moderate), t);
+    const tail = dot(g.resultant, g.forward) / dot(g.resultant, g.normal);
+    close(tail, -GLIDING_FRICTION[Snow.HardGroomed] * Math.cos((p.at(t).attack * Math.PI) / 180), 1e-6);
   });
 });

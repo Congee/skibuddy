@@ -1986,11 +1986,7 @@
    "status": "eye-read; ROM measured",
    "n_skiers": 6
   },
-  "fore_aft_cm": {
-   "values": "-11.4 ± 4.4 at t 0 → +16.4 ± 4.1 before gate → -7.8 ± 4.0 at t 1 (10 m)",
-   "source": "reid-2010 p238",
-   "status": "range-only measured"
-  },
+  "fore_aft_cm": {"values":"-11.4 ± 4.4 at t 0 → +16.4 ± 4.1 before gate → -7.8 ± 4.0 at t 1 (10 m)","source":"reid-2010 p238","status":"range-only measured, peak phase inferred","t":[0,0.3,1],"mean":[-11.4,16.4,-7.8],"sd":[4.4,4.1,4],"phase_note":"t 0.3 for \"before the gate\" (gate t 0.54) is inferred: between the skid peak (0.2-0.3) and the gate; linear between anchors"},
   "skid_angle": {
    "values": "3.1 ± 2.4 at switch, peak 15.1 ± 5.3 at t 0.2-0.3, <4 after the gate (10 m)",
    "source": "reid-2010",

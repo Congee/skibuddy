@@ -26,7 +26,18 @@ export const contractionsFor = (a: Activation, i: Intensity): PhaseContraction =
  * legs, so across the switch the blend runs to or from `twin`, this muscle on the other leg
  * (by default the same intensity, for a muscle that does not change sides). For display only.
  */
+/** Linear between frames; past the last frame toward the twin leg's first, as the cycle mirrors at the switch. */
+export const framesAt = (frames: ReadonlyArray<number>, twin: ReadonlyArray<number>, t: number): number => {
+  const p = (((t % 1) + 1) % 1) * frames.length;
+  const k = Math.floor(p);
+  const a = frames[k] ?? 0;
+  const b = k + 1 < frames.length ? (frames[k + 1] ?? a) : (twin[0] ?? a);
+  return a + (b - a) * (p - k);
+};
+
 export const effortAt = (intensity: ActivationIntensity, t: number, setting: Intensity = Intensity.Moderate, twin: ActivationIntensity = intensity): number => {
+  const own = intensity.frames?.[setting];
+  if (own !== undefined) return framesAt(own, twin.frames?.[setting] ?? own, t);
   const resolved = phaseIntensity(intensity, setting);
   const other = phaseIntensity(twin, setting);
   const values = PHASES.map((p) => resolved[p]);
@@ -97,3 +108,5 @@ export const steadyOrder = (activations: ReadonlyArray<Activation>): ReadonlyArr
     .map((activation, index) => ({ activation, index }))
     .toSorted((a, b) => peak(b.activation) - peak(a.activation) || sum(b.activation) - sum(a.activation) || a.index - b.index)
     .map((x) => x.activation);
+
+export { derivedActivations, derivedProblems } from './derived';

@@ -72,8 +72,10 @@ const limb = (s: Side): ReadonlyArray<Coordinate> => {
     dof(`hip_adduction.${s}`, `femur.${s}`, Axis.X, m),
     dof(`hip_rotation.${s}`, `femur.${s}`, Axis.Y, m),
     dof(`knee_flexion.${s}`, `tibia.${s}`, Axis.Z, -1),
+    // ISB's third knee rotation, the tibia about its long axis after the hinge; internal positive.
+    dof(`knee_rotation.${s}`, `tibia.${s}`, Axis.Y, m),
     dof(`ankle_dorsiflexion.${s}`, `foot.${s}`, Axis.Z, 1),
-    { ...dof(`subtalar_inversion.${s}`, `foot.${s}`, Axis.X, m), locked: true },
+    dof(`subtalar_inversion.${s}`, `foot.${s}`, Axis.X, m),
     dof(`scapula_elevation.${s}`, `scapula.${s}`, Axis.X, m === 1 ? -1 : 1),
     dof(`scapula_protraction.${s}`, `scapula.${s}`, Axis.Y, m),
     dof(`shoulder_flexion.${s}`, `humerus.${s}`, Axis.Z, 1),
@@ -153,8 +155,11 @@ const jointRotation = (segment: string, q: Pose): Mat4 => {
   );
 };
 
-/** Segment world matrices for `q` (radians and metres, defaulting to REST_POSE); the pelvis translates in world axes. */
-export const forwardKinematics = (q: Pose = REST_POSE): Readonly<Record<string, Mat4>> => {
+/**
+ * Segment world matrices for `q` (radians and metres, defaulting to REST_POSE); the pelvis translates in world axes.
+ * `lengths` scales a segment's joint offset from its parent, as fk.ts `forward`.
+ */
+export const forwardKinematics = (q: Pose = REST_POSE, lengths: Readonly<Record<string, number>> = {}): Readonly<Record<string, Mat4>> => {
   const out: Record<string, Mat4> = {};
   for (const name of SEGMENT_NAMES) {
     const rest = restWorld(name);
@@ -165,7 +170,8 @@ export const forwardKinematics = (q: Pose = REST_POSE): Readonly<Record<string, 
       continue;
     }
     const local = multiply(rigidInverse(restWorld(parent)), rest);
-    const joint = translation([local[12] ?? 0, local[13] ?? 0, local[14] ?? 0]);
+    const l = lengths[name] ?? 1;
+    const joint = translation([l * (local[12] ?? 0), l * (local[13] ?? 0), l * (local[14] ?? 0)]);
     local[12] = local[13] = local[14] = 0;
     const world = out[parent];
     if (world === undefined) throw new Error(`segment ${name} precedes its parent ${parent}`);

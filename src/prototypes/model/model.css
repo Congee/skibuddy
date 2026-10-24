@@ -1,0 +1,368 @@
+:root {
+  color-scheme: light dark;
+  --paper: light-dark(#ffffff, #0b0c0e);
+  --panel: light-dark(#f4f5f7, #121417);
+  --ink: light-dark(#1d2025, #e8eaee);
+  --soft: light-dark(#5d6470, #9aa1ad);
+  --line: light-dark(#d8dbe0, #2a2e35);
+  --grid: light-dark(#eceef1, #1c1f24);
+  --physics: light-dark(#0072b2, #4fa8e0);
+  --bio: light-dark(#009e73, #2fc79a);
+  --video: light-dark(#b8579a, #d77fbd);
+  --flag: light-dark(#d55e00, #ff8a3d);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 14px/1.45 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+}
+.model {
+  display: grid;
+  gap: 16px;
+  padding: 12px 16px 32px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+}
+.spacer {
+  flex: 1;
+}
+h1 {
+  font-size: 17px;
+  font-weight: 500;
+  margin: 0;
+}
+h2 {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0;
+}
+h3 {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+.soft {
+  color: var(--soft);
+}
+button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  min-height: 32px;
+  cursor: pointer;
+}
+button[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.seg {
+  display: inline-flex;
+  gap: 4px;
+}
+.pickers {
+  display: grid;
+  gap: 8px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  border-radius: 16px;
+  padding: 4px 14px;
+}
+.task {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 4px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.task div {
+  display: flex;
+  gap: 6px;
+}
+.task dt,
+.nums dt {
+  color: var(--soft);
+}
+.task dd,
+.nums dd {
+  margin: 0;
+}
+.task .why {
+  flex-basis: 100%;
+}
+.overview {
+  border-collapse: collapse;
+  font-size: 13px;
+  width: 100%;
+  max-width: 720px;
+}
+.overview th {
+  font-weight: 400;
+  color: var(--soft);
+  text-align: left;
+  padding: 2px 8px 2px 0;
+}
+.overview td {
+  padding: 2px;
+}
+.cell {
+  width: 100%;
+  display: grid;
+  text-align: left;
+  gap: 0;
+  padding: 4px 8px;
+  line-height: 1.3;
+}
+.ok-text {
+  color: var(--soft);
+}
+.flag-text {
+  color: var(--flag);
+}
+.bio-text {
+  color: var(--bio);
+}
+.panel {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+}
+.physics {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.strip {
+  width: 100%;
+  height: auto;
+  display: block;
+  font-size: 11px;
+}
+.strip .grid {
+  stroke: var(--grid);
+}
+.strip .zero {
+  stroke: var(--line);
+}
+.strip .axis {
+  fill: var(--soft);
+}
+.strip .band {
+  fill: var(--physics);
+  opacity: 0.12;
+}
+.strip .lean,
+.strip .edge,
+.strip .load {
+  fill: none;
+  stroke: var(--physics);
+}
+.strip .lean {
+  stroke-width: 2;
+}
+.strip .edge {
+  stroke-width: 2;
+  stroke-dasharray: 7 4;
+}
+.strip .load {
+  stroke-width: 1.25;
+  stroke-dasharray: 2 3;
+}
+.strip .curve-label {
+  fill: var(--physics);
+}
+.strip .event {
+  stroke: var(--soft);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+.strip .event-label {
+  fill: var(--ink);
+}
+.strip .evidence-line {
+  fill: none;
+  stroke: var(--video);
+  stroke-width: 1.75;
+}
+.strip .evidence-band {
+  fill: var(--video);
+  opacity: 0.14;
+}
+.strip .evidence-label {
+  fill: var(--video);
+}
+.evidence-col {
+  font-size: 13px;
+  display: grid;
+  gap: 8px;
+}
+.lit,
+.clips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.swatch.video {
+  background: var(--video);
+}
+.footage p {
+  margin: 0 0 4px;
+}
+.rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rule {
+  font-size: 13px;
+  border-radius: 14px;
+  padding: 2px 12px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+}
+.rule.ok {
+  color: var(--soft);
+}
+.rule.fail {
+  color: var(--flag);
+  border-color: var(--flag);
+}
+.rule-detail {
+  margin: 0;
+  font-size: 13px;
+}
+.frames {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.frame {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.frame figcaption {
+  font-size: 13px;
+}
+.viewport {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background: var(--panel);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.viewport canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.viewport canvas.hidden {
+  visibility: hidden;
+}
+.unsolved {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--soft);
+  font-size: 13px;
+  padding: 8px;
+  text-align: center;
+}
+.nums {
+  margin: 0;
+  display: grid;
+  gap: 1px;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.nums div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.nums .phys dt {
+  color: var(--physics);
+}
+.nums .bio dt {
+  color: var(--bio);
+}
+.nums .soft-row {
+  color: var(--soft);
+}
+.gates {
+  font-size: 13px;
+}
+.offstage {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 300px;
+  height: 400px;
+}
+@media (max-width: 900px) {
+  .physics {
+    grid-template-columns: 1fr;
+  }
+  .frames {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.effort-key {
+  margin: 10px 0 2px;
+}
+.strip .lane-label {
+  fill: var(--ink);
+}
+.strip .authored {
+  fill: none;
+  stroke: var(--soft);
+  stroke-width: 1;
+}
+.effort-note {
+  margin: 4px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.curves {
+  min-width: 0;
+}

@@ -1,0 +1,250 @@
+:root {
+  --paper: #ffffff;
+  --panel: #f4f5f7;
+  --ink: #1d2025;
+  --soft: #5d6470;
+  --line: #d8dbe0;
+  --accent: #2f6bff;
+  --main: #c4473d;
+  --ghost: #2f7bff;
+  --error: #c62c3a;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0b0c0e;
+    --panel: #101114;
+    --ink: #e8eaee;
+    --soft: #9aa1ad;
+    --line: #2a2e35;
+    --accent: #6f9bff;
+    --error: #ff6b78;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 14px/1.45 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+}
+.capture {
+  display: grid;
+  gap: 12px;
+  padding: 12px 16px 24px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+h1 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 8px 0 0;
+}
+label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--soft);
+}
+select,
+button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  min-height: 32px;
+}
+button {
+  cursor: pointer;
+}
+button[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+button.quiet {
+  background: none;
+}
+.seg {
+  display: inline-flex;
+  gap: 4px;
+}
+.panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .panes {
+    grid-template-columns: 1fr;
+  }
+}
+.pane {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.pane video,
+.pane canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--panel);
+  border-radius: 6px;
+  object-fit: contain;
+}
+.pane canvas {
+  touch-action: none;
+  cursor: grab;
+}
+figcaption {
+  color: var(--soft);
+  font-size: 13px;
+}
+.scrub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.scrub input {
+  flex: 1;
+  accent-color: var(--accent);
+}
+.pos {
+  color: var(--soft);
+  font-variant-numeric: tabular-nums;
+  min-width: 15em;
+  text-align: right;
+}
+.readout {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.readout th,
+.readout td {
+  text-align: left;
+  font-weight: 400;
+  padding: 4px 12px 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+.readout thead th {
+  color: var(--soft);
+}
+.readout .clamped span {
+  display: inline-block;
+  margin-right: 12px;
+}
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.note {
+  color: var(--soft);
+  font-size: 13px;
+  margin: 0;
+}
+.error {
+  color: var(--error);
+}
+.stack {
+  position: relative;
+}
+.stack video {
+  width: 100%;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.inline {
+  margin-left: 12px;
+}
+.key {
+  margin-left: 12px;
+}
+.gates {
+  display: grid;
+  gap: 8px;
+}
+.stages {
+  display: flex;
+  gap: 8px;
+}
+.track {
+  display: flex;
+  gap: 1px;
+  height: 18px;
+}
+.tick {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 1px;
+  background: var(--line);
+}
+.tick.fail {
+  background: var(--error);
+}
+.tick.now {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+.bad {
+  color: var(--error);
+}
+.ok {
+  color: var(--soft);
+}
+.soft {
+  color: var(--soft);
+}
+.gate-sum th[scope='row'] {
+  min-width: 8em;
+}
+.panes.overlaid {
+  grid-template-columns: 1fr;
+}
+.panes.overlaid > .pane {
+  grid-area: 1 / 1;
+}
+.panes.overlaid video,
+.panes.overlaid canvas {
+  aspect-ratio: var(--video-aspect);
+}
+.panes.overlaid canvas {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.panes.overlaid > .pane:last-child figcaption {
+  visibility: hidden;
+}
+.overlay.top {
+  z-index: 2;
+}
+.readout caption {
+  caption-side: top;
+  text-align: left;
+  color: var(--soft);
+  font-size: 13px;
+  padding-bottom: 4px;
+}

@@ -52,6 +52,10 @@ import { fillSlotLevels, musclePartAt } from './slots';
 import type { SlotTable } from './slots';
 import type { Occluder } from './highlight';
 import type { Figure } from './scene';
+import { bentSki } from './ski-bend-draw';
+import { SKI_ROWS } from './ski-geometry';
+import type { SkiBendFrame } from './ski-bend-draw';
+import { SKI_MOUNT } from './skier';
 import { boxIn } from './view';
 import type { Box, GearStops } from './view';
 
@@ -64,7 +68,7 @@ const shapeGeometry = (segment: Segment): BufferGeometry => {
   const geometry =
     shape.type === 'capsule'
       ? new CapsuleGeometry(shape.radius, shape.length, 6, 20, 8)
-      : new BoxGeometry(shape.size[0], shape.size[1], shape.size[2], 6, 4, 8);
+      : new BoxGeometry(shape.size[0], shape.size[1], shape.size[2], 6, 4, segment.kind === SegmentKind.Ski ? SKI_ROWS : 8);
   geometry.translate(shape.center[0], shape.center[1], shape.center[2]);
   return geometry;
 };
@@ -107,6 +111,10 @@ const FEET = new Set(SEGMENTS.flatMap((s, i) => (s.kind === SegmentKind.Boot ? [
 const HIDDEN = new Vector3(0, 0, 0);
 
 const segmentOf = (kind: SegmentKind, side: LegSide): number => SEGMENTS.findIndex((s) => s.kind === kind && s.side === side);
+/** The capsule skis' bend axes: the box runs along z, the base rises along y. */
+const SKI_FRAME: SkiBendFrame = { mount: [0, 0, SKI_MOUNT], along: [0, 0, 1], up: [0, 1, 0], metres: 1 };
+const SKI_RIGHT = segmentOf(SegmentKind.Ski, BodySide.Right);
+const SKI_LEFT = segmentOf(SegmentKind.Ski, BodySide.Left);
 
 /** Merges every segment into one geometry tagged with `segment` and `muscleSlot`, both uint per vertex. */
 const buildFigureGeometry = (table: SlotTable): { readonly geometry: BufferGeometry; readonly anchors: ReadonlyArray<LocalAnchor> } => {
@@ -159,13 +167,16 @@ const buildFigureGeometry = (table: SlotTable): { readonly geometry: BufferGeome
   return { geometry, anchors: pickAnchors(points) };
 };
 
-/** Poses rigid segments in the vertex stage, like skinning with one bone per vertex. */
+/** Poses rigid segments in the vertex stage, like skinning with one bone per vertex; each ski bends by its curvature. */
 class FigureMaterial extends MeshStandardNodeMaterial {
   readonly matrices = SEGMENTS.map(() => new Matrix4());
+  /** Per segment, 1/m: the base rises u² · bend / 2 at u from the mount; 0 but on the skis. */
+  readonly bends = SEGMENTS.map(() => 0);
   readonly levels: Array<number>;
   readonly marks: Array<number>;
   readonly strength = uniform(0);
   readonly #matrixNode = uniformArray<'mat4'>(this.matrices, 'mat4');
+  readonly #bendNode = uniformArray<'float'>(this.bends, 'float');
 
   constructor(slotCount: number) {
     super({ roughness: 0.75 });
@@ -184,9 +195,11 @@ class FigureMaterial extends MeshStandardNodeMaterial {
   }
 
   override setupPosition(builder: NodeBuilder): ReturnType<MeshStandardNodeMaterial['setupPosition']> {
-    const m = this.#matrixNode.element(attribute('segment', 'uint'));
-    positionLocal.assign(m.mul(vec4(positionLocal, 1)).xyz);
-    normalLocal.assign(m.mul(vec4(normalLocal, 0)).xyz);
+    const segment = attribute('segment', 'uint');
+    const m = this.#matrixNode.element(segment);
+    const bent = bentSki(this.#bendNode.element(segment), SKI_FRAME);
+    positionLocal.assign(m.mul(vec4(bent.position, 1)).xyz);
+    normalLocal.assign(m.mul(vec4(bent.normal, 0)).xyz);
     return super.setupPosition(builder);
   }
 }
@@ -255,6 +268,8 @@ export const createCapsuleFigure = (parent: Object3D, table: SlotTable, muscles:
     update: (t: number, levels: ReadonlyArray<MuscleLevel>) => {
       const pose = samplePose(poses, t);
       const world = segmentMatrices(pose);
+      material.bends[SKI_RIGHT] = pose.outside.bend;
+      material.bends[SKI_LEFT] = pose.inside.bend;
       world.forEach((m, k) => {
         const target = material.matrices[k];
         if (target === undefined) return;

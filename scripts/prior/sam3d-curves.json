@@ -1,0 +1,528 @@
+{
+ "method": "SAM 3D Body (dinov3), per frame; knee_flex 3D thigh–shank; trunk_pitch_ski = pelvis root → neck keypoint against the mean sole normal, in the plane of the mean foot axis (+ forward); trunk_gravity = pelvis root → neck off camera up; trunk_across = its angle in the plane of camera up and the across-heading axis, + toward the CoM’s side (the turn’s inside); phase = (t − edge change) / (next − edge change), edge change = inclination zero crossing (3-frame mean), resampled linearly",
+ "phi": [
+  0,
+  0.0833,
+  0.1667,
+  0.25,
+  0.3333,
+  0.4167,
+  0.5,
+  0.5833,
+  0.6667,
+  0.75,
+  0.8333,
+  0.9167,
+  1
+ ],
+ "clips": {
+  "reilly": {
+   "clip": "vXcjdfBXTiI (Reilly McGlashan), spike clip = source 3.92–5.76 s",
+   "view": "side-on, 1080p24, figure 420–800 px",
+   "range_only": false,
+   "crossings_s": [
+    0.33,
+    0.83,
+    1.71
+   ],
+   "turns": [
+    {
+     "start_s": 0.33,
+     "end_s": 0.83,
+     "outside_label": "L",
+     "samples": 13,
+     "range": {
+      "knee_outside": [
+       64.7,
+       78.9
+      ],
+      "knee_inside": [
+       66.3,
+       86.1
+      ],
+      "trunk_pitch": [
+       21.3,
+       36.7
+      ],
+      "trunk_gravity": [
+       28.5,
+       34
+      ],
+      "trunk_across": [
+       -1.1,
+       8.6
+      ]
+     },
+     "p5_p95": {
+      "knee_outside": [
+       66.5,
+       78.2
+      ],
+      "knee_inside": [
+       67.7,
+       84.2
+      ],
+      "trunk_pitch": [
+       21.7,
+       35.3
+      ],
+      "trunk_gravity": [
+       28.8,
+       33.8
+      ],
+      "trunk_across": [
+       0.8,
+       7.8
+      ]
+     },
+     "knee_outside": [
+      78.8,
+      77.2,
+      77.5,
+      74.8,
+      72,
+      76.7,
+      77.2,
+      75.5,
+      69.1,
+      72,
+      72.4,
+      67.6,
+      64.4
+     ],
+     "knee_inside": [
+      76.5,
+      78.9,
+      81.8,
+      80.9,
+      79.4,
+      80.3,
+      86.1,
+      83.4,
+      76,
+      69.3,
+      69.1,
+      68.5,
+      66.2
+     ],
+     "trunk_pitch": [
+      31.7,
+      27.5,
+      24.1,
+      21.7,
+      21.9,
+      24.6,
+      26.8,
+      29.1,
+      32.8,
+      33.5,
+      33.2,
+      34.4,
+      36.6
+     ],
+     "trunk_gravity": [
+      34.1,
+      33.7,
+      33.7,
+      32.9,
+      32.6,
+      31.6,
+      31.6,
+      30.7,
+      29.2,
+      28.6,
+      29.4,
+      29.6,
+      30.7
+     ],
+     "trunk_across": [
+      1.8,
+      4.4,
+      5.5,
+      8,
+      7.4,
+      5.2,
+      3.6,
+      5,
+      4.9,
+      5,
+      4.9,
+      -0.9,
+      2.9
+     ]
+    },
+    {
+     "start_s": 0.83,
+     "end_s": 1.71,
+     "outside_label": "R",
+     "samples": 21,
+     "range": {
+      "knee_outside": [
+       62,
+       101.4
+      ],
+      "knee_inside": [
+       61.1,
+       110.8
+      ],
+      "trunk_pitch": [
+       29.1,
+       37.5
+      ],
+      "trunk_gravity": [
+       32.1,
+       39.6
+      ],
+      "trunk_across": [
+       -4.1,
+       21.5
+      ]
+     },
+     "p5_p95": {
+      "knee_outside": [
+       62.4,
+       98
+      ],
+      "knee_inside": [
+       62.1,
+       108.5
+      ],
+      "trunk_pitch": [
+       29.3,
+       36.5
+      ],
+      "trunk_gravity": [
+       32.7,
+       39.3
+      ],
+      "trunk_across": [
+       -4,
+       20.8
+      ]
+     },
+     "knee_outside": [
+      66.2,
+      65.4,
+      63.5,
+      67.7,
+      65,
+      67.3,
+      75.8,
+      90.1,
+      98,
+      98.5,
+      71.3,
+      67,
+      78
+     ],
+     "knee_inside": [
+      64.4,
+      62.3,
+      63.4,
+      72.5,
+      80.5,
+      87.6,
+      99.8,
+      108.8,
+      108.4,
+      100.2,
+      84,
+      76.4,
+      76.4
+     ],
+     "trunk_pitch": [
+      36.6,
+      36.2,
+      35.6,
+      34,
+      31.9,
+      31.5,
+      30.4,
+      31.7,
+      29.8,
+      31,
+      34.5,
+      36.7,
+      29
+     ],
+     "trunk_gravity": [
+      30.7,
+      33.3,
+      36.2,
+      36.4,
+      36.1,
+      37.9,
+      38.8,
+      39.5,
+      37,
+      34.4,
+      34.5,
+      34.8,
+      32.7
+     ],
+     "trunk_across": [
+      2.9,
+      3.3,
+      1.2,
+      4.7,
+      7.1,
+      15.3,
+      18.8,
+      20.6,
+      20.7,
+      15.2,
+      12.6,
+      3.8,
+      1.9
+     ]
+    }
+   ]
+  },
+  "sce": {
+   "clip": "jBsWS4hpivY (Snow Camps Europe instructor), source 32.20–33.23 s",
+   "view": "rear-oblique follow-cam, 720p30, figure 280–310 px",
+   "range_only": false,
+   "crossings_s": [
+    32.41,
+    33.01
+   ],
+   "turns": [
+    {
+     "start_s": 32.41,
+     "end_s": 33.01,
+     "outside_label": "R",
+     "samples": 18,
+     "range": {
+      "knee_outside": [
+       40,
+       60.4
+      ],
+      "knee_inside": [
+       46,
+       67.6
+      ],
+      "trunk_pitch": [
+       1.1,
+       21.4
+      ],
+      "trunk_gravity": [
+       4.1,
+       12
+      ],
+      "trunk_across": [
+       -5,
+       6.8
+      ]
+     },
+     "p5_p95": {
+      "knee_outside": [
+       41.6,
+       58.4
+      ],
+      "knee_inside": [
+       47.4,
+       65.9
+      ],
+      "trunk_pitch": [
+       4.6,
+       21
+      ],
+      "trunk_gravity": [
+       4.8,
+       9.8
+      ],
+      "trunk_across": [
+       -3.4,
+       6.5
+      ]
+     },
+     "knee_outside": [
+      47.4,
+      42.9,
+      42.4,
+      42.9,
+      40.5,
+      46.2,
+      49.9,
+      54.2,
+      58.5,
+      57.4,
+      53.3,
+      54.8,
+      48
+     ],
+     "knee_inside": [
+      50.7,
+      48.9,
+      50.3,
+      47.9,
+      48,
+      52.6,
+      54.1,
+      56.8,
+      64.7,
+      66.3,
+      61.5,
+      60.6,
+      56.6
+     ],
+     "trunk_pitch": [
+      21.5,
+      19.7,
+      19.7,
+      20.8,
+      19.5,
+      17.7,
+      13.9,
+      11.9,
+      4.5,
+      6,
+      14.6,
+      13.4,
+      18.9
+     ],
+     "trunk_gravity": [
+      13.1,
+      10.3,
+      8.8,
+      8.1,
+      5.8,
+      7.1,
+      7.1,
+      7.1,
+      6.3,
+      5.3,
+      4.3,
+      5.5,
+      9.1
+     ],
+     "trunk_across": [
+      1.9,
+      -1.1,
+      1.6,
+      2.7,
+      3.5,
+      5.1,
+      6.4,
+      6.7,
+      6.1,
+      4.9,
+      1.9,
+      -2,
+      -3
+     ]
+    }
+   ]
+  },
+  "lig": {
+   "clip": "Ted Ligety GS slow-mo (spike ligA.mp4, 0–20 s of a 142 s download; YouTube id not recorded)",
+   "view": "GS, varied angles, every 10th slow-mo frame",
+   "range_only": true,
+   "crossings_s": [
+    15.28
+   ],
+   "turns": [
+    {
+     "start_s": 0.67,
+     "end_s": 15.28,
+     "outside_label": "L",
+     "samples": 44,
+     "range": {
+      "knee_outside": [
+       47.9,
+       102.6
+      ],
+      "knee_inside": [
+       58.5,
+       125.2
+      ],
+      "trunk_pitch": [
+       2.1,
+       36.6
+      ],
+      "trunk_gravity": [
+       23.2,
+       52.7
+      ],
+      "trunk_across": [
+       -20.9,
+       48.2
+      ]
+     },
+     "p5_p95": {
+      "knee_outside": [
+       52.3,
+       96.5
+      ],
+      "knee_inside": [
+       74.9,
+       109
+      ],
+      "trunk_pitch": [
+       8.8,
+       34.1
+      ],
+      "trunk_gravity": [
+       26.3,
+       51.3
+      ],
+      "trunk_across": [
+       -10.5,
+       46.9
+      ]
+     }
+    },
+    {
+     "start_s": 15.28,
+     "end_s": 19.69,
+     "outside_label": "R",
+     "samples": 14,
+     "range": {
+      "knee_outside": [
+       48.4,
+       99.1
+      ],
+      "knee_inside": [
+       89.7,
+       104.6
+      ],
+      "trunk_pitch": [
+       10.5,
+       21
+      ],
+      "trunk_gravity": [
+       31.1,
+       53
+      ],
+      "trunk_across": [
+       21.9,
+       49.9
+      ]
+     },
+     "p5_p95": {
+      "knee_outside": [
+       49.2,
+       96.3
+      ],
+      "knee_inside": [
+       89.9,
+       104.2
+      ],
+      "trunk_pitch": [
+       11.9,
+       20.7
+      ],
+      "trunk_gravity": [
+       31.4,
+       52.4
+      ],
+      "trunk_across": [
+       23.6,
+       49.7
+      ]
+     }
+    }
+   ]
+  }
+ }
+}

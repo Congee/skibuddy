@@ -164,7 +164,7 @@ describe('turns on the tops', () => {
 
   legacyIt('holds the hands wide and in front, below the shoulders, other drills keep the default', () => {
     // Wide and forward at about waist to lower-chest height, never above the shoulders (duncan-smith-2021 1:28-1:32, 4:26):
-    // wider than cruising's hands away from the pole plant's swing.
+    // wider than the steered kind's hands away from the pole plant's swing.
     for (const i of INTENSITIES)
       for (const t of TIMES) {
         const { sides, span } = handsAt(i, t);
@@ -173,7 +173,7 @@ describe('turns on the tops', () => {
           assert.isAbove(h.ahead, 0, `${i} t ${t} hand ${k} ahead`);
         }
         const swinging = (drill: string): boolean => Math.abs(samplePose(poseTable(drill, i), t).poleTouch) > 0.1;
-        if (!swinging(TOPS_POSE) && !swinging(RegularTurn.Cruising)) assert.isAbove(span, handsAt(i, t, RegularTurn.Cruising).span, `${i} t ${t} span`);
+        if (!swinging(TOPS_POSE) && !swinging(RegularTurn.Steered)) assert.isAbove(span, handsAt(i, t, RegularTurn.Steered).span, `${i} t ${t} span`);
       }
     assert.strictEqual(samplePose(poseTable('regular-moguls', 'moderate'), 0.5).armFlexion, ARM_FLEXION);
   });

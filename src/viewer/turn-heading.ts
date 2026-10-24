@@ -1,9 +1,10 @@
 import type { Intensity } from '../content/schema';
-import { comRadius, turnForcesAt } from '../physics/turn';
+import { taskFor } from '../physics/task';
+import { comRadius, mogulLineFor, skiHeadingAt, turnForcesAt } from '../physics/turn';
 import type { TurnScenario } from '../physics/turn';
 import { SEGMENTS, SegmentKind } from './figure';
 import type { Travel } from './pose-definition';
-import { CLOSED_STANCE, CORRIDOR_SHARE, ROUND, ROUND_CORRIDOR, ROUND_FORCES, ROUND_PHASE, RegularTurn, TOPS, TOPS_CORRIDOR_SHARE, TURN_STYLES, ZIPPER_CORRIDOR, headingPhase, travelOf } from './poses/regular-turn';
+import { CLOSED_STANCE, CORRIDOR_SHARE, ROUND, ROUND_CORRIDOR, ROUND_FORCES, ROUND_PHASE, RegularTurn, TOPS, TOPS_CORRIDOR_SHARE, TURN_STYLES, headingPhase, kindOfDrill, travelOf } from './poses/regular-turn';
 import type { TurnStyle } from './poses/regular-turn';
 
 export { CORRIDOR_SHARE };
@@ -24,6 +25,8 @@ export interface TurnPath {
   readonly length?: number;
   /** Skid off the track at `set`, radians, building from none at the switch; absent, the skis swing from the fall line at the switch. */
   readonly skid?: number;
+  /** The skis' yaw off the fall line at u in 0..1 from the physics (skiHeadingAt: the line plus the attack); absent, the fields above. */
+  readonly skis?: (u: number) => number;
 }
 
 /**
@@ -49,10 +52,12 @@ const wrap = (t: number): number => ((t % 1) + 1) % 1;
 export const trackHeadingAt = (t: number, path: TurnPath): number => -trackMost(path) * Math.cos(Math.PI * (wrap(t) + (path.phase ?? 0)));
 
 /**
- * The skis' yaw off the fall line at turn time u in 0..1, unwrapped: carved, along the track; pivoted, the track plus a
- * skid from none at the switch to `skid` at the set, or without one, from the fall line at the switch to most across at the set.
+ * The skis' yaw off the fall line at turn time u in 0..1, unwrapped: the physics' own (`skis`); carved, along the track;
+ * pivoted, the track plus a skid from none at the switch to `skid` at the set, or without one, from the fall line at the
+ * switch to transitionHeading at the set.
  */
 export const skisHeading = (u: number, path: TurnPath): number => {
+  if (path.skis !== undefined) return path.skis(u);
   const track = -trackMost(path) * Math.cos(Math.PI * (u + (path.phase ?? 0)));
   if (path.set === undefined) return track;
   const swing = -Math.cos(Math.PI * headingPhase(u, path.set));
@@ -94,14 +99,27 @@ export const turnPath = (pose: string, intensity: Intensity): TurnPath => {
   const radius = style?.scenarios[intensity].radiusM ?? FALLBACK_RADIUS;
   const set = style?.set === undefined ? {} : { set: style.set };
   if (pose === ROUND_POSE) return { radius, corridor: ROUND_CORRIDOR, phase: ROUND_PHASE, ...set, forces: ROUND_FORCES };
+  if (pose === MOGUL_POSE) return { ...mogulPath(pose, intensity, radius), ...set };
   const corridor =
-    pose === MOGUL_POSE ? ZIPPER_CORRIDOR : pose === TOPS_POSE ? TOPS_CORRIDOR_SHARE * radius : pose === CLOSED_STANCE_POSE ? CLOSED_STANCE_CORRIDOR : CORRIDOR_SHARE * radius;
+    pose === TOPS_POSE ? TOPS_CORRIDOR_SHARE * radius : pose === CLOSED_STANCE_POSE ? CLOSED_STANCE_CORRIDOR : CORRIDOR_SHARE * radius;
   const scenario = style?.scenarios[intensity];
   if (scenario === undefined || style?.period === undefined) return { radius, corridor, ...set };
   return { ...travelPath(scenario, style.set, travelOf(style) ?? { period: style.period }), corridor };
 };
 
-/** The feet's path under a mass running down the fall line, the feet swinging about it (arndt-1992, fis-freestyle-judging-2025). */
+/**
+ * The moguls cell's own line, the skis' sinusoid a_s across, a spacing down per turn (mogulLineFor): the skis' path.
+ * Their yaw is the line plus the energy closure's attack (skiHeadingAt).
+ */
+const mogulPath = (pose: string, intensity: Intensity, radius: number): TurnPath => {
+  const kind = kindOfDrill(pose);
+  if (kind === null) throw new Error(`${pose}: no moguls task`);
+  const task = taskFor(kind, intensity);
+  const feet = 2 * mogulLineFor(task).swing;
+  return { radius, corridor: feet, feet, length: task.bumpSpacingM, skis: (u) => skiHeadingAt(task, u) - Math.PI / 2 };
+};
+
+/** The feet's path under a mass running down the fall line, the feet swinging about it (fis-freestyle-judging-2025). */
 export const travelPath = (s: TurnScenario, set: number | undefined, travel: Pick<Travel, 'period'> & Partial<Pick<Travel, 'skid'>>): TurnPath => ({
   radius: s.radiusM,
   corridor: CORRIDOR_SHARE * s.radiusM,

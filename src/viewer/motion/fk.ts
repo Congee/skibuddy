@@ -36,6 +36,12 @@ const cos = (a: Scalar): Scalar => (typeof a === 'number' ? Math.cos(a) : a.cos(
 const sin = (a: Scalar): Scalar => (typeof a === 'number' ? Math.sin(a) : a.sin());
 export const asin = (a: Scalar): Scalar => (typeof a === 'number' ? Math.asin(a) : a.chain(Math.asin(a.v), 1 / Math.sqrt(Math.max(1e-12, 1 - a.v * a.v))));
 
+/** atan2 with the derivative (x dy − y dx) / r². */
+export const atan2 = (y: Scalar, x: Scalar): Scalar => {
+  const [yv, xv] = [value(y), value(x)];
+  const r2 = Math.max(1e-12, xv * xv + yv * yv);
+  return add(Math.atan2(yv, xv), mul(1 / r2, sub(mul(xv, y), mul(yv, x))));
+};
 export const dot3 = (a: V3, b: V3): Scalar => add(add(mul(a[0], b[0]), mul(a[1], b[1])), mul(a[2], b[2]));
 export const sub3 = (a: V3, b: V3): V3 => [sub(a[0], b[0]), sub(a[1], b[1]), sub(a[2], b[2])];
 export const cross3 = (a: V3, b: V3): V3 => [
@@ -129,11 +135,21 @@ export const chainOf = (names: ReadonlyArray<string>): string[] => {
   return SEGMENT_NAMES.filter((n) => need.has(n));
 };
 
+const IDENTITY: readonly number[] = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+
 /**
  * World frames of `segments` (closed under parents, in SEGMENT_NAMES order) for coordinates `q` in COORDINATES
- * order, the pelvis translated by `offset` plus its own coordinates, as forwardKinematics.
+ * order, the pelvis translated by `offset` plus its own coordinates, as forwardKinematics. The pelvis rotation is
+ * relative to `ref` (row-major, constant): R_pelvis = ref · R_rest · R_isb(q), so a moving root keeps q small.
+ * `lengths` scales a segment's joint offset from its parent (a subject's bone lengths against the template's).
  */
-export const forward = (q: ReadonlyArray<Scalar>, offset: Vec3 = [0, 0, 0], segments: ReadonlyArray<string> = SEGMENT_NAMES): Readonly<Record<string, Rigid>> => {
+export const forward = (
+  q: ReadonlyArray<Scalar>,
+  offset: Vec3 = [0, 0, 0],
+  segments: ReadonlyArray<string> = SEGMENT_NAMES,
+  ref: readonly number[] = IDENTITY,
+  lengths: Readonly<Record<string, Scalar>> = {},
+): Readonly<Record<string, Rigid>> => {
   const out: Record<string, Rigid> = {};
   for (const name of segments) {
     const s = SEGMENTS[name];
@@ -142,14 +158,32 @@ export const forward = (q: ReadonlyArray<Scalar>, offset: Vec3 = [0, 0, 0], segm
     for (const d of s.dofs) joint = matMul(joint, rotation(d.axis, mul(d.sign, sub(q[d.index] ?? 0, d.rest))));
     if (s.parent === null) {
       const t: V3 = [0, 1, 2].map((k) => add(add(q[TRANSLATION[k as 0 | 1 | 2]] ?? 0, offset[k as 0 | 1 | 2]), s.joint[k as 0 | 1 | 2])) as unknown as V3;
-      out[name] = { R: matMul(s.local, joint), p: t };
+      out[name] = { R: matMul(ref === IDENTITY ? s.local : matMul(ref, s.local), joint), p: t };
       continue;
     }
     const parent = out[s.parent];
     if (parent === undefined) throw new Error(`segment ${name} precedes its parent ${s.parent}`);
-    out[name] = compose(parent, { R: matMul(joint, s.local), p: s.joint });
+    const l = lengths[name];
+    out[name] = compose(parent, { R: matMul(joint, s.local), p: l === undefined ? s.joint : (s.joint.map((c) => mul(l, c)) as unknown as V3) });
   }
   return out;
+};
+
+/**
+ * Each of `segment`'s rotation coordinates with its world axis times its sign, so a moment's dot with it is the
+ * coordinate's generalised force. Grood–Suntay: each axis is the parent's turned by the coordinates before it.
+ */
+export const dofAxes = (q: ReadonlyArray<Scalar>, world: Readonly<Record<string, Rigid>>, segment: string): Array<{ readonly index: number; readonly axis: V3 }> => {
+  const s = SEGMENTS[segment];
+  if (s === undefined || s.parent === null) throw new Error(`no joint above ${segment}`);
+  const parent = world[s.parent];
+  if (parent === undefined) throw new Error(`${s.parent} not solved`);
+  let R: M3 = parent.R;
+  return s.dofs.map((d) => {
+    R = matMul(R, rotation(d.axis, mul(d.sign, sub(q[d.index] ?? 0, d.rest))));
+    const c = d.axis === Axis.X ? 0 : d.axis === Axis.Y ? 1 : 2;
+    return { index: d.index, axis: [mul(d.sign, R[c] ?? 0), mul(d.sign, R[3 + c] ?? 0), mul(d.sign, R[6 + c] ?? 0)] };
+  });
 };
 
 /** The binding frame (ski top under the boot; x across to the body's left, y up, z along the ski) in each foot. */

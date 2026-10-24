@@ -216,11 +216,19 @@ export type LevelBySetting = typeof LevelBySetting.Type;
 export const SettingLevel = Schema.Union([EffortLevel, LevelBySetting]);
 export type SettingLevel = typeof SettingLevel.Type;
 
-/** An activation's effort per phase, as content gives it. */
+/** Per setting, efforts 0..3 at evenly spaced turn times from the switch. */
+export const FramesBySetting = Schema.Struct({
+  gentle: Schema.Array(Schema.Number),
+  moderate: Schema.Array(Schema.Number),
+  dynamic: Schema.Array(Schema.Number),
+});
+
+/** An activation's effort per phase, as content gives it; `frames` only on effort derived from the solve (motion-model §6.8). */
 export const ActivationIntensity = Schema.Struct({
   initiation: SettingLevel,
   shaping: SettingLevel,
   finish: SettingLevel,
+  frames: Schema.optionalKey(FramesBySetting),
 });
 export type ActivationIntensity = typeof ActivationIntensity.Type;
 

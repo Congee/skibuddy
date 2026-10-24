@@ -24,8 +24,9 @@ import type { MuscleLevel } from '../content/activation';
 import { Intensity } from '../content/schema';
 import type { AnchorPoint } from './anchor-projection';
 import { EQUIPMENT, bindingInFoot, shellInFoot } from './equipment';
+import { transformPoint } from './mat4';
 import type { Mat4, Vec3 } from './mat4';
-import { BodySide } from './figure';
+import { BodySide, SKI_MOUNT_IN_BINDING } from './figure';
 import { createGear, gearStops, placePole } from './gear';
 import type { Gear, LegSide } from './gear';
 import { bootFitFrom, parseGearFit, standingArm } from './gear-fit';
@@ -35,6 +36,8 @@ import { CAPSULE_ARM, poleDirection, poleSize, poleTouchOf } from './pose';
 import type { StandingArm } from './pose';
 import { poleTrimOf } from './poses';
 import { poseTable, samplePose } from './pose-table';
+import { BentSkiMaterial } from './ski-bend-draw';
+import { SKI_ROWS, skiGeometryOf } from './ski-geometry';
 import type { PoseTable } from './pose-table';
 import { NEUTRAL_CLIP, NodeKind, motionClipName, nodeOf } from './anatomy-names';
 import type { AnatomyNode } from './anatomy-names';
@@ -209,6 +212,8 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
   const cartilage = new MeshStandardNodeMaterial({ color: CARTILAGE, roughness: 0.3 });
   const gear = new MeshStandardNodeMaterial({ color: GEAR, roughness: 0.6, side: DoubleSide });
   const fading = [muscle, tendon];
+  // Each baked ski is redrawn bending, with its own material.
+  const bending: Array<{ readonly side: LegSide; readonly material: BentSkiMaterial }> = [];
 
   const fitted = fittings(root);
   let kit: Gear | null = null;
@@ -218,7 +223,7 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
     root.traverse((o) => {
       if (isSkinned(o)) o.geometry.dispose();
     });
-    for (const m of [muscle, tendon, bone, cartilage, gear]) m.dispose();
+    for (const m of [muscle, tendon, bone, cartilage, gear, ...bending.map((b) => b.material)]) m.dispose();
   };
 
   const anchors: Array<Anchor> = [];
@@ -357,6 +362,26 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
     });
     return meshes.map((mesh) => ({ mesh, side }));
   });
+  for (const { mesh, side } of skis) {
+    // The glTF's up and forward, in the geometry's space, pick the box's axis signs.
+    const toLocal = new Matrix4().copy(mesh.matrixWorld).invert();
+    const direction = (x: number, y: number, z: number): Vec3 => new Vector3(x, y, z).transformDirection(toLocal).toArray();
+    const built = skiGeometryOf(mesh.geometry, SKI_ROWS, direction(0, 1, 0), direction(0, 0, 1));
+    if (built === null) continue;
+    const { box } = built;
+    // It bends about the capsule ski's pressure point, found from the binding; the bake sets the ski's centre off it.
+    const at = fitted?.[side];
+    // The mesh node scales its geometry down to metres, so the binding's metres go through its inverse.
+    const metres = new Vector3().setFromMatrixScale(mesh.matrixWorld).x;
+    const origin = at === undefined ? null : new Vector3(...transformPoint(bindingInFoot(at.fit, EQUIPMENT), [0, 0, 0])).add(new Vector3(...at.ankle)).applyMatrix4(toLocal);
+    const u = origin === null ? 0 : new Vector3(...box.along).dot(origin.clone().sub(new Vector3(...box.centre))) + SKI_MOUNT_IN_BINDING / metres;
+    const mount: Vec3 = [box.centre[0] + box.along[0] * u, box.centre[1] + box.along[1] * u, box.centre[2] + box.along[2] * u];
+    const material = new BentSkiMaterial({ mount, along: box.along, up: box.up, metres }, { color: GEAR, roughness: 0.6, side: DoubleSide });
+    mesh.geometry.dispose();
+    mesh.geometry = built.geometry;
+    mesh.material = material;
+    bending.push({ side, material });
+  }
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   // Bumped by each update, so a tap re-measures only meshes posed since the last one.
@@ -388,6 +413,8 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
       // Otherwise the bone matrices upload a draw late and the hands trail their poles.
       for (const s of skeletons) s.update();
       placePoles(t);
+      const sampled = samplePose(poses, t);
+      for (const { side, material } of bending) material.curvature.value = side === BodySide.Right ? sampled.outside.bend : sampled.inside.bend;
       fillSlotLevels(table, current, levels);
       pose++;
     },

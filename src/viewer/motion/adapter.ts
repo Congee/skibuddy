@@ -7,6 +7,9 @@ import { samplePose } from '../pose-table';
 import type { PoseTable } from '../pose-table';
 import type { Rigid } from './fk';
 import { REST_WORLD, rootWorlds } from './q-table';
+import { bendCurvatureOf } from '../../physics/ski-bend';
+import { surfaceFor } from '../surface';
+import { skiGoal } from './turn';
 
 /**
  * Legacy-channel adapter: the Pose channels the viewer still reads (poles, capsule figure, camera locks), fitted so
@@ -139,13 +142,16 @@ export const fitPose = (world: Readonly<Record<string, Rigid>>, old: Pose, start
 export const adaptTable = (drill: string, intensity: Intensity, q: ReadonlyArray<ArrayLike<number>>, old: PoseTable): { readonly table: PoseTable; readonly misfit: number } => {
   let prev: Pose | undefined;
   let misfit = 0;
+  const surface = surfaceFor(drill, intensity);
   const table = q.map((frame, k) => {
     const t = k / q.length;
     const was = samplePose(old, t);
     const fit = fitPose(rootWorlds(drill, intensity, frame, t), was, prev ?? was);
     prev = fit.pose;
     misfit = Math.max(misfit, fit.misfit);
-    return fit.pose;
+    // The solve's own bend per frame and side; the fit leaves it alone.
+    const [out, ins] = skiGoal(drill, intensity, surface, t).bend.map(bendCurvatureOf);
+    return { ...fit.pose, outside: { ...fit.pose.outside, bend: out ?? 0 }, inside: { ...fit.pose.inside, bend: ins ?? 0 } };
   });
   return { table, misfit };
 };

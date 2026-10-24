@@ -1,4 +1,5 @@
 import { Intensity, PHASES, levelAt } from './schema';
+import { framesAt } from './effort';
 import type { Activation, Movement, MuscleId, Side } from './schema';
 
 /** One lit muscle on one side at a moment in the turn, 0..1. */
@@ -15,6 +16,8 @@ const MAX_INTENSITY = 3;
  * turn and peaks at its centre; the finish blends back into the next initiation.
  */
 export const intensityAt = (activation: Activation, t: number, setting: Intensity = Intensity.Moderate): number => {
+  const frames = activation.intensity.frames?.[setting];
+  if (frames !== undefined) return framesAt(frames, frames, t) / MAX_INTENSITY;
   const values = PHASES.map((p) => levelAt(activation.intensity[p], setting));
   const n = values.length;
   const pos = (((t % 1) + 1) % 1) * n - 0.5;

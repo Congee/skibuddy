@@ -1,7 +1,10 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
 import { PLAYBACK_RATES, PlaybackRate, TURN_SECONDS, cycleAdvance, parseRate } from '../src/state/playback';
-import { RegularTurn, TOPS, TURN_STYLES } from '../src/viewer/poses/regular-turn';
+import { Snow } from '../src/physics/edge';
+import { TurnKind, taskFor } from '../src/physics/task';
+import { turnProfile } from '../src/physics/turn';
+import { RegularTurn, TOPS } from '../src/viewer/poses/regular-turn';
 import { surfaceFor } from '../src/viewer/surface';
 import { TOPS_POSE } from '../src/viewer/turn-heading';
 import { realTurnSeconds } from '../src/viewer/turn-time';
@@ -24,25 +27,33 @@ describe('playback rate', () => {
   });
 
   it('times a turn as its path length over its speed', () => {
-    const cases = [
-      [RegularTurn.Moguls, TURN_STYLES[RegularTurn.Moguls].scenarios.moderate.speedMps],
-      [TOPS_POSE, TOPS.scenarios.moderate.speedMps],
-      [RegularTurn.Carving, TURN_STYLES[RegularTurn.Carving].scenarios.moderate.speedMps],
-    ] as const;
-    for (const [pose, speed] of cases) {
-      const surface = surfaceFor(pose, Intensity.Moderate);
-      const seconds = realTurnSeconds(pose, Intensity.Moderate);
-      assert.closeTo(seconds, surface.speed / speed, 1e-12);
-      // The path is at least the turn's run down the fall line.
-      assert.isTrue(seconds >= surface.spacing / speed);
+    const surface = surfaceFor(TOPS_POSE, Intensity.Moderate);
+    const speed = TOPS.scenarios.moderate.speedMps;
+    const seconds = realTurnSeconds(TOPS_POSE, Intensity.Moderate);
+    assert.closeTo(seconds, surface.speed / speed, 1e-12);
+    // The path is at least the turn's run down the fall line.
+    assert.isTrue(seconds >= surface.spacing / speed);
+    // A migrated groomed cell: its profile's period, its path per turn at about the task's speed (2%, inferred).
+    for (const i of [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic]) {
+      const task = taskFor(TurnKind.GS, i);
+      const p = turnProfile(task, Snow.HardGroomed);
+      const cell = surfaceFor(RegularTurn.GS, i);
+      const t = realTurnSeconds(RegularTurn.GS, i);
+      assert.strictEqual(t, p.periodS, i);
+      assert.closeTo(cell.speed / t, task.speedMps, 0.02 * task.speedMps, i);
+      assert.isTrue(cell.speed >= cell.spacing, i);
     }
   });
 
   it('turns about one mogul spacing apart in the zipper, near two turns a second', () => {
-    const surface = surfaceFor(RegularTurn.Moguls, Intensity.Moderate);
-    const speed = TURN_STYLES[RegularTurn.Moguls].scenarios.moderate.speedMps;
+    const task = taskFor(TurnKind.Moguls, Intensity.Moderate);
     const seconds = realTurnSeconds(RegularTurn.Moguls, Intensity.Moderate);
-    assert.closeTo(seconds, surface.spacing / speed, 0.1 * seconds);
+    // The cell's own spacing and speed, inside motion-model §3's moderate 3–4 m at 6–8 m/s (inferred).
+    assert.closeTo(seconds, task.bumpSpacingM / task.speedMps, 1e-12);
+    assert.isTrue(task.bumpSpacingM >= 3 && task.bumpSpacingM <= 4 && task.speedMps >= 6 && task.speedMps <= 8);
+    // FIS pace 0.35–0.4 s per bump is the dynamic cell's (motion-model §3, measured rules).
+    const fis = realTurnSeconds(RegularTurn.Moguls, Intensity.Dynamic);
+    assert.isTrue(fis >= 0.35 && fis <= 0.4, `${fis}`);
     assert.isTrue(seconds < 0.7);
     assert.isTrue(seconds < realTurnSeconds(TOPS_POSE, Intensity.Moderate));
     assert.isTrue(realTurnSeconds(RegularTurn.Moguls, Intensity.Dynamic) < realTurnSeconds(RegularTurn.Moguls, Intensity.Gentle));

@@ -1,9 +1,13 @@
 import { assert, describe, it } from '@effect/vitest';
 import { Intensity } from '../src/content/schema';
-import { RegularTurn } from '../src/viewer/poses/regular-turn';
+import { Snow } from '../src/physics/edge';
+import { TurnKind, taskFor } from '../src/physics/task';
+import { mogulLineFor, skiHeadingAt, turnProfile } from '../src/physics/turn';
+import { lineHeading } from '../src/physics/zipper';
+import { kindOfDrill, RegularTurn } from '../src/viewer/poses/regular-turn';
 import { surfaceFor } from '../src/viewer/surface';
 import { realTurnSeconds } from '../src/viewer/turn-time';
-import { LEG_LENGTH, ROUND_POSE, TOPS_POSE, feetCorridor, headingAt, pivotAt, sinusoidHeading, trackHeadingAt, transitionHeading, turnPath, turnStyle } from '../src/viewer/turn-heading';
+import { LEG_LENGTH, ROUND_POSE, TOPS_POSE, feetCorridor, headingAt, pivotAt, sinusoidHeading, trackHeadingAt, trackMost, transitionHeading, turnPath, turnStyle } from '../src/viewer/turn-heading';
 import { legacyIt } from './legacy';
 
 const DEG = Math.PI / 180;
@@ -46,10 +50,10 @@ describe('headingAt', () => {
 });
 
 describe('pivotAt', () => {
-  const PIVOTED = [RegularTurn.ShortTurns, RegularTurn.Moguls, RegularTurn.Steeps, RegularTurn.Powder, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns'];
+  const PIVOTED = [RegularTurn.SL, RegularTurn.Steeps, RegularTurn.Powder, RegularTurn.Moguls, TOPS_POSE, ROUND_POSE, 'closed-stance-short-turns'];
 
   it('carves without skidding: the skis along the track', () => {
-    for (const drill of [RegularTurn.Carving, RegularTurn.Cruising])
+    for (const drill of [RegularTurn.GS, RegularTurn.Steered])
       for (const i of [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic])
         for (let k = 0; k < 48; k++) close(pivotAt(k / 48, turnPath(drill, i)), 0, 1e-12);
   });
@@ -73,8 +77,14 @@ describe('pivotAt', () => {
 });
 
 describe('turnPath', () => {
-  it('runs the zipper in a rut-wide corridor, the tops line 50° off the fall line and closed stance in 2 m', () => {
-    assert.deepStrictEqual(turnPath(RegularTurn.Moguls, Intensity.Moderate), { radius: 5, corridor: 1.1, set: 0.5 });
+  it("runs the zipper on its cell's line, the tops line 50° off the fall line and closed stance in 2 m", () => {
+    for (const i of [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic]) {
+      const task = taskFor(TurnKind.Moguls, i);
+      const a = mogulLineFor(task).swing;
+      const line = turnPath(RegularTurn.Moguls, i);
+      assert.deepStrictEqual({ feet: line.feet, length: line.length, set: line.set }, { feet: 2 * a, length: task.bumpSpacingM, set: 0.5 }, i);
+      close(trackMost(line), -lineHeading({ spacing: task.bumpSpacingM, relief: task.bumpHeightM, swing: a }, 0), 1e-12);
+    }
     // Finishing across the hill (duncan-smith-2021 1:28-1:32); 50° inferred.
     for (const i of [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic]) close(transitionHeading(turnPath(TOPS_POSE, i)), 50 * DEG);
     const { radius, corridor, set } = turnPath('closed-stance-short-turns', Intensity.Moderate);
@@ -87,18 +97,18 @@ describe('turnPath', () => {
   });
 
   it('gives other turns a round shape, 60° off the fall line', () => {
-    close(transitionHeading(turnPath(RegularTurn.Carving, Intensity.Dynamic)), 60 * DEG);
+    close(transitionHeading(turnPath(RegularTurn.GS, Intensity.Dynamic)), 60 * DEG);
     close(transitionHeading(turnPath('no-such-pose', Intensity.Gentle)), 60 * DEG);
   });
 });
 
 describe('feet track', () => {
   const INTENSITIES = [Intensity.Gentle, Intensity.Moderate, Intensity.Dynamic];
-  const GROOMED_PIVOTED = [RegularTurn.ShortTurns, RegularTurn.Steeps, RegularTurn.Powder, 'closed-stance-short-turns'];
+  const GROOMED_PIVOTED = [RegularTurn.SL, RegularTurn.Steeps, RegularTurn.Powder, 'closed-stance-short-turns'];
   const skids = (path: ReturnType<typeof turnPath>): ReadonlyArray<number> => Array.from({ length: 96 }, (_, k) => Math.abs(pivotAt(k / 96, path)));
 
-  it('skids carved and cruising skis within the measured spread: peak 15°, 4° after the fall line (reid-2010, nakazato-2016, klous-2014)', () => {
-    for (const drill of [RegularTurn.Carving, RegularTurn.Cruising])
+  it('skids carved and steered skis within the measured spread: peak 15°, 4° after the fall line (reid-2010, nakazato-2016, klous-2014)', () => {
+    for (const drill of [RegularTurn.GS, RegularTurn.Steered])
       for (const i of INTENSITIES) {
         const all = skids(turnPath(drill, i));
         assert.isAtMost(Math.max(...all) / DEG, 15, `${drill} ${i}`);
@@ -117,7 +127,7 @@ describe('feet track', () => {
       }
   });
 
-  it('swings the feet about a mass on the fall line: under it at the switch, farthest out at the apex (arndt-1992, gellie)', () => {
+  it('swings the feet about a mass on the fall line: under it at the switch, farthest out at the apex (gellie)', () => {
     for (const drill of GROOMED_PIVOTED)
       for (const i of INTENSITIES) {
         const path = turnPath(drill, i);
@@ -140,28 +150,41 @@ describe('feet track', () => {
       }
   });
 
-  it('turns as often as filmed short turns: 0.55-0.73 s (Reilly, SCE, Giaccio), quicker than slalom 0.83-0.98 s (reid-2010, kroll-2015)', () => {
-    for (const drill of GROOMED_PIVOTED)
+  it('turns as often as filmed short turns: 0.55-0.73 s (Reilly, SCE, Giaccio); slalom 0.83-0.98 s (reid-2010, kroll-2015) is the SL ceiling', () => {
+    for (const drill of GROOMED_PIVOTED.filter((d) => kindOfDrill(d) === null))
       for (const i of INTENSITIES) {
         const seconds = realTurnSeconds(drill, i);
         assert.isAtLeast(seconds, 0.55 - 0.05, `${drill} ${i}`);
         assert.isBelow(seconds, 0.83, `${drill} ${i}`);
       }
+    // Race data is a ceiling: no cell quicker than the race, slower intensities turn less often.
+    const sl = INTENSITIES.map((i) => realTurnSeconds(RegularTurn.SL, i));
+    for (const s of sl) assert.isAtLeast(s, 0.83, `${sl}`);
+    for (let j = 1; j < sl.length; j++) assert.isBelow(sl[j] ?? Infinity, sl[j - 1] ?? 0, `${sl}`);
   });
 
   it('runs the mass one turn length L = v·P per turn, the feet within the 3 m short-turn corridor (bon-2021)', () => {
     for (const drill of GROOMED_PIVOTED)
       for (const i of INTENSITIES) {
         const surface = surfaceFor(drill, i);
-        const speed = turnStyle(drill)?.scenarios[i].speedMps ?? NaN;
-        close(realTurnSeconds(drill, i), surface.spacing / speed, 1e-12);
-        assert.closeTo(surface.spacing / (surface.path.length ?? NaN), 1, 0.05, `${drill} ${i}`);
+        const kind = kindOfDrill(drill);
+        if (kind === null) {
+          close(realTurnSeconds(drill, i), surface.spacing / (turnStyle(drill)?.scenarios[i].speedMps ?? NaN), 1e-12);
+          assert.closeTo(surface.spacing / (surface.path.length ?? NaN), 1, 0.05, `${drill} ${i}`);
+        } else {
+          // A migrated cell: the profile's period at its mean speed, as the viewer plays it (V); the fall-line run within the path.
+          const task = taskFor(kind, i);
+          const p = turnProfile(task, task.snow ?? Snow.HardGroomed);
+          close(realTurnSeconds(drill, i), p.periodS, 1e-12);
+          assert.closeTo(surface.speed / p.periodS, task.speedMps, 0.02 * task.speedMps, `${drill} ${i}`);
+          assert.isAtMost(surface.spacing, surface.speed, `${drill} ${i}`);
+        }
         assert.isAtMost(surface.path.feet ?? Infinity, 3, `${drill} ${i}`);
       }
   });
 
   it('skids groomed short turns off the track from none at the switch, so the skis cross with the track there (Reilly, SCE; reid-2010 0-4°)', () => {
-    for (const drill of [RegularTurn.ShortTurns, RegularTurn.Steeps, RegularTurn.Powder])
+    for (const drill of [RegularTurn.SL, RegularTurn.Steeps, RegularTurn.Powder])
       for (const i of INTENSITIES) {
         const run = turnPath(drill, i);
         close(headingAt(0, run), trackHeadingAt(0, run), 1e-12);
@@ -173,7 +196,24 @@ describe('feet track', () => {
       }
   });
 
-  it('keeps the mogul lines on their own corridors', () => {
-    for (const drill of [RegularTurn.Moguls, TOPS_POSE, ROUND_POSE]) for (const i of INTENSITIES) assert.isUndefined(turnPath(drill, i).feet, `${drill} ${i}`);
+  it('draws the moguls skis along the line plus the attack γ, along the line at the switch where γ is off', () => {
+    for (const i of INTENSITIES) {
+      const task = taskFor(TurnKind.Moguls, i);
+      const moguls = turnPath(RegularTurn.Moguls, i);
+      const { swing, ride } = mogulLineFor(task);
+      const { down } = ride.track;
+      const p = turnProfile(task, Snow.HardGroomed);
+      const course = { spacing: task.bumpSpacingM, relief: task.bumpHeightM, swing };
+      for (let k = 0; k < down.length; k += 6) {
+        const t = k / down.length;
+        close(headingAt(t, moguls), skiHeadingAt(task, t) - Math.PI / 2, 1e-12);
+        close(headingAt(t, moguls), lineHeading(course, down[k] ?? 0) + (p.at(t).attack ?? 0) * DEG, 1e-9);
+      }
+      assert.isBelow(Math.abs(headingAt(0, moguls) - lineHeading(course, down[0] ?? 0)), 0.5 * DEG, `${i}`);
+    }
+  });
+  it('keeps the mogul lines on their own corridors, the zipper on its line', () => {
+    for (const drill of [TOPS_POSE, ROUND_POSE]) for (const i of INTENSITIES) assert.isUndefined(turnPath(drill, i).feet, `${drill} ${i}`);
+    for (const i of INTENSITIES) close(turnPath(RegularTurn.Moguls, i).feet ?? Number.NaN, 2 * mogulLineFor(taskFor(TurnKind.Moguls, i)).swing, 1e-12);
   });
 });
