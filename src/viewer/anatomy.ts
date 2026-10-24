@@ -32,6 +32,8 @@ import type { Gear, LegSide } from './gear';
 import { bootFitFrom, parseGearFit, standingArm } from './gear-fit';
 import type { BootFit, RawFit } from './gear-fit';
 import type { GearMode } from './gear-mode';
+import { drivenBones, poseSolved, unposeSolved } from './motion/solved-bones';
+import { solvedAt } from './motion/solved-figure';
 import { CAPSULE_ARM, poleDirection, poleSize, poleTouchOf } from './pose';
 import type { StandingArm } from './pose';
 import { poleTrimOf } from './poses';
@@ -200,7 +202,9 @@ export interface AnatomyModel {
 
 export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: AnatomyModel): AnatomyFigure => {
   const root = gltf.scene;
-  root.updateMatrixWorld(true);
+  // Read at rest, before any clip plays.
+  const driven = drivenBones(root);
+  const placedBones = new Map<Object3D, Matrix4>();
 
   const levels = Array.from({ length: table.size }, () => 0);
   const skeleton = uniform(0);
@@ -344,6 +348,8 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
   let playing = actionFor(NEUTRAL_CLIP);
   playing.action.play();
   let poses: PoseTable = poseTable(null, Intensity.Moderate);
+  let motion: { readonly drill: string; readonly intensity: Intensity } | null = null;
+  let solvedLast = false;
   // Mirrors the bake's poles, sized from the left arm.
   const arm = fitted?.left.arm ?? CAPSULE_ARM;
   let size = poleSize(arm);
@@ -408,13 +414,21 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
     pose: (t: number) => samplePose(poses, t),
     update: (t: number, current: ReadonlyArray<MuscleLevel>) => {
       playing.action.time = (((t % 1) + 1) % 1) * playing.clip.duration;
+      // A migrated drill stands as solved; the clip keeps the fingers, and the drawn pose times the poles.
+      const solved = motion === null ? null : solvedAt(motion.drill, motion.intensity, t);
       mixer.update(0);
+      if (solved !== null) poseSolved(root, driven, solved.w, placedBones);
+      else if (solvedLast) unposeSolved(driven);
+      solvedLast = solved !== null;
       root.updateMatrixWorld(true);
       // Otherwise the bone matrices upload a draw late and the hands trail their poles.
       for (const s of skeletons) s.update();
       placePoles(t);
       const sampled = samplePose(poses, t);
-      for (const { side, material } of bending) material.curvature.value = side === BodySide.Right ? sampled.outside.bend : sampled.inside.bend;
+      for (const { side, material } of bending) {
+        const outside = side === BodySide.Right;
+        material.curvature.value = solved === null ? (outside ? sampled.outside.bend : sampled.inside.bend) : solved.bend[outside ? 0 : 1];
+      }
       fillSlotLevels(table, current, levels);
       pose++;
     },
@@ -496,6 +510,7 @@ export const buildAnatomyFigure = (rig: Object3D, table: SlotTable, gltf: Anatom
       last = performance.now();
     },
     setMotion: (drill: string | null, i: Intensity) => {
+      motion = drill === null ? null : { drill, intensity: i };
       const named = motionClipName(drill, i);
       const next = actionFor(gltf.animations.some((a) => a.name === named) ? named : NEUTRAL_CLIP);
       // The poles' touch must match the clip, so a drill the model has no clip for stands still.

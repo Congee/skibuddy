@@ -21,7 +21,8 @@ export const pelvisOnSnow = (pelvis: Mat4): { readonly heading: number; readonly
   z: pelvis[14] ?? 0,
 });
 
-const pelvisOf = (pose: Pose): Mat4 => segmentMatrices(pose)[PELVIS] ?? identity();
+/** The drawn pose's pelvis; a migrated drill's camera locks take the solved one (solvedPelvis). */
+export const pelvisOf = (pose: Pose): Mat4 => segmentMatrices(pose)[PELVIS] ?? identity();
 
 /** Where the pelvis stands in the neutral stance; the locked pelvis is held there. */
 const HOME = pelvisOnSnow(pelvisOf(poseFromChannels(POSE_CHANNELS.map(() => 0))));
@@ -31,10 +32,13 @@ const centred = (p: { readonly x: number; readonly z: number }, yaw: number): Ma
   compose(translation([HOME.x, 0, HOME.z]), rotationY(yaw), translation([-p.x, 0, -p.z]));
 
 /** Holds the pelvis's heading and place on the snow, so the skis turn and slide under it. */
-export const hipLock = (pose: Pose): Mat4 => {
-  const p = pelvisOnSnow(pelvisOf(pose));
+export const hipLockOf = (pelvis: Mat4): Mat4 => {
+  const p = pelvisOnSnow(pelvis);
   return centred(p, HOME.heading - p.heading);
 };
 
 /** Turns the skis to `heading` off the fall line (+z), the pelvis held in place. */
-export const slopeLock = (pose: Pose, heading: number): Mat4 => centred(pelvisOnSnow(pelvisOf(pose)), heading);
+export const slopeLockOf = (pelvis: Mat4, heading: number): Mat4 => centred(pelvisOnSnow(pelvis), heading);
+
+export const hipLock = (pose: Pose): Mat4 => hipLockOf(pelvisOf(pose));
+export const slopeLock = (pose: Pose, heading: number): Mat4 => slopeLockOf(pelvisOf(pose), heading);

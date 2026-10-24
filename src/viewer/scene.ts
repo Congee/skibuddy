@@ -10,9 +10,11 @@ import { createFrameScheduler } from './frame-scheduler';
 import type { GearMode } from './gear-mode';
 import { isDoubleTap, isTap, midpoint, pinchRatio, span, toNdc, wheelRatio } from './gestures';
 import type { Point, TapAt } from './gestures';
-import { ViewLock, hipLock, slopeLock } from './hip-lock';
+import { ViewLock, hipLockOf, pelvisOf, slopeLockOf } from './hip-lock';
 import { chooseView, highlightSlots, highlightStrength, pointsFor, revealsDeep } from './highlight';
 import type { FigureHighlight, Occluder } from './highlight';
+import type { Mat4 } from './mat4';
+import { solvedPelvis } from './motion/solved-figure';
 import { DRAG_DAMPING, TURN_DAMPING, dampOrbit, dampStep } from './orbit';
 import type { Orbit } from './orbit';
 import { pickOf } from './pick';
@@ -430,13 +432,15 @@ export const createViewer = async (
     lift = rideOf(surface, t, figure.pose(t)).lift;
     return lifted.makeTranslation(0, lift, 0).multiply(unlifted.fromArray(lockedAt(t))).elements;
   };
+  // Both figures stand as solved for a migrated drill, so the locks hold its solved pelvis.
+  const pelvisAt = (t: number): Mat4 => solvedPelvis(drill, intensity, t) ?? pelvisOf(figure.pose(t));
   const lockedAt = (t: number): ArrayLike<number> => {
     switch (lock) {
       case ViewLock.HipsFixed:
-        return hipLock(figure.pose(t));
+        return hipLockOf(pelvisAt(t));
       case ViewLock.SlopeFixed:
         // The heading the field turns by, so the fall line holds still on screen.
-        return slopeLock(figure.pose(t), pathAt(surface, t).heading);
+        return slopeLockOf(pelvisAt(t), pathAt(surface, t).heading);
       default:
         return IDENTITY;
     }

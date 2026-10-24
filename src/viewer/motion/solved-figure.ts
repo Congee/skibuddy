@@ -9,7 +9,7 @@ import { surfaceFor } from '../surface';
 import { ALIGN, PAIRS } from './adapter';
 import { skiFrame, transform } from './fk';
 import type { Rigid } from './fk';
-import { qTable, rootWorlds } from './q-table';
+import { Q_FRAMES, qTable, rootWorlds } from './q-table';
 import { MIRROR, skiGoal } from './turn';
 
 /** The capsule figure placed by the solve's forward kinematics, its skis bent as solved. */
@@ -77,6 +77,13 @@ const along = (m: Mat4, from: Vec3, to: Vec3, length: number): Mat4 => {
   return new Float32Array([...x, 0, v[0] * s, v[1] * s, v[2] * s, 0, ...z, 0, ...from, 1]);
 };
 
+/** The capsule's hip line on the solved hip centres `a` and `b`, the pelvis turned as `rotated`. */
+const pelvisOn = (rotated: Mat4, a: Vec3, b: Vec3): Mat4 => {
+  const mid: Vec3 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+  const off = transformPoint(rotated, HIP_IN_PELVIS);
+  return withPoint(rotated, [mid[0] - off[0], mid[1] - off[1], mid[2] - off[2]]);
+};
+
 /**
  * Capsule world matrices from ISB root frames: every paired segment turns as its ISB segment; the legs stand on
  * the solved hip and knee centres and the boots and skis on the solved bindings, so the stance is the solve's.
@@ -119,11 +126,7 @@ export const placeCapsule = (w: Readonly<Record<string, Rigid>>, legacy: Readonl
       return;
     }
     if (segment.kind === SegmentKind.Pelvis) {
-      // The capsule's hip line on the solved hip centres.
-      const [a, b] = [femur('R'), femur('L')];
-      const mid: Vec3 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
-      const off = transformPoint(rotated, HIP_IN_PELVIS);
-      out[i] = withPoint(rotated, [mid[0] - off[0], mid[1] - off[1], mid[2] - off[2]]);
+      out[i] = pelvisOn(rotated, femur('R'), femur('L'));
       return;
     }
     out[i] = withPoint(rotated, pointOf(compose(parent, translation(segment.joint))));
@@ -144,15 +147,61 @@ export const qAt = (q: ReadonlyArray<ArrayLike<number>>, t: number): Float64Arra
   return Float64Array.from({ length: a.length }, (_, c) => (a[c] ?? 0) + f * ((b[c] ?? 0) - (a[c] ?? 0)));
 };
 
+/** The solve at a turn time: ISB root frames, and per side the skis' bend, outside then inside, 1/m. */
+export interface Solved {
+  readonly w: Readonly<Record<string, Rigid>>;
+  readonly bend: readonly [number, number];
+}
+
+const tables = new Map<string, ReadonlyArray<Float64Array> | null>();
+const stored = new Map<string, Solved>();
+let last: { readonly key: string; readonly t: number; readonly solved: Solved } | null = null;
+
+/**
+ * The migrated drill's solve at turn time `t`, or null when it has none. Kept per stored frame, where it is exact,
+ * and for the last time asked, which the camera lock and both figures share within a draw.
+ */
+export const solvedAt = (drill: string, intensity: Intensity, t: number): Solved | null => {
+  const key = `${drill}|${intensity}`;
+  if (last !== null && last.key === key && last.t === t) return last.solved;
+  if (!tables.has(key)) tables.set(key, qTable(drill, intensity));
+  const q = tables.get(key) ?? null;
+  if (q === null) return null;
+  const u = (((t % 1) + 1) % 1) * Q_FRAMES;
+  // k / Q_FRAMES * Q_FRAMES misses the integer by an ulp for most k.
+  const k = Math.round(u);
+  const frame = Math.abs(u - k) < 1e-9 && k < Q_FRAMES && q.length === Q_FRAMES ? `${key}|${k}` : null;
+  let solved = frame === null ? undefined : stored.get(frame);
+  if (solved === undefined) {
+    const [out, ins] = skiGoal(drill, intensity, surfaceFor(drill, intensity), t).bend.map(bendCurvatureOf);
+    solved = { w: rootWorlds(drill, intensity, qAt(q, t), t), bend: [out ?? 0, ins ?? 0] };
+    if (frame !== null) stored.set(frame, solved);
+  }
+  last = { key, t, solved };
+  return solved;
+};
+
+const PELVIS = SEGMENTS.findIndex((s) => s.kind === SegmentKind.Pelvis);
+
+/** The capsule pelvis's frame (the camera locks' pelvis) on the solve at turn time `t`, or null when the drill has none. */
+export const solvedPelvis = (drill: string, intensity: Intensity, t: number): Mat4 | null => {
+  const w = solvedAt(drill, intensity, t)?.w;
+  const k = PAIR_OF.get(PELVIS);
+  const r = w?.['pelvis'];
+  if (w === undefined || k === undefined || r === undefined) return null;
+  const femur = (s: Side): Vec3 => num(w[`femur.${s}`] ?? r).p;
+  return pelvisOn(mat(mul3(num(r).R, ALIGN[k] ?? []), [0, 0, 0]), femur(Side.Right), femur(Side.Left));
+};
+
 /** The migrated drill's capsule figure at turn time `t`, or null when it has no solve. */
 export const solvedFigure = (drill: string, intensity: Intensity, t: number, legacy: ReadonlyArray<Mat4>): SolvedFigure | null => {
-  const q = qTable(drill, intensity);
-  if (q === null) return null;
-  const w = rootWorlds(drill, intensity, qAt(q, t), t);
-  const [out, ins] = skiGoal(drill, intensity, surfaceFor(drill, intensity), t).bend.map(bendCurvatureOf);
+  const solved = solvedAt(drill, intensity, t);
+  if (solved === null) return null;
+  const { w } = solved;
+  const [out, ins] = solved.bend;
   const shell = (side: Side): Mat4 => {
     const f = num(skiFrame(w, side));
     return compose(mat(f.R, f.p), BOOT_IN_BINDING);
   };
-  return { world: placeCapsule(w, legacy), bend: [out ?? 0, ins ?? 0], shells: { [BodySide.Right]: shell(Side.Right), [BodySide.Left]: shell(Side.Left), [BodySide.Center]: undefined } };
+  return { world: placeCapsule(w, legacy), bend: [out, ins], shells: { [BodySide.Right]: shell(Side.Right), [BodySide.Left]: shell(Side.Left), [BodySide.Center]: undefined } };
 };
