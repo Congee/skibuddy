@@ -17,6 +17,7 @@ import type { Block, Problem } from '../../solve/problem';
 import { solve } from '../../solve/solve';
 import type { SolveOptions, SolveResult } from '../../solve/solve';
 import { EQUIPMENT, shellInFoot } from '../equipment';
+import { BodySide, SEGMENTS, segmentIndex } from '../figure';
 import { CUFF, shinPitch } from './cuff';
 import { bootFitFrom } from '../gear-fit';
 import type { BootFit } from '../gear-fit';
@@ -328,6 +329,45 @@ const bootClearances = (world: Readonly<Record<string, Rigid>>): Scalar[] => {
   const fl = world['foot.L'];
   if (fr === undefined || fl === undefined) throw new Error('feet not solved');
   return BOOTS[Side.Right].flatMap((cr) => BOOTS[Side.Left].flatMap((cl) => clearance(fr, cr, fl, cl)));
+};
+
+/** A leg capsule: the figure's thigh or shin as fractions along its ISB bone, as the clearance rig places it. */
+interface LegCapsule {
+  readonly from: number;
+  readonly to: number;
+  readonly radius: number;
+}
+const legCapsuleOf = (part: string, child: string): LegCapsule => {
+  const shape = SEGMENTS[segmentIndex(part)]?.shape;
+  const bone = -(SEGMENTS[segmentIndex(child)]?.joint[1] ?? Number.NaN);
+  if (shape === undefined || shape.type !== 'capsule') throw new Error(`${part} is not a capsule`);
+  const half = shape.length / 2;
+  return { from: -(shape.center[1] - half) / bone, to: -(shape.center[1] + half) / bone, radius: shape.radius };
+};
+const LEG_CAPSULES = Object.fromEntries(
+  ([[Side.Right, BodySide.Right], [Side.Left, BodySide.Left]] as const).map(([s, b]) => [
+    s,
+    {
+      thigh: legCapsuleOf(`${b}-thigh`, `${b}-shin`),
+      shin: legCapsuleOf(`${b}-shin`, `${b}-boot`),
+      ankle: transformPoint(composeM(rigidInverse(restWorld(`foot.${s}`)), translation(SKELETON_DATA.gear_fit[s].ankle)), [0, 0, 0]),
+    },
+  ]),
+) as Readonly<Record<Side, { readonly thigh: LegCapsule; readonly shin: LegCapsule; readonly ankle: Vec3 }>>;
+
+/** A leg's thigh and shin capsules in world coordinates: hip to knee, knee to ankle. */
+const legCapsules = (world: Readonly<Record<string, Rigid>>, s: Side): ReadonlyArray<readonly [V3, V3, number]> => {
+  const [femur, tibia, foot] = [world[`femur.${s}`], world[`tibia.${s}`], world[`foot.${s}`]];
+  if (femur === undefined || tibia === undefined || foot === undefined) throw new Error('legs not solved');
+  const { thigh, shin, ankle } = LEG_CAPSULES[s];
+  const at = (u: V3, v: V3, c: LegCapsule): readonly [V3, V3, number] => [lerp(u, v, c.from), lerp(u, v, c.to), c.radius];
+  return [at(femur.p, tibia.p, thigh), at(tibia.p, transform(foot, ankle), shin)];
+};
+
+/** Every leg capsule pair's clearance, right against left. */
+const legClearances = (world: Readonly<Record<string, Rigid>>): Scalar[] => {
+  const l = legCapsules(world, Side.Left);
+  return legCapsules(world, Side.Right).flatMap(([a0, a1, ra]) => l.flatMap(([b0, b1, rb]) => clearanceOf(a0, a1, b0, b1, ra + rb)));
 };
 
 /** Gap of whichever edge is lower. */
@@ -1097,6 +1137,7 @@ export const buildTurnProblem = (drill: string, intensity: Intensity, options: B
       }),
       cycle.frameBlock({ name: `boots ${k}`, group: 'boot clearance', kind: BlockKind.Inequality, size: 20 }, [k], ([q = []]) => bootClearances(forward(q45(q), g.origin, LEGS, g.ref)) as Dual[]),
       cycle.frameBlock({ name: `skis ${k}`, group: 'ski clearance', kind: BlockKind.Inequality, size: 20 }, [k], ([q = []]) => skiClearances(forward(q45(q), g.origin, LEGS, g.ref), ski) as Dual[]),
+      cycle.frameBlock({ name: `legs ${k}`, group: 'leg clearance', kind: BlockKind.Inequality, size: 20 }, [k], ([q = []]) => legClearances(forward(q45(q), g.origin, LEGS, g.ref)) as Dual[]),
     );
     // Two-footed: the pressed inside ski's P on the snow and its axis tangent there; bridged, tip and tail on the snow.
     if (!lifts)
