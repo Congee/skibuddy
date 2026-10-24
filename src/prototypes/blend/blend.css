@@ -198,6 +198,13 @@ p {
   min-width: 0;
 }
 
+.top-hand-set {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ink-3);
+}
+
 .top-actions {
   display: flex;
   flex: none;

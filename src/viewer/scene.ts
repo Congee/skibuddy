@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, CircleGeometry, Color, DirectionalLight, Group, HemisphereLight, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, Raycaster, Scene, Vector2, Vector3, WebGPURenderer } from 'three/webgpu';
+import { BufferAttribute, BufferGeometry, CircleGeometry, Color, DirectionalLight, DoubleSide, Group, HemisphereLight, MathUtils, Matrix4, Mesh, MeshBasicNodeMaterial, PerspectiveCamera, PlaneGeometry, Raycaster, Scene, Vector2, Vector3, WebGPURenderer } from 'three/webgpu';
 import { color, dot, float, length, mix, normalWorld, positionLocal, positionWorld, smoothstep, uniform, vec2, vec3 } from 'three/tsl';
 import type { MuscleLevel } from '../content/activation';
 import { Intensity } from '../content/schema';
@@ -20,7 +20,8 @@ import type { Pose } from './pose';
 import { rideOf } from './ride';
 import { SurfaceKind, fieldMesh, heightAt, pathAt, surfaceFor } from './surface';
 import type { Surface } from './surface';
-import { headingAt, turnPath } from './turn-heading';
+import { downhillArrow, fallLineMarks, trackMarks } from './snow-marks';
+import type { Marks } from './snow-marks';
 import type { MusclePick } from './pick';
 import { pixelRatio } from './pixel-ratio';
 import { makeSlotTable } from './slots';
@@ -158,6 +159,12 @@ const SNOW_TONES = {
 } as const;
 /** How fast faces tone toward the key, away from it, and by steepness alone. */
 const SNOW_TOWARD = 2.2;
+/** Snow marks: share of the way from the snow toward its shade, and their opacity. */
+const MARKS_TONE = 0.7;
+const MARKS_OPACITY = 0.7;
+const FALL_LINES_REACH = 16;
+/** Just downhill of the skier, in the field's frame. */
+const ARROW_AT = [0, 1.4] as const;
 const SNOW_AWAY = 0.9;
 const SNOW_STEEP = 0.8;
 const sameSurface = (a: Surface, b: Surface): boolean =>
@@ -191,6 +198,8 @@ export const createViewer = async (
   const fieldMaterial = new MeshBasicNodeMaterial();
   const snowLift = uniform(new Color());
   const snowShade = uniform(new Color());
+  // Marks darken light snow and lighten dark snow.
+  const marksInk = uniform(new Color());
   const fieldOuter = uniform(GROUND_RADIUS);
   const fieldInner = uniform(GROUND_SOLID);
   const key = dot(normalWorld, vec3(SNOW_LIGHT.x, SNOW_LIGHT.y, SNOW_LIGHT.z)).sub(SNOW_LIGHT.y);
@@ -205,6 +214,7 @@ export const createViewer = async (
     const tones = 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.25 ? SNOW_TONES.dark : SNOW_TONES.light;
     snowLift.value.copy(tones.lift);
     snowShade.value.copy(tones.shade);
+    marksInk.value.copy(tones === SNOW_TONES.dark ? tones.lift : tones.shade);
   };
   toneSnow();
   let field: Mesh<BufferGeometry, MeshBasicNodeMaterial> | null = null;
@@ -321,10 +331,52 @@ export const createViewer = async (
     scene.add(field);
   };
   buildField();
+
+  // Snow marks on groomed snow: the skis' track and the fall line, so heading reads against the slope.
+  const marksMaterial = new MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: DoubleSide });
+  marksMaterial.colorNode = mix(groundColour, marksInk, MARKS_TONE);
+  marksMaterial.opacityNode = smoothstep(float(GROUND_RADIUS), float(GROUND_SOLID), length(positionWorld.xz)).mul(MARKS_OPACITY);
+  const marksMesh = (m: Marks): Mesh<BufferGeometry, MeshBasicNodeMaterial> => {
+    const geometry = new BufferGeometry();
+    geometry.setAttribute('position', new BufferAttribute(m.positions, 3));
+    geometry.setIndex(new BufferAttribute(m.indices, 1));
+    const mesh = new Mesh(geometry, marksMaterial);
+    mesh.matrixAutoUpdate = false;
+    mesh.renderOrder = 0.5;
+    scene.add(mesh);
+    return mesh;
+  };
+  const track = marksMesh(trackMarks(surface));
+  const fallLines = marksMesh(fallLineMarks(FALL_LINES_REACH));
+  const arrow = marksMesh(downhillArrow(ARROW_AT));
+  const showMarks = (): void => {
+    const groomed = surface.kind === SurfaceKind.Groomed;
+    for (const m of [track, fallLines, arrow]) m.visible = groomed;
+  };
+  const buildTrack = (): void => {
+    track.geometry.dispose();
+    const m = trackMarks(surface);
+    track.geometry = new BufferGeometry();
+    track.geometry.setAttribute('position', new BufferAttribute(m.positions, 3));
+    track.geometry.setIndex(new BufferAttribute(m.indices, 1));
+    showMarks();
+  };
+  showMarks();
+  const placeMark = (mesh: Mesh, root: ArrayLike<number>, heading: number, x: number, z: number): void => {
+    mesh.matrix.fromArray(root).multiply(fieldTurn.makeRotationY(-heading)).multiply(fieldShift.makeTranslation(-x, -lift - 0.0015, -z));
+    if (mirrored) mesh.matrix.premultiply(MIRROR);
+    mesh.matrixWorldNeedsUpdate = true;
+  };
   /** Slides the field so the skier at `time` stands on its path: rotated off the skis by the heading, mirrored with the figure. */
   const placeField = (root: ArrayLike<number>): void => {
-    if (field === null) return;
     const p = pathAt(surface, time);
+    if (track.visible) {
+      placeMark(track, root, p.heading, p.x, p.z);
+      // Lines along the fall line show only their slide across it; the arrow stays beside the skier.
+      placeMark(fallLines, root, p.heading, p.x, 0);
+      placeMark(arrow, root, p.heading, 0, 0);
+    }
+    if (field === null) return;
     field.matrix.fromArray(root).multiply(fieldTurn.makeRotationY(-p.heading)).multiply(fieldShift.makeTranslation(-p.x, -lift, -p.z));
     if (mirrored) field.matrix.premultiply(MIRROR);
     fieldInverse.copy(field.matrix).invert();
@@ -383,7 +435,8 @@ export const createViewer = async (
       case ViewLock.HipsFixed:
         return hipLock(figure.pose(t));
       case ViewLock.SlopeFixed:
-        return slopeLock(figure.pose(t), headingAt(t, turnPath(drill, intensity)));
+        // The heading the field turns by, so the fall line holds still on screen.
+        return slopeLock(figure.pose(t), pathAt(surface, t).heading);
       default:
         return IDENTITY;
     }
@@ -673,10 +726,11 @@ export const createViewer = async (
       drill = nextDrill;
       figure.setMotion?.(nextDrill, next);
       const nextSurface = surfaceFor(nextDrill, next);
-      if (!sameSurface(surface, nextSurface)) {
-        surface = nextSurface;
-        buildField();
-      }
+      // Groomed tasks share a field but not a path.
+      const sameField = sameSurface(surface, nextSurface);
+      surface = nextSurface;
+      if (!sameField) buildField();
+      buildTrack();
       posedAt = Number.NaN;
       cycle = null;
       fitStale = true;
@@ -763,6 +817,8 @@ export const createViewer = async (
       }
       field?.geometry.dispose();
       fieldMaterial.dispose();
+      for (const m of [track, fallLines, arrow]) m.geometry.dispose();
+      marksMaterial.dispose();
       void renderer.dispose();
     },
   };

@@ -6,9 +6,9 @@ import { forward, skiFrame, transform } from './fk';
 import type { Rigid, V3 } from './fk';
 import { NAMES, skiGoal, skiPoints } from './turn';
 import Q_TABLES from './q-tables.json';
+import { MIGRATED } from './migrated';
 
-/** Drills whose motion comes from the whole-turn solve; the rest keep the pose-solver tables. */
-export const MIGRATED: ReadonlySet<string> = new Set(['regular-steered', 'regular-gs', 'regular-sl']);
+export { MIGRATED };
 
 /** Solved frames per turn: a multiple of the bake's 24, so its frames are exact. */
 export const Q_FRAMES = 48;

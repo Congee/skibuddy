@@ -8,6 +8,7 @@ import type { PlaybackRate } from '../../state/playback';
 import { usePlayback, usePlaybackRate } from './playback';
 import { REDUCED_MOTION, createMedia } from './media';
 import { ViewLock } from '../../viewer/hip-lock';
+import { MIGRATED } from '../../viewer/motion/migrated';
 import { motionFor } from '../../viewer/poses';
 import { RegularTurn } from '../../viewer/poses/regular-turn';
 import { realTurnSeconds } from '../../viewer/turn-time';
@@ -184,9 +185,14 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
     if (k !== undefined && lineDrill() === null) return k.pose;
     return d === undefined ? '' : (motionFor(d.id, isTurnScenarios(d.scenarios)) ?? d.id);
   });
-  // The pose's own view until one is chosen.
+  // The pose's own view until one is chosen: turns hold the slope still, so heading reads against the fall line.
   const [viewChoice, setViewChoice] = createSignal<ViewLock | null>(null);
-  const viewLock = (): ViewLock => viewChoice() ?? (HIPS_FIXED_POSES.has(pose()) ? ViewLock.HipsFixed : ViewLock.SkisFixed);
+  const isTurn = (): boolean => {
+    const d = drill();
+    return d !== undefined && isTurnScenarios(d.scenarios);
+  };
+  const viewLock = (): ViewLock =>
+    viewChoice() ?? (HIPS_FIXED_POSES.has(pose()) ? ViewLock.HipsFixed : isTurn() ? ViewLock.SlopeFixed : ViewLock.SkisFixed);
   const movement = createMemo(() => {
     const k = kind();
     const d = drill();
@@ -361,6 +367,9 @@ export const Blend = (props: { readonly data: BlendData }): JSX.Element => {
             </span>
             <Show when={status()}>{(tag) => <span class="tag" data-tone={placeholder() !== null ? 'placeholder' : undefined}>{tag()}</span>}</Show>
           </p>
+          <Show when={!MIGRATED.has(pose())}>
+            <p class="top-hand-set">Hand-set poses, not yet from the physics</p>
+          </Show>
         </div>
         <div class="top-actions">
           <button type="button" class="icon-button" aria-pressed={mode() === Mode.Drills} onClick={openDrills}>
