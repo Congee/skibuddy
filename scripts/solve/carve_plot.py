@@ -2,7 +2,7 @@
 # requires-python = ">=3.11,<3.13"
 # dependencies = ["numpy==2.1.3", "matplotlib==3.9.2"]
 # ///
-"""Curves of the R1 carve-cycle solves over t/T, one line per intensity, with the measured curves in grey.
+"""Curves of the carve-cycle solves over t/T, one line per intensity, with the measured curves in grey.
   carve_plot.py KIND DIR OUT.png     reads DIR/sol-KIND-<intensity>-n80.json
 """
 import json
@@ -19,8 +19,9 @@ import numpy as np
 LIT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'prior', 'lit-curves.json')
 DEG = 180 / math.pi
 ROWS = [('eps', 'ε edge, deg', DEG), ('lam', 'λ lean, deg', DEG), ('load', 'load, g', 1), ('gam', 'γ attack, deg', DEG), ('om', 'ω yaw off the carve, rad/s', 1),
-        ('m', 'm = ε − λ, deg', DEG), ('MoutR', 'M_out / 0.17 Nm/kg (solid), M_in / 0.23 (dash-dot)', 1), ('psi', 'ψ heading, deg', DEG), ('v', 'v, m/s', 1),
-        ('h', 'h, m', 1)]
+        ('m', 'm = ε − λ, deg', DEG), ('MoutR', '|M_snow| out share / 0.17 Nm/kg (solid), in / 0.23 (dash-dot)', 1),
+        ('MhoR', 'M_hip out / 0.17 Nm/kg (solid), in / 0.23 (dash-dot)', 1), ('s', 'bend branch: 1 pressed, 0 bridged', 1), ('psi', 'ψ mass heading, deg', DEG),
+        ('psiS', 'ψ_ski skis heading, deg', DEG), ('v', 'v, m/s', 1), ('h', 'h, m', 1)]
 COLORS = {'gentle': '#2a7fd4', 'moderate': '#d4312a', 'dynamic': '#1f9e54'}
 
 
@@ -58,11 +59,11 @@ def measured(kind, lit):
 def main():
   kind, d, png = sys.argv[1:4]
   lit = json.load(open(LIT))
-  fig, axs = plt.subplots(len(ROWS), 1, figsize=(8, 21), sharex=True)
+  fig, axs = plt.subplots(len(ROWS), 1, figsize=(8, 27), sharex=True)
   meas = measured(kind, lit)
   pre, cols = ('sl', {'reid': '#7b3fc4'}) if kind == 'reid' else (kind, COLORS)
   for inten, col in cols.items():
-    # Solid: R2 warm start; dotted: carve start.
+    # Solid: R3 warm start; dotted: carve start.
     for tag, ls, lw in (('', '-', 1.6), ('-carve', ':', 1.2)):
       f = os.path.join(d, f'sol-{pre}-{inten}{tag}-n80.json')
       if not os.path.exists(f):
@@ -73,8 +74,8 @@ def main():
       lab_ = f"{inten}{' carve start' if tag else ''} ({sol['status']}, τ {sol.get('tauReached')}, T {sol['T']:.2f} s, D {sol['D']:.2f} m)"
       for ax, (k, lab, sc) in zip(axs, ROWS):
         ax.plot(t, np.array([n.get(k, np.nan) for n in ns]) * sc, color=col, ls=ls, lw=lw, label=lab_)
-        if k == 'MoutR':
-          ax.plot(t, np.array([n.get('MinR', np.nan) for n in ns]), color=col, ls='-.', lw=lw * 0.8)
+        if k in ('MoutR', 'MhoR'):
+          ax.plot(t, np.array([n.get({'MoutR': 'MinR', 'MhoR': 'MhiR'}[k], np.nan) for n in ns]), color=col, ls='-.', lw=lw * 0.8)
   for ax, (k, lab, _) in zip(axs, ROWS):
     for label, ls, x, y, err, *xerr in meas.get(k, []):
       if ls in ('-', '--'):
