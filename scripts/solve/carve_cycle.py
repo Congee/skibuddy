@@ -121,15 +121,26 @@ class Model:
     Pi = self.slip_speed(v * ca.sin(gam), om)
     vDot = G * (self.sin * ca.sin(psi) - self.c['mu'] * load - self.c['dragPerV2'] * v * v - f / ca.cos(gam) * Pi / v)
     xd = ca.vertcat(lamDot, lamAcc, hd, hdd, u[0], epsDot, u[1], gamDot, u[2], psiDot, vDot)
-    return xd, fm - load * G, kap, share, force, {'p': p, 'pd': pd, 'pdd': pdd, 'inertia': inertia, 'kS': kS, 'f': f, 'Pi': Pi}
+    M = self.pivot_moment(f / ca.cos(gam) * self.c['mass'] * G, v * ca.sin(gam), om)
+    mo, mi = share * M / (M_REF_OUT * self.c['mass']), (1 - share) * M / (M_REF_IN * self.c['mass'])
+    return xd, fm - load * G, kap, share, force, {'p': p, 'pd': pd, 'pdd': pdd, 'inertia': inertia, 'kS': kS, 'f': f, 'Pi': Pi, 'M': M, 'MoutR': mo, 'MinR': mi}
 
   # Mean |a + ω s| over the running edge, uniform load (inferred): b ≤ a gives a; else (1/ℓ)∫|u|du/|ω| = (a² + b²)/(2b),
   # = a + (b − a)²/(2b): equal and C¹ at b = a. With p = max(0, b − a), max(a, b) = a + p, so the denominator never hits 0.
-  def slip_speed(self, a, om):
+  def edge_slip(self, a, om):
     ell = math.sqrt(8 * self.depth * self.Rsc)
     b = ca.sqrt(om * om + OM_DELTA ** 2) * ell / 2
-    p = (b - a + ca.sqrt((b - a) ** 2 + P_DELTA ** 2)) / 2
+    return ell, (b - a + ca.sqrt((b - a) ** 2 + P_DELTA ** 2)) / 2
+
+  def slip_speed(self, a, om):
+    _, p = self.edge_slip(a, om)
     return a + p * p / (2 * (a + p))
+
+  # Snow's yaw moment about the ski centre, M = q∫ s·sign(a + ωs) ds over ±ℓ/2, q = F/ℓ: 0 with no sign change (b ≤ a), else
+  # q(ℓ²/4 − s0²), s0 = −a/ω, = (Fℓ/4)(1 − a²/b²) = (Fℓ/4)·p(2a + p)/(a + p)²: 0 at b = a (continuous), Fℓ/4 at a = 0.
+  def pivot_moment(self, F, a, om):
+    ell, p = self.edge_slip(a, om)
+    return F * ell / 4 * p * (2 * a + p) / (a + p) ** 2
 
 
 LIT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'prior', 'lit-curves.json')
@@ -140,8 +151,10 @@ GAM_REF = float(re.match(r't [^,]*, ([\d.]+) ±', _sl['events']['skid_peak']).gr
 # |ω| as √(ω² + δ²), rad/s, and max(0, b − a) as (x + √(x² + δ²))/2, m/s: numerical.
 OM_DELTA = 1e-3
 P_DELTA = 1e-3
-# Scholtes homotopy on m·γ, m·ω± ≤ τ, each step warm started from the last.
+# Scholtes homotopy on the split ω⁺·ω⁻ ≤ τ, each step warm started from the last.
 TAUS = (1e-2, 1e-3, 1e-4, 1e-5, 1e-6)
+# Hip rotation moment maxima, Nm/kg: outside ER 0.17, inside IR 0.23 (heinrich-2022, docs/research/biomechanics.md:1005).
+M_REF_OUT, M_REF_IN = 0.17, 0.23
 GAM_MAX = 60.0 * math.pi / 180
 # Lateral |cos ψ| as √(cos² + δ²), numerical.
 ABS_DELTA = 1e-3
@@ -277,10 +290,9 @@ def solve_law(args, c, m, g, lam_peak, sc, wall, tau_c, duals=None):
       # Free switch: between straight across (0) and the fall line (π/2).
       ub[I['psi']] = math.pi / 2
     x = var(NX, lb, ub, [min(ub[i], max(lb[i], clip(k, gi(k, tt)))) for i, k in enumerate(NXL)])
-    # Grip: 0 ≤ m ≤ A_max; slip (γ > 0) only at m = 0.
-    mg = x[I['eps']] - x[I['lam']]
-    con(mg, 0, amax)
-    con(mg * x[I['gam']], -inf, tau_c)
+    # Platform hold 0 ≤ m ≤ A_max; slip at any margin. The snow's lateral capacity: tan λ ≤ GRIP_RATIO (task.ts rule 3).
+    con(x[I['eps']] - x[I['lam']], 0, amax)
+    con(ca.sin(x[I['lam']]) - c['GRIP_RATIO'] * ca.cos(x[I['lam']]), -inf, 0)
     if first:
       # Cross-over: the mass is highest at the switch.
       con(x[I['h']] - first[0][I['h']], -inf, 0)
@@ -291,7 +303,7 @@ def solve_law(args, c, m, g, lam_peak, sc, wall, tau_c, duals=None):
   X0 = new_x(0.0)
   Xk = X0
   nodes = [(0, 0.0, X0, None, None)]
-  Iv = IL = ID = Ju = 0
+  Iv = IL = ID = Ju = JM = 0
   for j in range(N):
     tj, dt = (j + 0.5) * Tg / N, Tg / N
     U = var(3, [-inf] * 3, [inf] * 3, [(gi(k, tj + dt / 2) - gi(k, tj - dt / 2)) / dt for k in ('hdd', 'epsDot', 'gamDot')])
@@ -300,17 +312,16 @@ def solve_law(args, c, m, g, lam_peak, sc, wall, tau_c, duals=None):
       tt = (j + tau[r]) * Tg / N
       x = new_x(tt)
       Z = var(3, [0, 0, 0], [c['F_CEIL_G'], inf, inf], [min(c['F_CEIL_G'], max(0.0, gi('load', tt))), max(0.0, gi('omP', tt)), max(0.0, gi('omM', tt))])
-      mg = x[I['eps']] - x[I['lam']]
-      con(mg * Z[1], -inf, tau_c)
-      con(mg * Z[2], -inf, tau_c)
-      # The split's own complementarity: without it ω⁺ = ω⁻ drift large together and pin m.
+      # The split's complementarity: without it ω⁺ = ω⁻ drift large together.
       con(Z[1] * Z[2], -inf, tau_c)
       Xc.append(x)
       nodes.append((j, tau[r], x, U, Z))
     for r in range(1, d + 1):
       xp = C[0, r] * Xk + sum(C[q, r] * Xc[q - 1] for q in range(1, d + 1))
       x, Z = nodes[-d + r - 1][2], nodes[-d + r - 1][4]
-      xd, alg, kap, share, force, _ = m.rhs_law(x, U, Z[0], Z[1] - Z[2], delta, lam_peak)
+      xd, alg, kap, share, force, ex = m.rhs_law(x, U, Z[0], Z[1] - Z[2], delta, lam_peak)
+      # (1/T)∫ over Radau: hstep·Bq/T = Bq/N.
+      JM += Bq[r] * (ex['MoutR'] ** 2 + ex['MinR'] ** 2)
       con(hstep * xd - xp, 0, 0)
       con(alg, 0, 0)
       con(m.pressed_margin_s(x[I['eps']], force, delta), 0, inf)
@@ -329,10 +340,11 @@ def solve_law(args, c, m, g, lam_peak, sc, wall, tau_c, duals=None):
   con(ca.vertcat(X0[I['lam']], XN[I['lam']]), 0, 0)
   mirror = ca.vertcat(*[XN[I[k]] + X0[I[k]] for k in ODD], *[XN[I[k]] - X0[I[k]] for k in EVEN], XN[I['psi']] + X0[I['psi']] - math.pi)
   con(mirror, 0, 0)
-  course = ca.vertcat(Iv - args.speed * T, IL - args.turn_l, ID - args.offset)
+  cnames = ('meanSpeed', 'L') if args.free_d else ('meanSpeed', 'L', 'D')
+  course = ca.vertcat(Iv - args.speed * T, IL - args.turn_l, *([] if args.free_d else [ID - args.offset]))
   con(course, 0, 0)
   # Time-mean J: (1/T)∫u² dt over piecewise-constant u is (1/N)Σu².
-  J = Ju / N
+  J = (Ju + JM) / N
   W = ca.vertcat(*w)
   ip = {'max_iter': args.max_iter, 'tol': args.tol, 'constr_viol_tol': 1e-10, 'print_level': 0, 'sb': 'yes', 'mumps_pivot_order': 6, 'max_wall_time': max(1.0, wall)}
   kw = {}
@@ -344,8 +356,8 @@ def solve_law(args, c, m, g, lam_peak, sc, wall, tau_c, duals=None):
   r_ = solver(x0=w0, lbx=lbw, ubx=ubw, lbg=lbg, ubg=ubg, **kw)
   st = solver.stats()
   wv = r_['x']
-  outs = ca.Function('fv', [W], [J, X0, XN, T, mirror, course, Iv, IL, ID])(wv)
-  Jv, x0v, xNv, Tv, mv, cv, Ivv, ILv, IDv = [np.array(z).ravel() for z in outs]
+  outs = ca.Function('fv', [W], [J, X0, XN, T, mirror, course, Iv, IL, ID, JM / N])(wv)
+  Jv, x0v, xNv, Tv, mv, cv, Ivv, ILv, IDv, JMv = [np.array(z).ravel() for z in outs]
   flat = np.array(ca.Function('ev', [W], [ca.vertcat(*[ca.vertcat(*[q for q in nd[2:] if q is not None]) for nd in nodes])])(wv)).ravel()
   Tv = float(Tv[0])
   rows, k = [], 0
@@ -364,7 +376,8 @@ def solve_law(args, c, m, g, lam_peak, sc, wall, tau_c, duals=None):
       row.update(dict(zip(NUL, uv)))
       row.update({'load': load, 'lamAcc': float(xd[1]), 'pdd': float(ex['pdd']), 'kappa': float(kap), 'kS': float(ex['kS']), 'f': float(ex['f']),
                   'force': float(force), 'pressedMargin': float(m.pressed_margin_s(xv[I['eps']], float(force), delta)), 'algRes': float(alg),
-                  'omP': omP, 'omM': omM, 'om': omP - omM, 'Pi': float(ex['Pi']), 'kSoff': float(ex['kS']) - float(kap) * math.cos(xv[I['gam']])})
+                  'omP': omP, 'omM': omM, 'om': omP - omM, 'Pi': float(ex['Pi']), 'kSoff': float(ex['kS']) - float(kap) * math.cos(xv[I['gam']]),
+                  'M': float(ex['M']), 'MoutR': float(ex['MoutR']), 'MinR': float(ex['MinR'])})
     else:
       # At λ 0 the force balance is explicit: F/m = ḧ − h λ̇² + g cos θ.
       row['load'] = (xv[I['hdd']] - xv[I['h']] * xv[I['lamDot']] ** 2 + m.G * m.cos) / m.G
@@ -372,9 +385,9 @@ def solve_law(args, c, m, g, lam_peak, sc, wall, tau_c, duals=None):
     rows.append(row)
   names = [*ODD, *EVEN, 'psi']
   duals_out = {'x': np.array(wv).ravel().tolist(), 'lam_x': np.array(r_['lam_x']).ravel().tolist(), 'lam_g': np.array(r_['lam_g']).ravel().tolist()}
-  return {'status': st['return_status'], 'success': st['success'], 'iters': st['iter_count'], 'lamPeak': lam_peak, 'tau': tau_c, 'J': float(Jv[0]), '_duals': duals_out,
-          'defectDegS': float(xNv[1] + x0v[1]) * 180 / math.pi, 'mirrorRes': dict(zip(names, (float(z) for z in mv))),
-          'courseRes': dict(zip(('meanSpeed', 'L', 'D'), (float(cv[0]) / Tv, float(cv[1]), float(cv[2])))),
+  return {'status': st['return_status'], 'success': st['success'], 'iters': st['iter_count'], 'lamPeak': lam_peak, 'tau': tau_c, 'J': float(Jv[0]), 'JM': float(JMv[0]),
+          '_duals': duals_out, 'defectDegS': float(xNv[1] + x0v[1]) * 180 / math.pi, 'mirrorRes': dict(zip(names, (float(z) for z in mv))),
+          'courseRes': dict(zip(cnames, (float(cv[0]) / Tv, *(float(z) for z in cv[1:])))),
           'meanSpeed': float(Ivv[0]) / Tv, 'L': float(ILv[0]), 'D': float(IDv[0]),
           'T': Tv, 'v0': float(x0v[I['v']]), 'psi0': float(x0v[I['psi']]), 'psiN': float(xNv[I['psi']]), 'h0': float(x0v[I['h']]),
           'ceil': {'F_CEIL_G': c['F_CEIL_G'], 'HD_MAX': c['HD_MAX']}, 'scales': sc, 'tau': list(tau), 'Bq': list(Bq), 'nodes': rows}
@@ -432,7 +445,7 @@ def cycle(args):
     sol = solve_law(args, c, m, g, lam_peak, sc, left, tau_c, duals)
     duals = sol.pop('_duals')
     nxt = max(n['lam'] for n in sol['nodes'])
-    hist.append({'tau': tau_c, 'lamPeakDeg': lam_peak * 180 / math.pi, 'maxLamDeg': nxt * 180 / math.pi, 'status': sol['status'], 'iters': sol['iters'], 'J': sol['J'],
+    hist.append({'tau': tau_c, 'lamPeakDeg': lam_peak * 180 / math.pi, 'maxLamDeg': nxt * 180 / math.pi, 'status': sol['status'], 'iters': sol['iters'], 'J': sol['J'], 'JM': sol['JM'],
                  'T': sol['T'], 'psi0Deg': sol['psi0'] * 180 / math.pi})
     print(json.dumps(hist[-1]), flush=True)
     if sol['status'] not in ('Solve_Succeeded', 'Solved_To_Acceptable_Level', 'Maximum_Iterations_Exceeded'):
@@ -478,7 +491,13 @@ def samples_r1(sol):
     n0['f'] = n0['load'] * math.sin(n0['lam'])
     n0['kSoff'] = (n0['om'] - n0['gamDot']) / n0['v']
     c = json.load(open(sol['args']['const']))
-    n0['Pi'] = float(Model(c).slip_speed(n0['v'] * math.sin(n0['gam']), n0['om']))
+    md = Model(c)
+    a0 = n0['v'] * math.sin(n0['gam'])
+    n0['Pi'] = float(md.slip_speed(a0, n0['om']))
+    if 'M' in cs[-1]:
+      n0['M'] = float(md.pivot_moment(n0['f'] / math.cos(n0['gam']) * c['mass'] * c['G'], a0, n0['om']))
+      n0['MoutR'] = n0['share'] * n0['M'] / (M_REF_OUT * c['mass'])
+      n0['MinR'] = (1 - n0['share']) * n0['M'] / (M_REF_IN * c['mass'])
   return [n0] + cs
 
 
@@ -595,6 +614,85 @@ def gates_r2(args):
     out[name] = r2_cell(json.load(open(fine_f)), json.load(open(coarse_f)))
     print(json.dumps({name: out[name]['gates']}))
   json.dump(out, open(args.out, 'w'), indent=1)
+
+
+DEG = 180 / math.pi
+# reid-2010 10 m course, mean ± SD (n 6): GRF pp 245 text, CoM speed Table G.1; reid-2020 edge and attack.
+REID = {'epsPeakDeg': (65.7, 1.7), 'gamPeakDeg': (15.1, 5.3), 'gamPeakT': (0.1, 0.4), 'loadMax': (3.35, 0.20), 'loadMaxT': (0.509, 0.059),
+        'loadMin': (0.17, 0.06), 'loadMinT': (0.008, 0.063), 'vMax': (12.62, 0.24), 'vMaxT': (0.329, 0.035), 'vMin': (11.74, 0.36), 'vMinT': (0.7333, 0.0374)}
+
+
+def within(x, ms, k=2):
+  return abs(x - ms[0]) <= k * ms[1]
+
+
+def phase_d(t, t0):
+  """Signed phase distance on the switch-to-switch cycle (t 1 is the next t 0)."""
+  return (t - t0 + 0.5) % 1 - 0.5
+
+
+def r3_cell(fine, coarse, reid):
+  r = r2_cell(fine, coarse)
+  c = json.load(open(fine['args']['const']))
+  s = samples_r1(fine)
+  T = fine['T']
+  col = lambda k: np.array([n[k] for n in s])
+  t, gam, load, mg, lam, v = col('t') / T, col('gam'), col('load'), col('m'), col('lam'), col('v')
+  N = fine['args']['N']
+  Bq = np.tile(fine['Bq'][1:], N) * T / N
+  cs = s[1:]
+  qd = lambda f: float(sum(b * f(n) for b, n in zip(Bq, cs)))
+  tb = 1e-6
+  amax = c['ANGULATION_MAX_DEG'] * math.pi / 180
+  grip = [round(float(x), 4) for x, l in zip(t, lam) if math.sin(l) - c['GRIP_RATIO'] * math.cos(l) >= -tb]
+  if grip:
+    r['activeBounds']['tan lam<=GRIP_RATIO'] = grip
+  ig, il = int(np.argmax(gam)), int(np.argmax(load))
+  rising = ig < il and ig + 1 < len(load) and load[ig + 1] > load[ig]
+  slip = [x for x, g in zip(mg, gam) if g > 0.5 / DEG]
+  io, ii = int(np.argmax(col('MoutR'))), int(np.argmax(col('MinR')))
+  sweep = qd(lambda n: n['v'] * n['kS'])
+  r.update({
+    'D': fine['D'], 'freeD': bool(fine['args'].get('free_d')), 'sigmaOut': qd(lambda n: n['om']) / sweep, 'skisSweepDeg': sweep * DEG,
+    'JM': fine.get('JM'), 'MoutPeakR': float(col('MoutR')[io]), 'MoutPeakT': float(t[io]), 'MinPeakR': float(col('MinR')[ii]), 'MinPeakT': float(t[ii]),
+    'MpeakNm': float(col('M').max()), 'gripBinds': grip, 'tanLamMax': float(np.tan(lam.max())),
+    'switchMassOffFallDeg': 90 - r['switchMassDeg'], 'switchSkisOffFallDeg': 90 - r['switchSkisDeg'], 'gamAtLoadPeakDeg': float(gam[il]) * DEG,
+    'minMWhereSlipDeg': float(min(slip)) * DEG if slip else None,
+  })
+  g2 = r['gates']
+  m_ok = all(-1e-9 <= n['m'] <= amax + 1e-9 for n in fine['nodes'])
+  gates = {
+    '1_solved_residuals': g2['1_solved_residuals'], 'mirrorRes': g2['mirrorRes'], 'courseRes': g2['courseRes'],
+    '2_one_max': g2['2_one_max'], 'epsMaxima': g2['epsMaxima'], 'loadMaxima': g2['loadMaxima'], '4_mesh': g2['4_mesh'],
+    'm_range': m_ok, 'tauReached': fine.get('tauReached'), 'maxOmPOmM': g2['maxOmPOmM'],
+    'gam_peak_on_rising_load': rising, 'gam_lt_4_at_load_peak': r['gamAtLoadPeakDeg'] < 4,
+    'slip_above_lean': all(x > tb for x in slip),
+    'switch_off_fall_line': {'massDeg': r['switchMassOffFallDeg'], 'skisDeg': r['switchSkisOffFallDeg']},
+  }
+  if reid:
+    gates['reid'] = {
+      'epsPeak': within(r['epsPeakDeg'], REID['epsPeakDeg']), 'gamPeak': within(r['gamPeakDeg'], REID['gamPeakDeg']),
+      'gamPeakT': REID['gamPeakT'][0] <= r['gamPeakT'] <= REID['gamPeakT'][1],
+      'loadMax': within(float(load.max()), REID['loadMax']), 'loadMaxT': abs(phase_d(r['loadPeakT'], REID['loadMaxT'][0])) <= 2 * REID['loadMaxT'][1],
+      'loadMin': within(float(load.min()), REID['loadMin']), 'loadMinT': abs(phase_d(float(t[int(np.argmin(load))]), REID['loadMinT'][0])) <= 2 * REID['loadMinT'][1],
+      'vMax': within(float(v.max()), REID['vMax']), 'vMaxT': abs(phase_d(float(t[int(np.argmax(v))]), REID['vMaxT'][0])) <= 2 * REID['vMaxT'][1],
+      'vMin': within(float(v.min()), REID['vMin']), 'vMinT': abs(phase_d(float(t[int(np.argmin(v))]), REID['vMinT'][0])) <= 2 * REID['vMinT'][1],
+      'values': {'loadMin': float(load.min()), 'loadMinT': float(t[int(np.argmin(load))]), 'vMaxT': float(t[int(np.argmax(v))]), 'vMinT': float(t[int(np.argmin(v))])},
+    }
+  r['gates'] = gates
+  return r
+
+
+def gates_r3(args):
+  out = json.load(open(args.out)) if os.path.exists(args.out) else {}
+  for name, fine_f, coarse_f in args.cell:
+    out[name] = r3_cell(json.load(open(fine_f)), json.load(open(coarse_f)), 'reid' in name)
+    print(json.dumps({name: out[name]['gates']}, default=np_item))
+  json.dump(out, open(args.out, 'w'), indent=1, default=np_item)
+
+
+def np_item(o):
+  return o.item()
 
 
 OK = ('Solve_Succeeded', 'Solved_To_Acceptable_Level')
@@ -731,6 +829,7 @@ def main():
   cy.add_argument('--speed', type=float, required=True, help='mean speed over the turn, m/s')
   cy.add_argument('--turn-l', type=float, required=True, help='fall-line distance per turn, m')
   cy.add_argument('--offset', type=float, required=True, help="the mass's lateral travel per turn (gate offset D), m")
+  cy.add_argument('--free-d', action='store_true', help='D solved by the energy balance; --offset shapes the carve start only')
   cy.add_argument('--N', type=int, default=80)
   cy.add_argument('--delta-deg', type=float, default=1.0)
   cy.add_argument('--max-iter', type=int, default=3000)
@@ -743,6 +842,9 @@ def main():
   gr = sp.add_parser('gates_r2', help='R2 gates and summary from N and N/2 solves; merges into OUT')
   gr.add_argument('out')
   gr.add_argument('--cell', nargs=3, action='append', required=True, metavar=('NAME', 'SOL_N', 'SOL_HALF_N'))
+  g3 = sp.add_parser('gates_r3', help='R3 gates and summary from N and N/2 solves; a NAME with "reid" adds the measured gates')
+  g3.add_argument('out')
+  g3.add_argument('--cell', nargs=3, action='append', required=True, metavar=('NAME', 'SOL_N', 'SOL_HALF_N'))
   lp = sp.add_parser('link', help='both starts linked and agreeing, each against its N/2 solve')
   for k in ('a', 'a_half', 'b', 'b_half'):
     lp.add_argument(k)
@@ -751,7 +853,7 @@ def main():
   bk.add_argument('--cell', nargs=4, action='append', required=True, metavar=('NAME', 'SOL_N', 'SOL_HALF_N', 'REPLAY'))
   bk.add_argument('--other', nargs=3, action='append', metavar=('NAME', 'SOL_N', 'SOL_HALF_N'), help='the second start at the same heading')
   args = ap.parse_args()
-  {'port': port, 'cycle': cycle, 'gates_r2': gates_r2, 'link': link, 'bake': bake}[args.cmd](args)
+  {'port': port, 'cycle': cycle, 'gates_r2': gates_r2, 'gates_r3': gates_r3, 'link': link, 'bake': bake}[args.cmd](args)
 
 
 if __name__ == '__main__':
