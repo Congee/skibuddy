@@ -18,8 +18,8 @@ import numpy as np
 
 LIT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'prior', 'lit-curves.json')
 DEG = 180 / math.pi
-ROWS = [('eps', 'ε edge, deg', DEG), ('lam', 'λ lean, deg', DEG), ('load', 'load, g', 1), ('gam', 'γ attack, deg', DEG), ('psi', 'ψ heading, deg', DEG),
-        ('v', 'v, m/s', 1), ('h', 'h, m', 1)]
+ROWS = [('eps', 'ε edge, deg', DEG), ('lam', 'λ lean, deg', DEG), ('load', 'load, g', 1), ('gam', 'γ attack, deg', DEG), ('om', 'ω yaw off the carve, rad/s', 1),
+        ('m', 'm = ε − λ, deg', DEG), ('psi', 'ψ heading, deg', DEG), ('v', 'v, m/s', 1), ('h', 'h, m', 1)]
 COLORS = {'gentle': '#2a7fd4', 'moderate': '#d4312a', 'dynamic': '#1f9e54'}
 
 
@@ -46,17 +46,20 @@ def measured(kind, lit):
 def main():
   kind, d, png = sys.argv[1:4]
   lit = json.load(open(LIT))
-  fig, axs = plt.subplots(len(ROWS), 1, figsize=(8, 15), sharex=True)
+  fig, axs = plt.subplots(len(ROWS), 1, figsize=(8, 19), sharex=True)
   meas = measured(kind, lit)
   for inten, col in COLORS.items():
-    f = os.path.join(d, f'sol-{kind}-{inten}-n80.json')
-    if not os.path.exists(f):
-      continue
-    sol = json.load(open(f))
-    ns = [sol['nodes'][0]] + [n for n in sol['nodes'] if 'hddd' in n]
-    t = np.array([n['t'] for n in ns]) / sol['T']
-    for ax, (k, lab, sc) in zip(axs, ROWS):
-      ax.plot(t, np.array([n[k] for n in ns]) * sc, color=col, lw=1.6, label=f"{inten} ({sol['status']}, T {sol['T']:.2f} s)")
+    # Solid: R1 warm start; dotted: carve start.
+    for tag, ls, lw in (('', '-', 1.6), ('-carve', ':', 1.2)):
+      f = os.path.join(d, f'sol-{kind}-{inten}{tag}-n80.json')
+      if not os.path.exists(f):
+        continue
+      sol = json.load(open(f))
+      ns = [sol['nodes'][0]] + [n for n in sol['nodes'] if 'hddd' in n]
+      t = np.array([n['t'] for n in ns]) / sol['T']
+      lab_ = f"{inten}{' carve start' if tag else ''} ({sol['status']}, τ {sol.get('tauReached')}, T {sol['T']:.2f} s)"
+      for ax, (k, lab, sc) in zip(axs, ROWS):
+        ax.plot(t, np.array([n.get(k, np.nan) for n in ns]) * sc, color=col, ls=ls, lw=lw, label=lab_)
   for ax, (k, lab, _) in zip(axs, ROWS):
     for label, ls, x, y, err in meas.get(k, []):
       if ls in ('-', '--'):

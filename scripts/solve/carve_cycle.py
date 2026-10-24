@@ -7,7 +7,7 @@
 Ports src/physics/turn.ts's carve: the pendulum on the pressure centre, skiCurvatureOf, the speed law. Constants come
 from a JSON the lane's bun dump writes; nothing here is retyped from TS.
   port CONST TSVALS OUT        the port table against TS values
-  gates_r1 OUT --cell NAME SOL SOL_HALF ...   R1 gates and summary
+  gates_r2 OUT --cell NAME SOL SOL_HALF ...   R2 gates and summary
   cycle CONST OUT --speed --turn-l --offset [options]   the share-law solve with the λ_peak fixed point
   link A A_HALF B B_HALF       both starts linked and agreeing
   bake OUT --cell NAME SOL SOL_HALF REPLAY [--other NAME SOL SOL_HALF] ...   carve-cycles.json, gated
@@ -101,37 +101,35 @@ class Model:
     return p, A * w, A, B
 
 
-  def rhs_law(self, x, u, load, delta, lam_peak):
-    lam, lamDot, h, hd, hdd, eps, epsDot, gam, psi, v = [x[i] for i in range(10)]
+  def rhs_law(self, x, u, load, om, delta, lam_peak):
+    lam, lamDot, h, hd, hdd, eps, epsDot, gam, gamDot, psi, v = [x[i] for i in range(11)]
     G = self.G
     p, pd, A, B = self.law_s(lam, lamDot, lam_peak)
     share = self.c['SWITCH_SHARE'] - p / self.c['stance']
     force = load * share * self.c['mass'] * G
     kap = self.ski_curvature_s(eps, force, delta)
-    # Steady sideslip on the bent edge: the support path bends by κ cos γ (inferred).
-    kS = kap * ca.cos(gam)
+    # Ski heading = travel + γ; the edge yaws the ski at v cos γ κ, the leg adds ω, so the travel turns at v kS.
+    kS = kap * ca.cos(gam) + (om - gamDot) / v
     pull = G * self.sin * ca.cos(psi)
     inertia = h + A * ca.cos(lam)
     lamAcc = (G * self.cos * ca.sin(lam) - (v * v * kS + B - pull) * ca.cos(lam) - 2 * hd * lamDot) / inertia
     pdd = A * lamAcc + B
     fm = hdd - h * lamDot ** 2 + G * self.cos * ca.cos(lam) + (v * v * kS + pdd - pull) * ca.sin(lam)
     psiDot = (load * G * ca.sin(lam) + G * self.sin * ca.cos(psi)) / v
-    # Snow's lateral force in g, ≥ 0 by the bounds λ ≥ 0, load ≥ 0; skid dissipation as solveGroomed's max(0, f) tan(set).
+    # Snow's lateral force in g, ≥ 0 by the bounds λ ≥ 0, load ≥ 0; normal to the ski it is f / cos γ.
     f = load * ca.sin(lam)
-    vDot = G * (self.sin * ca.sin(psi) - self.c['mu'] * load - self.c['dragPerV2'] * v * v - f * ca.tan(gam))
-    xd = ca.vertcat(lamDot, lamAcc, hd, hdd, u[0], epsDot, u[1], u[2], psiDot, vDot)
-    return xd, fm - load * G, kap, share, force, {'p': p, 'pd': pd, 'pdd': pdd, 'inertia': inertia, 'kS': kS, 'f': f}
+    Pi = self.slip_speed(v * ca.sin(gam), om)
+    vDot = G * (self.sin * ca.sin(psi) - self.c['mu'] * load - self.c['dragPerV2'] * v * v - f / ca.cos(gam) * Pi / v)
+    xd = ca.vertcat(lamDot, lamAcc, hd, hdd, u[0], epsDot, u[1], gamDot, u[2], psiDot, vDot)
+    return xd, fm - load * G, kap, share, force, {'p': p, 'pd': pd, 'pdd': pdd, 'inertia': inertia, 'kS': kS, 'f': f, 'Pi': Pi}
 
-  # §4.2 margin band: q = smooth min(1, γ/γ_ref), softplus width Q_WIDTH, shifted so q(0) is exactly 0.
-  def band_s(self, gam):
-    amax = self.c['ANGULATION_MAX_DEG'] * math.pi / 180
-    sm = lambda g: GAM_REF - Q_WIDTH * softplus((GAM_REF - g) / Q_WIDTH)
-    q = (sm(gam) - sm(0.0)) / GAM_REF
-    return -SLIP * q, amax - (amax - SLIP) * q, q
-
-
-def softplus(x):
-  return ca.fmax(x, 0) + ca.log1p(ca.exp(-ca.fabs(x)))
+  # Mean |a + ω s| over the running edge, uniform load (inferred): b ≤ a gives a; else (1/ℓ)∫|u|du/|ω| = (a² + b²)/(2b),
+  # = a + (b − a)²/(2b): equal and C¹ at b = a. With p = max(0, b − a), max(a, b) = a + p, so the denominator never hits 0.
+  def slip_speed(self, a, om):
+    ell = math.sqrt(8 * self.depth * self.Rsc)
+    b = ca.sqrt(om * om + OM_DELTA ** 2) * ell / 2
+    p = (b - a + ca.sqrt((b - a) ** 2 + P_DELTA ** 2)) / 2
+    return a + p * p / (2 * (a + p))
 
 
 LIT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'prior', 'lit-curves.json')
@@ -139,9 +137,11 @@ _sl = json.load(open(LIT))['slalom']
 _num = lambda s: float(s.split()[0])
 # reid-2010 SL skid peak mean, inferred as the full-slip attack.
 GAM_REF = float(re.match(r't [^,]*, ([\d.]+) ±', _sl['events']['skid_peak']).group(1)) * math.pi / 180
-Q_WIDTH = 1.0 * math.pi / 180
-# §4.2's slip allowance: the edge may lead or trail the lean by this much at full slip.
-SLIP = 5.0 * math.pi / 180
+# |ω| as √(ω² + δ²), rad/s, and max(0, b − a) as (x + √(x² + δ²))/2, m/s: numerical.
+OM_DELTA = 1e-3
+P_DELTA = 1e-3
+# Scholtes homotopy on m·γ, m·ω± ≤ τ, each step warm started from the last.
+TAUS = (1e-2, 1e-3, 1e-4, 1e-5, 1e-6)
 GAM_MAX = 60.0 * math.pi / 180
 # Lateral |cos ψ| as √(cos² + δ²), numerical.
 ABS_DELTA = 1e-3
@@ -152,7 +152,7 @@ def scales():
   T_turn = _num(_sl['period_s']['values']['reid-2010 13 m'])
   e_max = float(_sl['edge_angle']['13m']['max'])
   rom = _num(_sl['leg_length_cm']['13m']['rom']) / 100
-  return {'s_eps': e_max * math.pi / 180 * (math.pi / T_turn) ** 2, 's_h': rom / 2 * (2 * math.pi / T_turn) ** 3, 's_gam': GAM_REF,
+  return {'s_eps': e_max * math.pi / 180 * (math.pi / T_turn) ** 2, 's_h': rom / 2 * (2 * math.pi / T_turn) ** 3, 's_gdd': GAM_REF * (math.pi / T_turn) ** 2,
           'inputs': {'T_turn_s': T_turn, 'T_turn_src': 'slalom.period_s reid-2010 13 m', 'eps_max_deg': e_max, 'eps_max_src': 'slalom.edge_angle.13m.max',
                      'rom_m': rom, 'rom_src': 'slalom.leg_length_cm.13m.rom', 'gam_ref_deg': GAM_REF * 180 / math.pi, 'gam_ref_src': 'slalom.events.skid_peak'}}
 
@@ -206,12 +206,14 @@ def port(args):
   print(json.dumps({k: out[k] for k in ('worstRel', 'branchFlips', 'n', 'solveForm')}))
 
 
-NXL = ['lam', 'lamDot', 'h', 'hd', 'hdd', 'eps', 'epsDot', 'gam', 'psi', 'v']
-NUL = ['hddd', 'epsDdot', 'gamDot']
+NXL = ['lam', 'lamDot', 'h', 'hd', 'hdd', 'eps', 'epsDot', 'gam', 'gamDot', 'psi', 'v']
+NX = len(NXL)
+NUL = ['hddd', 'epsDdot', 'gamDdot']
 I = {k: i for i, k in enumerate(NXL)}
-# Mirror about the fall line, turn sense s → −s: λ' = −λ so d/dt keeps the sign (λ̇, ε, ε̇ odd); h, its rates, γ, v even; ψ' = π − ψ.
-ODD = ('lamDot', 'eps', 'epsDot')
-EVEN = ('h', 'hd', 'hdd', 'gam', 'v')
+# Mirror about the fall line, turn sense s → −s: λ' = −λ so d/dt keeps the sign (λ̇, ε, ε̇ odd); γ is into the turn, so it flips with s
+# like ε (γ, γ̇ odd; with γ ≥ 0 that pins γ 0 at the switch); h, its rates, v even; ψ' = π − ψ.
+ODD = ('lamDot', 'eps', 'epsDot', 'gam', 'gamDot')
+EVEN = ('h', 'hd', 'hdd', 'v')
 
 
 def radau(d):
@@ -237,13 +239,14 @@ def radau(d):
   return tau, C, Dend, Bq
 
 
-def solve_law(args, c, m, g, lam_peak, sc, wall):
-  """One solve with p on §7's share law at λ_peak: smooth controls, skid as the brake, free switch, course and speed hard."""
+def solve_law(args, c, m, g, lam_peak, sc, wall, tau_c, duals=None):
+  """One solve with p on §7's share law at λ_peak: the edge sticks or slips at m = 0 (Scholtes τ_c), free switch, course and speed hard."""
   d, N = 3, args.N
   delta = args.delta_deg * math.pi / 180
   tau, C, Dend, Bq = radau(d)
   Tg = float(g['t'][-1])
-  gi = lambda k, tt: float(np.interp(tt, g['tl'] if k == 'load' else g['t'], g[k]))
+  gi = lambda k, tt: float(np.interp(tt, g['tl'] if k in ('load', 'omP', 'omM') else g['t'], g[k]))
+  amax = c['ANGULATION_MAX_DEG'] * math.pi / 180
   w, lbw, ubw, w0, g_, lbg, ubg = [], [], [], [], [], [], []
   inf = math.inf
 
@@ -273,11 +276,11 @@ def solve_law(args, c, m, g, lam_peak, sc, wall):
     if not first:
       # Free switch: between straight across (0) and the fall line (π/2).
       ub[I['psi']] = math.pi / 2
-    x = var(10, lb, ub, [min(ub[i], max(lb[i], clip(k, gi(k, tt)))) for i, k in enumerate(NXL)])
-    blo, bhi, _ = m.band_s(x[I['gam']])
-    ang = x[I['eps']] - x[I['lam']]
-    con(ang - blo, 0, inf)
-    con(bhi - ang, 0, inf)
+    x = var(NX, lb, ub, [min(ub[i], max(lb[i], clip(k, gi(k, tt)))) for i, k in enumerate(NXL)])
+    # Grip: 0 ≤ m ≤ A_max; slip (γ > 0) only at m = 0.
+    mg = x[I['eps']] - x[I['lam']]
+    con(mg, 0, amax)
+    con(mg * x[I['gam']], -inf, tau_c)
     if first:
       # Cross-over: the mass is highest at the switch.
       con(x[I['h']] - first[0][I['h']], -inf, 0)
@@ -288,21 +291,26 @@ def solve_law(args, c, m, g, lam_peak, sc, wall):
   X0 = new_x(0.0)
   Xk = X0
   nodes = [(0, 0.0, X0, None, None)]
-  Iv = IL = ID = Jg = Ju = 0
+  Iv = IL = ID = Ju = 0
   for j in range(N):
     tj, dt = (j + 0.5) * Tg / N, Tg / N
-    U = var(3, [-inf] * 3, [inf] * 3, [(gi(k, tj + dt / 2) - gi(k, tj - dt / 2)) / dt for k in ('hdd', 'epsDot', 'gam')])
+    U = var(3, [-inf] * 3, [inf] * 3, [(gi(k, tj + dt / 2) - gi(k, tj - dt / 2)) / dt for k in ('hdd', 'epsDot', 'gamDot')])
     Xc = []
     for r in range(1, d + 1):
       tt = (j + tau[r]) * Tg / N
       x = new_x(tt)
-      Z = var(1, [0], [c['F_CEIL_G']], [min(c['F_CEIL_G'], max(0.0, gi('load', tt)))])
+      Z = var(3, [0, 0, 0], [c['F_CEIL_G'], inf, inf], [min(c['F_CEIL_G'], max(0.0, gi('load', tt))), max(0.0, gi('omP', tt)), max(0.0, gi('omM', tt))])
+      mg = x[I['eps']] - x[I['lam']]
+      con(mg * Z[1], -inf, tau_c)
+      con(mg * Z[2], -inf, tau_c)
+      # The split's own complementarity: without it ω⁺ = ω⁻ drift large together and pin m.
+      con(Z[1] * Z[2], -inf, tau_c)
       Xc.append(x)
       nodes.append((j, tau[r], x, U, Z))
     for r in range(1, d + 1):
       xp = C[0, r] * Xk + sum(C[q, r] * Xc[q - 1] for q in range(1, d + 1))
       x, Z = nodes[-d + r - 1][2], nodes[-d + r - 1][4]
-      xd, alg, kap, share, force, _ = m.rhs_law(x, U, Z, delta, lam_peak)
+      xd, alg, kap, share, force, _ = m.rhs_law(x, U, Z[0], Z[1] - Z[2], delta, lam_peak)
       con(hstep * xd - xp, 0, 0)
       con(alg, 0, 0)
       con(m.pressed_margin_s(x[I['eps']], force, delta), 0, inf)
@@ -310,8 +318,7 @@ def solve_law(args, c, m, g, lam_peak, sc, wall):
       Iv += hstep * Bq[r] * v
       IL += hstep * Bq[r] * v * ca.sin(psi)
       ID += hstep * Bq[r] * v * ca.sqrt(ca.cos(psi) ** 2 + ABS_DELTA ** 2)
-      Jg += Bq[r] * (x[I['gam']] / sc['s_gam']) ** 2
-    Ju += (U[0] / sc['s_h']) ** 2 + (U[1] / sc['s_eps']) ** 2
+    Ju += (U[0] / sc['s_h']) ** 2 + (U[1] / sc['s_eps']) ** 2 + (U[2] / sc['s_gdd']) ** 2
     Xk = Dend[0] * Xk + sum(Dend[q] * Xc[q - 1] for q in range(1, d + 1))
     if j < N - 1:
       Xn = new_x((j + 1) * Tg / N)
@@ -325,41 +332,47 @@ def solve_law(args, c, m, g, lam_peak, sc, wall):
   course = ca.vertcat(Iv - args.speed * T, IL - args.turn_l, ID - args.offset)
   con(course, 0, 0)
   # Time-mean J: (1/T)∫u² dt over piecewise-constant u is (1/N)Σu².
-  J = (Ju + Jg) / N
+  J = Ju / N
   W = ca.vertcat(*w)
   ip = {'max_iter': args.max_iter, 'tol': args.tol, 'constr_viol_tol': 1e-10, 'print_level': 0, 'sb': 'yes', 'mumps_pivot_order': 6, 'max_wall_time': max(1.0, wall)}
+  kw = {}
+  if duals is not None and len(duals['x']) == len(w0) and len(duals['lam_g']) == len(lbg):
+    # Homotopy step: primal and duals from the last τ.
+    ip.update({'warm_start_init_point': 'yes', 'mu_init': 1e-4, 'warm_start_bound_push': 1e-6, 'warm_start_mult_bound_push': 1e-6})
+    w0, kw = duals['x'], {'lam_x0': duals['lam_x'], 'lam_g0': duals['lam_g']}
   solver = ca.nlpsol('s', 'ipopt', {'x': W, 'f': J, 'g': ca.vertcat(*g_)}, {'print_time': False, 'ipopt': ip})
-  r_ = solver(x0=w0, lbx=lbw, ubx=ubw, lbg=lbg, ubg=ubg)
+  r_ = solver(x0=w0, lbx=lbw, ubx=ubw, lbg=lbg, ubg=ubg, **kw)
   st = solver.stats()
   wv = r_['x']
-  outs = ca.Function('fv', [W], [J, X0, XN, T, mirror, course, Iv, IL, ID, Ju / N, Jg / N])(wv)
-  Jv, x0v, xNv, Tv, mv, cv, Ivv, ILv, IDv, Juv, Jgv = [np.array(z).ravel() for z in outs]
+  outs = ca.Function('fv', [W], [J, X0, XN, T, mirror, course, Iv, IL, ID])(wv)
+  Jv, x0v, xNv, Tv, mv, cv, Ivv, ILv, IDv = [np.array(z).ravel() for z in outs]
   flat = np.array(ca.Function('ev', [W], [ca.vertcat(*[ca.vertcat(*[q for q in nd[2:] if q is not None]) for nd in nodes])])(wv)).ravel()
   Tv = float(Tv[0])
   rows, k = [], 0
   for (j, tr, x, U, Z) in nodes:
-    n = 10 + (4 if U is not None else 0)
+    n = NX + (6 if U is not None else 0)
     vv = flat[k:k + n]
     k += n
-    xv = [float(q) for q in vv[:10]]
+    xv = [float(q) for q in vv[:NX]]
     row = {'t': (j + tr) * Tv / N, **dict(zip(NXL, xv))}
     p, pd, A, B = m.law(xv[0], xv[1], lam_peak)
     row.update({'p': p, 'pd': pd, 'share': c['SWITCH_SHARE'] - p / c['stance']})
     if U is not None:
-      uv = [float(q) for q in vv[10:13]]
-      load = float(vv[13])
-      xd, alg, kap, share, force, ex = m.rhs_law(ca.DM(xv), ca.DM(uv), load, delta, lam_peak)
+      uv = [float(q) for q in vv[NX:NX + 3]]
+      load, omP, omM = (float(q) for q in vv[NX + 3:NX + 6])
+      xd, alg, kap, share, force, ex = m.rhs_law(ca.DM(xv), ca.DM(uv), load, omP - omM, delta, lam_peak)
       row.update(dict(zip(NUL, uv)))
       row.update({'load': load, 'lamAcc': float(xd[1]), 'pdd': float(ex['pdd']), 'kappa': float(kap), 'kS': float(ex['kS']), 'f': float(ex['f']),
-                  'force': float(force), 'pressedMargin': float(m.pressed_margin_s(xv[I['eps']], float(force), delta)), 'algRes': float(alg)})
+                  'force': float(force), 'pressedMargin': float(m.pressed_margin_s(xv[I['eps']], float(force), delta)), 'algRes': float(alg),
+                  'omP': omP, 'omM': omM, 'om': omP - omM, 'Pi': float(ex['Pi']), 'kSoff': float(ex['kS']) - float(kap) * math.cos(xv[I['gam']])})
     else:
       # At λ 0 the force balance is explicit: F/m = ḧ − h λ̇² + g cos θ.
       row['load'] = (xv[I['hdd']] - xv[I['h']] * xv[I['lamDot']] ** 2 + m.G * m.cos) / m.G
-    blo, bhi, q = (float(z) for z in m.band_s(xv[I['gam']]))
-    row.update({'angulation': xv[I['eps']] - xv[I['lam']], 'bandLo': blo, 'bandHi': bhi, 'q': q})
+    row['m'] = xv[I['eps']] - xv[I['lam']]
     rows.append(row)
   names = [*ODD, *EVEN, 'psi']
-  return {'status': st['return_status'], 'success': st['success'], 'iters': st['iter_count'], 'lamPeak': lam_peak, 'J': float(Jv[0]), 'Ju': float(Juv[0]), 'Jgam': float(Jgv[0]),
+  duals_out = {'x': np.array(wv).ravel().tolist(), 'lam_x': np.array(r_['lam_x']).ravel().tolist(), 'lam_g': np.array(r_['lam_g']).ravel().tolist()}
+  return {'status': st['return_status'], 'success': st['success'], 'iters': st['iter_count'], 'lamPeak': lam_peak, 'tau': tau_c, 'J': float(Jv[0]), '_duals': duals_out,
           'defectDegS': float(xNv[1] + x0v[1]) * 180 / math.pi, 'mirrorRes': dict(zip(names, (float(z) for z in mv))),
           'courseRes': dict(zip(('meanSpeed', 'L', 'D'), (float(cv[0]) / Tv, float(cv[1]), float(cv[2])))),
           'meanSpeed': float(Ivv[0]) / Tv, 'L': float(ILv[0]), 'D': float(IDv[0]),
@@ -376,10 +389,10 @@ def course_guess(c, m, v, L, D):
   t = np.concatenate([[0], np.cumsum((ds[1:] + ds[:-1]) / 2 * np.diff(y))]) / v
   lam = np.arctan(v * v * np.abs(xpp) / ds ** 3 / m.G)
   eps = lam + 3 * math.pi / 180 * np.sin(math.pi * t / t[-1])
-  gam = 5 * math.pi / 180 + 0 * t
   h = c['REACH'][0] + 0.75 * (c['REACH'][1] - c['REACH'][0]) + 0 * t
+  # Carve start: γ = ω = 0.
   return {'t': t, 'lam': lam, 'lamDot': np.gradient(lam, t), 'h': h, 'hd': 0 * t, 'hdd': 0 * t, 'eps': eps, 'epsDot': np.gradient(eps, t),
-          'gam': gam, 'psi': math.pi / 2 - np.arctan(xp), 'v': v + 0 * t, 'tl': t, 'load': m.cos / np.cos(lam)}
+          'gam': 0 * t, 'gamDot': 0 * t, 'psi': math.pi / 2 - np.arctan(xp), 'v': v + 0 * t, 'tl': t, 'load': m.cos / np.cos(lam), 'omP': 0 * t, 'omM': 0 * t}
 
 
 def guess_from(sol):
@@ -387,6 +400,14 @@ def guess_from(sol):
   g = {k: np.array([n.get(k, 0.0) for n in ns]) for k in ['t', *NXL]}
   wl = [n for n in ns if 'load' in n]
   g['tl'], g['load'] = np.array([n['t'] for n in wl]), np.array([n['load'] for n in wl])
+  if 'omP' in wl[0]:
+    g['omP'], g['omM'] = np.array([n['omP'] for n in wl]), np.array([n['omM'] for n in wl])
+  else:
+    # An R1 solve: γ̇ was its control; ω = γ̇ is R1's special case.
+    tu, iu = np.unique(g['t'], return_index=True)
+    g['gamDot'] = np.interp(g['t'], tu, np.gradient(g['gam'][iu], tu))
+    gd = np.interp(g['tl'], g['t'], g['gamDot'])
+    g['omP'], g['omM'] = np.maximum(gd, 0), np.maximum(-gd, 0)
   return g
 
 
@@ -401,40 +422,64 @@ def cycle(args):
   lam_peak = warm['lamPeak'] if warm else c['lamPeak0']
   coarse = json.load(open(args.coarse)) if args.coarse else None
   deadline = time.time() + args.wall
-  hist, sol, converged, extra = [], None, False, {}
+  hist, sol, converged, extra, duals, reached, last_ok = [], None, False, {}, None, None, None
+  # τ ladder first, λ_peak updated after every pass; the fixed point is tested at the last τ only.
   for it in range(args.peak_iters):
     left = deadline - time.time()
     if left <= 0:
       break
-    sol = solve_law(args, c, m, g, lam_peak, sc, left)
+    tau_c = TAUS[min(it, len(TAUS) - 1)]
+    sol = solve_law(args, c, m, g, lam_peak, sc, left, tau_c, duals)
+    duals = sol.pop('_duals')
     nxt = max(n['lam'] for n in sol['nodes'])
-    hist.append({'lamPeakDeg': lam_peak * 180 / math.pi, 'maxLamDeg': nxt * 180 / math.pi, 'status': sol['status'], 'iters': sol['iters'], 'J': sol['J'], 'T': sol['T'],
-                 'psi0Deg': sol['psi0'] * 180 / math.pi})
+    hist.append({'tau': tau_c, 'lamPeakDeg': lam_peak * 180 / math.pi, 'maxLamDeg': nxt * 180 / math.pi, 'status': sol['status'], 'iters': sol['iters'], 'J': sol['J'],
+                 'T': sol['T'], 'psi0Deg': sol['psi0'] * 180 / math.pi})
     print(json.dumps(hist[-1]), flush=True)
     if sol['status'] not in ('Solve_Succeeded', 'Solved_To_Acceptable_Level', 'Maximum_Iterations_Exceeded'):
-      json.dump({'args': vars(args), **sol, 'peakConverged': False, 'peakHistory': hist}, open(args.out, 'w'))
+      # Keep the last good pass on disk; the failure is in its history.
+      if last_ok is not None:
+        last_ok['peakHistory'] = hist
+      json.dump(last_ok or {'args': vars(args), **sol, 'tauReached': reached, 'peakConverged': False, 'peakHistory': hist}, open(args.out, 'w'))
       break
+    if sol['status'] == 'Solve_Succeeded':
+      reached = tau_c
+    if tau_c != TAUS[-1]:
+      g, lam_peak = guess_from(sol), nxt
+      last_ok = {'args': vars(args), **sol, 'tauReached': reached, 'peakConverged': False, 'peakHistory': hist}
+      json.dump(last_ok, open(args.out + '.tmp', 'w'))
+      os.replace(args.out + '.tmp', args.out)
+      continue
     if coarse:
       mesh = float(mesh_change_lam({**sol, 'args': vars(args)}, coarse))
-      spread = peak_spread_deg(hist)
+      spread = peak_spread_deg([q for q in hist if q['tau'] == TAUS[-1]])
       extra = {'meshChangeLamDeg': mesh, 'peakSpreadDeg': spread}
       converged = bool(spread is not None and spread <= mesh)
     else:
       converged = abs(nxt - lam_peak) <= args.peak_tol
-    json.dump({'args': vars(args), **sol, **extra, 'peakConverged': converged, 'peakHistory': hist}, open(args.out + '.tmp', 'w'))
+    last_ok = {'args': vars(args), **sol, **extra, 'tauReached': reached, 'peakConverged': converged, 'peakHistory': hist}
+    json.dump(last_ok, open(args.out + '.tmp', 'w'))
     os.replace(args.out + '.tmp', args.out)
     g = guess_from(sol)
     lam_peak = nxt
     if converged:
       break
   if sol is not None:
-    print(json.dumps({'status': sol['status'], 'T': sol['T'], 'psi0Deg': sol['psi0'] * 180 / math.pi, 'lamPeak': sol['lamPeak'], 'peakConverged': converged, **extra}))
+    print(json.dumps({'status': sol['status'], 'tauReached': reached, 'T': sol['T'], 'psi0Deg': sol['psi0'] * 180 / math.pi, 'lamPeak': sol['lamPeak'], 'peakConverged': converged, **extra}))
 
 
 def samples_r1(sol):
-  """t 0 (the switch, load explicit) then every collocation point."""
+  """t 0 (the switch, load explicit) then every collocation point; ω is sense-relative, so ω(0) = −ω(T)."""
   ns = sol['nodes']
-  return [ns[0]] + [n for n in ns if 'hddd' in n]
+  cs = [n for n in ns if 'hddd' in n]
+  n0 = dict(ns[0])
+  if 'om' in cs[-1] and 'om' not in n0:
+    n0['om'] = -cs[-1]['om']
+    n0['omP'], n0['omM'] = cs[-1]['omM'], cs[-1]['omP']
+    n0['f'] = n0['load'] * math.sin(n0['lam'])
+    n0['kSoff'] = (n0['om'] - n0['gamDot']) / n0['v']
+    c = json.load(open(sol['args']['const']))
+    n0['Pi'] = float(Model(c).slip_speed(n0['v'] * math.sin(n0['gam']), n0['om']))
+  return [n0] + cs
 
 
 def poly_at(tau, vals, x):
@@ -474,23 +519,27 @@ def interior_maxima(y, tol):
   return peaks
 
 
-def r1_cell(fine, coarse):
+def r2_cell(fine, coarse):
   c = json.load(open(fine['args']['const']))
-  m = Model(c)
   s = samples_r1(fine)
   T, N = fine['T'], fine['args']['N']
   col = lambda k: np.array([n[k] for n in s])
   t = col('t') / T
   deg = 180 / math.pi
-  lam, eps, gam, psi, v, h, load, lamDot = (col(k) for k in ('lam', 'eps', 'gam', 'psi', 'v', 'h', 'load', 'lamDot'))
+  lam, eps, gam, psi, v, h, load, lamDot, om, mg = (col(k) for k in ('lam', 'eps', 'gam', 'psi', 'v', 'h', 'load', 'lamDot', 'om', 'm'))
   mesh = {k: mesh_change(fine, coarse, k) for k in ('lam', 'eps', 'load', 'gam')}
   # Quadrature over collocation samples (Radau IIA weights).
   Bq = np.tile(fine['Bq'][1:], N) * T / N
   cs = s[1:]
   qd = lambda f: float(sum(b * f(n) for b, n in zip(Bq, cs)))
   mu, dr = c['mu'], c['dragPerV2']
-  skid = qd(lambda n: n['f'] * n['v'] * math.tan(n['gam']))
-  diss = qd(lambda n: mu * n['load'] * n['v'] + dr * n['v'] ** 3 + n['f'] * n['v'] * math.tan(n['gam']))
+  amax = c['ANGULATION_MAX_DEG'] * math.pi / 180
+  sn = lambda n: n['f'] / math.cos(n['gam'])
+  parts = {'gliding': qd(lambda n: mu * n['load'] * n['v']), 'drag': qd(lambda n: dr * n['v'] ** 3),
+           'attack': qd(lambda n: sn(n) * n['v'] * math.sin(n['gam'])), 'pivot': qd(lambda n: sn(n) * (n['Pi'] - n['v'] * math.sin(n['gam'])))}
+  tot = sum(parts.values())
+  slipping = lambda n: n['gam'] > 0.5 / deg or abs(n['om']) > 0.05
+  sl_t = [n['t'] / T for n in s if slipping(n)]
   rate = c['EDGE_RATE_DEG_S'] * math.pi / 180
   tb = 1e-6
   bounds = {
@@ -500,43 +549,50 @@ def r1_cell(fine, coarse):
     'load<=F_CEIL_G': [n['t'] / T for n in s if c['F_CEIL_G'] - n['load'] <= tb], 'load>=0': [n['t'] / T for n in s if n['load'] <= tb],
     '|epsDot|<=EDGE_RATE': [n['t'] / T for n in s if rate - abs(n['epsDot']) <= tb],
     'pressed margin>=0': [n['t'] / T for n in cs if n['pressedMargin'] <= tb],
-    'band lo': [n['t'] / T for n in s if n['angulation'] - n['bandLo'] <= tb], 'band hi': [n['t'] / T for n in s if n['bandHi'] - n['angulation'] <= tb],
+    'm>=0': [n['t'] / T for n in s if n['m'] <= tb], 'm<=A_max': [n['t'] / T for n in s if amax - n['m'] <= tb],
     'gam>=0': [n['t'] / T for n in s if n['gam'] <= tb], 'gam<=60deg': [n['t'] / T for n in s if GAM_MAX - n['gam'] <= tb],
     'h<=h(0) cross-over': [n['t'] / T for n in s[1:] if s[0]['h'] - n['h'] <= tb],
     'psi0 in [0, pi/2]': [0.0] if fine['psi0'] <= tb or math.pi / 2 - fine['psi0'] <= tb else [],
     'v>=V_FLOOR': [n['t'] / T for n in s if n['v'] - c['V_FLOOR'] <= tb],
   }
   active = {k: [round(x, 4) for x in v_] for k, v_ in bounds.items() if v_}
-  band_ok = all(n['bandLo'] - 1e-9 <= n['angulation'] <= n['bandHi'] + 1e-9 for n in s)
+  # Complementarity at every node the solve holds it on, the mesh nodes included.
+  allx = fine['nodes']
+  comp_g = max(n['m'] * n['gam'] for n in allx)
+  comp_w = max(n['m'] * max(n['omP'], n['omM']) for n in allx if 'omP' in n)
+  comp_s = max(n['omP'] * n['omM'] for n in allx if 'omP' in n)
+  m_ok = all(-1e-9 <= n['m'] <= amax + 1e-9 for n in allx)
   pe, pl = interior_maxima(eps, mesh['eps']), interior_maxima(load, mesh['load'])
   res_ok = all(abs(x) <= 1e-6 for x in fine['mirrorRes'].values()) and all(abs(x) <= 1e-6 for x in fine['courseRes'].values())
-  ie, il, ig = int(np.argmax(eps)), int(np.argmax(load)), int(np.argmax(gam))
+  ie, il, ig, iw = int(np.argmax(eps)), int(np.argmax(load)), int(np.argmax(gam)), int(np.argmax(np.abs(om)))
   return {
-    'status': fine['status'], 'T': T, 'L': fine['L'], 'D': fine['D'], 'meanSpeed': fine['meanSpeed'], 'lamPeakDeg': fine['lamPeak'] * deg, 'peakConverged': fine.get('peakConverged'),
-    'J': fine['J'], 'Ju': fine['Ju'], 'Jgam': fine['Jgam'],
-    'switchMassDeg': fine['psi0'] * deg, 'switchSkisDeg': (fine['psi0'] - math.atan(h[0] * lamDot[0] / v[0])) * deg,
+    'status': fine['status'], 'tauReached': fine.get('tauReached'), 'T': T, 'L': fine['L'], 'D': fine['D'], 'meanSpeed': fine['meanSpeed'], 'lamPeakDeg': fine['lamPeak'] * deg,
+    'peakConverged': fine.get('peakConverged'), 'J': fine['J'],
+    'switchMassDeg': fine['psi0'] * deg, 'switchSkisDeg': (fine['psi0'] - math.atan(h[0] * lamDot[0] / v[0]) + gam[0]) * deg,
     'vMin': float(v.min()), 'vMax': float(v.max()), 'eps0Deg': float(eps[0]) * deg,
     'epsPeakDeg': float(eps[ie]) * deg, 'epsPeakT': float(t[ie]), 'lamPeakSolvedDeg': float(lam.max()) * deg, 'loadPeak': float(load[il]), 'loadPeakT': float(t[il]),
     'gamPeakDeg': float(gam[ig]) * deg, 'gamPeakT': float(t[ig]), 'gamMeanDeg': qd(lambda n: n['gam']) / T * deg,
+    'omPeak': float(abs(om[iw])), 'omPeakT': float(t[iw]),
+    'slipShare': qd(lambda n: 1.0 if slipping(n) else 0.0) / T, 'slipStartT': min(sl_t) if sl_t else None, 'slipEndT': max(sl_t) if sl_t else None,
     'hMin': float(h.min()), 'hMax': float(h.max()), 'reachBinds': bool(active.get('REACH lo') or active.get('REACH hi')),
     'pressedBinds': bool(active.get('pressed margin>=0')), 'pressedMarginMin': min(n['pressedMargin'] for n in cs),
     'loadVsInvCosLam': float(np.max(np.abs(load - 1 / np.cos(lam)))),
-    'bandNearSwitch': {k: [x for x in active.get(k, []) if x <= 0.15 or x >= 0.85] for k in ('band lo', 'band hi')},
-    'skidShare': skid / diss, 'activeBounds': active,
+    'dissipation': {k: v_ / tot for k, v_ in parts.items()}, 'skidShare': (parts['attack'] + parts['pivot']) / tot, 'activeBounds': active,
     'meshChange': {'lamDeg': mesh['lam'] * deg, 'epsDeg': mesh['eps'] * deg, 'loadG': mesh['load'], 'gamDeg': mesh['gam'] * deg},
     'gates': {
       '1_solved_residuals': fine['status'] == 'Solve_Succeeded' and res_ok, 'mirrorRes': fine['mirrorRes'], 'courseRes': fine['courseRes'],
       '2_one_max': len(pe) == 1 and len(pl) == 1, 'epsMaxima': [round(float(t[i]), 4) for i in pe], 'loadMaxima': [round(float(t[i]), 4) for i in pl],
-      '3_band': band_ok,
+      '3_grip': m_ok and fine.get('tauReached') == TAUS[-1] and max(comp_g, comp_w, comp_s) <= 1e-6 and not active.get('gam<=60deg'),
+      'mRange': m_ok, 'maxMGam': comp_g, 'maxMOm': comp_w, 'maxOmPOmM': comp_s, 'gam60Active': bool(active.get('gam<=60deg')),
       '4_mesh': {'lamDeg': mesh['lam'] * deg, 'epsDeg': mesh['eps'] * deg, 'loadG': mesh['load'], 'gamDeg': mesh['gam'] * deg},
     },
   }
 
 
-def gates_r1(args):
+def gates_r2(args):
   out = json.load(open(args.out)) if os.path.exists(args.out) else {}
   for name, fine_f, coarse_f in args.cell:
-    out[name] = r1_cell(json.load(open(fine_f)), json.load(open(coarse_f)))
+    out[name] = r2_cell(json.load(open(fine_f)), json.load(open(coarse_f)))
     print(json.dumps({name: out[name]['gates']}))
   json.dump(out, open(args.out, 'w'), indent=1)
 
@@ -684,7 +740,7 @@ def main():
   cy.add_argument('--warm', help='start from a cycle solution JSON and its λ_peak')
   cy.add_argument('--peak-tol', type=float, default=1e-6, help='λ_peak fixed-point step, rad, when no --coarse is given')
   cy.add_argument('--coarse', help='the N/2 solve: λ_peak converged once its last-3-pass range is within the mesh change')
-  gr = sp.add_parser('gates_r1', help='R1 gates and summary from N and N/2 solves; merges into OUT')
+  gr = sp.add_parser('gates_r2', help='R2 gates and summary from N and N/2 solves; merges into OUT')
   gr.add_argument('out')
   gr.add_argument('--cell', nargs=3, action='append', required=True, metavar=('NAME', 'SOL_N', 'SOL_HALF_N'))
   lp = sp.add_parser('link', help='both starts linked and agreeing, each against its N/2 solve')
@@ -695,7 +751,7 @@ def main():
   bk.add_argument('--cell', nargs=4, action='append', required=True, metavar=('NAME', 'SOL_N', 'SOL_HALF_N', 'REPLAY'))
   bk.add_argument('--other', nargs=3, action='append', metavar=('NAME', 'SOL_N', 'SOL_HALF_N'), help='the second start at the same heading')
   args = ap.parse_args()
-  {'port': port, 'cycle': cycle, 'gates_r1': gates_r1, 'link': link, 'bake': bake}[args.cmd](args)
+  {'port': port, 'cycle': cycle, 'gates_r2': gates_r2, 'link': link, 'bake': bake}[args.cmd](args)
 
 
 if __name__ == '__main__':
