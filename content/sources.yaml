@@ -18,6 +18,11 @@
   citation: Kröll J et al. Changes in quadriceps muscle activity during sustained recreational alpine skiing. J Sports Sci Med. 2011;10:81-92.
   url: https://pubmed.ncbi.nlm.nih.gov/24149299/
   read: abstract
+- id: kroll-2015
+  type: article
+  citation: Kröll J, Spörri J, Kandler C, Fasel B, Müller E, Schwameder H. Kinetic and kinematic comparison of alpine ski racing disciplines as a base for specific conditioning regimes. ISBS Conference Proceedings. 2015;33:816-9.
+  url: https://ojs.ub.uni-konstanz.de/cpa/article/view/6526
+  read: partial
 - id: chollet-2025
   type: article
   citation: Chollet M et al. Fatigue-induced changes in electromyographic activity after repeated racing turns. Eur J Appl Physiol. 2025;125:1423-35.
@@ -95,6 +100,13 @@
   citation: Cuniberti GC et al. Sex-specific biomechanical profiles in recreational alpine skiing. J Biomech. 2026;207:113543.
   url: https://pubmed.ncbi.nlm.nih.gov/42697010/
   read: abstract
+# Re-read in full (E2c, 2026-10-21); figure values read by eye (moments ±0.15 Nm/kg, hip rotation ±0.03, angles ±2 deg). One professional ski instructor, right turn, GS skis; subject mass and phase shares not printed.
+# Table 2: RIGHT = INSIDE leg, LEFT = OUTSIDE leg. Window = steering phase (radius < 32 m): t 0-1.32 s, v 13.5-14.5 m/s, min radius 16 m. Outside force (Fig 4B) flat top ~1.00 BW at t 0.7-0.9 s; the 0.17 s bump (outside 0.86 BW) is an unload-load motion, not the peak.
+# Signs are internal (muscle) moments, + = hip flexion, adduction, internal rotation, knee extension, ankle dorsiflexion, lumbar extension, lateral bending (side unstated), left rotation. Our lumbar flexion has the opposite sign: its +1.88 extension is -1.88 here.
+# Outside leg at the force peak (t ~0.87 s): hip flexion ~79 deg (range 50.3-80.6; inside hip ~117 deg), hip rotation -0.17 Nm/kg (external; turn range -0.17..+0.06, minimum at t 0.9-1.0 s; inside hip +0.2), hip extension 1.27 (its peak),
+# hip adduction ~+0.1 (range -0.39..+0.52: abduction <= 0.39, adduction <= 0.52), knee extension ~0.65 (peak 1.02 at t 0.17 s), ankle plantarflexion ~0.5 (peak 0.85 at t 0.45 s). The inside leg's Table 2 peaks are knee extension <= 0.96, hip adduction <= 0.45, ankle plantarflexion <= 0.47.
+# Lumbar: ONE joint with 3 DOF (pelvis to the Hamner torso segment; 8 added muscles: 2x erector spinae, rectus abdominis, external and internal obliques), no thoracic joint, so no thoracic moment. Extension 1.88 Nm/kg (range 0.16-1.88, peak at the force peak) is the net moment of everything above the pelvis: a whole-spine demand.
+# Lumbar bending 0.01-0.75 (max at t ~0.5 s; ~0.35 at the force peak), rotation -0.16..-0.01 (~-0.1 at the peak, toward the right).
 - id: heinrich-2022
   type: article
   citation: Heinrich D, van den Bogert AJ, Nachbauer W. Estimation of joint moments during turning maneuvers in alpine skiing using a three dimensional musculoskeletal skier model. Front Bioeng Biotechnol. 2022;10:894568.
@@ -121,6 +133,11 @@
   citation: de Leva P. Adjustments to Zatsiorsky-Seluyanov's segment inertia parameters. J Biomech. 1996;29:1223-30.
   url: https://doi.org/10.1016/0021-9290(95)00178-6
   read: partial
+- id: anderson-2007
+  type: article
+  citation: Anderson DE, Madigan ML, Nussbaum MA. Maximum voluntary joint torque as a function of joint angle and angular velocity - model development and application to the lower limb. J Biomech. 2007;40:3105-13.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC6820133/
+  read: full
 - id: sporri-2015
   type: article
   citation: Spörri J et al. Potential mechanisms leading to overuse injuries of the back in alpine ski racing. Am J Sports Med. 2015;43:2042-8.
@@ -161,11 +178,19 @@
   citation: Panizzolo FA, Marcolin G, Petrone N. Comparative evaluation of two skiing simulators as functional training devices for recreational skiers. J Sports Sci Med. 2013;12:151-8.
   url: https://pmc.ncbi.nlm.nih.gov/articles/PMC3761755/
   read: full
+# Full text read (open author PDF), Table 1 and Figs 3-7. Four cadavers, tendon-excursion rotation moment arms about the femoral axis at 0 deg hip rotation; + internal, - external, mm; hip flexion 0, 20, 45, 60, 90 deg (no 30).
+# Table 1 prints 0 and 90 deg as mean (SD). The 60 deg values are the mean of the 4 specimen markers read off the plots (±5 mm; the model curve is up to ~15 mm more external for GMAX1-3). GMIN and piriformis have no plot, so no 60 deg value.
+# mm at 0 / 60 / 90 deg, GMAX1 anterior-superior to GMAX6 posterior-inferior: GMAX1 -20(13) / +32 / +46(8), GMAX2 -26(18) / +14 / +33(6), GMAX3 -28(12) / +5 / +13(6), GMAX4 -29(14) / -6 / +1(3), GMAX5 -15(3) / -6 / -3(3), GMAX6 -18(10) / -11 / -12(7).
+# GMED1 anterior to GMED4 posterior: +7(10) / +53 / +58(2), -11(10) / +44 / +55(6), -20(8) / +29 / +39(8), -41(16) / +8 / +22(10). GMIN1-3: +18(16) / - / +35(14), -10(5) / - / +42(6), -30(6) / - / +26(18); piriformis -29(7) / - / +14(7).
+# Obturator internus -30(3) / -19 / -7(4), quadratus femoris -22(7) / -33 / -27(11), obturator externus -14(2) / -25 / -26(4), iliopsoas +2(2) / 0 / -4(5).
+# Zero crossings in hip flexion (plot means, ±10 deg; GMIN and piriformis linear 0-90 deg, inferred): GMAX1 ~16, GMAX2 ~35, GMAX3 ~45, GMAX4 ~85, GMAX5-6 never; GMED2 ~10, GMED3 ~20, GMED4 ~47, GMED1 internal throughout; GMIN2 ~15, GMIN3 ~50, piriformis ~55;
+# obturators and quadratus femoris external at every angle; iliopsoas ~0 throughout.
+# No adductors (adductor longus and magnus are listed as future work) and no TFL; 60 deg values read off plots. Those muscles' hip rotation arms need another source.
 - id: delp-1999
   type: article
   citation: Delp SL et al. Variation of rotation moment arms with hip flexion. J Biomech. 1999;32:493-501.
-  url: https://pubmed.ncbi.nlm.nih.gov/10327003/
-  read: abstract
+  url: https://nmbl.stanford.edu/publications/pdf/Delp1999.pdf
+  read: full
 - id: neumann-2010
   type: article
   citation: Neumann DA. Kinesiology of the hip - a focus on muscular actions. J Orthop Sports Phys Ther. 2010;40:82-94.
@@ -246,6 +271,12 @@
   citation: Debertin D et al. Quantitative downhill skiing technique analysis according to ski instruction curricula. Front Bioeng Biotechnol. 2022;10:1003619.
   url: https://pmc.ncbi.nlm.nih.gov/articles/PMC9552888/
   read: full
+# Full text read. One A-level instructor, 48 carved + 48 steered turns, compact snow; Atomic Redster G7, 1.82 m, R_sc 19.6 m; no speed.
+# Roll angle (gyro integral, slope-independent), not the edge angle. Carved outer ski: max 57°, radial force max 1111 N (about 1.5 BW).
+# Carved inner ski: max 53°, 517 N. Steered outer ski: max 42°, 556 N. Steered inner ski: max 45°, 56 N.
+# Peak local curvature 0.26 1/m (sensor L3, behind the binding) = 3.85 m, against R_sc cos 57° = 10.7 m (paper: 10.80 m): ratio 0.36.
+# Rear-sensor curvature (L2, L3) rises with roll angle and force on the outer ski in carving (r 0.30-0.80), not in steering (r -0.33 to 0.46).
+# No trajectory radius was measured, so no k; the authors call the local bending radius "an inadequate descriptor" of the turn radius.
 - id: thorwartl-2023
   type: article
   citation: Thorwartl C et al. Technique-dependent relationship between local ski bending curvature, roll angle and radial force in alpine skiing. Sensors. 2023;23:3997.
@@ -267,15 +298,47 @@
   citation: Berg HE, Eiken O, Tesch PA. Involvement of eccentric muscle actions in giant slalom racing. Med Sci Sports Exerc. 1995;27:1666-70.
   url: https://pubmed.ncbi.nlm.nih.gov/8614323/
   read: abstract
+# bon-2021 (the entry below). Full text read (PMC BioC). 9 male instructors (78.6 kg), 20° slope, 180 turns; corridors 15 m (parallel), 3 m (short).
+# GRF taken once per turn, at the lowest CoM just before the outside ski's release: no timing curve, no force-peak τ.
+# Max force, left / right turn. Outside foot: short 1.45 / 1.37 MBW, parallel 1.06 / 1.10. Inside foot: short 0.92 / 0.99, parallel 0.33 / 0.28.
+# Speeds and turn durations not given. "High values of GRF detected at the end of the ST" is qualitative only.
 - id: bon-2021
   type: article
   citation: Bon I et al. What are kinematic and kinetic differences between short and parallel turn in alpine skiing? Int J Environ Res Public Health. 2021;18.
   url: https://pmc.ncbi.nlm.nih.gov/articles/PMC8000885/
   read: full
+# reid-2020 (the entry below). Full text read (Figs 4, 6). Kinematics only: no forces or speeds; the load numbers are in Reid's 2010 thesis, not read here.
+# Six Norwegian national-team men (17-20 y), 10 m and 13 m gate distances, 19° slope, hard compact snow, 12 turns per course.
+# Skis fitted as a 14 m sidecut model. Outside-ski edge angle at the switch: 5.1° (10 m), 4.5° (13 m).
+# Edge angle max 65.7 ± 1.7° just after the gate (10 m), 70.2 ± 1.3° at the gate (13 m); both fall fast through turn completion.
+# Fig 4 sample turn, 10 m (t from the distance axis): 36° at t 0.1, 50° at 0.2, steady rise to the gate (t 0.53), release from about 0.66.
+# Fig 4 sample turn, 13 m: 45° at t 0.1, 55° at 0.2, plateau 72° from the gate (t 0.59) to about 0.77, then release: early build on 13 m only.
+# Attack angle max 15.1 ± 5.3° (10 m), 12.1 ± 4.9° (13 m) early; higher on 10 m at 10-45 % of the turn; carving by the gate.
+# Min outside-ski R_ski 3.96 ± 0.23 m (10 m), 4.94 ± 0.59 m (13 m): k = R_ski / (14 cos ε_max) = 0.69 and 1.04 (group extremes).
+# R_ski against R_sc cos ε (carving, attack < 5°): RMSE 2.5 m and 6.4 m above 45° edge, 42.0 m and 71.5 m below it (k far above 1).
 - id: reid-2020
   type: article
   citation: Reid RC et al. Alpine ski motion characteristics in slalom. Front Sports Act Living. 2020;2:25.
   url: https://pmc.ncbi.nlm.nih.gov/articles/PMC7739813/
+  read: full
+- id: reid-2010
+  type: article
+  citation: Reid RC. A kinematic and kinetic study of alpine skiing technique in slalom. PhD thesis, Norwegian School of Sport Sciences, Oslo; 2010.
+  url: https://nih.brage.unit.no/nih-xmlui/handle/11250/171325
+  read: partial
+# nakazato-2011 (the entry below). Full text read from the PMC page (no XML offered), Tables 1-2, Figs 5-6. Left-leg vertical force over the double turn, in BW (plus a 5 kg backpack).
+# Outside phase 0-50 %, inside 50-100 %, edge change 40-60 %. Force plate (FP) is the reference; the pressure insole reads 23-35 % lower, so only FP is kept.
+# 10 experts (Atomic FIS GS, 184 cm, R 23 m) and 10 intermediates (Atomic Drive Fibre Sport, 169 cm, R 15 m); 10 double turns per cell, twice.
+# Groomed hard compact snow, -1.1 ± 2.2 °C; pitch 15° (flat), 23° (steep); speed not reported. Carved = short-radius carving, steered = long-radius skidded parallel turn.
+# FP outside mean / outside peak / inside mean (BW), flat then steep. Expert carved 1.26 / 1.91 / 0.56, 1.15 / 2.05 / 0.62; expert steered 1.27 / 1.76 / 0.48, 1.18 / 1.86 / 0.49.
+# Intermediate carved 1.18 / 1.68 / 0.51, 1.01 / 1.61 / 0.53; intermediate steered 1.15 / 1.59 / 0.45, 1.04 / 1.60 / 0.45.
+# Inside share, inside / (outside + inside) of the means, symmetric turns assumed: carved 30-35 %, steered 27-30 %, higher on the steep pitch.
+# Edge-change minimum (40-60 %): expert carved 0.34 / 0.15, expert steered 0.37 / 0.26, intermediate carved 0.27 / 0.09, intermediate steered 0.31 / 0.15 (flat / steep).
+# Fig 6 mean FP curves (read by eye): peak at 20-30 % of the double turn (0.4-0.6 of the outside phase), 1.35-1.7 BW, carved and steered alike; minimum at 50 %; inside hump near 60-70 %.
+- id: nakazato-2011
+  type: article
+  citation: Nakazato K, Scheiber P, Müller E. A comparison of ground reaction forces determined by portable force-plate and pressure-insole systems in alpine skiing. J Sports Sci Med. 2011;10:754-62.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC3761512/
   read: full
 - id: komissarov-2022b
   type: article
@@ -379,6 +442,12 @@
   citation: Kersting UG, McAlpine P, Kurpiers N. The effect of boot shaft flexibility on ankle, knee and hip coupling during mogul skiing. In - Scher I, Greenwald R, eds. Book of Abstracts, 19th International Congress on Ski Trauma and Skiing Safety; 2011 May 1-7; Keystone (CO). p. 81.
   url: https://vbn.aau.dk/ws/files/62984277/RevisedISSS2011AbstractBook_1_4_5_81.pdf
   read: full
+# Read p338 (Methods). Wave slope, no turns - 5 male skiers: "average inclination of 19 deg with six bumps of approximately 0.5 m height situated at a distance of 4 m apart"; bumps 3 and 4 frame the measurement area. Not a competition course.
+- id: kurpiers-2020
+  type: article
+  citation: Kurpiers N, McAlpine P, Kersting UG. A biomechanical field testing approach in snow sports - case studies toward a detailed analysis of joint loading. Proc IMechE Part P. 2020;234(4):337-46.
+  url: https://doi.org/10.1177/1754337120918037
+  read: partial
 - id: campbell-rogan-2001
   type: web
   citation: Campbell S, Rogan M. Turning Points Part 6 - Bumps. Ski Magazine. 15 Feb 2001.
@@ -643,3 +712,199 @@
   citation: "Wolan-Nieroda A et al. Use of the Zebris ultrasonic three-dimensional motion analysis system to evaluate range of motion of the cervical spine in 61 healthy adults. Med Sci Monit. 2025;31:e948203."
   url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12124152/
   read: partial
+- id: footage-mcglashan-short-turns
+  type: web
+  citation: "McGlashan R. Dynamic short turns, side-on [video]. YouTube. Source 3.92–5.76 s measured with SAM 3D Body (video-3d), 44 frames."
+  url: https://www.youtube.com/watch?v=vXcjdfBXTiI
+  read: partial
+- id: footage-sce-instructor
+  type: web
+  citation: "Snow Camps Europe. Instructor short/medium turns on groomed, rear-oblique follow-cam [video]. YouTube. Source 32.20–33.23 s measured with SAM 3D Body (video-3d), 32 frames."
+  url: https://www.youtube.com/watch?v=jBsWS4hpivY
+  read: partial
+- id: rajagopal-2016
+  type: article
+  citation: "Rajagopal A et al. Full-body musculoskeletal model for muscle-driven simulation of human gait. IEEE Trans Biomed Eng. 2016;63:2068-79."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC5507211/
+  read: full
+- id: arnold-2010
+  type: article
+  citation: "Arnold EM et al. A model of the lower limb for analysis of human movement. Ann Biomed Eng. 2010;38:269-79."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC2903973/
+  read: full
+- id: nemeth-1985
+  type: article
+  citation: "Németh G, Ohlsén H. In vivo moment arm lengths for hip extensor muscles at different angles of hip flexion. J Biomech. 1985;18:129-40."
+  url: https://pubmed.ncbi.nlm.nih.gov/3988782/
+  read: abstract
+- id: krevolin-2004
+  type: article
+  citation: "Krevolin JL, Pandy MG, Pearce JC. Moment arm of the patellar tendon in the human knee. J Biomech. 2004;37:785-8."
+  url: https://pubmed.ncbi.nlm.nih.gov/15047009/
+  read: abstract
+- id: maganaris-1998
+  type: article
+  citation: "Maganaris CN, Baltzopoulos V, Sargeant AJ. Changes in Achilles tendon moment arm from rest to maximum isometric plantarflexion: in vivo observations in man. J Physiol. 1998;510:977-85."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC2231068/
+  read: abstract
+- id: maganaris-1999
+  type: article
+  citation: "Maganaris CN, Baltzopoulos V, Sargeant AJ. Changes in the tibialis anterior tendon moment arm from rest to maximum isometric dorsiflexion: in vivo observations in man. Clin Biomech. 1999;14:661-6."
+  url: https://pubmed.ncbi.nlm.nih.gov/10521650/
+  read: abstract
+- id: rugg-1990
+  type: article
+  citation: "Rugg SG et al. In vivo moment arm calculations at the ankle using magnetic resonance imaging (MRI). J Biomech. 1990;23:495-501."
+  url: https://pubmed.ncbi.nlm.nih.gov/2373722/
+  read: abstract
+# Full text read from the PMC XML (J Hum Kinet 57:51-59, DOI 10.1515/hukin-2017-0046), Tables 1-3. Trunk flexion and extension peak torque of 109 FIS skiers who met Austrian Ski Federation national-team criteria (junior 44, European Cup 42, World Cup 23; 2008-2011) and 47 sport-science students.
+# Protocol: CON-TREX TP 1000, STANDING, axis at the lumbosacral junction, lower limbs, hips and upper body strapped (hips fixed), gravity-corrected, concentric isokinetic 150 deg/s (ballistic mode), ROM 60 deg (0 upright to 60 flexion), 4 submaximal then 3 maximal repetitions, best of 2 trials = peak torque. Not isometric.
+# Male skiers n 53, 22.1 y, 83.8 ± 5.7 kg: extension 378.2 ± 54.4 Nm = 4.53 ± 0.65 Nm/kg (range 3.5-6.1), flexion 204.9 ± 28.6 Nm = 2.44 ± 0.30 Nm/kg, flexion/extension 0.56 ± 0.09. Female skiers n 56, 63.7 kg: extension 228.1 ± 31.7 Nm = 3.55 ± 0.53 Nm/kg, flexion 127.6 ± 16.2 Nm = 2.05 ± 0.22 Nm/kg.
+# Male controls n 21, 76.7 kg: extension 299.1 ± 47.9 Nm = 4.11 ± 0.52 Nm/kg, flexion 173.6 ± 27.3 Nm = 2.32 ± 0.42 Nm/kg. Female controls n 26, 61.6 kg: extension 192.7 ± 38.4 Nm = 3.14 ± 0.48 Nm/kg, flexion 1.74 ± 0.28 Nm/kg.
+# Used for the lumbar and thoracic flexion and extension maxima (male skiers x the reference skier's mass). Caveat: a standing concentric peak over 0-60 deg flexion, not pan-2025's seated isometric from neutral; heinrich-2022's skier is flexed (pelvis tilt 28-39 deg, lumbar flexion 23-29 deg).
+- id: hildebrandt-2017
+  type: article
+  citation: Hildebrandt C, Müller L, Heisse C, Raschner C. Trunk strength characteristics of elite alpine skiers - a comparison with physically active controls. J Hum Kinet. 2017;57:51-9.
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC5504578/
+  read: full
+# Isometric trunk torques, seated upright, shoulders and pelvis fixed (61 asymptomatic males 24.5 ± 2.3 y, 73.4 ± 15.0 kg): flexion 1.15, extension 1.74, lateral bending left 0.95 / right 0.91, axial rotation left 0.74 / right 0.64 Nm/kg. It says its torques sit below earlier studies (other populations, protocols, devices).
+# Its flexion and extension sit 2.1x and 2.6x below hildebrandt-2017's male FIS skiers (2.44 / 4.53 Nm/kg; standing, concentric isokinetic 150 deg/s). The model now takes flexion and extension from hildebrandt-2017; pan-2025 supplies bending (0.93, mean of the sides) and rotation (0.69) only, as it has no athlete value to replace them.
+- id: pan-2025
+  type: article
+  citation: "Pan F, Cheng J, Kong C, Wang W, Lu S. Sex-specific characteristics of the trunk muscle behaviors in an asymptomatic adult cohort. Eur J Med Res. 2025;30:471."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC12150468/
+  read: partial
+- id: mortensen-2018
+  type: article
+  citation: "Mortensen JD, Vasavada AN, Merryweather AS. The inclusion of hyoid muscles improves moment generating capacity and dynamic simulations in musculoskeletal models of the head and neck. PLoS One. 2018;13:e0199912."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC6023174/
+  read: partial
+- id: roos-2020
+  type: article
+  citation: "Roos PE, Vasavada A, Zheng L, Zhou X. Neck musculoskeletal model generation through anthropometric scaling. PLoS One. 2020;15:e0219954."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC6986765/
+  read: partial
+- id: vasavada-1998
+  type: article
+  citation: "Vasavada AN, Li S, Delp SL. Influence of muscle morphometry and moment arms on the moment-generating capacity of human neck muscles. Spine. 1998;23:412-22."
+  url: https://pubmed.ncbi.nlm.nih.gov/9516695/
+  read: abstract
+- id: christophy-2012
+  type: article
+  citation: "Christophy M, Faruk Senan NA, Lotz JC, O'Reilly OM. A musculoskeletal model for the lumbar spine. Biomech Model Mechanobiol. 2012;11:19-34."
+  url: https://pubmed.ncbi.nlm.nih.gov/21318374/
+  read: abstract
+- id: hamner-2010
+  type: web
+  citation: "Hamner SR, Seth A, Delp SL. Muscle contributions to propulsion and support during running. J Biomech. 2010;43:2709-16. Model file FullBodyModel_Hamner2010_v2_0.osim, opensim-models (max_isometric_force of the trunk muscles only)."
+  url: https://github.com/opensim-org/opensim-models/blob/master/Models/Hamner/FullBodyModel_Hamner2010_v2_0.osim
+  read: partial
+- id: holzbaur-2005
+  type: web
+  citation: "Holzbaur KRS, Murray WM, Delp SL. A model of the upper extremity for simulating musculoskeletal surgery and analyzing neuromuscular control. Ann Biomed Eng. 2005;33:829-40. Read as the derived arm26.osim, opensim-models (max_isometric_force only)."
+  url: https://github.com/opensim-org/opensim-models/blob/master/Models/Arm26/arm26.osim
+  read: partial
+- id: holzbaur-2007
+  type: article
+  citation: "Holzbaur KRS, Delp SL, Gold GE, Murray WM. Moment-generating capacity of upper limb muscles in healthy adults. J Biomech. 2007;40:2442-9."
+  url: https://pubmed.ncbi.nlm.nih.gov/17250841/
+  read: abstract
+- id: kritzer-2024
+  type: article
+  citation: "Kritzer TD, Lang CJ, Holmes MWR, Cudlip AC. Shoulder strength in men and women: a review. PeerJ. 2024;12:e16968."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC10960529/
+  read: partial
+- id: simpson-2019
+  type: article
+  citation: "Simpson D et al. Elbow extension and flexion torque. Hong Kong Physiother J. 2019;39:67-76."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC6467829/
+  read: partial
+- id: dourado-2025
+  type: article
+  citation: "Dourado VZ et al. Muscle strength reference values. Braz J Med Biol Res. 2025;58:e14214."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC11884781/
+  read: partial
+- id: puah-2018
+  type: article
+  citation: "Puah KL et al. Comparison of a simplified skin pointer device compared with a skeletal marker for knee rotation laxity: a cadaveric study using a rotation-meter. World J Orthop. 2018;9(6):85-."
+  url: https://pmc.ncbi.nlm.nih.gov/articles/PMC6033708/
+  read: full
+- id: mossberg-1983
+  type: article
+  citation: "Mossberg KA, Smith LK. Active axial knee rotation in 85 women (title not recorded). J Orthop Sports Phys Ther. 1983;4:236."
+  read: abstract
+- id: hrycyna-2011
+  type: article
+  citation: "Hrycyna M, Zielinski J. Torque of the shank rotating muscles in patients with knee joint injuries. Acta Bioeng Biomech. 2011;13(4)."
+  read: partial
+- id: cleather-2018
+  type: article
+  citation: "Cleather DJ. An important role of the biarticular hamstrings is to exert internal/external rotation moments on the tibia during vertical jumping. J Theor Biol. 2018;455:101-8. doi:10.1016/j.jtbi.2018.07.013"
+  read: full
+- id: riku-2007
+  type: article
+  citation: "Riku. 2007. Knee-angle change per turn (50-60°) in World and European Cup mogul skiers, from an abstract. Author initials, title and venue not located (Crossref, Europe PMC and web search found no record)."
+  read: abstract
+- id: ando-2024
+  type: article
+  citation: "Ando. 2024. Mogul knee flexion 20-120° from maximum extension, quoting Horishima 2019 thesis. Title and venue not located (Crossref, Europe PMC and web search found no record); seen as an abstract-level figure only."
+  read: abstract
+- id: wolfsperger-2021
+  type: article
+  citation: Wolfsperger F, Meyer F, Gilgien M. The snow-friction of freestyle skis and snowboards predicted from snow physical quantities. Front Mech Eng. 2021;7:728722.
+  url: https://doi.org/10.3389/fmech.2021.728722
+  read: partial
+- id: wolfsperger-2021-jsams
+  type: article
+  citation: Wolfsperger F, Meyer F, Gilgien M. Towards more valid simulations of slopestyle and big air jumps - aerodynamics during in-run and flight phase. J Sci Med Sport. 2021;24(10):1082-7.
+  url: https://doi.org/10.1016/j.jsams.2021.05.005
+  read: abstract
+- id: kaps-1996
+  type: article
+  citation: Kaps P, Nachbauer W, Mössner M. Determination of kinetic friction and drag area in alpine skiing. In - Mote CD, Johnson RJ, Hauser W, Schaff PS, eds. Ski Trauma and Skiing Safety, 10th Volume, ASTM STP 1266. Philadelphia (PA) - ASTM; 1996. p. 165-77.
+  url: https://sport1.uibk.ac.at/mm/publ/120--Kaps--1996--Determination_of_Kinetic_Friction_and_Drag_Area_in_Alpine_Skiing.pdf
+  read: full
+- id: moessner-2008
+  type: article
+  citation: Mössner M, Heinrich D, Kaps P, Schretter H, Nachbauer W. Effects of ski stiffness in a sequence of ski turns. 2008. Proceedings paper; venue not stated in the text read.
+  url: https://sport1.uibk.ac.at/mm/publ/198--Moessner--2008--Effects_of_Ski_Stiffness_in_a_Sequence_of_Ski_Turns.pdf
+  read: full
+- id: federolf-2005
+  type: book
+  citation: Federolf PA. Finite element simulation of a carving snow ski. Doctoral thesis, Diss ETH No. 16065. Swiss Federal Institute of Technology Zurich; 2005.
+  url: https://www.dora.lib4ri.ch/wsl/dload/wsl:20067/PDF/view
+  read: full
+- id: kaps-2001
+  type: article
+  citation: Kaps P, Mössner M, Nachbauer W, Stenberg R. Pressure distribution under a ski during carved turns. In - Müller E et al., eds. Science and Skiing. Hamburg - Verlag Dr. Kovac; 2001. p. 180-202.
+  url: https://sport1.uibk.ac.at/mm/publ/153--Kaps--2001--Pressure_Distribution_Under_a_Ski_During_Carved_Turns.pdf
+  read: full
+- id: moessner-2013
+  type: article
+  citation: Mössner M, Innerhofer G, Schindelwig K, Kaps P, Schretter H, Nachbauer W. Measurement of mechanical properties of snow for simulation of skiing. J Glaciol. 2013;59(218):1170-8.
+  url: https://doi.org/10.3189/2013JoG13J031
+  read: full
+- id: cross-2021
+  type: article
+  citation: Cross MR, Delhaye C, Morin JB, Bowen M, Coulmy N, Hintzy F, Samozino P. Force output in giant-slalom skiing - a practical model of force application effectiveness. PLOS ONE. 2021;16(1):e0244698.
+  url: https://doi.org/10.1371/journal.pone.0244698
+  read: partial
+- id: hladnik-2026
+  type: article
+  citation: Hladnik J, Dražumerič R, Petrović I, Bon I, Očić M, Cigrovski V, Jerman B. Mechanical analysis of skier activity in giant slalom. PLOS ONE. 2026;21(4):e0347192.
+  url: https://doi.org/10.1371/journal.pone.0347192
+  read: full
+- id: knuenz-2000
+  type: article
+  citation: Knünz B, Nachbauer W, Mössner M, Schindelwig K, Brunner F. Track analysis of giant slalom turns of World Cup racers. In - Avela J, Komi PV, Komulainen J, eds. Proceedings of the 5th Annual Congress of the European College of Sport Science. Jyväskylä - University of Jyväskylä; 2000. p. 399.
+  url: https://sport1.uibk.ac.at/mm/publ/150--Knuenz--2000--Track_Analysis_of_Giant_Slalom_Turns_of_World_Cup_Racers.pdf
+  read: abstract
+- id: ogrin-2021
+  type: article
+  citation: Ogrin J, Šarabon N, Madsen MK, Kersting U, Holmberg HC, Supej M. Asymmetries in ground reaction forces during turns by elite slalom alpine skiers are not related to asymmetries in muscular strength. Front Physiol. 2021;12:577698.
+  url: https://doi.org/10.3389/fphys.2021.577698
+  read: partial
+- id: lamontagne-2001
+  type: article
+  citation: Lamontagne M. Plantar pressure distribution and forces measured during slalom and giant slalom turns performed by elite skiers. Biomechanics Symposia 2001, University of San Francisco (ISBS).
+  read: full

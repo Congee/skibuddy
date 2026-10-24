@@ -930,8 +930,9 @@ has text only, see D19); their poses follow the foundations above, with these ad
   crest it touches under the boot with the ends floating, in a trough the ends touch. Pressed together,
   the skis edge as one platform. The legs absorb up to the top of each bump and extend right after it,
   keeping the pressure on the snow even (fis-freestyle-judging-2025 p28): the outside knee opens in the
-  troughs and folds over the crests, deeper as the intensity grows, toward the elite mogul knee a little
-  past 100° (arndt-1992 p85). The mass then rises and falls by well under the bumps' height; the open
+  troughs and folds over the crests, deeper as the intensity grows: past 90° in the one elite trial
+  arndt-1992 reports (p78), 50 to 60° of change per turn in World and Europa Cup skiers (riku-2007, abstract),
+  20 to 120° over a run (ando-2024, citing horishima-2019). The mass then rises and falls by well under the bumps' height; the open
   knee, the share absorbed and the extra squeeze that keeps the boots together in deep flexion are
   inferred. Pitched by the bumps, the mass balances over the feet along the snow, not along the ski.
   Closed-stance turns rehearse the line on smooth groomed snow, so they skip the ride and the absorption.
@@ -951,7 +952,8 @@ has text only, see D19); their poses follow the foundations above, with these ad
   (heinrich-2022). The tips-up pitch of 8° to 16°, lifting the forebody 12 to 23 cm, is inferred from
   the tail's reverse bend and the boot tipped back on its spoiler.
 - *Snow surfaces.* Moguls are drawn as an egg-crate field: crests on the line at each switch and on the
-  columns either side between them. Competition moguls run 1 to 1.5 m high (arndt-1992 p1); the smaller
+  columns either side between them. Arndt gives competition moguls as 100 to 150 cm high, "only an indication", with no method
+  or datum (arndt-1992 p1); the smaller
   recreational heights and the spacing across are inferred. Powder is loose snow over a packed base:
   15 cm or less still skis like packed snow, deeper calls for near even weighting (lemaster-2010 p197).
   The depths drawn, with the boots partly buried, are inferred.
