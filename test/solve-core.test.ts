@@ -223,6 +223,7 @@ describe('diagnostics', () => {
     assert.closeTo(why?.shares.find((s) => s.source === 'pin')?.share ?? 0, 1, 1e-6);
     assert.closeTo(why?.rest ?? 1, 0, 1e-6);
     assert.include(formatDiagnosis(d), 'why prior');
+    assert.strictEqual(d.groups.find((g) => g.group === 'smoothness')?.at, 'smoothness 2[0]');
 
     const clipped: Problem = { size: 1, blocks: [prior('reach', [plain(0)], [2], [1])], upper: Float64Array.from([1]) };
     const c = diagnose(clipped, solve(clipped, [0]));

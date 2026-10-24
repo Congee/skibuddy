@@ -10,6 +10,8 @@ export interface GroupReport {
   // ½‖w·r‖² for soft groups; ½‖c‖² for constraints.
   readonly cost: number;
   readonly maxAbs: number;
+  // The max |r| row as `<block name>[<row>]`; '' when no row is off.
+  readonly at: string;
   readonly maxMultiplier: number;
   readonly activeRows: number;
 }
@@ -55,6 +57,7 @@ export const diagnose = (problem: Problem, result: SolveResult): Diagnosis => {
     let rows = 0;
     let cost = 0;
     let maxAbs = 0;
+    let at = '';
     let maxMultiplier = 0;
     let activeRows = 0;
     for (const i of members) {
@@ -65,13 +68,16 @@ export const diagnose = (problem: Problem, result: SolveResult): Diagnosis => {
         const violated = kind === BlockKind.Inequality ? Math.min(0, v) : v;
         rows++;
         cost += 0.5 * violated * violated;
-        maxAbs = Math.max(maxAbs, Math.abs(violated));
+        if (Math.abs(violated) > maxAbs) {
+          maxAbs = Math.abs(violated);
+          at = `${b.name}[${row}]`;
+        }
         const l = lam?.[row] ?? 0;
         maxMultiplier = Math.max(maxMultiplier, Math.abs(l));
         if (kind === BlockKind.Inequality && l > 0) activeRows++;
       }
     }
-    return { group, kind, blocks: members.length, rows, cost, maxAbs, maxMultiplier, activeRows };
+    return { group, kind, blocks: members.length, rows, cost, maxAbs, at, maxMultiplier, activeRows };
   });
 
   // Gradient contribution of each group, in variable order.
@@ -159,10 +165,10 @@ const fmt = (v: number): string => (v === 0 ? '0' : v.toPrecision(3));
 const pct = (v: number): string => `${(100 * v).toFixed(0)}%`;
 
 export const formatDiagnosis = (d: Diagnosis, minShare = 0.05): string => {
-  const lines = ['group | kind | rows | cost | max |r| | max λ | active'];
+  const lines = ['group | kind | rows | cost | max |r| | at | max λ | active'];
   for (const g of d.groups) {
     const active = g.kind === BlockKind.Inequality ? String(g.activeRows) : '';
-    lines.push([g.group, g.kind, g.rows, fmt(g.cost), fmt(g.maxAbs), fmt(g.maxMultiplier), active].join(' | '));
+    lines.push([g.group, g.kind, g.rows, fmt(g.cost), fmt(g.maxAbs), g.at, fmt(g.maxMultiplier), active].join(' | '));
   }
   for (const a of d.attribution) {
     const parts = a.shares.filter((s) => Math.abs(s.share) >= minShare).map((s) => `${pct(s.share)} ${s.source}`);

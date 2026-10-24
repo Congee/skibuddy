@@ -92,9 +92,9 @@ export class Cycle {
     return { index: this.solved * this.coords + j, sign: 1 };
   }
 
-  // Residual over the full coordinate vectors of the listed frames, then the extras.
-  frameBlock(spec: BlockSpec, frames: readonly number[], f: (q: Dual[][], extras: Dual[]) => readonly Dual[]): Block {
-    const refs = [...frames.flatMap((k) => this.frameRefs(k)), ...Array.from({ length: this.extras }, (_, j) => this.extra(j))];
+  // Residual over the full coordinate vectors of the listed frames, then the first `extras` extras.
+  frameBlock(spec: BlockSpec, frames: readonly number[], f: (q: Dual[][], extras: Dual[]) => readonly Dual[], extras = this.extras): Block {
+    const refs = [...frames.flatMap((k) => this.frameRefs(k)), ...Array.from({ length: Math.min(extras, this.extras) }, (_, j) => this.extra(j))];
     const n = this.coords;
     return autodiff(spec, refs, (v) =>
       f(
