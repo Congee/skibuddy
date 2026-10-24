@@ -4645,49 +4645,30 @@
       "knee_flexion": {
        "parity": "sided",
        "mu": {
-        "a0": 70,
+        "a0": 68.35,
         "cos": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
        },
        "logSigma": {
-        "a0": 3.2189,
+        "a0": 3.546,
         "cos": [0, 0, 0, 0, 0, 0],
         "sin": [0, 0, 0, 0, 0, 0]
        },
        "provenance": {
         "roles": {
          "outside": {
-          "evidence": "range-only",
-          "sigma": "range",
-          "sources": [
-           {
-            "id": "ando-2024",
-            "what": "knee 20–120 from max extension (horishima-2019 thesis)",
-            "status": "range-only",
-            "n": 1,
-            "errorDeg": 5,
-            "mapping": "flexion +, as ISB",
-            "warp": "none: a range has no timing"
-           }
-          ]
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
          },
          "inside": {
-          "evidence": "range-only",
-          "sigma": "range",
-          "sources": [
-           {
-            "id": "ando-2024",
-            "what": "knee 20–120 from max extension (horishima-2019 thesis)",
-            "status": "range-only",
-            "n": 1,
-            "errorDeg": 5,
-            "mapping": "flexion +, as ISB",
-            "warp": "none: a range has no timing"
-           }
-          ]
+          "evidence": "neutral",
+          "sigma": "neutral",
+          "sources": []
          }
         },
         "notes": [
+         "ando-2024 dropped: no record of the study found",
          "no outside/inside split",
          "riku-2007: 50–60° change per turn (both knees, 6 WC/EC); an amplitude check, not fitted"
         ]

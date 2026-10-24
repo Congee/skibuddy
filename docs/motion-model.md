@@ -356,7 +356,7 @@ the solve infeasible at 0.11–0.12 with the pelvis listing to 34°). The model:
   meet the next face: the tip, half a ski ahead of the boot along the track, passes the trough's bottom (P2).
 - Absorption (P2): the legs keep the pressure on the snow even (fis-freestyle-judging-2025 p28), so the mass height
   over the mean slope is the periodic path with the least normal acceleration that stays within the legs' reach
-  above the snow under the boots, from the deepest mogul fold (the knee at 105°, inferred: arndt-1992 p78 has past 90° in one trial, ando-2024 20–120° over a run) to the
+  above the snow under the boots, from the deepest mogul fold (the knee at 105°, inferred: arndt-1992 p78 has past 90° in one trial) to the
   open knee (inferred), and never asks the snow to pull: `z̈_mass ≥ −g cos θ`. The normal load is
   `cos θ + z̈_mass / g`: even where the reach suffices, rising only where the legs run out, and the mass rises and
   falls by the part of the bump the legs cannot take. P1's `v² κ_snow / g` had the mass ride the snow: 69–78 % of

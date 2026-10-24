@@ -931,8 +931,8 @@ has text only, see D19); their poses follow the foundations above, with these ad
   the skis edge as one platform. The legs absorb up to the top of each bump and extend right after it,
   keeping the pressure on the snow even (fis-freestyle-judging-2025 p28): the outside knee opens in the
   troughs and folds over the crests, deeper as the intensity grows: past 90° in the one elite trial
-  arndt-1992 reports (p78), 50 to 60° of change per turn in World and Europa Cup skiers (riku-2007, abstract),
-  20 to 120° over a run (ando-2024, citing horishima-2019). The mass then rises and falls by well under the bumps' height; the open
+  arndt-1992 reports (p78), 50 to 60° of change per turn in World and Europa Cup skiers (riku-2007, abstract).
+  The mass then rises and falls by well under the bumps' height; the open
   knee, the share absorbed and the extra squeeze that keeps the boots together in deep flexion are
   inferred. Pitched by the bumps, the mass balances over the feet along the snow, not along the ski.
   Closed-stance turns rehearse the line on smooth groomed snow, so they skip the ride and the absorption.

@@ -444,8 +444,8 @@ export const EXAMPLES: Readonly<Record<string, ReadonlyArray<ExampleDef>>> = {
       indexProvenance: 'inferred: the drill’s dynamic scenario (elite and WC skiers)',
       coordinates: {
         knee_flexion: {
-          roles: both([range('ando-2024', 'knee 20–120 from max extension (horishima-2019 thesis)', [20, 120], 'range-only', 5, FLEX)]),
-          notes: ['no outside/inside split', 'riku-2007: 50–60° change per turn (both knees, 6 WC/EC); an amplitude check, not fitted'],
+          roles: {},
+          notes: ['ando-2024 dropped: no record of the study found', 'no outside/inside split', 'riku-2007: 50–60° change per turn (both knees, 6 WC/EC); an amplitude check, not fitted'],
         },
         ankle_dorsiflexion: {
           roles: both([range('arndt-1992', 'ankle ≈10 → 45, left leg, 3 elite', [10, 45], 'range-only measured (pp67-68)', 5, 'dorsiflexion +, as ISB', 3)]),

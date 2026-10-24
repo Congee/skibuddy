@@ -831,23 +831,23 @@
   read: full
 - id: mossberg-1983
   type: article
-  citation: "Mossberg KA, Smith LK. Active axial knee rotation in 85 women (title not recorded). J Orthop Sports Phys Ther. 1983;4:236."
+  citation: "Mossberg KA, Smith LK. Axial rotation of the knee in women. J Orthop Sports Phys Ther. 1983;4(4):236-240."
+  url: https://researchexperts.utmb.edu/en/publications/axial-rotation-of-the-knee-in-women/
   read: abstract
 - id: hrycyna-2011
   type: article
   citation: "Hrycyna M, Zielinski J. Torque of the shank rotating muscles in patients with knee joint injuries. Acta Bioeng Biomech. 2011;13(4)."
+  url: https://pubmed.ncbi.nlm.nih.gov/22339068/
   read: partial
 - id: cleather-2018
   type: article
   citation: "Cleather DJ. An important role of the biarticular hamstrings is to exert internal/external rotation moments on the tibia during vertical jumping. J Theor Biol. 2018;455:101-8. doi:10.1016/j.jtbi.2018.07.013"
+  url: https://doi.org/10.1016/j.jtbi.2018.07.013
   read: full
 - id: riku-2007
   type: article
-  citation: "Riku. 2007. Knee-angle change per turn (50-60°) in World and European Cup mogul skiers, from an abstract. Author initials, title and venue not located (Crossref, Europe PMC and web search found no record)."
-  read: abstract
-- id: ando-2024
-  type: article
-  citation: "Ando. 2024. Mogul knee flexion 20-120° from maximum extension, quoting Horishima 2019 thesis. Title and venue not located (Crossref, Europe PMC and web search found no record); seen as an abstract-level figure only."
+  citation: "Riku V, Miettunen K. Biomechanical characteristics of mogul skiing turn. 2007. Knee-angle change per turn (50-60°) in World and European Cup mogul skiers, from the abstract."
+  url: https://www.sponet.de/sponet/Record/3042756
   read: abstract
 - id: wolfsperger-2021
   type: article
@@ -907,4 +907,5 @@
 - id: lamontagne-2001
   type: article
   citation: Lamontagne M. Plantar pressure distribution and forces measured during slalom and giant slalom turns performed by elite skiers. Biomechanics Symposia 2001, University of San Francisco (ISBS).
+  url: https://ojs.ub.uni-konstanz.de/cpa/article/view/3891
   read: full
