@@ -452,6 +452,12 @@
   citation: U.S. Ski and Snowboard. FIS homologation report, Squaw Valley Red Dog GS, inspected 29 Aug 2012 (example packet F). Technical data.
   url: https://my.usskiandsnowboard.org/sites/default/files/documents/athletics/compservices/2014-15/documents/Homologation%20report%20packet%20example%20F.pdf
   read: partial
+- id: gilgien-2015
+  type: article
+  citation: Gilgien M, Crivelli P, Spörri J, Kröll J, Müller E. Characterization of course and terrain and their effect on skier speed in World Cup alpine ski racing. PLoS ONE. 2015;10(3) - e0118119.
+  url: https://doi.org/10.1371/journal.pone.0118119
+  read: partial
+# Read Table 1. World Cup men's GS, median ± IQR - terrain inclination 17.8 ± 7.0°, vertical drop 407 ± 23 m, 51.2 ± 3.5 direction changes, gate distance 26.24 m, horizontal gate distance 7.47 m.
 - id: kersting-2011
   type: article
   citation: Kersting UG, McAlpine P, Kurpiers N. The effect of boot shaft flexibility on ankle, knee and hip coupling during mogul skiing. In - Scher I, Greenwald R, eds. Book of Abstracts, 19th International Congress on Ski Trauma and Skiing Safety; 2011 May 1-7; Keystone (CO). p. 81.
