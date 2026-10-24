@@ -437,6 +437,21 @@
   citation: "FIS. Moguls 101: understanding moguls and dual moguls (FIS news). 9 Feb 2026."
   url: https://www.fis-ski.com/freestyle/news/moguls-aerials-2025-26/moguls-101-understanding-moguls-and-dual-moguls
   read: full
+- id: fis-icr-alpine-2026
+  type: web
+  citation: FIS. International Ski and Snowboard Competition Rules (ICR) Book IV - Joint Regulations for Alpine Skiing, edition July 2026. Slalom §801.2.3, §801.2.4, §802.1.1; giant slalom §901.2.3, §901.2.4, §902.1.
+  url: https://assets.fis-ski.com/f/252177/x/57a5e17fad/icr-04-09-2026.pdf
+  read: partial
+- id: ussa-homologation-hunter-sl
+  type: web
+  citation: U.S. Ski and Snowboard. FIS re-homologation report, Hunter Mountain Highlands FIS SL (example packet B, 2014-15). Technical data.
+  url: https://my.usskiandsnowboard.org/sites/default/files/documents/athletics/compservices/2014-15/documents/Homologation%20report%20packet%20example%20B.pdf
+  read: partial
+- id: ussa-homologation-red-dog-gs
+  type: web
+  citation: U.S. Ski and Snowboard. FIS homologation report, Squaw Valley Red Dog GS, inspected 29 Aug 2012 (example packet F). Technical data.
+  url: https://my.usskiandsnowboard.org/sites/default/files/documents/athletics/compservices/2014-15/documents/Homologation%20report%20packet%20example%20F.pdf
+  read: partial
 - id: kersting-2011
   type: article
   citation: Kersting UG, McAlpine P, Kurpiers N. The effect of boot shaft flexibility on ankle, knee and hip coupling during mogul skiing. In - Scher I, Greenwald R, eds. Book of Abstracts, 19th International Congress on Ski Trauma and Skiing Safety; 2011 May 1-7; Keystone (CO). p. 81.

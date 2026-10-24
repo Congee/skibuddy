@@ -1952,6 +1952,12 @@ in short turns was higher than in the plough, and the quadriceps-to-hamstrings r
 the most hamstring co-contraction (hermann-2023). SL knee action is the most dynamic of the disciplines,
 with a short quasi-isometric share on the outside leg (11 %) (alhammoud-2020).
 
+**FIS course.** Slalom at the Olympics and World Championships is set on about 33 to 45 % (18 to 24°); it
+may run below 33 % and exceeds about 52 % only in very short parts (fis-icr-alpine-2026 §802.1.1). Turns
+number 30 to 35 % of the vertical drop in metres, ±3 (§801.2.4), so each turn drops about 2.9 to 3.3 m,
+about 7 to 11 m along the slope on 18 to 24°. Turning poles are 6 to 13 m apart (§801.2.3). One homologated
+FIS slalom averages 26 %, 47 % at most (ussa-homologation-hunter-sl).
+
 | Segment | Initiation | Shaping | Finish |
 |---|---|---|---|
 | Ankles | Tip quickly to new edges | Dorsiflexed; tipped | Released early |
@@ -2031,6 +2037,12 @@ vastus lateralis, then gluteus maximus and medial and lateral hamstrings. Inside
 tibialis anterior, adductor longus and vastus medialis. Trunk: erector spinae and internal obliques
 (heinrich-2023). Joint moments come from heinrich-2022. Fatigue after 30 GS turns altered initiation-phase
 EMG (chollet-2025).
+
+**FIS course.** The ICR sets no gradient for giant slalom, only undulating, hilly terrain about 40 m wide
+(fis-icr-alpine-2026 §902.1). Turns number 11 to 15 % of the vertical drop in metres (§901.2.4), so each
+turn drops about 6.7 to 9.1 m; turning poles are at least 10 m apart (§901.2.3). One homologated FIS giant
+slalom averages 34 to 42 % by start, 55 % at most (ussa-homologation-red-dog-gs). Our GS slope is an
+inferred pick from such course data.
 
 | Segment | Initiation | Shaping | Finish |
 |---|---|---|---|
@@ -2772,6 +2784,9 @@ returned HTTP 200 to curl on 2026-10-15. The slugs follow `content/sources.yaml`
 | fis-course-standards-2023 | FIS. *Freestyle Course Standards Manual*, August 2023 (sheets 30.04.2023). | https://assets.fis-ski.com/f/252177/9bd14f7a20/freestyle-course-standards-manual-2023.pdf | page: moguls course angle, length and width (p3), dual (p4) |
 | fis-icr-book6-2025 | FIS. *ICR Book VI Freestyle Skiing*, November 2025. | https://www.infoski.lv/files/sbfsfk-new-icr-fall-2025.pdf | page: course (§4204), pace speed (§4207) |
 | fis-moguls-101-2026 | FIS news. Moguls 101: understanding moguls and dual moguls. 9 Feb 2026. | https://www.fis-ski.com/freestyle/news/moguls-aerials-2025-26/moguls-101-understanding-moguls-and-dual-moguls | full: run time, scoring shares, mogul skis and poles |
+| fis-icr-alpine-2026 | FIS. *ICR Book IV Joint Regulations for Alpine Skiing*, edition July 2026. | https://assets.fis-ski.com/f/252177/x/57a5e17fad/icr-04-09-2026.pdf | page: slalom gates, direction changes and gradient (§801.2.3, §801.2.4, §802.1.1); giant slalom (§901.2.3, §901.2.4, §902.1) |
+| ussa-homologation-hunter-sl | U.S. Ski and Snowboard. FIS re-homologation report, Hunter Mountain Highlands FIS SL (example packet B, 2014-15). | https://my.usskiandsnowboard.org/sites/default/files/documents/athletics/compservices/2014-15/documents/Homologation%20report%20packet%20example%20B.pdf | page: technical data (gradient) |
+| ussa-homologation-red-dog-gs | U.S. Ski and Snowboard. FIS homologation report, Squaw Valley Red Dog GS, inspected 29 Aug 2012 (example packet F). | https://my.usskiandsnowboard.org/sites/default/files/documents/athletics/compservices/2014-15/documents/Homologation%20report%20packet%20example%20F.pdf | page: technical data (gradient) |
 | kersting-2011 | Kersting UG, McAlpine P, Kurpiers N. Boot shaft flexibility and joint coupling in mogul skiing. ISSS 2011 abstracts, p81. | https://vbn.aau.dk/ws/files/62984277/RevisedISSS2011AbstractBook_1_4_5_81.pdf | full (abstract): softer shaft, more ankle and knee range, mass further forward |
 | campbell-rogan-2001 | Campbell S, Rogan M. Turning Points Part 6 - Bumps. Ski Magazine; 2001. | https://www.skimag.com/uncategorized/turning-pointspart-6-bumps | full: pivot on the crest, plant on top over the tops |
 | wiegand-2021 | Wiegand J. Struggling in Moguls? Change the Way You Use Your Poles. Ski Magazine; 2021. | https://www.skimag.com/performance/instruction/how-to-ski-moguls-pole-plants/ | full: plant just below the crest, pole tip ahead of the feet |
