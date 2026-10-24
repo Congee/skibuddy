@@ -7,8 +7,8 @@
 Ports src/physics/turn.ts's carve: the pendulum on the pressure centre, skiCurvatureOf, the speed law. Constants come
 from a JSON the lane's bun dump writes; nothing here is retyped from TS.
   port CONST TSVALS OUT        the port table against TS values
-  solve CONST OUT [options]    one solve; writes the trajectory JSON
-  cycle CONST OUT [options]    the share-law solve with the λ_peak fixed point
+  gates_r1 OUT --cell NAME SOL SOL_HALF ...   R1 gates and summary
+  cycle CONST OUT --speed --turn-l --offset [options]   the share-law solve with the λ_peak fixed point
   link A A_HALF B B_HALF       both starts linked and agreeing
   bake OUT --cell NAME SOL SOL_HALF REPLAY [--other NAME SOL SOL_HALF] ...   carve-cycles.json, gated
 """
@@ -16,13 +16,13 @@ import argparse
 import json
 import math
 import os
+import re
 import sys
+import time
 
 import casadi as ca
 import numpy as np
 
-NX = ['lam', 'lamDot', 'h', 'hd', 'eps', 'p', 'pd', 'psi', 'v']
-NU = ['hdd', 'epsDot', 'pdd']
 
 
 class Model:
@@ -100,38 +100,61 @@ class Model:
     B = ca.if_else(inside, amp * (6 - 12 * u) * w * w / lam_peak ** 2, 0)
     return p, A * w, A, B
 
+
   def rhs_law(self, x, u, load, delta, lam_peak):
-    lam, lamDot, h, hd, eps, psi, v = [x[i] for i in range(7)]
-    hdd, epsDot = u[0], u[1]
+    lam, lamDot, h, hd, hdd, eps, epsDot, gam, psi, v = [x[i] for i in range(10)]
     G = self.G
     p, pd, A, B = self.law_s(lam, lamDot, lam_peak)
     share = self.c['SWITCH_SHARE'] - p / self.c['stance']
     force = load * share * self.c['mass'] * G
     kap = self.ski_curvature_s(eps, force, delta)
+    # Steady sideslip on the bent edge: the support path bends by κ cos γ (inferred).
+    kS = kap * ca.cos(gam)
     pull = G * self.sin * ca.cos(psi)
     inertia = h + A * ca.cos(lam)
-    lamAcc = (G * self.cos * ca.sin(lam) - (v * v * kap + B - pull) * ca.cos(lam) - 2 * hd * lamDot) / inertia
+    lamAcc = (G * self.cos * ca.sin(lam) - (v * v * kS + B - pull) * ca.cos(lam) - 2 * hd * lamDot) / inertia
     pdd = A * lamAcc + B
-    fm = hdd - h * lamDot ** 2 + G * self.cos * ca.cos(lam) + (v * v * kap + pdd - pull) * ca.sin(lam)
+    fm = hdd - h * lamDot ** 2 + G * self.cos * ca.cos(lam) + (v * v * kS + pdd - pull) * ca.sin(lam)
     psiDot = (load * G * ca.sin(lam) + G * self.sin * ca.cos(psi)) / v
-    vDot = G * (self.sin * ca.sin(psi) - self.c['mu'] * load - self.c['dragPerV2'] * v * v)
-    xd = ca.vertcat(lamDot, lamAcc, hd, hdd, epsDot, psiDot, vDot)
-    return xd, fm - load * G, kap, share, force, {'p': p, 'pd': pd, 'pdd': pdd, 'inertia': inertia}
+    # Snow's lateral force in g, ≥ 0 by the bounds λ ≥ 0, load ≥ 0; skid dissipation as solveGroomed's max(0, f) tan(set).
+    f = load * ca.sin(lam)
+    vDot = G * (self.sin * ca.sin(psi) - self.c['mu'] * load - self.c['dragPerV2'] * v * v - f * ca.tan(gam))
+    xd = ca.vertcat(lamDot, lamAcc, hd, hdd, u[0], epsDot, u[1], u[2], psiDot, vDot)
+    return xd, fm - load * G, kap, share, force, {'p': p, 'pd': pd, 'pdd': pdd, 'inertia': inertia, 'kS': kS, 'f': f}
 
-  def rhs(self, x, u, load, delta):
-    lam, lamDot, h, hd, eps, p, pd, psi, v = [x[i] for i in range(9)]
-    hdd, epsDot, pdd = [u[i] for i in range(3)]
-    G = self.G
-    share = self.c['SWITCH_SHARE'] - p / self.c['stance']
-    force = load * share * self.c['mass'] * G
-    kap = self.ski_curvature_s(eps, force, delta)
-    a = v * v * kap + pdd
-    lamAcc = (G * self.cos * ca.sin(lam) - (a - G * self.sin * ca.cos(psi)) * ca.cos(lam) - 2 * hd * lamDot) / h
-    fm = hdd - h * lamDot ** 2 + G * self.cos * ca.cos(lam) + (a - G * self.sin * ca.cos(psi)) * ca.sin(lam)
-    psiDot = (load * G * ca.sin(lam) + G * self.sin * ca.cos(psi)) / v
-    vDot = G * (self.sin * ca.sin(psi) - self.c['mu'] * load - self.c['dragPerV2'] * v * v)
-    xd = ca.vertcat(lamDot, lamAcc, hd, hdd, epsDot, pd, pdd, psiDot, vDot)
-    return xd, fm - load * G, kap, share, force
+  # §4.2 margin band: q = smooth min(1, γ/γ_ref), softplus width Q_WIDTH, shifted so q(0) is exactly 0.
+  def band_s(self, gam):
+    amax = self.c['ANGULATION_MAX_DEG'] * math.pi / 180
+    sm = lambda g: GAM_REF - Q_WIDTH * softplus((GAM_REF - g) / Q_WIDTH)
+    q = (sm(gam) - sm(0.0)) / GAM_REF
+    return -SLIP * q, amax - (amax - SLIP) * q, q
+
+
+def softplus(x):
+  return ca.fmax(x, 0) + ca.log1p(ca.exp(-ca.fabs(x)))
+
+
+LIT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'prior', 'lit-curves.json')
+_sl = json.load(open(LIT))['slalom']
+_num = lambda s: float(s.split()[0])
+# reid-2010 SL skid peak mean, inferred as the full-slip attack.
+GAM_REF = float(re.match(r't [^,]*, ([\d.]+) ±', _sl['events']['skid_peak']).group(1)) * math.pi / 180
+Q_WIDTH = 1.0 * math.pi / 180
+# §4.2's slip allowance: the edge may lead or trail the lean by this much at full slip.
+SLIP = 5.0 * math.pi / 180
+GAM_MAX = 60.0 * math.pi / 180
+# Lateral |cos ψ| as √(cos² + δ²), numerical.
+ABS_DELTA = 1e-3
+
+
+def scales():
+  """Fixed objective scales from reid-2010's 13 m slalom course (inferred as scales)."""
+  T_turn = _num(_sl['period_s']['values']['reid-2010 13 m'])
+  e_max = float(_sl['edge_angle']['13m']['max'])
+  rom = _num(_sl['leg_length_cm']['13m']['rom']) / 100
+  return {'s_eps': e_max * math.pi / 180 * (math.pi / T_turn) ** 2, 's_h': rom / 2 * (2 * math.pi / T_turn) ** 3, 's_gam': GAM_REF,
+          'inputs': {'T_turn_s': T_turn, 'T_turn_src': 'slalom.period_s reid-2010 13 m', 'eps_max_deg': e_max, 'eps_max_src': 'slalom.edge_angle.13m.max',
+                     'rom_m': rom, 'rom_src': 'slalom.leg_length_cm.13m.rom', 'gam_ref_deg': GAM_REF * 180 / math.pi, 'gam_ref_src': 'slalom.events.skid_peak'}}
 
 
 def port(args):
@@ -183,165 +206,12 @@ def port(args):
   print(json.dumps({k: out[k] for k in ('worstRel', 'branchFlips', 'n', 'solveForm')}))
 
 
-def guess_of(args, c, m):
-  """Start trajectory as {t: [...], name: [...]} on its own times."""
-  head = args.head * math.pi / 180
-  v0 = c['speedMps']
-  h0 = sum(c['REACH']) / 2
-  if args.start == 'r2a23':
-    g = json.load(open(args.start_file))
-    return {k: np.array(v) for k, v in g.items()}
-  # Conservative swing: R2a23's old balance lean and energy-formula λ̇ at λ 0; flat: λ, ε, p 0.
-  lam_pk = args.swing_lean * math.pi / 180 if args.start == 'swing' else 0.0
-  w0 = args.swing_rate * math.pi / 180
-  t_r = (math.pi / 2) * lam_pk / w0 if lam_pk > 0 else 0.0
-  # T from the steady turn rate g tan λ / v (flat: gravity's pull alone, so take the swing's T).
-  lp = args.swing_lean * math.pi / 180
-  T = (math.pi - 2 * math.atan(h0 * w0 / v0) + math.pi / 2 - head) / (c['G'] * math.tan(lp) / v0) + t_r
-  t = np.linspace(0, T, 400)
-  if lam_pk > 0:
-    u = np.minimum(1, np.minimum(t / t_r, (T - t) / t_r))
-    lam = lam_pk * np.sin(u * math.pi / 2)
-  else:
-    lam = 0 * t
-  lamDot = np.gradient(lam, t)
-  mfrac = lam / lam_pk if lam_pk > 0 else 0 * t
-  eps = lam + c['mMax'] * mfrac
-  amp = -(c['S'] - c['SWITCH_SHARE']) * c['stance']
-  p = amp * mfrac ** 2 * (3 - 2 * mfrac)
-  psi0 = math.pi / 2 - head + math.atan(h0 * lamDot[0] / v0)
-  psi = psi0 + (math.pi - 2 * psi0) * t / T
-  return {'t': t, 'lam': lam, 'lamDot': lamDot, 'h': h0 + 0 * t, 'hd': 0 * t, 'eps': eps, 'p': p, 'pd': np.gradient(p, t),
-          'psi': psi, 'v': v0 + 0 * t, 'load': m.cos / np.cos(lam)}
-
-
-def solve(args):
-  c = json.load(open(args.const))
-  m = Model(c)
-  d, N = 3, args.N
-  delta = args.delta_deg * math.pi / 180
-  head = args.head * math.pi / 180
-  tau = np.append(0, ca.collocation_points(d, 'radau'))
-  C, Dend = np.zeros((d + 1, d + 1)), np.zeros(d + 1)
-  for j in range(d + 1):
-    p = np.poly1d([1])
-    for r in range(d + 1):
-      if r != j:
-        p *= np.poly1d([1, -tau[r]]) / (tau[j] - tau[r])
-    Dend[j] = p(1.0)
-    dp = np.polyder(p)
-    for r in range(d + 1):
-      C[j, r] = dp(tau[r])
-
-  g = guess_of(args, c, m)
-  Tg = float(g['t'][-1])
-  gi = lambda k, tt: float(np.interp(tt, g['t'], g[k]))
-
-  w, lbw, ubw, w0, g_, lbg, ubg = [], [], [], [], [], [], []
-  inf = math.inf
-
-  def var(n, lb, ub, init):
-    x = ca.SX.sym('w', n)
-    w.append(x)
-    lbw.extend(lb)
-    ubw.extend(ub)
-    w0.extend(init)
-    return x
-
-  def con(e, lb, ub):
-    g_.append(e)
-    lbg.extend([lb] * e.numel())
-    ubg.extend([ub] * e.numel())
-
-  T = var(1, [0.05], [60], [Tg])
-  hstep = T / N
-  lo = {'lam': 0.0 if args.lam_nonneg else -math.pi / 2, 'h': c['REACH'][0], 'eps': -c['ROOT_TOP'], 'p': -c['stance'] / 2, 'psi': 0.0, 'v': c['V_FLOOR']}
-  hi = {'lam': math.pi / 2, 'h': c['REACH'][1], 'eps': c['ROOT_TOP'], 'p': 0.0, 'psi': math.pi}
-  rate = c['EDGE_RATE_DEG_S'] * math.pi / 180
-
-  def new_x(tt):
-    x = var(9, [lo.get(k, -inf) for k in NX], [hi.get(k, inf) for k in NX], [gi(k, tt) for k in NX])
-    # Angulation 0 ≤ ε − λ ≤ mMax at every node.
-    con(x[4] - x[0], 0, c['mMax'])
-    return x
-
-  X0 = new_x(0.0)
-  Xk = X0
-  nodes = [(0, 0.0, X0, None, None)]
-  for j in range(N):
-    tj = (j + 0.5) * Tg / N
-    dt = Tg / N
-    U = var(3, [-inf, -rate, -inf], [inf, rate, inf], [(gi('hd', tj + dt / 2) - gi('hd', tj - dt / 2)) / dt,
-            min(rate, max(-rate, (gi('eps', tj + dt / 2) - gi('eps', tj - dt / 2)) / dt)), (gi('pd', tj + dt / 2) - gi('pd', tj - dt / 2)) / dt])
-    Xc = []
-    for r in range(1, d + 1):
-      tt = (j + tau[r]) * Tg / N
-      x = new_x(tt)
-      Z = var(1, [0], [inf], [gi('load', tt)])
-      Xc.append(x)
-      nodes.append((j, tau[r], x, U, Z))
-    for r in range(1, d + 1):
-      xp = C[0, r] * Xk + sum(C[q, r] * Xc[q - 1] for q in range(1, d + 1))
-      x, Z = nodes[-d + r - 1][2], nodes[-d + r - 1][4]
-      xd, alg, kap, share, force = m.rhs(x, U, Z, delta)
-      con(hstep * xd - xp, 0, 0)
-      con(alg, 0, 0)
-      con(m.pressed_margin_s(x[4], force, delta), 0, inf)
-    Xk = Dend[0] * Xk + sum(Dend[q] * Xc[q - 1] for q in range(1, d + 1))
-    if j < N - 1:
-      Xn = new_x((j + 1) * Tg / N)
-      con(Xn - Xk, 0, 0)
-      Xk = Xn
-      nodes.append((j + 1, 0.0, Xn, None, None))
-  XN = Xk
-  # Switches: λ 0, share ½ (p, ṗ 0), ski heading ψ − atan((h λ̇ + ṗ)/v) at π/2 ∓ head.
-  con(ca.vertcat(X0[0], XN[0], X0[5], X0[6]), 0, 0)
-  con(X0[7] - ca.atan((X0[2] * X0[1] + X0[6]) / X0[8]) - (math.pi / 2 - head), 0, 0)
-  # Mirror, hard except λ̇.
-  con(ca.vertcat(XN[2] - X0[2], XN[3] - X0[3], XN[4] + X0[4], XN[5] + X0[5], XN[6] + X0[6], XN[7] - (math.pi - X0[7]), XN[8] - X0[8]), 0, 0)
-  defect = XN[1] + X0[1]
-  W = ca.vertcat(*w)
-  # QAMD ordering: METIS segfaults in this IPOPT build above N 80 (libcoinmetis __GKfree).
-  solver = ca.nlpsol('s', 'ipopt', {'x': W, 'f': defect ** 2, 'g': ca.vertcat(*g_)},
-                     {'print_time': False, 'ipopt': {'max_iter': args.max_iter, 'tol': 1e-12, 'constr_viol_tol': 1e-10, 'print_level': 0, 'sb': 'yes', 'mumps_pivot_order': 6}})
-  r_ = solver(x0=w0, lbx=lbw, ubx=ubw, lbg=lbg, ubg=ubg)
-  st = solver.stats()
-  ok = st['success']
-  wv = r_['x']
-  fv = ca.Function('fv', [W], [defect, X0, XN, T])
-  dv, x0v, xNv, Tv = fv(wv)
-  ev = ca.Function('ev', [W], [ca.vertcat(*[ca.vertcat(*[q for q in nd[2:] if q is not None]) for nd in nodes])])
-  flat = np.array(ev(wv)).ravel()
-  val_of, k = [], 0
-  for nd in nodes:
-    n = 9 + (4 if nd[3] is not None else 0)
-    val_of.append(flat[k:k + n])
-    k += n
-  val = lambda e: float(e)
-  Tv = float(Tv)
-  rows = []
-  for (j, tr, x, U, Z), vv in zip(nodes, val_of):
-    xv = [float(q) for q in vv[:9]]
-    row = {'t': (j + tr) * Tv / N, **dict(zip(NX, xv))}
-    if U is not None:
-      uv = [float(q) for q in vv[9:12]]
-      row.update(dict(zip(NU, uv)))
-      load = float(vv[12])
-      xd, alg, kap, share, force = m.rhs(ca.DM(xv), ca.DM(uv), load, delta)
-      row.update({'load': load, 'kappa': float(kap), 'kR': float(kap) * m.Rsc, 'share': float(share), 'force': float(force),
-                  'pressedMargin': float(m.pressed_margin_s(xv[4], float(force), delta)), 'angulation': xv[4] - xv[0],
-                  'grip_kRcos': float(kap) * m.Rsc * math.cos(xv[4])})
-    rows.append(row)
-  out = {'args': vars(args), 'status': st['return_status'], 'success': ok, 'iters': st['iter_count'],
-         'defectDegS': float(dv) * 180 / math.pi, 'lamDot0DegS': float(x0v[1]) * 180 / math.pi, 'lamDotNDegS': float(xNv[1]) * 180 / math.pi,
-         'T': Tv, 'v0': float(x0v[8]), 'vN': float(xNv[8]), 'psi0': float(x0v[7]), 'psiN': float(xNv[7]), 'h0': float(x0v[2]),
-         'tau': list(tau), 'C': C.tolist(), 'Dend': Dend.tolist(), 'nodes': rows}
-  json.dump(out, open(args.out, 'w'))
-  print(json.dumps({k: out[k] for k in ('status', 'iters', 'defectDegS', 'lamDot0DegS', 'lamDotNDegS', 'T', 'v0', 'psi0', 'h0')}))
-
-
-NXL = ['lam', 'lamDot', 'h', 'hd', 'eps', 'psi', 'v']
-NUL = ['hdd', 'epsDot']
+NXL = ['lam', 'lamDot', 'h', 'hd', 'hdd', 'eps', 'epsDot', 'gam', 'psi', 'v']
+NUL = ['hddd', 'epsDdot', 'gamDot']
+I = {k: i for i, k in enumerate(NXL)}
+# Mirror about the fall line, turn sense s → −s: λ' = −λ so d/dt keeps the sign (λ̇, ε, ε̇ odd); h, its rates, γ, v even; ψ' = π − ψ.
+ODD = ('lamDot', 'eps', 'epsDot')
+EVEN = ('h', 'hd', 'hdd', 'gam', 'v')
 
 
 def radau(d):
@@ -356,17 +226,24 @@ def radau(d):
     dp = np.polyder(p)
     for r in range(d + 1):
       C[j, r] = dp(tau[r])
-  return tau, C, Dend
+  # Radau IIA weights on the collocation points (the algebraic load lives only there).
+  Bq = np.zeros(d + 1)
+  for j in range(1, d + 1):
+    p = np.poly1d([1])
+    for r in range(1, d + 1):
+      if r != j:
+        p *= np.poly1d([1, -tau[r]]) / (tau[j] - tau[r])
+    Bq[j] = np.polyint(p)(1.0)
+  return tau, C, Dend, Bq
 
 
-def solve_law(args, c, m, g, lam_peak):
-  """One solve with p on §7's share law at λ_peak and the measured ceilings: F/mg ≤ F_CEIL_G, |ḣ| ≤ HD_MAX, λ ≥ 0."""
+def solve_law(args, c, m, g, lam_peak, sc, wall):
+  """One solve with p on §7's share law at λ_peak: smooth controls, skid as the brake, free switch, course and speed hard."""
   d, N = 3, args.N
   delta = args.delta_deg * math.pi / 180
-  head = args.head * math.pi / 180
-  tau, C, Dend = radau(d)
+  tau, C, Dend, Bq = radau(d)
   Tg = float(g['t'][-1])
-  gi = lambda k, tt: float(np.interp(tt, g['t' if k != 'load' else 'tl'] if 'tl' in g else g['t'], g[k]))
+  gi = lambda k, tt: float(np.interp(tt, g['tl'] if k == 'load' else g['t'], g[k]))
   w, lbw, ubw, w0, g_, lbg, ubg = [], [], [], [], [], [], []
   inf = math.inf
 
@@ -385,23 +262,36 @@ def solve_law(args, c, m, g, lam_peak):
 
   T = var(1, [0.05], [60], [Tg])
   hstep = T / N
-  lo = {'lam': 0.0, 'h': c['REACH'][0], 'hd': -c['HD_MAX'], 'eps': -c['ROOT_TOP'], 'psi': 0.0, 'v': c['V_FLOOR']}
-  hi = {'lam': math.pi / 2, 'h': c['REACH'][1], 'hd': c['HD_MAX'], 'eps': c['ROOT_TOP'], 'psi': math.pi}
   rate = c['EDGE_RATE_DEG_S'] * math.pi / 180
+  lo = {'lam': 0.0, 'h': c['REACH'][0], 'hd': -c['HD_MAX'], 'eps': -c['ROOT_TOP'], 'epsDot': -rate, 'gam': 0.0, 'psi': 0.0, 'v': c['V_FLOOR']}
+  hi = {'lam': math.pi / 2, 'h': c['REACH'][1], 'hd': c['HD_MAX'], 'eps': c['ROOT_TOP'], 'epsDot': rate, 'gam': GAM_MAX, 'psi': math.pi}
   clip = lambda k, v: min(hi.get(k, inf), max(lo.get(k, -inf), v))
+  first = []
 
   def new_x(tt):
-    x = var(7, [lo.get(k, -inf) for k in NXL], [hi.get(k, inf) for k in NXL], [clip(k, gi(k, tt)) for k in NXL])
-    con(x[4] - x[0], 0, c['mMax'])
+    lb, ub = [lo.get(k, -inf) for k in NXL], [hi.get(k, inf) for k in NXL]
+    if not first:
+      # Free switch: between straight across (0) and the fall line (π/2).
+      ub[I['psi']] = math.pi / 2
+    x = var(10, lb, ub, [min(ub[i], max(lb[i], clip(k, gi(k, tt)))) for i, k in enumerate(NXL)])
+    blo, bhi, _ = m.band_s(x[I['gam']])
+    ang = x[I['eps']] - x[I['lam']]
+    con(ang - blo, 0, inf)
+    con(bhi - ang, 0, inf)
+    if first:
+      # Cross-over: the mass is highest at the switch.
+      con(x[I['h']] - first[0][I['h']], -inf, 0)
+    else:
+      first.append(x)
     return x
 
   X0 = new_x(0.0)
   Xk = X0
   nodes = [(0, 0.0, X0, None, None)]
+  Iv = IL = ID = Jg = Ju = 0
   for j in range(N):
     tj, dt = (j + 0.5) * Tg / N, Tg / N
-    U = var(2, [-inf, -rate], [inf, rate], [(gi('hd', tj + dt / 2) - gi('hd', tj - dt / 2)) / dt,
-            min(rate, max(-rate, (gi('eps', tj + dt / 2) - gi('eps', tj - dt / 2)) / dt))])
+    U = var(3, [-inf] * 3, [inf] * 3, [(gi(k, tj + dt / 2) - gi(k, tj - dt / 2)) / dt for k in ('hdd', 'epsDot', 'gam')])
     Xc = []
     for r in range(1, d + 1):
       tt = (j + tau[r]) * Tg / N
@@ -415,7 +305,13 @@ def solve_law(args, c, m, g, lam_peak):
       xd, alg, kap, share, force, _ = m.rhs_law(x, U, Z, delta, lam_peak)
       con(hstep * xd - xp, 0, 0)
       con(alg, 0, 0)
-      con(m.pressed_margin_s(x[4], force, delta), 0, inf)
+      con(m.pressed_margin_s(x[I['eps']], force, delta), 0, inf)
+      v, psi = x[I['v']], x[I['psi']]
+      Iv += hstep * Bq[r] * v
+      IL += hstep * Bq[r] * v * ca.sin(psi)
+      ID += hstep * Bq[r] * v * ca.sqrt(ca.cos(psi) ** 2 + ABS_DELTA ** 2)
+      Jg += Bq[r] * (x[I['gam']] / sc['s_gam']) ** 2
+    Ju += (U[0] / sc['s_h']) ** 2 + (U[1] / sc['s_eps']) ** 2
     Xk = Dend[0] * Xk + sum(Dend[q] * Xc[q - 1] for q in range(1, d + 1))
     if j < N - 1:
       Xn = new_x((j + 1) * Tg / N)
@@ -423,47 +319,72 @@ def solve_law(args, c, m, g, lam_peak):
       Xk = Xn
       nodes.append((j + 1, 0.0, Xn, None, None))
   XN = Xk
-  # Switches at λ 0, where the law's p and ṗ are 0: ski heading ψ − atan(h λ̇ / v) at π/2 − head.
-  con(ca.vertcat(X0[0], XN[0]), 0, 0)
-  con(X0[5] - ca.atan(X0[2] * X0[1] / X0[6]) - (math.pi / 2 - head), 0, 0)
-  con(ca.vertcat(XN[2] - X0[2], XN[3] - X0[3], XN[4] + X0[4], XN[5] - (math.pi - X0[5]), XN[6] - X0[6]), 0, 0)
-  defect = XN[1] + X0[1]
+  con(ca.vertcat(X0[I['lam']], XN[I['lam']]), 0, 0)
+  mirror = ca.vertcat(*[XN[I[k]] + X0[I[k]] for k in ODD], *[XN[I[k]] - X0[I[k]] for k in EVEN], XN[I['psi']] + X0[I['psi']] - math.pi)
+  con(mirror, 0, 0)
+  course = ca.vertcat(Iv - args.speed * T, IL - args.turn_l, ID - args.offset)
+  con(course, 0, 0)
+  # Time-mean J: (1/T)∫u² dt over piecewise-constant u is (1/N)Σu².
+  J = (Ju + Jg) / N
   W = ca.vertcat(*w)
-  solver = ca.nlpsol('s', 'ipopt', {'x': W, 'f': defect ** 2, 'g': ca.vertcat(*g_)},
-                     {'print_time': False, 'ipopt': {'max_iter': args.max_iter, 'tol': 1e-12, 'constr_viol_tol': 1e-10, 'print_level': 0, 'sb': 'yes', 'mumps_pivot_order': 6}})
+  ip = {'max_iter': args.max_iter, 'tol': args.tol, 'constr_viol_tol': 1e-10, 'print_level': 0, 'sb': 'yes', 'mumps_pivot_order': 6, 'max_wall_time': max(1.0, wall)}
+  solver = ca.nlpsol('s', 'ipopt', {'x': W, 'f': J, 'g': ca.vertcat(*g_)}, {'print_time': False, 'ipopt': ip})
   r_ = solver(x0=w0, lbx=lbw, ubx=ubw, lbg=lbg, ubg=ubg)
   st = solver.stats()
   wv = r_['x']
-  dv, x0v, xNv, Tv = [np.array(z).ravel() for z in ca.Function('fv', [W], [defect, X0, XN, T])(wv)]
+  outs = ca.Function('fv', [W], [J, X0, XN, T, mirror, course, Iv, IL, ID, Ju / N, Jg / N])(wv)
+  Jv, x0v, xNv, Tv, mv, cv, Ivv, ILv, IDv, Juv, Jgv = [np.array(z).ravel() for z in outs]
   flat = np.array(ca.Function('ev', [W], [ca.vertcat(*[ca.vertcat(*[q for q in nd[2:] if q is not None]) for nd in nodes])])(wv)).ravel()
   Tv = float(Tv[0])
   rows, k = [], 0
   for (j, tr, x, U, Z) in nodes:
-    n = 7 + (3 if U is not None else 0)
+    n = 10 + (4 if U is not None else 0)
     vv = flat[k:k + n]
     k += n
-    xv = [float(q) for q in vv[:7]]
+    xv = [float(q) for q in vv[:10]]
     row = {'t': (j + tr) * Tv / N, **dict(zip(NXL, xv))}
     p, pd, A, B = m.law(xv[0], xv[1], lam_peak)
     row.update({'p': p, 'pd': pd, 'share': c['SWITCH_SHARE'] - p / c['stance']})
     if U is not None:
-      uv = [float(q) for q in vv[7:9]]
-      load = float(vv[9])
+      uv = [float(q) for q in vv[10:13]]
+      load = float(vv[13])
       xd, alg, kap, share, force, ex = m.rhs_law(ca.DM(xv), ca.DM(uv), load, delta, lam_peak)
       row.update(dict(zip(NUL, uv)))
-      row.update({'load': load, 'lamAcc': float(xd[1]), 'pdd': float(ex['pdd']), 'inertia': float(ex['inertia']), 'kappa': float(kap), 'kR': float(kap) * m.Rsc,
-                  'force': float(force), 'pressedMargin': float(m.pressed_margin_s(xv[4], float(force), delta)), 'angulation': xv[4] - xv[0],
-                  'grip_kRcos': float(kap) * m.Rsc * math.cos(xv[4]), 'algRes': float(alg)})
+      row.update({'load': load, 'lamAcc': float(xd[1]), 'pdd': float(ex['pdd']), 'kappa': float(kap), 'kS': float(ex['kS']), 'f': float(ex['f']),
+                  'force': float(force), 'pressedMargin': float(m.pressed_margin_s(xv[I['eps']], float(force), delta)), 'algRes': float(alg)})
+    else:
+      # At λ 0 the force balance is explicit: F/m = ḧ − h λ̇² + g cos θ.
+      row['load'] = (xv[I['hdd']] - xv[I['h']] * xv[I['lamDot']] ** 2 + m.G * m.cos) / m.G
+    blo, bhi, q = (float(z) for z in m.band_s(xv[I['gam']]))
+    row.update({'angulation': xv[I['eps']] - xv[I['lam']], 'bandLo': blo, 'bandHi': bhi, 'q': q})
     rows.append(row)
-  return {'status': st['return_status'], 'success': st['success'], 'iters': st['iter_count'], 'lamPeak': lam_peak,
-          'defectDegS': float(dv[0]) * 180 / math.pi, 'lamDot0DegS': float(x0v[1]) * 180 / math.pi, 'lamDotNDegS': float(xNv[1]) * 180 / math.pi,
-          'T': Tv, 'v0': float(x0v[6]), 'vN': float(xNv[6]), 'psi0': float(x0v[5]), 'psiN': float(xNv[5]), 'h0': float(x0v[2]),
-          'ceil': {'F_CEIL_G': c['F_CEIL_G'], 'HD_MAX': c['HD_MAX']}, 'tau': list(tau), 'nodes': rows}
+  names = [*ODD, *EVEN, 'psi']
+  return {'status': st['return_status'], 'success': st['success'], 'iters': st['iter_count'], 'lamPeak': lam_peak, 'J': float(Jv[0]), 'Ju': float(Juv[0]), 'Jgam': float(Jgv[0]),
+          'defectDegS': float(xNv[1] + x0v[1]) * 180 / math.pi, 'mirrorRes': dict(zip(names, (float(z) for z in mv))),
+          'courseRes': dict(zip(('meanSpeed', 'L', 'D'), (float(cv[0]) / Tv, float(cv[1]), float(cv[2])))),
+          'meanSpeed': float(Ivv[0]) / Tv, 'L': float(ILv[0]), 'D': float(IDv[0]),
+          'T': Tv, 'v0': float(x0v[I['v']]), 'psi0': float(x0v[I['psi']]), 'psiN': float(xNv[I['psi']]), 'h0': float(x0v[I['h']]),
+          'ceil': {'F_CEIL_G': c['F_CEIL_G'], 'HD_MAX': c['HD_MAX']}, 'scales': sc, 'tau': list(tau), 'Bq': list(Bq), 'nodes': rows}
+
+
+def course_guess(c, m, v, L, D):
+  """Mass on x(y) = (D/2) sin(πy/L) at speed v: ψ from the slope, λ from the path's curvature."""
+  y = np.linspace(0, L, 401)
+  a, k = D / 2, math.pi / L
+  xp, xpp = a * k * np.cos(k * y), -a * k * k * np.sin(k * y)
+  ds = np.sqrt(1 + xp ** 2)
+  t = np.concatenate([[0], np.cumsum((ds[1:] + ds[:-1]) / 2 * np.diff(y))]) / v
+  lam = np.arctan(v * v * np.abs(xpp) / ds ** 3 / m.G)
+  eps = lam + 3 * math.pi / 180 * np.sin(math.pi * t / t[-1])
+  gam = 5 * math.pi / 180 + 0 * t
+  h = c['REACH'][0] + 0.75 * (c['REACH'][1] - c['REACH'][0]) + 0 * t
+  return {'t': t, 'lam': lam, 'lamDot': np.gradient(lam, t), 'h': h, 'hd': 0 * t, 'hdd': 0 * t, 'eps': eps, 'epsDot': np.gradient(eps, t),
+          'gam': gam, 'psi': math.pi / 2 - np.arctan(xp), 'v': v + 0 * t, 'tl': t, 'load': m.cos / np.cos(lam)}
 
 
 def guess_from(sol):
   ns = sol['nodes']
-  g = {k: np.array([n[k] for n in ns]) for k in ['t', 'lam', 'lamDot', 'h', 'hd', 'eps', 'psi', 'v']}
+  g = {k: np.array([n.get(k, 0.0) for n in ns]) for k in ['t', *NXL]}
   wl = [n for n in ns if 'load' in n]
   g['tl'], g['load'] = np.array([n['t'] for n in wl]), np.array([n['load'] for n in wl])
   return g
@@ -473,42 +394,151 @@ def cycle(args):
   """λ_peak by fixed point as carveCycle carries it: solve at λ_peak, set it to the solved turn's largest λ, repeat."""
   c = json.load(open(args.const))
   m = Model(c)
-  g = guess_from(json.load(open(args.warm))) if args.warm else guess_of(args, c, m)
-  if 'p' in g:
-    g = {k: v for k, v in g.items() if k not in ('p', 'pd')}
-  lam_peak = json.load(open(args.warm))['lamPeak'] if args.warm else c['lamPeak0']
+  sc = scales()
+  print(json.dumps({'scales': sc}), flush=True)
+  warm = json.load(open(args.warm)) if args.warm else None
+  g = guess_from(warm) if warm else course_guess(c, m, args.speed, args.turn_l, args.offset)
+  lam_peak = warm['lamPeak'] if warm else c['lamPeak0']
   coarse = json.load(open(args.coarse)) if args.coarse else None
-  hist = []
-  sol = None
-  converged = False
-  extra = {}
+  deadline = time.time() + args.wall
+  hist, sol, converged, extra = [], None, False, {}
   for it in range(args.peak_iters):
-    sol = solve_law(args, c, m, g, lam_peak)
+    left = deadline - time.time()
+    if left <= 0:
+      break
+    sol = solve_law(args, c, m, g, lam_peak, sc, left)
     nxt = max(n['lam'] for n in sol['nodes'])
-    hist.append({'lamPeakDeg': lam_peak * 180 / math.pi, 'maxLamDeg': nxt * 180 / math.pi, 'status': sol['status'], 'defectDegS': sol['defectDegS'], 'T': sol['T'], 'v': sol['v0']})
+    hist.append({'lamPeakDeg': lam_peak * 180 / math.pi, 'maxLamDeg': nxt * 180 / math.pi, 'status': sol['status'], 'iters': sol['iters'], 'J': sol['J'], 'T': sol['T'],
+                 'psi0Deg': sol['psi0'] * 180 / math.pi})
     print(json.dumps(hist[-1]), flush=True)
-    # A pass IPOPT ends without an iterate it stands by gives no λ_peak to carry: stop, flagged.
     if sol['status'] not in ('Solve_Succeeded', 'Solved_To_Acceptable_Level', 'Maximum_Iterations_Exceeded'):
-      converged = False
       json.dump({'args': vars(args), **sol, 'peakConverged': False, 'peakHistory': hist}, open(args.out, 'w'))
       break
     if coarse:
-      # λ_peak converged once it moves no more than the mesh resolves.
       mesh = float(mesh_change_lam({**sol, 'args': vars(args)}, coarse))
       spread = peak_spread_deg(hist)
       extra = {'meshChangeLamDeg': mesh, 'peakSpreadDeg': spread}
       converged = bool(spread is not None and spread <= mesh)
     else:
       converged = abs(nxt - lam_peak) <= args.peak_tol
-    # Every pass on disk, so a timeout keeps the latest trajectory.
     json.dump({'args': vars(args), **sol, **extra, 'peakConverged': converged, 'peakHistory': hist}, open(args.out + '.tmp', 'w'))
     os.replace(args.out + '.tmp', args.out)
     g = guess_from(sol)
     lam_peak = nxt
     if converged:
       break
-  out = {'args': vars(args), **sol, **extra, 'peakConverged': converged, 'peakHistory': hist}
-  print(json.dumps({k: out[k] for k in ('status', 'iters', 'defectDegS', 'lamDot0DegS', 'lamDotNDegS', 'T', 'v0', 'psi0', 'h0', 'lamPeak', 'peakConverged', *extra)}))
+  if sol is not None:
+    print(json.dumps({'status': sol['status'], 'T': sol['T'], 'psi0Deg': sol['psi0'] * 180 / math.pi, 'lamPeak': sol['lamPeak'], 'peakConverged': converged, **extra}))
+
+
+def samples_r1(sol):
+  """t 0 (the switch, load explicit) then every collocation point."""
+  ns = sol['nodes']
+  return [ns[0]] + [n for n in ns if 'hddd' in n]
+
+
+def poly_at(tau, vals, x):
+  return lagrange(list(tau), vals, x)
+
+
+def mesh_change(fine, coarse, key):
+  """max |fine − coarse| at the fine samples on t/T; states by the coarse interval polynomial, load by the quadratic on its collocation points."""
+  N, T, tau, ns = coarse['args']['N'], coarse['T'], coarse['tau'], coarse['nodes']
+  worst = 0.0
+  for n in samples_r1(fine):
+    s = n['t'] / fine['T'] * N
+    j = min(N - 1, int(s))
+    x = s - j
+    if key == 'load':
+      cv = poly_at(tau[1:], [ns[4 * j + r]['load'] for r in range(1, 4)], x)
+    else:
+      cv = poly_at(tau, [ns[4 * j + r][key] for r in range(4)], x)
+    worst = max(worst, abs(n[key] - cv))
+  return worst
+
+
+def interior_maxima(y, tol):
+  """Maxima with a rise > tol before and a fall > tol after; a plateau or a dip ≤ tol counts once; endpoints are not interior."""
+  peaks, lo, hi, hi_i, rising = [], y[0], y[0], 0, False
+  for i, v in enumerate(y):
+    if not rising:
+      lo = min(lo, v)
+      if v - lo > tol:
+        rising, hi, hi_i = True, v, i
+    else:
+      if v >= hi:
+        hi, hi_i = v, i
+      elif hi - v > tol:
+        peaks.append(hi_i)
+        rising, lo = False, v
+  return peaks
+
+
+def r1_cell(fine, coarse):
+  c = json.load(open(fine['args']['const']))
+  m = Model(c)
+  s = samples_r1(fine)
+  T, N = fine['T'], fine['args']['N']
+  col = lambda k: np.array([n[k] for n in s])
+  t = col('t') / T
+  deg = 180 / math.pi
+  lam, eps, gam, psi, v, h, load, lamDot = (col(k) for k in ('lam', 'eps', 'gam', 'psi', 'v', 'h', 'load', 'lamDot'))
+  mesh = {k: mesh_change(fine, coarse, k) for k in ('lam', 'eps', 'load', 'gam')}
+  # Quadrature over collocation samples (Radau IIA weights).
+  Bq = np.tile(fine['Bq'][1:], N) * T / N
+  cs = s[1:]
+  qd = lambda f: float(sum(b * f(n) for b, n in zip(Bq, cs)))
+  mu, dr = c['mu'], c['dragPerV2']
+  skid = qd(lambda n: n['f'] * n['v'] * math.tan(n['gam']))
+  diss = qd(lambda n: mu * n['load'] * n['v'] + dr * n['v'] ** 3 + n['f'] * n['v'] * math.tan(n['gam']))
+  rate = c['EDGE_RATE_DEG_S'] * math.pi / 180
+  tb = 1e-6
+  bounds = {
+    'lam>=0 (interior)': [n['t'] / T for n in s[1:-1] if n['lam'] <= tb],
+    'REACH lo': [n['t'] / T for n in s if n['h'] - c['REACH'][0] <= tb], 'REACH hi': [n['t'] / T for n in s if c['REACH'][1] - n['h'] <= tb],
+    '|hd|<=HD_MAX': [n['t'] / T for n in s if c['HD_MAX'] - abs(n['hd']) <= tb],
+    'load<=F_CEIL_G': [n['t'] / T for n in s if c['F_CEIL_G'] - n['load'] <= tb], 'load>=0': [n['t'] / T for n in s if n['load'] <= tb],
+    '|epsDot|<=EDGE_RATE': [n['t'] / T for n in s if rate - abs(n['epsDot']) <= tb],
+    'pressed margin>=0': [n['t'] / T for n in cs if n['pressedMargin'] <= tb],
+    'band lo': [n['t'] / T for n in s if n['angulation'] - n['bandLo'] <= tb], 'band hi': [n['t'] / T for n in s if n['bandHi'] - n['angulation'] <= tb],
+    'gam>=0': [n['t'] / T for n in s if n['gam'] <= tb], 'gam<=60deg': [n['t'] / T for n in s if GAM_MAX - n['gam'] <= tb],
+    'h<=h(0) cross-over': [n['t'] / T for n in s[1:] if s[0]['h'] - n['h'] <= tb],
+    'psi0 in [0, pi/2]': [0.0] if fine['psi0'] <= tb or math.pi / 2 - fine['psi0'] <= tb else [],
+    'v>=V_FLOOR': [n['t'] / T for n in s if n['v'] - c['V_FLOOR'] <= tb],
+  }
+  active = {k: [round(x, 4) for x in v_] for k, v_ in bounds.items() if v_}
+  band_ok = all(n['bandLo'] - 1e-9 <= n['angulation'] <= n['bandHi'] + 1e-9 for n in s)
+  pe, pl = interior_maxima(eps, mesh['eps']), interior_maxima(load, mesh['load'])
+  res_ok = all(abs(x) <= 1e-6 for x in fine['mirrorRes'].values()) and all(abs(x) <= 1e-6 for x in fine['courseRes'].values())
+  ie, il, ig = int(np.argmax(eps)), int(np.argmax(load)), int(np.argmax(gam))
+  return {
+    'status': fine['status'], 'T': T, 'L': fine['L'], 'D': fine['D'], 'meanSpeed': fine['meanSpeed'], 'lamPeakDeg': fine['lamPeak'] * deg, 'peakConverged': fine.get('peakConverged'),
+    'J': fine['J'], 'Ju': fine['Ju'], 'Jgam': fine['Jgam'],
+    'switchMassDeg': fine['psi0'] * deg, 'switchSkisDeg': (fine['psi0'] - math.atan(h[0] * lamDot[0] / v[0])) * deg,
+    'vMin': float(v.min()), 'vMax': float(v.max()), 'eps0Deg': float(eps[0]) * deg,
+    'epsPeakDeg': float(eps[ie]) * deg, 'epsPeakT': float(t[ie]), 'lamPeakSolvedDeg': float(lam.max()) * deg, 'loadPeak': float(load[il]), 'loadPeakT': float(t[il]),
+    'gamPeakDeg': float(gam[ig]) * deg, 'gamPeakT': float(t[ig]), 'gamMeanDeg': qd(lambda n: n['gam']) / T * deg,
+    'hMin': float(h.min()), 'hMax': float(h.max()), 'reachBinds': bool(active.get('REACH lo') or active.get('REACH hi')),
+    'pressedBinds': bool(active.get('pressed margin>=0')), 'pressedMarginMin': min(n['pressedMargin'] for n in cs),
+    'loadVsInvCosLam': float(np.max(np.abs(load - 1 / np.cos(lam)))),
+    'bandNearSwitch': {k: [x for x in active.get(k, []) if x <= 0.15 or x >= 0.85] for k in ('band lo', 'band hi')},
+    'skidShare': skid / diss, 'activeBounds': active,
+    'meshChange': {'lamDeg': mesh['lam'] * deg, 'epsDeg': mesh['eps'] * deg, 'loadG': mesh['load'], 'gamDeg': mesh['gam'] * deg},
+    'gates': {
+      '1_solved_residuals': fine['status'] == 'Solve_Succeeded' and res_ok, 'mirrorRes': fine['mirrorRes'], 'courseRes': fine['courseRes'],
+      '2_one_max': len(pe) == 1 and len(pl) == 1, 'epsMaxima': [round(float(t[i]), 4) for i in pe], 'loadMaxima': [round(float(t[i]), 4) for i in pl],
+      '3_band': band_ok,
+      '4_mesh': {'lamDeg': mesh['lam'] * deg, 'epsDeg': mesh['eps'] * deg, 'loadG': mesh['load'], 'gamDeg': mesh['gam'] * deg},
+    },
+  }
+
+
+def gates_r1(args):
+  out = json.load(open(args.out)) if os.path.exists(args.out) else {}
+  for name, fine_f, coarse_f in args.cell:
+    out[name] = r1_cell(json.load(open(fine_f)), json.load(open(coarse_f)))
+    print(json.dumps({name: out[name]['gates']}))
+  json.dump(out, open(args.out, 'w'), indent=1)
 
 
 OK = ('Solve_Succeeded', 'Solved_To_Acceptable_Level')
@@ -639,28 +669,24 @@ def main():
   a.add_argument('const')
   a.add_argument('tsvals')
   a.add_argument('out')
-  b = sp.add_parser('solve')
-  b.add_argument('const')
-  b.add_argument('out')
-  b.add_argument('--head', type=float, default=90.0)
-  b.add_argument('--N', type=int, default=40)
-  b.add_argument('--delta-deg', type=float, default=1.0)
-  b.add_argument('--start', choices=['swing', 'r2a23', 'flat'], default='swing')
-  b.add_argument('--start-file')
-  b.add_argument('--swing-lean', type=float, help='old balance lean, deg (R2a23 energy.lamB1)')
-  b.add_argument('--swing-rate', type=float, help='energy-formula λ̇ at λ 0, deg/s (R2a23 energy.consPred)')
-  b.add_argument('--lam-nonneg', action='store_true', help='λ ≥ 0: one turn, no interior switch (not in the brief)')
-  b.add_argument('--max-iter', type=int, default=3000)
-  cy = sp.add_parser('cycle', help='share-law p, measured ceilings, λ_peak fixed point')
+  cy = sp.add_parser('cycle', help='share-law p, smooth controls, skid, free switch, course and mean speed hard; λ_peak fixed point')
   cy.add_argument('const')
   cy.add_argument('out')
-  for k, v in b._option_string_actions.items():
-    if k.startswith('--') and k not in ('--help', '--lam-nonneg'):
-      cy._add_action(v)
+  cy.add_argument('--speed', type=float, required=True, help='mean speed over the turn, m/s')
+  cy.add_argument('--turn-l', type=float, required=True, help='fall-line distance per turn, m')
+  cy.add_argument('--offset', type=float, required=True, help="the mass's lateral travel per turn (gate offset D), m")
+  cy.add_argument('--N', type=int, default=80)
+  cy.add_argument('--delta-deg', type=float, default=1.0)
+  cy.add_argument('--max-iter', type=int, default=3000)
+  cy.add_argument('--tol', type=float, default=1e-9, help='IPOPT tol')
+  cy.add_argument('--wall', type=float, default=1800, help='wall-clock cap for the whole fixed point, s')
   cy.add_argument('--peak-iters', type=int, default=25)
   cy.add_argument('--warm', help='start from a cycle solution JSON and its λ_peak')
   cy.add_argument('--peak-tol', type=float, default=1e-6, help='λ_peak fixed-point step, rad, when no --coarse is given')
   cy.add_argument('--coarse', help='the N/2 solve: λ_peak converged once its last-3-pass range is within the mesh change')
+  gr = sp.add_parser('gates_r1', help='R1 gates and summary from N and N/2 solves; merges into OUT')
+  gr.add_argument('out')
+  gr.add_argument('--cell', nargs=3, action='append', required=True, metavar=('NAME', 'SOL_N', 'SOL_HALF_N'))
   lp = sp.add_parser('link', help='both starts linked and agreeing, each against its N/2 solve')
   for k in ('a', 'a_half', 'b', 'b_half'):
     lp.add_argument(k)
@@ -669,7 +695,7 @@ def main():
   bk.add_argument('--cell', nargs=4, action='append', required=True, metavar=('NAME', 'SOL_N', 'SOL_HALF_N', 'REPLAY'))
   bk.add_argument('--other', nargs=3, action='append', metavar=('NAME', 'SOL_N', 'SOL_HALF_N'), help='the second start at the same heading')
   args = ap.parse_args()
-  {'port': port, 'solve': solve, 'cycle': cycle, 'link': link, 'bake': bake}[args.cmd](args)
+  {'port': port, 'cycle': cycle, 'gates_r1': gates_r1, 'link': link, 'bake': bake}[args.cmd](args)
 
 
 if __name__ == '__main__':
