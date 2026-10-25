@@ -58,7 +58,7 @@ describe('motion fk', () => {
     for (const b of moguls.problem.blocks.filter((k) => k.name.endsWith(' 1'))) assert.isBelow(checkJacobian(b, Float64Array.from(b.vars, (v) => xm[v] ?? 0)), 1e-5, `moguls ${b.name}`);
   });
 
-  failsUntil('step: fast steered solve')('heads the path and the ski goals on the skis\' heading', () => {
+  it('heads the path and the ski goals on the skis\' heading', () => {
     for (const drill of ['regular-steered', 'regular-gs', 'regular-sl'])
       for (const i of INTENSITIES) {
         const kind = kindOfDrill(drill);

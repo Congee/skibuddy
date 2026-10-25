@@ -1,5 +1,4 @@
 import { assert, describe, it } from '@effect/vitest';
-import { failsUntil } from './legacy';
 import { INTENSITIES, Intensity, Side } from '../src/content/schema';
 import type { Activation } from '../src/content/schema';
 import { TurnKind } from '../src/physics/task';
@@ -26,7 +25,7 @@ describe('model page adapter', () => {
     assert.strictEqual(frameIndex(0.5).t, 0.5);
   });
 
-  failsUntil('step: fast steered solve')('the stage figure lands on the solved root frames', () => {
+  it('the stage figure lands on the solved root frames', () => {
     const drill = KIND_DRILL[TurnKind.Steered];
     let checked = 0;
     for (const intensity of INTENSITIES) {

@@ -142,7 +142,7 @@ describe('skis heading and counter band from the pelvis facing the mass heading 
   const ts = Array.from({ length: 96 }, (_, k) => k / 96);
   const GROOMED = [TurnKind.GS, TurnKind.SL, TurnKind.Steered];
 
-  failsUntil('step: fast steered solve')("centres the groomed band on the skis' heading less the mass heading plus the counter habit, ±10°, mirrored into the next turn", () => {
+  it("centres the groomed band on the skis' heading less the mass heading plus the counter habit, ±10°, mirrored into the next turn", () => {
     for (const kind of GROOMED) {
       for (const i of INTENSITIES) {
         const task = taskFor(kind, i);

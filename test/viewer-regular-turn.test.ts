@@ -728,7 +728,7 @@ const COM_SLACK = 0.055;
 const COM_LINE = 0.02;
 
 describe('angulation', () => {
-  failsUntil('step: fast steered solve')('angulates rather than banks: the trunk tilts in no further than the legs once the turn is edged', () => {
+  it('angulates rather than banks: the trunk tilts in no further than the legs once the turn is edged', () => {
     for (const kind of FRONTAL_KINDS)
       for (const i of INTENSITIES)
         for (const p of oldTable(kind, i)) {

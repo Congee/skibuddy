@@ -241,7 +241,7 @@ describe('phase events', () => {
 
 describe('kinds are presets', () => {
   const ts = [0, 0.1, 0.3, 0.52, 0.7, 0.9, 0.97];
-  failsUntil('step: fast steered solve')('gives the same answer for two kinds whose tasks are equal', () => {
+  it('gives the same answer for two kinds whose tasks are equal', () => {
     for (const kind of TURN_KINDS) {
       for (const i of INTENSITIES) {
         const task = taskFor(kind, i);

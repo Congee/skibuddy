@@ -1,5 +1,4 @@
 import { assert, describe, it } from '@effect/vitest';
-import { failsUntil } from './legacy';
 import { INTENSITIES, Intensity } from '../src/content/schema';
 import { edgeBandGate, Gate, gateAll, gateTurn, MOGUL_HIPS_DEG, MOGUL_LEAN_RATIO_SPREAD, mogulHipsGate, mogulLegLeanGate, mogulMassPathGate, momentsGate, REPORT_ONLY, THRESHOLD } from '../src/viewer/motion/gates';
 import type { GateResult } from '../src/viewer/motion/gates';
@@ -68,7 +67,7 @@ describe('motion gates', () => {
     assert.deepStrictEqual(gateTurn('stork-turn', Intensity.Gentle, []), {});
   });
 
-  failsUntil('step: fast steered solve')('reports every gate on a rest-pose turn, n/a ones with a reason', () => {
+  it('reports every gate on a rest-pose turn, n/a ones with a reason', () => {
     const rest = Float64Array.from(NAMES, (n) => REST_POSE[n] ?? 0);
     const g = gateTurn('regular-steered', Intensity.Gentle, Array.from({ length: Q_FRAMES }, () => rest), null);
     assert.deepStrictEqual(Object.keys(g).toSorted(), Object.values(Gate).toSorted());
