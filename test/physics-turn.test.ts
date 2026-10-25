@@ -376,7 +376,7 @@ describe('speed along the cycle (motion-model §9 V)', () => {
         assert.closeTo(e.gain - e.friction - e.skid - e.bump - e.drag, 0, 1e-6);
       });
       // The early skid brakes before the fall line, so v tops out in the early arc and bottoms near the fall line.
-      failsUntil('V: dissipation after the fall line', kind !== TurnKind.Steered && i !== Intensity.Gentle)(`${cell} runs fastest between the fall line and the release, slowest from the release to the engagement`, () => {
+      failsUntil('V: dissipation after the fall line', kind !== TurnKind.Steered && i !== Intensity.Gentle && cell !== 'gs moderate')(`${cell} runs fastest between the fall line and the release, slowest from the release to the engagement`, () => {
         const p = profileOf(task);
         const v = Array.from(p.speed);
         const n = v.length;
@@ -386,7 +386,7 @@ describe('speed along the cycle (motion-model §9 V)', () => {
         assert.isTrue(top >= fallLine && top <= release, `top ${top}`);
         assert.isTrue(low >= release || low <= engagement, `low ${low}`);
       });
-      failsUntil('V: dissipation after the fall line', cell !== 'steered gentle')(`${cell} peaks its load earlier than at constant speed`, () => {
+      failsUntil('V: dissipation after the fall line', !['steered gentle', 'gs gentle', 'sl gentle'].includes(cell))(`${cell} peaks its load earlier than at constant speed`, () => {
         const steady = solveProfile(task, Snow.HardGroomed, { constantSpeed: true });
         assert.isBelow(profileOf(task).events.forcePeak, steady.events.forcePeak);
       });

@@ -134,7 +134,7 @@ describe('task table', () => {
     assert.isAtMost(Math.max(...carved), Math.min(...swings(TurnKind.Steered)));
   });
 
-  failsUntil('step: smooth load')('rises in speed, slope and load with intensity in every kind', () => {
+  it('rises in speed, slope and load with intensity in every kind', () => {
     for (const kind of TURN_KINDS) {
       const peaks = INTENSITIES.map((i) => Math.max(...Array.from({ length: 240 }, (_, k) => massPathForcesAt(taskFor(kind, i), k / 240).load)));
       INTENSITIES.forEach((i, k) => {
