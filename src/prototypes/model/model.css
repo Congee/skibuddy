@@ -268,6 +268,19 @@ button[aria-pressed='true'] {
   margin: 0;
   font-size: 13px;
 }
+.solver-gates {
+  font-size: 13px;
+}
+.solver-gates h3 {
+  margin: 12px 0 4px;
+}
+.solver-gates p {
+  margin: 0 0 4px;
+}
+.solver-gates ul {
+  margin: 0;
+  padding-left: 18px;
+}
 .frames {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));

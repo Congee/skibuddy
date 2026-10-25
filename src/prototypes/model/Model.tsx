@@ -9,6 +9,7 @@ import { KIND_LABEL, TURN_KINDS, TurnKind, feasibilityOf, presetOf } from '../..
 import type { FeasibilityCheck, TurnEvents, TurnTask } from '../../physics/task';
 import { turnProfile } from '../../physics/turn';
 import type { TurnProfile } from '../../physics/turn';
+import type { CarveCell, CarveGate } from '../../physics/carve-bake';
 import { Q_FRAMES, qTable } from '../../viewer/motion/q-table';
 import { KIND_DRILL, frameIndex, readoutOf, skiYaw, solvedAt } from './adapter';
 import type { SolvedReadout } from './adapter';
@@ -221,6 +222,7 @@ export const Model = (): JSX.Element => {
           </For>
         </div>
         <Show when={cell().checks.find((c) => c.rule === rule())}>{(c) => <p class="rule-detail">{c().detail}</p>}</Show>
+        <Show when={cell().profile.carve?.cell}>{(c) => <SolverGates cell={c()} />}</Show>
       </section>
 
       <section class="panel">
@@ -268,10 +270,14 @@ const Overview = (props: { readonly kind: TurnKind; readonly intensity: Intensit
               {(i) => {
                 const c = CELLS[k][i];
                 const failed = c.checks.filter((x) => !x.ok).map((x) => x.rule);
+                const gateFails = c.profile.carve?.cell === undefined ? 0 : solverGatesOf(c.profile.carve.cell).filter((g) => g.ok === false).length;
                 return (
                   <td>
                     <button type="button" class="cell" aria-pressed={props.kind === k && props.intensity === i} onClick={() => props.onPick(k, i)}>
                       <span class={failed.length === 0 ? 'ok-text' : 'flag-text'}>{failed.length === 0 ? `${c.checks.length} rules pass` : `fails rule ${failed.join(', ')}`}</span>
+                      <Show when={c.profile.carve?.cell}>
+                        <span class={gateFails === 0 ? 'ok-text' : 'flag-text'}>{gateFails === 0 ? 'solver gates pass' : `${gateFails} solver gate${gateFails === 1 ? '' : 's'} fail`}</span>
+                      </Show>
                       <span class={c.solved === null ? 'soft' : 'bio-text'}>{c.solved === null ? 'not solved' : 'solved'}</span>
                     </button>
                   </td>
@@ -283,6 +289,66 @@ const Overview = (props: { readonly kind: TurnKind; readonly intensity: Intensit
       </For>
     </tbody>
   </table>
+);
+
+/** The whole-turn solve's gates (carve_cycle.py gates_r4) in plain words; startsAgreement is `identified` again. */
+const SOLVER_GATE_LABEL: Readonly<Record<string, string>> = {
+  '1_solved_residuals': 'The solve converged, the next turn mirrored and the course met',
+  mirrorRes: 'The next turn mirrors this one',
+  courseRes: 'Mean speed and turn length meet the course',
+  '2_one_max': 'One edge peak and one load peak',
+  epsMaxima: 'Edge peaks, turn time',
+  loadMaxima: 'Load peaks, turn time',
+  '4_mesh': 'Change from the half mesh',
+  m_range: 'Angulation within its range',
+  tauReached: 'The bend branch homotopy reached its last step',
+  gam_peak_on_rising_load: 'The slip angle peaks while the load still rises',
+  gam_lt_4_at_load_peak: 'The slip angle is under 4° at the load peak',
+  slip_above_lean: 'The edge stays above the lean wherever the skis slip',
+  switch_off_fall_line: 'Switch headings off the fall line, degrees',
+  branch_comp_le_tau: 'Pressed or bridged, never both',
+  no_spikes: 'Peak yaw rate and hip moments',
+  no_load_step: 'The load step shrinks on the finer mesh',
+  identified: 'Both solver starts agree',
+};
+
+interface SolverGateRow {
+  readonly key: string;
+  readonly label: string;
+  readonly ok: boolean | null;
+  readonly value: string;
+}
+
+const valueText = (v: unknown): string => {
+  if (typeof v === 'number') return Math.abs(v) >= 1e-3 || v === 0 ? f(v, 3) : v.toExponential(1);
+  if (Array.isArray(v)) return v.map(valueText).join(', ');
+  if (v !== null && typeof v === 'object') return Object.entries(v).filter(([, x]) => typeof x !== 'boolean').map(([k, x]) => `${k} ${valueText(x)}`).join(', ');
+  return '';
+};
+
+const gateRow = (key: string, label: string, g: CarveGate): SolverGateRow => ({ key, label, ok: g.ok, value: valueText(g.value) });
+
+const solverGatesOf = (cell: CarveCell): ReadonlyArray<SolverGateRow> => [
+  ...Object.entries(cell.gates).map(([k, g]) => gateRow(k, SOLVER_GATE_LABEL[k] ?? k, g)),
+  gateRow('replay', `The app's restart replay matches the solve: worst λ change, degrees, against the mesh's ${f(cell.meshChangeLamDeg, 3)}`, cell.replay),
+];
+
+const SolverGates = (props: { readonly cell: CarveCell }): JSX.Element => (
+  <div class="solver-gates">
+    <h3>Whole-turn solve</h3>
+    <p class="soft">
+      Skis cross the switch {f(props.cell.switchSkisOffFallDeg)}° off the fall line, the mass {f(props.cell.switchMassOffFallDeg)}°.
+    </p>
+    <ul>
+      <For each={solverGatesOf(props.cell)}>
+        {(g) => (
+          <li class={g.ok === false ? 'flag-text' : g.ok === null ? 'soft' : 'ok-text'}>
+            {g.label}: {g.ok === null ? 'reported' : g.ok ? 'pass' : 'fail'}{g.value === '' ? '' : ` (${g.value})`}
+          </li>
+        )}
+      </For>
+    </ul>
+  </div>
 );
 
 const Footage = (props: { readonly kind: TurnKind; readonly clips: ReadonlyArray<Clip> | undefined; readonly error: boolean }): JSX.Element => {
