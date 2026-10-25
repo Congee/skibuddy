@@ -18,7 +18,8 @@
     "check": "bun run content && bun run typecheck && bun run lint && bun run test",
     "priors": "bun scripts/prior/build.ts",
     "test:solve": "vitest run --config vitest.solve.config.ts",
-    "bake:carve": "sh scripts/solve/bake.sh"
+    "bake:carve": "sh scripts/solve/bake.sh",
+    "bake:groomed": "bun scripts/solve/groomed-bake.ts"
   },
   "dependencies": {
     "@effect/atom-solid": "4.0.5",

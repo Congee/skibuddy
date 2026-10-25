@@ -9,6 +9,7 @@ import { MOGUL_LEAN_RATIO, REACH, alongOf, edgeCurvatureOf, harmonicSwing, leanR
 import type { Bridge, ContactGeometry, MogulMass, SwingFit } from './moguls';
 import { carveCellFor } from './carve-bake';
 import type { CarveCell, CarveCells, CarveSampleKey } from './carve-bake';
+import { bakedGroomed } from './groomed-bake';
 import { bendRadiusOf } from './ski-bend';
 import type { TurnEvents, TurnTask } from './task';
 import { lineHeading, zipperTrack } from './zipper';
@@ -525,6 +526,23 @@ const lerp = (a: ReadonlyArray<number>, x: number, mirror: (y: number) => number
   const y1 = i + 1 < n ? (a[i + 1] ?? y0) : mirror(a[0] ?? 0);
   return y0 + (y1 - y0) * (u - i);
 };
+
+/** A groomed profile's point at `t` from its series; the solve and the baked cycles share it. */
+export const groomedPointAt =
+  (s: Pick<TurnProfile, 'arcShare' | 'massShare' | 'heading' | 'lean' | 'load' | 'edge' | 'skiRadius' | 'attack'> & { readonly speed: ReadonlyArray<number> }) =>
+  (t: number): ProfilePoint => ({
+    arcShare: lerp(s.arcShare, t, same),
+    massShare: lerp(s.massShare, t, flip),
+    heading: lerp(s.heading, t, (y) => Math.PI - y),
+    lean: lerp(s.lean, t, flip),
+    load: lerp(s.load, t, same),
+    edge: lerp(s.edge, t, flip),
+    skiRadius: lerp(s.skiRadius, t, same),
+    speed: lerp(s.speed, t, same),
+    attack: lerp(s.attack, t, same),
+    clearance: null,
+    bendRadius: null,
+  });
 
 const profiles = new WeakMap<TurnTask, Map<string, TurnProfile>>();
 
@@ -1895,20 +1913,7 @@ const solveGroomed = (task: TurnTask, snow: Snow, options: SolveOptions, depth =
   const [gain = 0, friction = 0, skid = 0, bump = 0, drag = 0] = sums.map((x) => x / along);
   let skisHalfSweep = 0;
   for (let i = 0; i < n; i++) skisHalfSweep = Math.max(skisHalfSweep, Math.abs((heading[i] ?? 0) + (geo.travel[i] ?? 0) - Math.PI / 2));
-  const speedList = [...speed];
-  const at = (t: number): ProfilePoint => ({
-    arcShare: lerp(arcShare, t, same),
-    massShare: lerp(w, t, flip),
-    heading: lerp(heading, t, (y) => Math.PI - y),
-    lean: lerp(lean, t, flip),
-    load: lerp(load, t, same),
-    edge: lerp(edge, t, flip),
-    skiRadius: lerp(skiRadius, t, same),
-    speed: lerp(speedList, t, same),
-    attack: lerp(attack, t, same),
-    clearance: null,
-    bendRadius: null,
-  });
+  const at = groomedPointAt({ arcShare, massShare: w, heading, lean, load, edge, skiRadius, speed: [...speed], attack });
   return {
     t: ts,
     arcShare,
@@ -3103,7 +3108,8 @@ export const turnProfile = (task: TurnTask, snow: Snow = task.snow ?? Snow.HardG
   }
   const hit = bySnow.get(snow);
   if (hit !== undefined) return hit;
-  const p = solveProfile(task, snow);
+  // The groomed solve takes seconds; the steered presets come baked.
+  const p = (task.bumpHeightM > 0 || task.skidShare === 0 ? null : bakedGroomed(task, snow)) ?? solveProfile(task, snow);
   bySnow.set(snow, p);
   return p;
 };
