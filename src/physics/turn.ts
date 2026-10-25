@@ -351,8 +351,10 @@ export interface TurnProfile {
   readonly pathM: ReadonlyArray<number>;
   readonly closure: SpeedClosure;
   readonly at: (t: number) => ProfilePoint;
-  /** Groomed only: the skis' heading, path travel plus γ, radians (skiHeadingAt). */
+  /** Groomed only: the skis' heading, radians (skiHeadingAt): path travel plus γ; a baked carve's ψ_ski. */
   readonly skiHeading?: ReadonlyArray<number>;
+  /** Baked carve only: the skis' middle off the mass path toward the turn's outside, h sin λ + p, metres. */
+  readonly skiOffset?: ReadonlyArray<number>;
   /** Groomed only: ε_c − λ, the carved edge toward the skis' turn less the lean, radians (rule 1). */
   readonly carveMargin?: ReadonlyArray<number>;
   /** Carve only: the outside ski's share, the pressure centre's place between the skis. */
@@ -2007,6 +2009,8 @@ export interface CarveReport {
   /** The switch's pendulum checks; null when the turn stops. */
   readonly switch: CarveSwitch | null;
   readonly periodic: CarvePeriodic;
+  /** The baked cell played, its gate verdicts pass or fail; absent on the march. */
+  readonly cell?: CarveCell;
 }
 
 /** The first stopped sample: why, turn (1 or 2), time from that turn's switch, mass heading from across, speed. */
@@ -2174,6 +2178,10 @@ interface CarveSample {
   readonly share: number;
   readonly pressed: boolean;
   readonly skiHeading: number;
+  /** Baked only: the slip angle γ, radians. */
+  readonly gam?: number;
+  /** Baked only: the skis' middle off the mass path toward the turn's outside, h sin λ + p, metres. */
+  readonly skiOffset?: number;
   readonly count: number;
   /** The hold drives: its demand is within the ceiling rate of the last edge. */
   readonly engaged: boolean;
@@ -2753,8 +2761,8 @@ const bakedReleaseIndex = (eps: ReadonlyArray<number>): number => {
 
 /**
  * A baked cell's cycle (carve-bake.ts): turn 1 from its samples, turn 2 its mirror (equal in its own side, y on from
- * turn 1's end). λ_b, count, κ_mass and the ski heading by carveTurn's own functions; engaged where the bake's ε̇ is
- * within the ceiling rate on a pressed edge before the release.
+ * turn 1's end). λ_b, count and κ_mass by carveTurn's own functions, the skis' heading the bake's ψ_ski; engaged where
+ * the bake's ε̇ is within the ceiling rate on a pressed edge before the release.
  */
 const bakedCycleOf = (inp: CarveInputs, cell: CarveCell): CarveCycle | null => {
   const c = cell.samples;
@@ -2791,7 +2799,9 @@ const bakedCycleOf = (inp: CarveInputs, cell: CarveCell): CarveCycle | null => {
       load,
       share: num('share', i),
       pressed,
-      skiHeading: skiHeadingFrom(psi, v, num('h', i), num('hDot', i), lam, w, num('pDot', i)),
+      skiHeading: num('psiS', i),
+      gam: num('gam', i),
+      skiOffset: num('h', i) * Math.sin(lam) + num('p', i),
       count: r.count,
       engaged,
       limited,
@@ -2961,6 +2971,7 @@ const solveCarved = (task: TurnTask, snow: Snow, options: SolveOptions): TurnPro
   const load = at((a) => a.load).slice(0, n);
   const shareCurve = at((a) => a.share).slice(0, n);
   const skiHeading = at((a) => a.skiHeading).slice(0, n);
+  const attack = at((a) => (a.gam ?? 0) / DEG_RAD).slice(0, n);
   const f = lean.map((l) => s.cos * Math.tan(l));
   const fPeak = Math.max(...f);
   const skiRadius = kSki.map((k) => Math.min(STRAIGHT_RADIUS_M, 1 / Math.abs(k)));
@@ -3005,7 +3016,6 @@ const solveCarved = (task: TurnTask, snow: Snow, options: SolveOptions): TurnPro
     const [a, b] = [sm[k - 1], sm[k]];
     if (a?.engaged === true && b?.engaged === true && b.t > a.t) arcRate = Math.max(arcRate, Math.abs(b.eps - a.eps) / (b.t - a.t));
   }
-  const zeros = ts.map(() => 0);
   const speedList = [...speed];
   const carve: CarveReport = {
     turnSizeM: last?.y ?? 0,
@@ -3023,6 +3033,7 @@ const solveCarved = (task: TurnTask, snow: Snow, options: SolveOptions): TurnPro
     flags,
     switch: turn.sw,
     periodic,
+    ...(cell === null || baked === null ? {} : { cell }),
   };
   return {
     t: ts,
@@ -3040,7 +3051,8 @@ const solveCarved = (task: TurnTask, snow: Snow, options: SolveOptions): TurnPro
     mogul: null,
     events,
     speed,
-    attack: zeros,
+    attack,
+    // The closure adds no skid to a carve; the bake's γ rides in attack.
     gammaE: 0,
     energy: { gain, friction, skid: 0, bump: 0, drag },
     pathM,
@@ -3055,12 +3067,13 @@ const solveCarved = (task: TurnTask, snow: Snow, options: SolveOptions): TurnPro
       edge: lerp(edge, t, flip),
       skiRadius: lerp(skiRadius, t, same),
       speed: lerp(speedList, t, same),
-      attack: lerp(zeros, t, same),
+      attack: lerp(attack, t, same),
       clearance: null,
       bendRadius: null,
       outsideShare: lerp(shareCurve, t, same),
     }),
     skiHeading,
+    ...(baked === null ? {} : { skiOffset: at((a) => a.skiOffset ?? 0).slice(0, n) }),
     carveMargin,
     outsideShare: shareCurve,
     topHalfSweep: Math.PI / 2,
@@ -3131,7 +3144,8 @@ export interface CounterBand {
 /**
  * Counter band at `t`, degrees (motion-model §4.5). Counter = pelvis yaw − outside ski yaw, + when the pelvis faces the
  * turn's outside more than the ski. Groomed: the pelvis faces the mass heading plus the style's habit, so the centre is
- * the skis' heading less the mass heading plus counterHabitDeg. Bumps at pelvis share 1: the tolerance about the fall line.
+ * the skis' heading less the mass heading plus counterHabitDeg; a carve holds no counter, the pelvis facing the skis. Bumps
+ * at pelvis share 1: the tolerance about the fall line.
  */
 export const counterBandAt = (task: TurnTask, t: number, snow: Snow = task.snow ?? Snow.HardGroomed): CounterBand => {
   const [lo, hi] = task.legacy.counterToleranceDeg;
@@ -3142,7 +3156,8 @@ export const counterBandAt = (task: TurnTask, t: number, snow: Snow = task.snow 
     const pivot = (skiHeadingAt(task, t, snow) - h + share * (h - Math.PI / 2)) / DEG_RAD;
     return { minDeg: pivot + lo, maxDeg: pivot + hi, aboutFallLine: false };
   }
-  const centre = (skiHeadingAt(task, t, snow) - h) / DEG_RAD + task.style.counterHabitDeg;
+  const pivot = task.skidShare === 0 ? 0 : (skiHeadingAt(task, t, snow) - h) / DEG_RAD;
+  const centre = pivot + task.style.counterHabitDeg;
   return { minDeg: centre + lo, maxDeg: centre + hi, aboutFallLine: false };
 };
 

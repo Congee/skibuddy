@@ -148,7 +148,8 @@ describe('skis heading and counter band from the pelvis facing the mass heading 
         const task = taskFor(kind, i);
         for (const t of ts) {
           const h = massPathForcesAt(task, t).heading;
-          const centre = (skiHeadingAt(task, t) - h) / DEG + task.style.counterHabitDeg;
+          // A carve holds no counter (user, 2026-10-23): the pelvis faces the skis.
+          const centre = (task.skidShare === 0 ? 0 : (skiHeadingAt(task, t) - h) / DEG) + task.style.counterHabitDeg;
           const b = counterBandAt(task, t);
           assert.isFalse(b.aboutFallLine, `${kind} ${i} ${t}`);
           assert.closeTo(b.minDeg, centre - 10, 1e-9, `${kind} ${i} ${t}`);

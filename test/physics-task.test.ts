@@ -84,9 +84,9 @@ describe('task table', () => {
         assert.deepStrictEqual(t.legacy.counterToleranceDeg, kind === TurnKind.Moguls ? [-20, 20] : [-10, 10], `${kind} ${i}`);
         const carved = kind === TurnKind.GS || kind === TurnKind.SL;
         assert.strictEqual(t.skidShare === 0, carved, `${kind} ${i}`);
-        // The attack is σ Γ (§4.2): nil all cycle for a pure carve, above 0 where the skis skid.
+        // The attack is σ Γ (§4.2) where the skis skid; a baked carve's is the whole-turn solve's slip angle γ.
         const attack = Math.max(...Array.from({ length: 240 }, (_, k) => Math.abs(turnProfile(t, Snow.HardGroomed).at(k / 240).attack)));
-        assert.strictEqual(attack > 0, !carved, `${kind} ${i}`);
+        assert.isAbove(attack, 0, `${kind} ${i}`);
         assert.strictEqual(t.style.counterHabitDeg, 0, `${kind} ${i}`);
         assert.strictEqual(t.bumpHeightM > 0, kind === TurnKind.Moguls, `${kind} ${i}`);
         assert.strictEqual(t.bumpSpacingM > 0, kind === TurnKind.Moguls, `${kind} ${i}`);
@@ -114,7 +114,14 @@ describe('task table', () => {
   it("widens the counter with the skis' yaw rate within each groomed kind, the pelvis facing the mass heading (motion-model §4.5)", () => {
     // Counter = skis' heading less mass heading: the mass runs straighter than quicker skis, so the swing grows with their yaw rate.
     // Moguls apart: their skis follow the line, and the counter band is held about the fall line.
-    for (const kind of [TurnKind.GS, TurnKind.SL, TurnKind.Steered]) {
+    // Carved kinds hold no counter (user, 2026-10-23): the band centred on the skis all cycle.
+    for (const kind of [TurnKind.GS, TurnKind.SL])
+      for (const i of INTENSITIES)
+        for (let k = 0; k < 96; k++) {
+          const b = counterBandAt(taskFor(kind, i), k / 96);
+          assert.closeTo(b.minDeg + b.maxDeg, 0, 1e-9, `${kind} ${i} ${k}`);
+        }
+    for (const kind of [TurnKind.Steered]) {
       const cells = INTENSITIES.map((i): Rated => ({ label: `${kind} ${i}`, task: taskFor(kind, i), rate: yawRateOf(taskFor(kind, i)) }));
       const byRate = cells.toSorted((a, b) => a.rate - b.rate);
       byRate.forEach((c, k) => k > 0 && assert.isAtLeast(counterSwingOf(c.task), counterSwingOf(byRate[k - 1]?.task ?? c.task), c.label));
