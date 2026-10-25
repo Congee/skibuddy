@@ -48,7 +48,7 @@ describe('motion fk', () => {
     }
   });
 
-  failsUntil('step: fast steered solve')('gives exact Jacobians in the turn blocks', () => {
+  it('gives exact Jacobians in the turn blocks', () => {
     const tp = buildTurnProblem('regular-steered', Intensity.Moderate, { frames: 4 });
     const x = seedFor(tp, SeedKind.Jitter);
     assert.isTrue(tp.problem.blocks.some((k) => k.name === 'prior trunk pitch 1'), 'measured trunk pitch block');
