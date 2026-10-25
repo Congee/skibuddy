@@ -123,7 +123,14 @@ const tableFor = (most: number, phase = 0): ReturnType<typeof integrate> => {
   return table;
 };
 
-type ProfileTable = { readonly xs: Float64Array; readonly zs: Float64Array; readonly track: Float64Array; readonly total: number };
+type ProfileTable = {
+  readonly xs: Float64Array;
+  readonly zs: Float64Array;
+  readonly track: Float64Array;
+  readonly total: number;
+  /** A baked carve's skis' path, the mass path's units; null where the skis ride the mass path. */
+  readonly skis: { readonly xs: Float64Array; readonly zs: Float64Array } | null;
+};
 const profileTables = new WeakMap<TurnTask, ProfileTable>();
 
 /** A groomed task's mass path per metre of it: the profile's heading over ds = v T dτ, centred so that x(0) = −x(1). */
@@ -145,7 +152,17 @@ const profileTable = (task: TurnTask): ProfileTable => {
   }
   const mid = (xs[n] ?? 0) / 2;
   for (let i = 0; i <= n; i++) xs[i] = (xs[i] ?? 0) - mid;
-  const table = { xs, zs, track, total };
+  const off = p.skiOffset;
+  // The skis toward the turn's outside, −x at the fall line; the next turn's outside is the other side.
+  const o = (i: number): number => (i < n ? (off?.[i] ?? 0) : -(off?.[0] ?? 0));
+  const skis =
+    off === undefined
+      ? null
+      : {
+          xs: xs.map((x, i) => x - (o(i) * Math.cos(track[i] ?? 0)) / total),
+          zs: zs.map((z, i) => z + (o(i) * Math.sin(track[i] ?? 0)) / total),
+        };
+  const table = { xs, zs, track, total, skis };
   profileTables.set(task, table);
   return table;
 };
@@ -389,9 +406,18 @@ export const pathAt = (s: Surface, t: number): OnField => {
   return { x: lerp(xs), z: lerp(zs), heading: skisHeading(at, s.path), track: heading(at + (s.path.phase ?? 0), most) };
 };
 
-/** Where the skis' centre is at turn time t: on the moguls line under the mass, else the path itself. */
+/** Where the skis' centre is at turn time t: on the moguls line under the mass, a baked carve's skis' path, else the path itself. */
 export const skisAt = (s: Surface, t: number): { readonly x: number; readonly z: number } => {
   const p = pathAt(s, t);
+  const skis = s.mogul === undefined && s.task !== null ? profileTable(s.task).skis : null;
+  if (skis !== null) {
+    const n = skis.xs.length - 1;
+    const at = Math.min(1, Math.max(0, t));
+    const i = Math.min(n - 1, Math.floor(at * n));
+    const f = at * n - i;
+    const lerp = (a: Float64Array): number => ((a[i] ?? 0) * (1 - f) + (a[i + 1] ?? 0) * f) * s.speed;
+    return { x: lerp(skis.xs), z: lerp(skis.zs) };
+  }
   return s.mogul === undefined ? p : { x: trackX(courseOf(s), p.z), z: p.z };
 };
 

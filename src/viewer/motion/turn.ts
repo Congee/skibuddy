@@ -681,7 +681,7 @@ export const skiGoal = (drill: string, intensity: Intensity, surface: Surface, t
   const style = turnStyle(drill);
   if (style === undefined) throw new Error(`${drill}: no regular turn`);
   const scenario = style.scenarios[intensity];
-  // The skis' place and heading: on moguls their line, under the root's mass path.
+  // The skis' place and heading (ψ_ski): on moguls their line, a baked carve its skis' path, off the root's mass path.
   const p = { ...pathAt(surface, t), ...skisAt(surface, t) };
   const origin: Vec3 = [p.x, supportAt(surface, p.x, p.z), p.z];
   const normal = normalAt(surface, p.x, p.z);

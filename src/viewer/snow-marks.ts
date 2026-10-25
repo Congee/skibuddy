@@ -1,4 +1,4 @@
-import { pathAt } from './surface';
+import { pathAt, skisAt } from './surface';
 import type { Surface } from './surface';
 
 /** Flat triangles on the snow (y = 0), in the field's frame: +z down the fall line. */
@@ -15,6 +15,9 @@ const TURNS_AROUND = 2;
 /** Each ski's line off the path, and a line's half width; metres, inferred. */
 const SKI_OFFSET = 0.1;
 const LINE_HALF = 0.016;
+/** The mass path's dashes, on and off, in track samples per dash; and its half width, metres. */
+const DASH = [2, 3] as const;
+const MASS_HALF = 0.01;
 const FALL_SPACING = 2;
 const FALL_HALF_WIDTH = 0.008;
 
@@ -51,10 +54,10 @@ const ribbon = (points: ReadonlyArray<Xz>, offset: number, half: number): Array<
     return [at(offset - half), at(offset + half)];
   });
 
-/** The skis' track over the turns around this one, each next turn mirrored in x, as the figure's. */
-export const trackMarks = (s: Surface): Marks => {
+/** One turn's line `at`, laid over the turns around this one, each next turn mirrored in x, as the figure's. */
+const aroundOf = (s: Surface, at: (s: Surface, t: number) => { readonly x: number; readonly z: number }): Array<Xz> => {
   const turn: Array<Xz> = Array.from({ length: TRACK_SAMPLES + 1 }, (_, i) => {
-    const { x, z } = pathAt(s, i / TRACK_SAMPLES);
+    const { x, z } = at(s, i / TRACK_SAMPLES);
     return [x, z];
   });
   const length = (turn[TRACK_SAMPLES]?.[1] ?? 0) - (turn[0]?.[1] ?? 0);
@@ -63,7 +66,20 @@ export const trackMarks = (s: Surface): Marks => {
     const sign = k % 2 === 0 ? 1 : -1;
     for (const [i, [x, z]] of turn.entries()) if (i > 0 || line.length === 0) line.push([sign * x, z + k * length]);
   }
-  return build([ribbon(line, SKI_OFFSET, LINE_HALF), ribbon(line, -SKI_OFFSET, LINE_HALF)], []);
+  return line;
+};
+
+/** The skis' track over the turns around this one; where the mass runs its own path, that path dashed between them. */
+export const trackMarks = (s: Surface): Marks => {
+  const skis = aroundOf(s, skisAt);
+  const mass = aroundOf(s, pathAt);
+  const strips = [ribbon(skis, SKI_OFFSET, LINE_HALF), ribbon(skis, -SKI_OFFSET, LINE_HALF)];
+  if (mass.some(([x, z], i) => Math.hypot(x - (skis[i]?.[0] ?? x), z - (skis[i]?.[1] ?? z)) > 1e-3)) {
+    const dashed = ribbon(mass, 0, MASS_HALF);
+    const [on, off] = DASH;
+    for (let i = 0; i + on < dashed.length; i += on + off) strips.push(dashed.slice(i, i + on + 1));
+  }
+  return build(strips, []);
 };
 
 /** Faint lines down the fall line, `reach` metres either side of the origin across and along it. */
