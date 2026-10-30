@@ -11,7 +11,8 @@ export const DEFAULT_URL_STATE: UrlState = { kind: KindId.Carving, line: MogulLi
 export const readUrlState = (search: string): UrlState => {
   const params = new URLSearchParams(search);
   const kind = KINDS.find((k) => k.id === params.get('kind'))?.id ?? DEFAULT_URL_STATE.kind;
-  const line = Object.values(MogulLine).find((l) => l === params.get('line')) ?? DEFAULT_URL_STATE.line;
+  // The line belongs to the Moguls kind only, so a link to a withheld kind keeps none.
+  const line = (kind === KindId.Moguls ? Object.values(MogulLine).find((l) => l === params.get('line')) : undefined) ?? DEFAULT_URL_STATE.line;
   return { kind, line };
 };
 

@@ -17,6 +17,12 @@ export interface BlendData {
   readonly drills: ReadonlyArray<BlendDrill>;
 }
 
+/** Failing a gate withholds content from the app: these never reach the picker, links or lists. Lift one when its gates pass. */
+export const WITHHELD_DRILLS: ReadonlySet<string> = new Set(['moguls', 'round-line', 'turns-on-the-tops', 'closed-stance-short-turns']);
+export const isWithheld = (drillId: string): boolean => WITHHELD_DRILLS.has(drillId);
+export const withhold = <T extends { readonly id: string }>(list: ReadonlyArray<T>): ReadonlyArray<T> => list.filter((d) => !isWithheld(d.id));
+const shownIds = (ids: ReadonlyArray<string>): ReadonlyArray<string> => ids.filter((id) => !isWithheld(id));
+
 const decode = <A>(schema: Schema.Decoder<A>): ((u: unknown) => A) => Schema.decodeUnknownSync(schema);
 
 export const loadData = async (url: string): Promise<BlendData> => {
@@ -35,7 +41,7 @@ export const loadData = async (url: string): Promise<BlendData> => {
     exercises: decode(Schema.Array(Exercise))(raw.exercises),
     movements: new Map(Object.values(raw.movements).map((m) => decode(Movement)(m)).map((m) => [m.id as string, m])),
     // Draft until an instructor or physio has reviewed it.
-    drills: raw.drills.map((d) => Object.assign(decode(Drill)(d), { draft: (d.reviewed_by ?? []).length === 0 })),
+    drills: withhold(raw.drills.map((d) => Object.assign(decode(Drill)(d), { draft: (d.reviewed_by ?? []).length === 0 }))),
   };
 };
 
@@ -67,7 +73,7 @@ const LEGS = new Set(['vasti', 'rectus-femoris', 'gluteus-maximus', 'biceps-femo
 const TRUNK = new Set(['rectus-abdominis', 'transversus-abdominis', 'external-oblique', 'internal-oblique', 'erector-spinae', 'multifidus']);
 const FOOT = new Set(['tibialis-anterior', 'toe-extensors', 'peroneals', 'tibialis-posterior', 'foot-intrinsics']);
 
-export const KINDS: ReadonlyArray<Kind> = [
+const ALL_KINDS: ReadonlyArray<Kind> = [
   { id: KindId.Cruising, name: 'Steered', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns', pose: RegularTurn.Steered, shift: () => -1 },
   { id: KindId.Carving, name: 'GS', base: 'long-radius-carved-turn', drill: 'long-radius-carved-turns', pose: RegularTurn.GS },
   { id: KindId.ShortTurns, name: 'SL', base: 'short-radius-turn', drill: 'short-radius-turns', pose: RegularTurn.SL },
@@ -99,6 +105,10 @@ export const KINDS: ReadonlyArray<Kind> = [
     shift: (a) => (a.side === 'inside' && LEGS.has(a.muscle) ? 1 : FOOT.has(a.muscle) ? -1 : 0),
   },
 ];
+
+/** The kinds the app offers: Moguls is withheld with its drills. */
+export const WITHHELD_KINDS: ReadonlySet<KindId> = new Set([KindId.Moguls]);
+export const KINDS: ReadonlyArray<Kind> = ALL_KINDS.filter((k) => !WITHHELD_KINDS.has(k.id));
 
 export { MogulLine };
 /** Moguls is skied round the bumps (that drill's), down the zipper line (the kind's own turn) or over the tops (that drill's). */
@@ -135,7 +145,7 @@ export const kindMovement = (kind: Kind, data: BlendData): Movement | undefined 
 };
 
 /** Our own grouping of the drill library; drafts carry no group yet. */
-export const DRILL_GROUPS: ReadonlyArray<{ readonly name: string; readonly ids: ReadonlyArray<string> }> = [
+const ALL_DRILL_GROUPS: ReadonlyArray<{ readonly name: string; readonly ids: ReadonlyArray<string> }> = [
   {
     name: 'Balance on one ski',
     ids: ['stork-turns', 'javelin-turns', 'outside-ski-turns', 'one-ski-straight-run', 'one-footed-railroad-track-turns', 'thousand-steps'],
@@ -145,8 +155,10 @@ export const DRILL_GROUPS: ReadonlyArray<{ readonly name: string; readonly ids: 
   { name: 'Timing and pressure', ids: ['extension-transitions', 'flexion-transitions', 'dolphin-turns', 'short-radius-turns', 'tic-tac-turns', 'closed-stance-short-turns'] },
 ];
 
+export const DRILL_GROUPS = ALL_DRILL_GROUPS.map((g) => ({ ...g, ids: shownIds(g.ids) }));
+
 // Placeholder picks by hand, not researched: drills that practise what each kind of skiing asks most.
-export const KIND_DRILLS: Readonly<Record<KindId, ReadonlyArray<string>>> = {
+const ALL_KIND_DRILLS: Readonly<Record<KindId, ReadonlyArray<string>>> = {
   [KindId.Cruising]: ['outside-ski-turns', 'thousand-steps', 'stork-turns'],
   [KindId.Carving]: ['carved-j-turns', 'railroad-track-turns', 'one-footed-railroad-track-turns'],
   [KindId.ShortTurns]: ['tic-tac-turns', 'javelin-turns', 'whitepass-turns', 'closed-stance-short-turns'],
@@ -154,3 +166,7 @@ export const KIND_DRILLS: Readonly<Record<KindId, ReadonlyArray<string>>> = {
   [KindId.Steeps]: ['sideslips', 'falling-leaf', 'hockey-stops'],
   [KindId.Powder]: ['extension-transitions', 'dolphin-turns', 'thousand-steps'],
 };
+
+export const KIND_DRILLS: Readonly<Record<KindId, ReadonlyArray<string>>> = Object.fromEntries(
+  Object.entries(ALL_KIND_DRILLS).map(([k, ids]) => [k, shownIds(ids)]),
+) as Record<KindId, ReadonlyArray<string>>;
